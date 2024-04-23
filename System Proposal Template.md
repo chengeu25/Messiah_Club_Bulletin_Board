@@ -49,7 +49,7 @@ title YOUR PROJECT TITLE HERE
 excludes weekends
 %% (`excludes` accepts specific dates in YYYY-MM-DD format,
 days of the week ("sunday") or "weekends", but not the word
-"weekdays".)
+"weekdays".)  
 section Section A
 Task A.1 : des1, 2014-01-06,2014-01-08
 Task A.2 : des2, 2014-01-09, 3d
