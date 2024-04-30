@@ -175,7 +175,8 @@ that will be replaced.
 > A set of data models and descriptions for the tois system that
 will be replaced.
 ### 5.4 Structure Chart Diagram
-> *Reference Chapter 9*
+![Simple org chart](https://github.com/YoungSnook/System_Proposal_CIS_474/assets/161474744/4b553023-b0cf-4191-b4e9-ec27166251fc)
+
 ## 6. Appendices
 > These contain additional material relevant to the proposal,
 often used to support the recommended system. This might include
