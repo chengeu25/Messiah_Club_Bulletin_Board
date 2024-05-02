@@ -14,8 +14,6 @@ of 5
 4. Level 3 Diagram
 5. Level 4 Diagram
 6. Level 5 Diagram
-4. Data Modeling (Entity Relationship Diagram)
-5. Structure Chart Diagram
 6. Appendices
 ## Executive Summary
 > A summary of all the essential information in the proposal so
