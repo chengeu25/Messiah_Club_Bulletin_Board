@@ -111,11 +111,11 @@ Task C.3 : des11, after des2, 5d
 Task C.4 : des12, after des3, 5d
 ```
 ## 3. Feasibility Analysis
-> 3.1 Technical Feasibility:​
+> 3.1 Technical Feasibility:​  
 **- Skill and Expertise:** We have our team of four developers with expertise in development. However, additional resources may be required for specialized tasks or technologies.​  
 **- Technology Stack:** Our team has some experience working with these technologies, which will facilitate the development process.​  
 **- Integration:** The app will integrate with existing club management systems for user authentication and event management.  
-> 3.2 Operational Feasibility:​
+> 3.2 Operational Feasibility:​  
 **- Resource Availability:** A budget may be a concern, but our team can discuss securing any funding for the project.​  
 **- Organizational Impact:** Our team will provide training and support to any user to ensure a smooth transition to the app, and actively request feedback to address any concerns or issues.​  
 **- User Acceptance:** User feedback will be built into the app through development, which demonstrates our commitment to user satisfaction and continuous improvement.  
