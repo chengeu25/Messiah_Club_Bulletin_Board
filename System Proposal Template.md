@@ -1,7 +1,3 @@
-
-Page
-5
-of 5
 # System Request Document
 ## Table of Content
 1. System Request
@@ -16,18 +12,19 @@ of 5
 6. Level 5 Diagram
 6. Appendices
 ## Executive Summary
-> A summary of all the essential information in the proposal so
-that a busy executive can read it quickly and decide what parts
-of the plan to read in more depth.
+>One of Messiah University's fundamental values is the importance of community. With this in mind, our team of cybersecurity students wanted to create a system to allow student clubs to share information about upcoming events with students in a simple, streamlined manner. The idea took shape as College Connect, a program that allows clubs to post event information on a virtual bulletin board. This system request document provides the necessary details about our project, including technical/organizational feasibility, requirements, data models, timeline, and uses cases, as detailed in the table of contents. If you have any questions, please do not hesitate to reach out to the team, and we will be happy to answer any questions about our project. 
+
 ## 1. System Request
-> *Reference Chapter 1*
-**Project Sponsor:** Carmella Herrera, General Manager, Client
-Services Business Unit
-**Business Need:** This project has been initiated . . .
-**Business Requirements:** Using this system from our . . .
-**Business Value:** The Client Services business unit . . .
-**Special Issues or Constraints:** The capabilities described . .
-.
+
+**Project Sponsor:** Messiah University Cybersecurity Students: Jess Donahoue, Carolina Hatch, Brandan Snook, and Nathan Steinbach 
+
+**Business Need:** This project has been initiated to improve the community aspect of Messiah University. Messiah has many clubs who host events nearly every week. While clubs can communicate with users via social media and emails, many students ignore emails and only follow specific clubs. This program allows clubs to upload their events to a community calender. This means their events will be displayed to all users, regardless of if they subscribe to the club. This will enable a greater level of communication and involvement between clubs and users, which will strengthen the community on our campus.
+
+**Business Requirements:** This system shall allow clubs post details of upcoming events to a community bulletin board. Students will be able to subscribe to clubs they chose. This will allow them to receive notifications about events from these clubs. Clubs and students will be different types of accounts with different privileges and abilities. 
+
+**Business Value:** This project will allow for greater connectivity between clubs and students. This will increase student participation in club activities, helping both parties build strong communities in line with Messiah University's desire to foster student connections. 
+**Special Issues or Constraints:** Although student accounts will be connected to Messiah, we will need to ensure that no FERPA data is pulled by the app. Additionally, we will need to ensure a great amount of both club and student support for this app or it will fail early on. 
+
 ## 2. Work plan
 > **1. Project Scope and Planning:**
 - Objective: Develop a bulletin board app for our club to facilitate communication and collaboration among members.
@@ -125,8 +122,33 @@ J-->>S: Types username and password
 <img width="679" alt="Screenshot 2024-05-02 at 12 03 14 AM" src="https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/2d147376-42d3-44b2-b5c4-28ea5b9350f7">
 
 ### 5.3 Process Model (Data Flow Diagram)
-> A set of process models and descriptions for the tois system
-that will be replaced.
+```mermaid
+flowchart
+
+    E1["`Student`"]
+    E2["`Club`"]
+    P0(["`
+    0
+    Bulletin Board System`"])
+
+    E3["`Admin`"]
+
+    D1[[D1:Club Connect Datastore ]]
+
+    E1 -- Views Club Events --> P0
+    E1 -- Registers for Club --> E2
+    E2 -- Sends Student Registration Data --> D1
+    E2 -- Uploads Events for Approval--> E3
+    P0 -- Sends Event Registration Information to Datastore --> D1
+    E3 -- Approves Events and Posts it --> P0 
+    E2 -- Approves/Rejects Club Registration --> D1
+    D1 -- Sends List of Club Members --> E2
+    E1 -- Registers for Event --> P0
+    E2 -- Sends Event Information to Members --> E1
+
+
+```
+
 ### 5.4 Data Model (Entity Relationship Diagram)
 <img width="884" alt="Screenshot 2024-05-01 at 10 49 39 PM" src="https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/166be2ce-0498-407a-85b7-564668d9ae74">
 
