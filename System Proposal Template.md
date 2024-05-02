@@ -175,7 +175,7 @@ Shop work order datastore|
 > A set of process models and descriptions for the tois system
 that will be replaced.
 ### 5.4 Data Model (Entity Relationship Diagram)
-![image](https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/a331cbad-acc0-4535-8317-c4fd549bee93)
+<img width="884" alt="Screenshot 2024-05-01 at 10 49 39 PM" src="https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/166be2ce-0498-407a-85b7-564668d9ae74">
 
 ### 5.4 Structure Chart Diagram
 ![Simple org chart](https://github.com/YoungSnook/System_Proposal_CIS_474/assets/161474744/4b553023-b0cf-4191-b4e9-ec27166251fc)
