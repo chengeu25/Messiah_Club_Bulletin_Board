@@ -121,15 +121,28 @@ Task C.4 : des12, after des3, 5d
 **- User Acceptance:** User feedback will be built into the app through development, which demonstrates our commitment to user satisfaction and continuous improvement.  
 
 ## 4. Requirements Definition
-> *Reference Chapter 3*
-> A list of the functional and nonfunctional business
-requirements for the system.
+
 ### 4.1 Functional Requirements:
+1. User registration and authentication
+Users shall be able to login securely to access the system.
+
+2. Club listings and search
+Allow users to seach clubs based on various criteria such as meeting times, genre, or events.
+
+3. Club registration
+Allow users to register for clubs they are eligible for.
+Enforce limits on the number of students that can register for each club.
 ### 4.2 Nonfunctional Requirements:
-1. **Operational**
-2. **Performance**
-3. **Security**
-4. **Cultural and political**
+1. Performance
+The system should respond to user actions within 6 seconds.
+
+2. Reliability
+The system should have minimal downtime for maintenance or upgrades.
+
+3. Useability
+The user interface shall be intuitive and easy to navigate.
+The system shall be restricted to current Messiah students.
+
 ## 5. Logical Design
 > A set of use cases that illustrate the basic processes that the
 system needs to support.
