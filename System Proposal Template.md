@@ -86,30 +86,7 @@ Services Business Unit
 - Analyze data to identify patterns and areas for improvement.
 - Continuously iterate and optimize the app based on user feedback and analytics insights.  
 ### Gantt Chart
-```mermaid
-gantt
-dateFormat YYYY-MM-DD
-title YOUR PROJECT TITLE HERE
-excludes weekends
-%% (`excludes` accepts specific dates in YYYY-MM-DD format,
-days of the week ("sunday") or "weekends", but not the word
-"weekdays".)  
-section Section A
-Task A.1 : des1, 2014-01-06,2014-01-08
-Task A.2 : des2, 2014-01-09, 3d
-Task A.3 : des3, after des2, 5d
-Task A.4 : des4, after des3, 5d
-section Section B
-Task B.1 : des5, 2014-01-07,2014-01-09
-Task B.2 : des6, 2014-01-10, 7d
-Task B.3 : des7, after des3, 2d
-Task B.4 : des8, after des7, 5d
-section Section C
-Task C.1 : des9, 2014-01-06,2014-01-08
-Task C.2 : des10, 2014-01-09, 3d
-Task C.3 : des11, after des2, 5d
-Task C.4 : des12, after des3, 5d
-```
+![College Connect Gantt Chart](https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156803738/3aea0c23-3a4d-421b-8eb3-0ef6b515fe29)
 ## 3. Feasibility Analysis
 ### 3.1 Technical Feasibility:​
 **- Skill and Expertise:** We have our team of four developers with expertise in development. However, additional resources may be required for specialized tasks or technologies.​  
