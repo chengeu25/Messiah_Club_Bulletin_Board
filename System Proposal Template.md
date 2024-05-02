@@ -123,23 +123,23 @@ Task C.4 : des12, after des3, 5d
 ## 4. Requirements Definition
 
 ### 4.1 Functional Requirements:
-1. User registration and authentication
+1. **User registration and authentication:**
 Users shall be able to login securely to access the system.
 
-2. Club listings and search
+2. **Club listings and search**
 Allow users to seach clubs based on various criteria such as meeting times, genre, or events.
 
-3. Club registration
+3. **Club registration**
 Allow users to register for clubs they are eligible for.
 Enforce limits on the number of students that can register for each club.
 ### 4.2 Nonfunctional Requirements:
-1. Performance
+1. **Performance:** 
 The system should respond to user actions within 6 seconds.
 
-2. Reliability
+2. **Reliability:** 
 The system should have minimal downtime for maintenance or upgrades.
 
-3. Useability
+3. **Useability: **  <br>
 The user interface shall be intuitive and easy to navigate.
 The system shall be restricted to current Messiah students.
 
