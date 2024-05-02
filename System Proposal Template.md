@@ -144,13 +144,6 @@ J-->>S: Types username and password
 ### 5.2 Use Cases
 <img width="679" alt="Screenshot 2024-05-02 at 12 03 14 AM" src="https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/2d147376-42d3-44b2-b5c4-28ea5b9350f7">
 
-|Summary Inputs|Source|Summary Outputs| Destination|
-|---|---|---|---|
-|Final parts verification|Parts room clerk|Parts request record|
-Parts room clerk|
-|Date/time completion|Parts room clerk|Shop work order record|
-Shop work order datastore|
-|||Work Order ready notice|Technician|
 ### 5.3 Process Model (Data Flow Diagram)
 > A set of process models and descriptions for the tois system
 that will be replaced.
