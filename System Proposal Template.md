@@ -142,28 +142,8 @@ S->>J: Enter user name and password
 J-->>S: Types username and password
 ```
 ### 5.2 Use Cases
-> *Reference Chapter 4*
-#### Use Case Name: Your use case name
-> __ID__ :
-> __Priority__ :
-> __Actor__ :
-> __Description__ :
-> __Trigger__ :
-> __Type__ :
-> __Preconditions__ :
-> 1. Condition 1
-> 2. Condition 2
-> 3. ......
-| Normal Course: | Information for Steps |
-|---|---|
-|1.0 Finalize Parts Request||
-|1. Parts room clerk opens the parts . . . | <--- Parts Request
-record |
-|2. Parts room clerk verifies . . . |<--- Shop Work Order Record|
-> __Postconditions__ :
-> 1. Condition 1
-> 2. Condition 2
-> 3. ......
+<img width="679" alt="Screenshot 2024-05-02 at 12 03 14 AM" src="https://github.com/YoungSnook/System_Proposal_CIS_474/assets/156804462/2d147376-42d3-44b2-b5c4-28ea5b9350f7">
+
 |Summary Inputs|Source|Summary Outputs| Destination|
 |---|---|---|---|
 |Final parts verification|Parts room clerk|Parts request record|
