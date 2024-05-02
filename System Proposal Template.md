@@ -5,16 +5,8 @@ of 5
 # System Request Document
 ## Table of Content
 1. System Request
-2. Work Plan
-3. Feasibility Analysis
-1. Technical Feasibility
-2. Organizational Feasibility
-4. Requirements Definition
-1. Functional Requirement
-2. Non-functional Requirement
 5. Logical Design
 1. Sequence Diagram
-2. Use Cases
 3. Process Modeling (Data Flow Diagram)
 1. Level 0 Diagram
 2. Level 1 Diagram
