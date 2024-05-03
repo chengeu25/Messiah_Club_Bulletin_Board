@@ -3,13 +3,7 @@
 1. System Request
 5. Logical Design
 1. Sequence Diagram
-3. Process Modeling (Data Flow Diagram)
-1. Level 0 Diagram
-2. Level 1 Diagram
-3. Level 2 Diagram
-4. Level 3 Diagram
-5. Level 4 Diagram
-6. Level 5 Diagram
+3. Process Modeling (Data Flow Diagram, levels 0-2)
 6. Appendices
 ## Executive Summary
 >One of Messiah University's fundamental values is the importance of community. With this in mind, our team of cybersecurity students wanted to create a system to allow student clubs to share information about upcoming events with students in a simple, streamlined manner. The idea took shape as College Connect, a program that allows clubs to post event information on a virtual bulletin board. This system request document provides the necessary details about our project, including technical/organizational feasibility, requirements, data models, timeline, and uses cases, as detailed in the table of contents. If you have any questions, please do not hesitate to reach out to the team, and we will be happy to answer any questions about our project. 
@@ -125,13 +119,16 @@ J-->>S: Types username and password
 ```mermaid
 flowchart
 
-    E1["`Student`"]
-    E2["`Club`"]
+    E1["`1
+    Student`"]
+    E2["`1
+    Club`"]
     P0(["`
     0
     Bulletin Board System`"])
 
-    E3["`Admin`"]
+    E3["`2
+    Admin`"]
 
     D1[[D1:Club Connect Datastore ]]
 
