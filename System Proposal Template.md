@@ -10,7 +10,7 @@
 
 ## 1. System Request
 
-**Project Sponsor:** Messiah University Cybersecurity Students: Jess Donahoue, Carolina Hatch, Brandan Snook, and Nathan Steinbach 
+**Project Sponsor:** Caleb Rice, Matthew Merlo, Garret Van Dyke, Cheng Eu Sun
 
 **Business Need:** This project has been initiated to improve the community aspect of Messiah University. Messiah has many clubs who host events nearly every week. While clubs can communicate with users via social media and emails, many students ignore emails and only follow specific clubs. This program allows clubs to upload their events to a community calender. This means their events will be displayed to all users, regardless of if they subscribe to the club. This will enable a greater level of communication and involvement between clubs and users, which will strengthen the community on our campus.
 
