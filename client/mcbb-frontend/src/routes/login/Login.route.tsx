@@ -43,7 +43,7 @@ const Login = () => {
             <Button color='blue' text='Sign Up' type='submit' name='signup' />
             <Button
               color='blue'
-              text='Forgot Password'
+              text='Forgot Password?'
               type='submit'
               name='forgot'
               filled={false}
