@@ -1,7 +1,7 @@
 import React from 'react';
 import { Form, useSubmit } from 'react-router-dom';
-import Input from '../../components/form-elements/Input';
-import Button from '../../components/form-elements/Button';
+import Input from '../../components/form-elements/Input.component';
+import Button from '../../components/form-elements/Button.component';
 
 const Login = () => {
   const submit = useSubmit();

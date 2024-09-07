@@ -8,12 +8,14 @@ import { createBrowserRouter } from 'react-router-dom';
 import Login from './routes/login/Login.route.tsx';
 import loginAction from './routes/login/Login.action.tsx';
 import NavigateToLogin from './routes/navigateToLogin/NavigateToLogin.tsx';
+import VerifyEmail from './routes/verifyEmail/verifyEmail.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<Root />} loader={rootLoader}>
       <Route path='/' element={<NavigateToLogin />} />
       <Route path='login' element={<Login />} action={loginAction} />
+      <Route path='verifyEmail' element={<VerifyEmail />} />
     </Route>
   )
 );
