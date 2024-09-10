@@ -7,7 +7,7 @@ import { createRoutesFromElements, Route, RouterProvider } from 'react-router';
 import { createBrowserRouter } from 'react-router-dom';
 import Login from './routes/login/Login.route.tsx';
 import loginAction from './routes/login/Login.action.tsx';
-import NavigateToLogin from './routes/navigateToLogin/NavigateToLogin.tsx';
+import NavigateToLogin from './routes/navigateToLogin/NavigateToLogin.route.tsx';
 import VerifyEmail from './routes/verifyEmail/verifyEmail.route.tsx';
 
 const router = createBrowserRouter(
