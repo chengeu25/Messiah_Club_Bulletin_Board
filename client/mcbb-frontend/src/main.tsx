@@ -9,6 +9,8 @@ import Login from './routes/login/Login.route.tsx';
 import loginAction from './routes/login/Login.action.tsx';
 import NavigateToLogin from './routes/navigateToLogin/NavigateToLogin.route.tsx';
 import VerifyEmail from './routes/verifyEmail/verifyEmail.route.tsx';
+import Dashboard from './routes/dashboard/Dashboard.route.tsx';
+import dashboardLoader from './routes/dashboard/Dashboard.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -16,6 +18,11 @@ const router = createBrowserRouter(
       <Route path='/' element={<NavigateToLogin />} />
       <Route path='login' element={<Login />} action={loginAction} />
       <Route path='verifyEmail' element={<VerifyEmail />} />
+      <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
+        <Route path='home' element={<div>Home</div>} />
+        <Route path='calendar' element={<div>Calendar</div>} />
+        <Route path='clubs' element={<div>Clubs</div>} />
+      </Route>
     </Route>
   )
 );
