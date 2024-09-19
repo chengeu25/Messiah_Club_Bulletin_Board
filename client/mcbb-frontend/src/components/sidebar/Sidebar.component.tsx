@@ -1,3 +1,4 @@
+import React from 'react';
 import SidebarButton from './SidebarButton.component';
 import { FaCalendar, FaHome, FaUsers } from 'react-icons/fa';
 
@@ -10,15 +11,14 @@ const buttonList = [
 const Sidebar = () => (
   <>
     {buttonList.map((button) => (
-      <>
+      <React.Fragment key={button.text}>
         <SidebarButton
-          key={button.text}
           text={button.text}
           icon={button.icon}
           route={button.route}
         />
         <hr />
-      </>
+      </React.Fragment>
     ))}
   </>
 );

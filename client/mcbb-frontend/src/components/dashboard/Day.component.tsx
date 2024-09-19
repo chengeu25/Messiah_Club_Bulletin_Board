@@ -6,7 +6,18 @@ export interface DayProps {
 }
 
 const Day = ({ events, date }: DayProps) => {
-  return <div>Day</div>;
+  return (
+    <div className='rounded-lg bg-slate-100 w-full flex-none flex flex-col p-2 shadow-md'>
+      <div className='text-xl font-bold'>{date.toLocaleDateString()}</div>
+      {events?.length === 0 ? (
+        <div className='font-italic text-gray-500'>
+          No events on this day yet.
+        </div>
+      ) : (
+        events.map((event) => <Event {...event} />)
+      )}
+    </div>
+  );
   // TODO: Add day display!
   /* Code to render a day goes here. You'll need to use each of the values defined in DayProps and render
   a visual represenation of the day, with styling (either using TailwindCSS utility classes like I have been or by
