@@ -1,6 +1,11 @@
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
 
-const demoDays: DayProps[] = [];
+const demoDays: DayProps[] = [{events: [{startTime: "12:00",
+  endTime: "13:00",
+  title: "Lunch",
+  image: "https://via.placeholder.com/150",
+  description: "Lunch with friends",}],
+  date: new Date('2022-01-01T00:00:00Z'),}];
 
 const Home = () => {
   return (
@@ -8,11 +13,8 @@ const Home = () => {
       {
         // TODO: Add day list display!
       }
-      {/* Code to render days goes here. You'll use a <Day /> component for each day,
-       and you can use demoDays.map() to render the list. This article is helpful: 
-       https://react.dev/learn/rendering-lists. The DayProps and EventProps types
-       (follow the imports to get there) will help with determining what attributes
-       ("props" in React) to give the components and how to structure the demoDays array. */}
+      {demoDays.map((day) => <Day {...day} />)
+}
     </div>
   );
 };
