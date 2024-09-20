@@ -1,5 +1,13 @@
 interface ButtonProps {
-  color: 'red' | 'blue' | 'green' | 'yellow' | 'purple' | 'orange' | 'gray';
+  color:
+    | 'red'
+    | 'blue'
+    | 'green'
+    | 'yellow'
+    | 'purple'
+    | 'orange'
+    | 'gray'
+    | 'white';
   text: string;
   onClick?: () => void;
   filled?: boolean;
