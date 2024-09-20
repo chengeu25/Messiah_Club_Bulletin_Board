@@ -1,3 +1,4 @@
+import Card from '../ui/Card';
 import Event, { EventProps } from './Event.component';
 
 export interface DayProps {
@@ -7,7 +8,7 @@ export interface DayProps {
 
 const Day = ({ events, date }: DayProps) => {
   return (
-    <div className='rounded-lg bg-slate-100 w-full flex-none flex flex-col p-2 shadow-md'>
+    <Card color='slate-200'>
       <div className='text-xl font-bold'>{date.toLocaleDateString()}</div>
       {events?.length === 0 ? (
         <div className='font-italic text-gray-500'>
@@ -16,7 +17,7 @@ const Day = ({ events, date }: DayProps) => {
       ) : (
         events.map((event) => <Event {...event} />)
       )}
-    </div>
+    </Card>
   );
   // TODO: Add day display!
   /* Code to render a day goes here. You'll need to use each of the values defined in DayProps and render
