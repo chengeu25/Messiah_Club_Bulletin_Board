@@ -1,3 +1,5 @@
+import generateStyleClasses from './styleGenerator.function';
+
 interface ButtonProps {
   color:
     | 'red'
@@ -15,14 +17,6 @@ interface ButtonProps {
   name?: string;
 }
 
-const generateButtonClasses = (color: string, filled: boolean) => {
-  const baseClasses = 'p-2 rounded-lg w-full transition duration-200';
-  const filledClasses = `bg-${color}-950 text-white hover:bg-${color}-900 active:bg-${color}-800`;
-  const outlinedClasses = `border-2 border-${color}-950 text-${color}-950 hover:text-${color}-900 hover:border-${color}-900 active:text-${color}-800 active:border-${color}-800`;
-
-  return `${baseClasses} ${filled ? filledClasses : outlinedClasses}`;
-};
-
 const Button = ({
   color,
   text,
@@ -32,7 +26,7 @@ const Button = ({
   filled = true
 }: ButtonProps) => (
   <button
-    className={generateButtonClasses(color, filled)}
+    className={generateStyleClasses(color, filled)}
     onClick={onClick}
     type={type}
     name={name}

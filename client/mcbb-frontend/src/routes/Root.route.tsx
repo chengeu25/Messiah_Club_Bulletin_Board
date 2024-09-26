@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, useNavigate } from 'react-router-dom';
+import { Outlet, useLoaderData, useNavigate, Link } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
 
 const Root = () => {
@@ -7,7 +7,9 @@ const Root = () => {
   return (
     <div className='w-screen h-screen flex flex-col relative'>
       <nav className='w-full bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center'>
-        <span className='text-xl'>Messiah University Engagement Bulletin</span>
+        <span className='text-xl'>
+          <Link to='/'>Messiah University Engagement Bulletin</Link>
+        </span>
         <div>
           {user ? (
             <></>
