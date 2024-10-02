@@ -2,7 +2,6 @@ import React from 'react';
 import { Form, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
-import Select from '../../components/formElements/Select.component';
 
 const Login = () => {
   const submit = useSubmit();
@@ -24,14 +23,7 @@ const Login = () => {
           onSubmit={handleSubmit}
           className='flex flex-col gap-2 w-full h-full'
         >
-          <h1 className='text-3xl font-bold'>Engagement Bulletin Login</h1>
-          <Select
-            label='User Type:'
-            name='type'
-            color='blue'
-            options={['Student', 'Club Admin', 'Messiah Faculty']}
-            filled={false}
-          />
+          <h1 className='text-3xl font-bold'>Login</h1>
           <Input
             label='Messiah Email:'
             name='email'

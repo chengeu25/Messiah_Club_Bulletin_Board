@@ -16,13 +16,14 @@ const LandingPage = () => {
         <Card color='slate-200' padding={6}>
           <div className='flex flex-col gap-5'>
             <h1 className='text-3xl sm:text-4xl lg:text-6xl font-bold'>
-              Welcome to the Messiah University <br />
-              Engagement Bulletin.
+              Welcome to <strong>SHARC</strong>, the place to find out about{' '}
+              <strong>student happenings</strong> and get{' '}
+              <strong>recommendations for clubs</strong> to get involved in.
             </h1>
 
             <p className='font-italic text-gray-500 text-xl'>
-              The perfect place to get connected with clubs, organizations, and
-              events on campus.
+              You've come to the perfect place to get connected with clubs,
+              organizations, and events on campus that pique your interest.
             </p>
 
             <Button
@@ -80,8 +81,8 @@ const LandingPage = () => {
         </div>
       </div>
       <footer className='w-full bg-blue-950 text-white p-3 flex flex-col gap-2'>
-        Messiah Univeristy Engagement Bulletin is created by Caleb Rice, Matthew
-        Merlo, Garret Van Dyke, and Cheng Eu Sun.
+        SHARC is created by Caleb Rice, Matthew Merlo, Garret Van Dyke, and
+        Cheng Eu Sun.
         <hr className='w-full border-white border-1' />
         <div className='flex flex-col md:flex-row gap-2 w-full'>
           <ul className='flex flex-col gap-2 w-full'>
