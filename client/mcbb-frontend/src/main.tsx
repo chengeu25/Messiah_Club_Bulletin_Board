@@ -13,6 +13,8 @@ import Dashboard from './routes/dashboard/Dashboard.route.tsx';
 import dashboardLoader from './routes/dashboard/Dashboard.loader.tsx';
 import verifyEmailAction from './routes/verifyEmail/verifyEmail.action.tsx';
 import Home from './routes/dashboard/home/Home.route.tsx';
+import ForgotPassword from './routes/forgotPassword/ForgotPassword.route.tsx';
+import forgotPasswordAction from './routes/forgotPassword/ForgotPassword.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,6 +25,11 @@ const router = createBrowserRouter(
         path='verifyEmail'
         element={<VerifyEmail />}
         action={verifyEmailAction}
+      />
+      <Route
+        path='forgot'
+        element={<ForgotPassword />}
+        action={forgotPasswordAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
