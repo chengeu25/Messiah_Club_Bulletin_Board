@@ -11,6 +11,7 @@ import LandingPage from './routes/landingPage/LandingPage.route.tsx';
 import VerifyEmail from './routes/verifyEmail/verifyEmail.route.tsx';
 import Dashboard from './routes/dashboard/Dashboard.route.tsx';
 import dashboardLoader from './routes/dashboard/Dashboard.loader.tsx';
+import verifyEmailAction from './routes/verifyEmail/verifyEmail.action.tsx';
 import Home from './routes/dashboard/home/Home.route.tsx';
 
 const router = createBrowserRouter(
@@ -18,7 +19,11 @@ const router = createBrowserRouter(
     <Route path='/' element={<Root />} loader={rootLoader}>
       <Route path='/' element={<LandingPage />} />
       <Route path='login' element={<Login />} action={loginAction} />
-      <Route path='verifyEmail' element={<VerifyEmail />} />
+      <Route
+        path='verifyEmail'
+        element={<VerifyEmail />}
+        action={verifyEmailAction}
+      />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
         <Route path='calendar' element={<div>Calendar</div>} />
