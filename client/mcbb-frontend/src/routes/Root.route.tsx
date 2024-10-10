@@ -5,7 +5,7 @@ const Root = () => {
   const user = useLoaderData();
   const navigate = useNavigate();
   return (
-    <div className='w-screen h-screen flex flex-col relative'>
+    <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       <nav className='w-full bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center'>
         <span className='text-xl'>
           <Link to='/'>

@@ -11,9 +11,9 @@ import Card from '../../components/ui/Card';
 const LandingPage = () => {
   const navigate = useNavigate();
   return (
-    <>
-      <div className='flex flex-col gap-4 w-full p-4 sm:px-[15%]'>
-        <Card color='slate-200' padding={6}>
+    <div className='bg-gray-100'>
+      <div className='flex flex-col gap-4 w-full p-4 sm:px-[15%] '>
+        <Card color='slate-300' padding={6}>
           <div className='flex flex-col gap-5'>
             <h1 className='text-3xl sm:text-4xl lg:text-6xl font-bold'>
               Welcome to <strong>SHARC</strong>, the place to find out about{' '}
@@ -37,45 +37,45 @@ const LandingPage = () => {
           </div>
         </Card>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <Card color='slate-200' padding={0}>
+          <Card color='slate-300' padding={0}>
             <img src={home1} className='w-full h-full object-cover' />
           </Card>
           <Card
-            color='slate-200'
+            color='slate-300'
             padding={6}
             className='text-5xl font-bold items-center justify-center'
           >
             See what events clubs are hosting, based on your interests.
           </Card>
           <Card
-            color='slate-200'
+            color='slate-300'
             padding={6}
             className='text-5xl font-bold items-center justify-center'
           >
             Get notified if one of your clubs is hosting an event.
           </Card>
-          <Card color='slate-200' padding={0}>
+          <Card color='slate-300' padding={0}>
             <img src={home2} className='w-full h-full object-cover' />
           </Card>
-          <Card color='slate-200' padding={0}>
+          <Card color='slate-300' padding={0}>
             <img src={home3} className='w-full h-full object-cover' />
           </Card>
           <Card
-            color='slate-200'
+            color='slate-300'
             padding={6}
             className='text-5xl font-bold items-center justify-center'
           >
             Explore the many opportunities to get involved on campus.
           </Card>
           <Card
-            color='slate-200'
+            color='slate-300'
             padding={6}
             className='text-5xl font-bold items-center justify-center'
           >
             Discuss events and clubs with other potential attendees and club
             leaders.
           </Card>
-          <Card color='slate-200' padding={0}>
+          <Card color='slate-300' padding={0}>
             <img src={home4} className='w-full h-full object-cover' />
           </Card>
         </div>
@@ -111,7 +111,7 @@ const LandingPage = () => {
           </ul>
         </div>
       </footer>
-    </>
+    </div>
   );
 };
 
