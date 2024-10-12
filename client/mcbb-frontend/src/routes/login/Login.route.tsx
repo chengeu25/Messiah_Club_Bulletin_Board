@@ -43,12 +43,16 @@ const Login = () => {
             name='email'
             type='text'
             placeholder='Messiah Email'
+            color='blue'
+            filled={false}
           />
           <Input
             label='Password:'
             name='password'
             type='password'
             placeholder='Password'
+            color='blue'
+            filled={false}
           />
           <div className='flex flex-row gap-2'>
             <Button color='blue' text='Sign In' type='submit' name='login' />

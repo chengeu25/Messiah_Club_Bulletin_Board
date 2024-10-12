@@ -39,6 +39,8 @@ const VerifyEmail = () => {
             name='code'
             type='text'
             placeholder='XXX-XXX-XXX'
+            color='blue'
+            filled={false}
           />
           <div className='flex flex-row gap-2'>
             <Button
