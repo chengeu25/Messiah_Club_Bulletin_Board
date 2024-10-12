@@ -4,20 +4,106 @@ const demoDays: DayProps[] = [
   {
     events: [
       {
-        startTime: '12:00',
-        endTime: '13:00',
-        title: 'Lunch',
-        image: 'https://via.placeholder.com/150',
-        description: 'Lunch with friends'
+        startTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          12,
+          0,
+          0
+        ),
+        endTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          13,
+          0,
+          0
+        ),
+        title: 'Event 1',
+        image: '../../../../assets/logo.png',
+        description: 'This is an event where all this stuff happens...'
+      },
+      {
+        startTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          12,
+          0,
+          0
+        ),
+        endTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          13,
+          0,
+          0
+        ),
+        title: 'Event 2',
+        image: './../../../assets/logo.png',
+        description: 'This is an event where all this stuff happens...'
       }
     ],
-    date: new Date('2022-01-01T00:00:00Z')
+    date: new Date('2025-01-01T00:00:00Z')
+  },
+  {
+    events: [
+      {
+        startTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          14,
+          0,
+          0
+        ),
+        endTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          15,
+          0,
+          0
+        ),
+        title: 'Event 1',
+        image: '../../../../assets/logo.png',
+        description: 'This is an event where all this stuff happens...'
+      },
+      {
+        startTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          12,
+          0,
+          0
+        ),
+        endTime: new Date(
+          new Date().getFullYear(),
+          new Date().getMonth(),
+          new Date().getDate(),
+          13,
+          0,
+          0
+        ),
+        title: 'Event 2',
+        image: './../../../assets/logo.png',
+        description: 'This is an event where all this stuff happens...'
+      }
+    ],
+    date: new Date('2025-01-02T00:00:00Z')
+  },
+  {
+    events: [],
+    date: new Date('2025-01-03T00:00:00Z')
   }
 ];
 
 const Home = () => {
   return (
-    <div className='flex flex-grow overflow-y-scroll p-4 sm:px-[15%] justify-center '>
+    <div className='flex flex-grow flex-col gap-4 overflow-y-scroll p-4 sm:px-[15%] items-center '>
       {demoDays.map((day) => (
         <Day {...day} />
       ))}

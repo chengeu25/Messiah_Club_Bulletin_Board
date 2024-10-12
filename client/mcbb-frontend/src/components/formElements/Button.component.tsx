@@ -15,6 +15,7 @@ interface ButtonProps {
   filled?: boolean;
   type?: 'button' | 'submit' | 'reset' | undefined;
   name?: string;
+  className?: string;
 }
 
 const Button = ({
@@ -23,10 +24,11 @@ const Button = ({
   onClick,
   type = 'button',
   name,
-  filled = true
+  filled = true,
+  className
 }: ButtonProps) => (
   <button
-    className={generateStyleClasses(color, filled)}
+    className={`${generateStyleClasses(color, filled)} ${className}`}
     onClick={onClick}
     type={type}
     name={name}
