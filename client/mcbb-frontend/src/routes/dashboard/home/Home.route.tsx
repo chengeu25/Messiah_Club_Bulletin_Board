@@ -49,6 +49,10 @@ const demoDays: DayProps[] = [
     date: new Date('2025-01-01T00:00:00Z')
   },
   {
+    events: [],
+    date: new Date('2025-01-02T00:00:00Z')
+  },
+  {
     events: [
       {
         startTime: new Date(
@@ -93,20 +97,18 @@ const demoDays: DayProps[] = [
         description: 'This is an event where all this stuff happens...'
       }
     ],
-    date: new Date('2025-01-02T00:00:00Z')
-  },
-  {
-    events: [],
-    date: new Date('2025-01-03T00:00:00Z')
+    date: new Date('2025-01-05T00:00:00Z')
   }
 ];
 
 const Home = () => {
   return (
     <div className='flex flex-grow flex-col gap-4 overflow-y-scroll p-4 sm:px-[15%] items-center '>
-      {demoDays.map((day) => (
-        <Day {...day} />
-      ))}
+      {demoDays
+        .sort((a, b) => a.date.getTime() - b.date.getTime())
+        .map((day) => (
+          <Day {...day} />
+        ))}
     </div>
   );
 };
