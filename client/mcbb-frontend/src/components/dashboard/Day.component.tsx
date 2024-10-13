@@ -4,9 +4,10 @@ import Event, { EventProps } from './Event.component';
 export interface DayProps {
   events: EventProps[];
   date: Date;
+  small?: boolean;
 }
 
-const Day = ({ events, date }: DayProps) => {
+const Day = ({ events, date, small = false }: DayProps) => {
   return (
     <Card
       color='slate-200'
@@ -20,7 +21,7 @@ const Day = ({ events, date }: DayProps) => {
       ) : (
         events
           .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-          .map((event) => <Event {...event} />)
+          .map((event) => <Event {...event} small={small} />)
       )}
     </Card>
   );

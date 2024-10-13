@@ -8,6 +8,13 @@ import {
 import Button from '../components/formElements/Button.component';
 import Input from '../components/formElements/Input.component';
 import Select from '../components/formElements/Select.component';
+import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
+import { BiHome } from 'react-icons/bi';
+import {
+  getMonthName,
+  getMostRecentSunday,
+  getNextSaturday
+} from '../helper/dateUtils';
 
 const Root = () => {
   const user = useLoaderData();
@@ -53,6 +60,35 @@ const Root = () => {
               color='white'
               filled={false}
             />
+            {location.pathname.includes('/calendar') && (
+              <div className='flex flex-row gap-2 h-full justify-center items-center'>
+                <Button
+                  icon={<BiHome />}
+                  color='white'
+                  filled={false}
+                  className='p-2 h-full'
+                />
+                <Button
+                  icon={<IoIosArrowBack />}
+                  color='white'
+                  filled={false}
+                  className='p-2 h-full'
+                />
+                <p className='text-nowrap'>{`${getMonthName(
+                  new Date()
+                )} ${getMostRecentSunday(
+                  new Date()
+                ).getDate()} - ${getNextSaturday(
+                  new Date()
+                ).getDate()}, ${new Date().getFullYear()}`}</p>
+                <Button
+                  icon={<IoIosArrowForward />}
+                  color='white'
+                  filled={false}
+                  className='p-2 h-full'
+                />
+              </div>
+            )}
           </div>
         ) : (
           <></>

@@ -22,7 +22,8 @@ const demoDays: DayProps[] = [
         ),
         title: 'Event 1',
         image: '../../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...'
+        description: 'This is an event where all this stuff happens...',
+        host: 'Club 1'
       },
       {
         startTime: new Date(
@@ -43,7 +44,8 @@ const demoDays: DayProps[] = [
         ),
         title: 'Event 2',
         image: './../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...'
+        description: 'This is an event where all this stuff happens...',
+        host: 'Club 1'
       }
     ],
     date: new Date('2025-01-01T00:00:00Z')
@@ -73,7 +75,8 @@ const demoDays: DayProps[] = [
         ),
         title: 'Event 1',
         image: '../../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...'
+        description: 'This is an event where all this stuff happens...',
+        host: 'Club 1'
       },
       {
         startTime: new Date(
@@ -94,7 +97,8 @@ const demoDays: DayProps[] = [
         ),
         title: 'Event 2',
         image: './../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...'
+        description: 'This is an event where all this stuff happens...',
+        host: 'Club 1'
       }
     ],
     date: new Date('2025-01-05T00:00:00Z')

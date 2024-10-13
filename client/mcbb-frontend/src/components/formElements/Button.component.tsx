@@ -10,7 +10,8 @@ interface ButtonProps {
     | 'orange'
     | 'gray'
     | 'white';
-  text: string;
+  text?: string;
+  icon?: JSX.Element;
   onClick?: () => void;
   filled?: boolean;
   type?: 'button' | 'submit' | 'reset' | undefined;
@@ -21,6 +22,7 @@ interface ButtonProps {
 const Button = ({
   color,
   text,
+  icon,
   onClick,
   type = 'button',
   name,
@@ -34,6 +36,7 @@ const Button = ({
     name={name}
   >
     {text}
+    {icon}
   </button>
 );
 

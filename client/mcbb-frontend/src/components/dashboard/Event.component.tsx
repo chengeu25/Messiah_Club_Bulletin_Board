@@ -6,6 +6,8 @@ export interface EventProps {
   title: string;
   image: string;
   description: string;
+  small?: boolean;
+  host: string;
 }
 
 const Event = ({
@@ -13,21 +15,29 @@ const Event = ({
   endTime,
   title,
   image,
-  description
+  description,
+  small = false,
+  host
 }: EventProps) => {
   return (
     <div>
-      <div className='flex flex-row justify-between'>
+      <div
+        className={`flex ${
+          small ? 'flex-col' : 'flex-row'
+        } justify-between rounded-lg border-blue-900 border-2 p-2`}
+      >
         <div className='flex-grow'>
           <h1 className='text-xl font-bold'>{title}</h1>
-          <div className='flex gap-2'>
-            <img
-              src={image}
-              alt={title}
-              className='h-16 bg-gray-800 rounded-lg'
-            />
+          <div className={`flex ${small ? 'flex-col' : 'flex-row'} gap-2`}>
+            {!small && (
+              <img
+                src={image}
+                alt={title}
+                className='h-16 bg-gray-800 rounded-lg'
+              />
+            )}
             <div>
-              <p>
+              <p className='text-nowrap'>
                 {startTime.toLocaleTimeString([], {
                   hour: 'numeric',
                   minute: '2-digit'
@@ -38,14 +48,17 @@ const Event = ({
                   minute: '2-digit'
                 })}
               </p>
-              <p>{description}</p>
+              {!small && <p>{description}</p>}
+              <p className='font-bold'>Hosted by {host}</p>
             </div>
           </div>
         </div>
-        <div className='flex flex-row justify-center items-center gap-2'>
-          <Button color='blue' text='View Details' className='text-nowrap' />
-          <Button color='blue' text='RSVP' />
-        </div>
+        {!small && (
+          <div className='flex flex-row justify-center items-center gap-2'>
+            <Button color='blue' text='View Details' className='text-nowrap' />
+            <Button color='blue' text='RSVP' />
+          </div>
+        )}
       </div>
     </div>
   );
