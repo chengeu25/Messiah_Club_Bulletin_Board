@@ -74,7 +74,7 @@ const Event = () => {
       </div>
       <hr className='border-2 border-black w-full mt-2' />
       <h1 className='text-3xl font-bold text-left w-full'>Discuss</h1>
-      <div className='flex flex-row w-full'>
+      <div className='flex flex-row w-full gap-2'>
         <Input
           label='Add a Comment: '
           placeholder='Comment'
@@ -83,6 +83,7 @@ const Event = () => {
           color='blue'
           filled={false}
         />
+        <Button color='blue' text='Comment' filled={true} className='w-auto' />
       </div>
       <div className='w-full flex flex-col align-left gap-2'>
         <Comment
