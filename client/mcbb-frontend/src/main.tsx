@@ -16,6 +16,7 @@ import Home from './routes/dashboard/home/Home.route.tsx';
 import ForgotPassword from './routes/forgotPassword/ForgotPassword.route.tsx';
 import forgotPasswordAction from './routes/forgotPassword/ForgotPassword.action.tsx';
 import Calendar from './routes/dashboard/calendar/Calendar.route.tsx';
+import Clubs from './routes/dashboard/clubs/Clubs.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -35,7 +36,7 @@ const router = createBrowserRouter(
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
         <Route path='calendar' element={<Calendar />} />
-        <Route path='clubs' element={<div>Clubs</div>} />
+        <Route path='clubs' element={<Clubs />} />
       </Route>
     </Route>
   )

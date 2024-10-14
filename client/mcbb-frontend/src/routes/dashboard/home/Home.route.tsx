@@ -107,7 +107,7 @@ const demoDays: DayProps[] = [
 
 const Home = () => {
   return (
-    <div className='flex flex-grow flex-col gap-4 overflow-y-scroll p-4 sm:px-[15%] items-center '>
+    <div className='flex flex-grow flex-col gap-4 overflow-y-scroll p-4 sm:px-[15%] items-center'>
       {demoDays
         .sort((a, b) => a.date.getTime() - b.date.getTime())
         .map((day) => (
