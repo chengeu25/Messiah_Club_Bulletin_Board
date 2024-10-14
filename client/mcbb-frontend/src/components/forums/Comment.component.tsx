@@ -1,3 +1,6 @@
+import Button from '../formElements/Button.component';
+import Input from '../formElements/Input.component';
+
 interface CommentProps {
   creator: string;
   content: string;
@@ -22,6 +25,19 @@ const Comment = ({
         <div className='text-sm text-slate-500 underline'>Report this</div>
       </div>
       <div className='text-sm text-black'>{content}</div>
+      <div className='flex flex-row w-full gap-2'>
+        <Input
+          label='Reply: '
+          placeholder='Reply'
+          name='comment'
+          type='text'
+          color='blue'
+          filled={false}
+        />
+        <div className='flex-shrink-0'>
+          <Button color='blue' text='Reply' filled={true} className='w-auto' />
+        </div>
+      </div>
     </div>
   );
 };
