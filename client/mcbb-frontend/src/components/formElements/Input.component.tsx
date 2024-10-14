@@ -1,4 +1,4 @@
-import generateStyleClasses from './styleGenerator.function';
+import generateStyleClasses from './styleGenerator';
 
 interface InputProps {
   label: string;

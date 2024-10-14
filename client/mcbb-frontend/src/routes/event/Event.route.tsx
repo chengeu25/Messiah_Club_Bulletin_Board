@@ -16,8 +16,10 @@ const Event = () => {
         padding={4}
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
-        <h1 className='font-bold text-4xl'>Event Title</h1>
-        <Button color='blue' text='RSVP' filled={true} className='w-auto' />
+        <h1 className='font-bold text-4xl flex-grow'>Event Title</h1>
+        <div className='flex-shrink-0 flex'>
+          <Button color='blue' text='RSVP' filled={true} />
+        </div>
       </Card>
       <div className='flex flex-col lg:flex-row w-full gap-4 m-2'>
         <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
@@ -33,7 +35,7 @@ const Event = () => {
         <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
           <p className='flex flex-row gap-2 items-center'>
             <RiAccountCircleLine size={24} /> <strong>Organizer:</strong>{' '}
-            <Link to='/' className='underline text-blue-600'>
+            <Link to='/club' className='underline text-blue-600'>
               Organizer
             </Link>
           </p>
@@ -83,7 +85,14 @@ const Event = () => {
           color='blue'
           filled={false}
         />
-        <Button color='blue' text='Comment' filled={true} className='w-auto' />
+        <div className='flex-shrink-0'>
+          <Button
+            color='blue'
+            text='Comment'
+            filled={true}
+            className='w-auto'
+          />
+        </div>
       </div>
       <div className='w-full flex flex-col align-left gap-2'>
         <Comment

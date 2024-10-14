@@ -19,6 +19,7 @@ const Comment = ({
       <div className='flex items-center gap-4'>
         <div className='text-sm text-slate-500'>{creator}</div>
         <div className='text-sm text-slate-500'>{lastModified.toString()}</div>
+        <div className='text-sm text-slate-500 underline'>Report this</div>
       </div>
       <div className='text-sm text-black'>{content}</div>
     </div>
