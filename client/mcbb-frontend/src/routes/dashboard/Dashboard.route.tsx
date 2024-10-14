@@ -15,7 +15,7 @@ const Dashboard = () => {
       </div>
 
       {/* Mobile Sidebar */}
-      <div className='border-t-2 border-gray-100 shadow-md flex sm:hidden w-full gap-2 p-2 justify-center'>
+      <div className='border-t-2 border-gray-100 shadow-md flex sm:hidden w-full gap-2 p-2 justify-center sticky bottom-0 bg-white'>
         <Sidebar />
       </div>
     </div>

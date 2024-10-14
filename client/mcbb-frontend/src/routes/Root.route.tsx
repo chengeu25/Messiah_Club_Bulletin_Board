@@ -22,7 +22,7 @@ const Root = () => {
   const location = useLocation();
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
-      <nav className='w-full bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center'>
+      <nav className='w-full bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-6'>
         <span className='text-xl'>
           <Link to='/'>
             <img src='../../assets/logo.png' className='h-12' />

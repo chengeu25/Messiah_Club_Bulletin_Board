@@ -19,7 +19,7 @@ const Input = ({
   placeholder = '',
   required = false
 }: InputProps) => (
-  <label className='flex flex-row items-center gap-2 text-nowrap'>
+  <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
     <span>{label}</span>
     <input
       type={type}
