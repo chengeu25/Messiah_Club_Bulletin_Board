@@ -28,7 +28,10 @@ const Input = ({
       className={`${generateStyleClasses(
         color ?? 'white',
         filled ?? true
-      )} p-2 rounded-lg flex-grow text-black`}
+      ).replace(
+        `text-${color ?? 'white'}`,
+        'text-black'
+      )} p-2 rounded-lg flex-grow`}
       required={required}
     />
   </label>

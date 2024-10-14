@@ -17,6 +17,8 @@ import ForgotPassword from './routes/forgotPassword/ForgotPassword.route.tsx';
 import forgotPasswordAction from './routes/forgotPassword/ForgotPassword.action.tsx';
 import Calendar from './routes/dashboard/calendar/Calendar.route.tsx';
 import Clubs from './routes/dashboard/clubs/Clubs.route.tsx';
+import changePasswordAction from './routes/changePassword/changePassword.action.tsx';
+import ChangePassword from './routes/changePassword/changePassword.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -32,6 +34,11 @@ const router = createBrowserRouter(
         path='forgot'
         element={<ForgotPassword />}
         action={forgotPasswordAction}
+      />
+      <Route
+        path='changePassword'
+        element={<ChangePassword />}
+        action={changePasswordAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />

@@ -3,7 +3,7 @@ import { Form, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 
-const ForgotPassword = () => {
+const ChangePassword = () => {
   const submit = useSubmit();
   const [error, setError] = useState<string | null>(null);
 
@@ -14,8 +14,14 @@ const ForgotPassword = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    if (formData.get('email') === '') {
-      setError('Please enter an email address.');
+    if (
+      formData.get('pwd') === '' ||
+      formData.get('npwd') === '' ||
+      formData.get('cnpwd') === ''
+    ) {
+      setError('Please fill out all fields.');
+    } else if (formData.get('npwd') !== formData.get('cnpwd')) {
+      setError('Passwords do not match.');
     } else {
       formData.append('action', action);
       submit(formData, { method: 'post' });
@@ -32,18 +38,34 @@ const ForgotPassword = () => {
           <h1 className='text-3xl font-bold'>Forgot Password?</h1>
           {error && <div className='text-red-500'>{error}</div>}
           <Input
-            label='Enter your Messiah email:'
-            name='email'
-            type='text'
-            placeholder='Messiah Email'
+            label='Enter your current password:'
+            name='pwd'
+            type='password'
+            placeholder='Password'
+            color='blue'
+            filled={false}
+          />
+          <Input
+            label='Enter your new password:'
+            name='npwd'
+            type='password'
+            placeholder='Password'
+            color='blue'
+            filled={false}
+          />
+          <Input
+            label='Confirm your new password:'
+            name='cnpwd'
+            type='password'
+            placeholder='Password'
             color='blue'
             filled={false}
           />
           <div className='flex flex-row gap-2'>
             <Button
-              text='Send Temporary Password'
+              text='Change Password'
               type='submit'
-              name='sendTemporaryPassword'
+              name='changePassword'
               color='blue'
             />
           </div>
@@ -53,4 +75,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ChangePassword;
