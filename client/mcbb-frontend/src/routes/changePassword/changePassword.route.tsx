@@ -35,7 +35,7 @@ const ChangePassword = () => {
           onSubmit={handleSubmit}
           className='flex flex-col gap-2 w-full h-full'
         >
-          <h1 className='text-3xl font-bold'>Forgot Password?</h1>
+          <h1 className='text-3xl font-bold'>Change Password</h1>
           {error && <div className='text-red-500'>{error}</div>}
           <Input
             label='Enter your current password:'

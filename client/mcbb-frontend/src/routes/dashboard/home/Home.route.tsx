@@ -107,12 +107,14 @@ const demoDays: DayProps[] = [
 
 const Home = () => {
   return (
-    <div className='flex flex-grow flex-col gap-4 overflow-y-scroll p-4 sm:px-[15%] items-center'>
-      {demoDays
-        .sort((a, b) => a.date.getTime() - b.date.getTime())
-        .map((day) => (
-          <Day {...day} />
-        ))}
+    <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
+      <div className='flex flex-col gap-4 flex-1'>
+        {demoDays
+          .sort((a, b) => a.date.getTime() - b.date.getTime())
+          .map((day) => (
+            <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
+          ))}
+      </div>
     </div>
   );
 };
