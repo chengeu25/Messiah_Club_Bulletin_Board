@@ -19,8 +19,8 @@ import Calendar from './routes/dashboard/calendar/Calendar.route.tsx';
 import Clubs from './routes/dashboard/clubs/Clubs.route.tsx';
 import changePasswordAction from './routes/changePassword/changePassword.action.tsx';
 import ChangePassword from './routes/changePassword/changePassword.route.tsx';
-import Event from './routes/event/Event.route.tsx';
-import Club from './routes/club/Club.route.tsx';
+import Event from './routes/dashboard/event/Event.route.tsx';
+import Club from './routes/dashboard/club/Club.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -42,12 +42,13 @@ const router = createBrowserRouter(
         element={<ChangePassword />}
         action={changePasswordAction}
       />
-      <Route path='event' element={<Event />} />
-      <Route path='club' element={<Club />} />
+
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
         <Route path='calendar' element={<Calendar />} />
         <Route path='clubs' element={<Clubs />} />
+        <Route path='event' element={<Event />} />
+        <Route path='club' element={<Club />} />
       </Route>
     </Route>
   )

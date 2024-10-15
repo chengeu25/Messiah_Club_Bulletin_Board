@@ -1,7 +1,7 @@
-import Card from '../../components/ui/Card';
-import Button from '../../components/formElements/Button.component';
-import Event from '../../components/dashboard/Event.component';
-import Officer from '../../components/clubDetails/Officer';
+import Card from '../../../components/ui/Card';
+import Button from '../../../components/formElements/Button.component';
+import Event from '../../../components/dashboard/Event.component';
+import Officer from '../../../components/clubDetails/Officer';
 
 const demoOfficers = [
   {

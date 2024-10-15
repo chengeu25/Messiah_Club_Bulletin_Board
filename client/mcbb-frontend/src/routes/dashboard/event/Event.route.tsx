@@ -1,12 +1,12 @@
-import Card from '../../components/ui/Card';
+import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
 import { RiAccountCircleLine } from 'react-icons/ri';
 import { FaDollarSign } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
-import Button from '../../components/formElements/Button.component';
-import Input from '../../components/formElements/Input.component';
-import Comment from '../../components/forums/Comment.component';
+import Button from '../../../components/formElements/Button.component';
+import Input from '../../../components/formElements/Input.component';
+import Comment from '../../../components/forums/Comment.component';
 
 const Event = () => {
   return (
