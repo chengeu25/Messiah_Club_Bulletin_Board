@@ -3,7 +3,6 @@ import { Form, useSubmit } from 'react-router-dom';
 import Button from '../../components/formElements/Button.component';
 
 const EditInterest = () => {
-  // Array of interests
   const interests = [
     'Sports',
     'Outdoors',
@@ -15,21 +14,21 @@ const EditInterest = () => {
     'Computer Science (Unfortunately)'
   ];
 
-  // State to manage checked interests
+
   const [checkedInterests, setCheckedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const submit = useSubmit();
 
-  // Handle checkbox change
+ 
   const handleCheckboxChange = (interest: string) => {
     setCheckedInterests((prev) =>
       prev.includes(interest)
-        ? prev.filter((i) => i !== interest) // Uncheck if already checked
-        : [...prev, interest] // Check if not already checked
+        ? prev.filter((i) => i !== interest) 
+        : [...prev, interest] 
     );
   };
 
-  // Handle form submission
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (checkedInterests.length === 0) {
@@ -40,7 +39,7 @@ const EditInterest = () => {
       checkedInterests.forEach((interest) => {
         formData.append('interests[]', interest);
       });
-      // Submit the form data
+ 
       submit(formData, { method: 'post' });
     }
   };
