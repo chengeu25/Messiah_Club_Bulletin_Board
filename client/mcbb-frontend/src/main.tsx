@@ -21,6 +21,7 @@ import changePasswordAction from './routes/changePassword/changePassword.action.
 import ChangePassword from './routes/changePassword/changePassword.route.tsx';
 import Event from './routes/dashboard/event/Event.route.tsx';
 import Club from './routes/dashboard/club/Club.route.tsx';
+import EditInterest from './routes/editinterestpage/editinterest.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -43,6 +44,7 @@ const router = createBrowserRouter(
         action={changePasswordAction}
       />
 
+
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
         <Route path='calendar' element={<Calendar />} />
@@ -50,7 +52,9 @@ const router = createBrowserRouter(
         <Route path='event' element={<Event />} />
         <Route path='club' element={<Club />} />
       </Route>
+      <Route path='editinterest' element={<EditInterest />} /> {/* Top-level EditInterest Route */}
     </Route>
+
   )
 );
 
