@@ -55,13 +55,13 @@ const EditInterest = () => {
             {interests.map((interest) => (
               <label
                 key={interest}
-                style={{ display: 'block', margin: '10px 0' }} // Spacing for each label
+                style={{ display: 'block', margin: '10px 0' }}
               >
                 <input
                   type="checkbox"
                   checked={checkedInterests.includes(interest)}
                   onChange={() => handleCheckboxChange(interest)}
-                  className='mr-2' // Margin for checkbox
+                  className='mr-2'
                 />
                 {interest}
               </label>
