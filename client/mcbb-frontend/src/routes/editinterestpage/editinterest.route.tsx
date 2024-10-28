@@ -25,6 +25,7 @@ const EditInterest = () => {
       prev.includes(interest)
         ? prev.filter((i) => i !== interest) 
         : [...prev, interest] 
+        
     );
   };
 
