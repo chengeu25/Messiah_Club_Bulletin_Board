@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Form, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import Select from '../../components/formElements/Select.component';
 
-const Login = () => {
+const SignUp = () => {
   const submit = useSubmit();
   const [error, setError] = useState<string | null>(null);
 
@@ -14,17 +15,21 @@ const Login = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    if (action === 'signup') {
-      formData.append('action', action);
-      submit(formData, { method: 'post' });
-    } else if (action === 'forgot') {
+    if (action === 'forgot') {
       formData.append('action', action);
       submit(formData, { method: 'post' });
     } else {
       if (formData.get('email') === '') {
         setError('Please enter an email address.');
-      } else if (formData.get('password') === '') {
+      } else if (
+        formData.get('password') === '' ||
+        formData.get('confirm-password') === ''
+      ) {
         setError('Please enter a password.');
+      } else if (
+        formData.get('password') !== formData.get('confirm-password')
+      ) {
+        setError('Passwords do not match.');
       } else {
         formData.append('action', action);
         submit(formData, { method: 'post' });
@@ -39,7 +44,7 @@ const Login = () => {
           onSubmit={handleSubmit}
           className='flex flex-col gap-2 w-full h-full'
         >
-          <h1 className='text-3xl font-bold'>Login</h1>
+          <h1 className='text-3xl font-bold'>Sign Up</h1>
           {error && <p className='text-red-500'>{error}</p>}
           <Input
             label='Messiah Email:'
@@ -57,16 +62,26 @@ const Login = () => {
             color='blue'
             filled={false}
           />
+          <Input
+            label='Confirm Password:'
+            name='confirm-password'
+            type='password'
+            placeholder='Password'
+            color='blue'
+            filled={false}
+          />
+          <Select
+            color='blue'
+            label='Gender:'
+            options={[
+              'Male',
+              'Female',
+              "Don't recommend gender-specific events"
+            ]}
+            filled={false}
+          />
           <div className='flex flex-row gap-2'>
-            <Button color='blue' text='Sign In' type='submit' name='login' />
             <Button color='blue' text='Sign Up' type='submit' name='signup' />
-            <Button
-              color='blue'
-              text='Forgot Password?'
-              type='submit'
-              name='forgot'
-              filled={false}
-            />
           </div>
         </Form>
       </div>
@@ -74,4 +89,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignUp;

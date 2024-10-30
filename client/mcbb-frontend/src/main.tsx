@@ -22,12 +22,14 @@ import ChangePassword from './routes/changePassword/changePassword.route.tsx';
 import Event from './routes/dashboard/event/Event.route.tsx';
 import Club from './routes/dashboard/club/Club.route.tsx';
 import EditInterest from './routes/editinterestpage/editinterest.route.tsx';
+import SignUp from './routes/signup/SignUp.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<Root />} loader={rootLoader}>
       <Route path='/' element={<LandingPage />} />
       <Route path='login' element={<Login />} action={loginAction} />
+      <Route path='signup' element={<SignUp />} action={loginAction} />
       <Route
         path='verifyEmail'
         element={<VerifyEmail />}
@@ -43,8 +45,6 @@ const router = createBrowserRouter(
         element={<ChangePassword />}
         action={changePasswordAction}
       />
-
-
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} />
         <Route path='calendar' element={<Calendar />} />
@@ -52,9 +52,9 @@ const router = createBrowserRouter(
         <Route path='event' element={<Event />} />
         <Route path='club' element={<Club />} />
       </Route>
-      <Route path='editinterest' element={<EditInterest />} /> {/* Top-level EditInterest Route */}
+      <Route path='editinterest' element={<EditInterest />} />{' '}
+      {/* Top-level EditInterest Route */}
     </Route>
-
   )
 );
 

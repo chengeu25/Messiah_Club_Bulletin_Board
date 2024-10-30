@@ -7,7 +7,7 @@ const loginAction: ActionFunction = async ({ request }) => {
   const action = formData.get('action');
   console.log(email, password, action);
   return action === 'signup'
-    ? redirect('/verifyEmail')
+    ? redirect('/signup')
     : action === 'forgot'
     ? redirect('/forgot')
     : redirect('/dashboard');
