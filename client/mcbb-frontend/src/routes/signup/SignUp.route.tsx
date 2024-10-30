@@ -73,6 +73,7 @@ const SignUp = () => {
           <Select
             color='blue'
             label='Gender:'
+            name='gender'
             options={[
               'Male',
               'Female',

@@ -23,13 +23,14 @@ import Event from './routes/dashboard/event/Event.route.tsx';
 import Club from './routes/dashboard/club/Club.route.tsx';
 import EditInterest from './routes/editinterestpage/editinterest.route.tsx';
 import SignUp from './routes/signup/SignUp.route.tsx';
+import signUpAction from './routes/signup/SignUp.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<Root />} loader={rootLoader}>
       <Route path='/' element={<LandingPage />} />
       <Route path='login' element={<Login />} action={loginAction} />
-      <Route path='signup' element={<SignUp />} action={loginAction} />
+      <Route path='signup' element={<SignUp />} action={signUpAction} />
       <Route
         path='verifyEmail'
         element={<VerifyEmail />}
