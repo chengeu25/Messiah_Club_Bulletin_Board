@@ -1,7 +1,8 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
@@ -37,6 +38,32 @@ def get_data():
     results = cur.fetchall()
     cur.close()
     return jsonify(results)
+
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json
+    cur = mysql.connection.cursor()
+
+    # Retrieve the hashed password from the database
+    cur.execute(
+        """SELECT pwd1 
+           FROM users 
+           WHERE email = %s""",
+        (data["email"],),
+    )
+    result = cur.fetchone()
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    # Verify the provided password against the hashed password
+    hashed_password = result[0]
+    if not check_password_hash(hashed_password, data["password"]):
+        return jsonify({"error": "Invalid password"}), 401
+
+    return jsonify({"message": "Login successful"}), 200
 
 
 @app.route("/api/signup", methods=["POST"])
