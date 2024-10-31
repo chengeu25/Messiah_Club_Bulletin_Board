@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request
+from datetime import datetime
+from flask import Flask, jsonify, request, session
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -6,6 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 load_dotenv()
 
@@ -31,15 +33,6 @@ def hello():
     return "Hello, World!"
 
 
-@app.route("/data")
-def get_data():
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users")
-    results = cur.fetchall()
-    cur.close()
-    return jsonify(results)
-
-
 @app.route("/api/login", methods=["POST"])
 def login():
     data = request.json
@@ -63,6 +56,11 @@ def login():
     if not check_password_hash(hashed_password, data["password"]):
         return jsonify({"error": "Invalid password"}), 401
 
+    # Set the user ID and activity timestamp in the session
+    session["user_id"] = data["email"]
+    session["last_activity"] = datetime.now()
+
+    cur.close()
     return jsonify({"message": "Login successful"}), 200
 
 
