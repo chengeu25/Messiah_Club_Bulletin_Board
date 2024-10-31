@@ -21,7 +21,7 @@ const Day = ({ events, date, small = false }: DayProps) => {
       ) : (
         events
           .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-          .map((event) => <Event {...event} small={small} />)
+          .map((event, i) => <Event key={i} {...event} small={small} />)
       )}
     </Card>
   );

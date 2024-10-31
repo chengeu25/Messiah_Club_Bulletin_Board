@@ -18,16 +18,20 @@ const loginAction: ActionFunction = async ({ request }) => {
       headers: {
         'Content-Type': 'application/json'
       },
+      credentials: 'include',
       body: JSON.stringify({ email, password })
     });
 
     // Go to the dashboard if login worked
     if (request.ok) {
       return redirect('/dashboard');
-
-      // Go to the login page if login failed, with an error message
-    } else {
+    }
+    // Go to the login page if login failed, with an error message
+    else {
       const json = await request.json();
+      if (json?.error === 'Email not verified') {
+        return redirect('/verifyEmail');
+      }
       return redirect('/login?error=' + json.error);
     }
   }
