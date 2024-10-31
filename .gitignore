@@ -1,2 +1,3 @@
 server/venv
 **/.DS_Store
+server/.env

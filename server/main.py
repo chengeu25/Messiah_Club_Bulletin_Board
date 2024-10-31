@@ -1,13 +1,17 @@
 from flask import Flask, jsonify
 from flask_mysqldb import MySQL
 from flask_cors import CORS
+from dotenv import load_dotenv
+import os
 
 app = Flask(__name__)
 
+load_dotenv()
+
 # MySQL configurations
 app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = ""
+app.config["MYSQL_USER"] = os.getenv("DB_USER")
+app.config["MYSQL_PASSWORD"] = os.getenv("DB_PWD")
 app.config["MYSQL_DB"] = "sharc"
 
 mysql = MySQL(app)
