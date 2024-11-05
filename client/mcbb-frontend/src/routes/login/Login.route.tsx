@@ -51,7 +51,7 @@ const Login = () => {
 
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
+      <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Login</h1>
           {error && <p className='text-red-500'>{error}</p>}
