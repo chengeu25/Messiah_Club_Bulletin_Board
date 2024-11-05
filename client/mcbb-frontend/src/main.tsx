@@ -24,6 +24,11 @@ import Club from './routes/dashboard/club/Club.route.tsx';
 import EditInterest from './routes/editinterestpage/editinterest.route.tsx';
 import SignUp from './routes/signup/SignUp.route.tsx';
 import signUpAction from './routes/signup/SignUp.action.tsx';
+import homeLoader from './routes/dashboard/home/Home.loader.tsx';
+import calendarLoader from './routes/dashboard/calendar/Calendar.loader.tsx';
+import clubsLoader from './routes/dashboard/clubs/Clubs.loader.tsx';
+import eventLoader from './routes/dashboard/event/Event.loader.tsx';
+import clubLoader from './routes/dashboard/club/Club.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -47,14 +52,13 @@ const router = createBrowserRouter(
         action={changePasswordAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
-        <Route path='home' element={<Home />} />
-        <Route path='calendar' element={<Calendar />} />
-        <Route path='clubs' element={<Clubs />} />
-        <Route path='event' element={<Event />} />
-        <Route path='club' element={<Club />} />
+        <Route path='home' element={<Home />} loader={homeLoader} />
+        <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
+        <Route path='clubs' element={<Clubs />} loader={clubsLoader} />
+        <Route path='event' element={<Event />} loader={eventLoader} />
+        <Route path='club' element={<Club />} loader={clubLoader} />
       </Route>
-      <Route path='editinterest' element={<EditInterest />} />{' '}
-      {/* Top-level EditInterest Route */}
+      <Route path='editinterest' element={<EditInterest />} />
     </Route>
   )
 );

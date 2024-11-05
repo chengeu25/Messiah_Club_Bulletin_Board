@@ -5,7 +5,6 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   const email = formData.get('email');
   const password = formData.get('password');
   const gender = formData.get('gender');
-  console.log(email, password, gender);
   const result = await fetch('http://localhost:3000/api/signup', {
     method: 'POST',
     headers: {
