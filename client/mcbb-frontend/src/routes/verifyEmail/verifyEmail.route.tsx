@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { Form, useSubmit } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Form, useSearchParams, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 
 const VerifyEmail = () => {
   const submit = useSubmit();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  /**
+   * If the page is reloaded with an error, set the error state
+   */
+  useEffect(() => {
+    if (params.get('error')) {
+      setError(decodeURIComponent(params.get('error') ?? ''));
+    }
+    if (params.get('message')) {
+      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    }
+  }, [params]);
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError(null);
@@ -27,15 +42,14 @@ const VerifyEmail = () => {
 
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:w-1/2 sm:h-1/2 justify-center items-center shadow-md rounded-lg p-5 bg-white'>
-        <Form
-          onSubmit={handleSubmit}
-          className='flex flex-col gap-2 w-full h-full'
-        >
+      <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
+        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
+
           <h1 className='text-3xl font-bold'>Email Verification</h1>
           {error && <div className='text-red-500'>{error}</div>}
+          {message && <p className='text-green-500'>{message}</p>}
           <Input
-            label='Enter the code we sent to your email:'
+            label='Enter the code sent to your email:'
             name='code'
             type='text'
             placeholder='XXX-XXX-XXX'

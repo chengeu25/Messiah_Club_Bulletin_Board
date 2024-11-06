@@ -33,6 +33,62 @@ cors = CORS(
 def hello():
     return "Hello, World!"
 
+@app.route('/api/verify-email', methods=['POST'])
+def verify_email():
+    data = request.get_json()
+    code = data.get('code')
+    if not code:
+        return jsonify({"error": "Code is required"}), 400
+
+    # Add logic to verify the code with the database
+    cursor = mysql.connection.cursor()
+    cursor.execute("SELECT * FROM users WHERE verification_code = %s", (code,))
+    user = cursor.fetchone()
+    if user:
+        cursor.execute("UPDATE users SET is_verified = 1 WHERE verification_code = %s", (code,))
+        mysql.connection.commit()
+        return jsonify({"message": "Email verified successfully"}), 200
+    else:
+        return jsonify({"error": "Invalid verification code"}), 400
+
+@app.route('/api/resend-code', methods=['POST'])
+def resend_code():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    # Generate a new verification code
+    new_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+    # Update the verification code in the database
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email))
+    mysql.connection.commit()
+
+    # Send the new verification code to the user's email
+    send_verification_email(email, new_code)
+
+    return jsonify({"message": "Verification code resent"}), 200
+
+def send_verification_email(email, code):
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+    subject = "Your Verification Code"
+    body = f"Your new verification code is: {code}"
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = email
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, msg.as_string())
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
 
 @app.route("/api/checkUser", methods=["GET"])
 def check_user():
