@@ -11,6 +11,7 @@ const Login = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   /**
    * If the page is reloaded with an error, set the error state
@@ -18,6 +19,9 @@ const Login = () => {
   useEffect(() => {
     if (params.get('error')) {
       setError(decodeURIComponent(params.get('error') ?? ''));
+    }
+    if (params.get('message')) {
+      setMessage(decodeURIComponent(params.get('message') ?? ''));
     }
   }, [params]);
 
@@ -55,6 +59,7 @@ const Login = () => {
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Login</h1>
           {error && <p className='text-red-500'>{error}</p>}
+          {message && <p className='text-green-500'>{message}</p>}
           <Input
             label='Messiah Email:'
             name='email'
