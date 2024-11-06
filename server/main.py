@@ -11,8 +11,9 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 load_dotenv()
 
-# MySQL configurations
-app.config["MYSQL_HOST"] = "localhost"
+# MySQL configuration
+app.config["MYSQL_UNIX_SOCKET"] = os.getenv("MYSQL_UNIX_SOCKET")
+app.config["MYSQL_HOST"] = os.getenv("MYSQL_HOST")
 app.config["MYSQL_USER"] = os.getenv("DB_USER")
 app.config["MYSQL_PASSWORD"] = os.getenv("DB_PWD")
 app.config["MYSQL_DB"] = "sharc"
