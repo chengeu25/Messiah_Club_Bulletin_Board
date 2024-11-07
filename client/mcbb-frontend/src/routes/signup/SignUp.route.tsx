@@ -1,35 +1,40 @@
-import React, { useState } from 'react';
-import { Form, useSubmit } from 'react-router-dom';
+import React, { useEffect,useState } from 'react';
+import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
 
 const SignUp = () => {
   const submit = useSubmit();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (params.get('error')) {
+      setError(decodeURIComponent(params.get('error') ?? ''));
+    }
+    if (params.get('message')) {
+      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    }
+  }, [params]);
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    setError(null);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    if (action === 'forgot') {
+    if (action === 'signup') {
+      formData.append('action', action);
+      submit(formData, { method: 'post' });
+    } else if (action === 'forgot') {
       formData.append('action', action);
       submit(formData, { method: 'post' });
     } else {
       if (formData.get('email') === '') {
         setError('Please enter an email address.');
-      } else if (
-        formData.get('password') === '' ||
-        formData.get('confirm-password') === ''
-      ) {
+      } else if (formData.get('password') === '') {
         setError('Please enter a password.');
-      } else if (
-        formData.get('password') !== formData.get('confirm-password')
-      ) {
-        setError('Passwords do not match.');
       } else {
         formData.append('action', action);
         submit(formData, { method: 'post' });
@@ -46,6 +51,7 @@ const SignUp = () => {
         >
           <h1 className='text-3xl font-bold'>Sign Up</h1>
           {error && <p className='text-red-500'>{error}</p>}
+          {message && <p className='text-green-500'>{message}</p>}
           <Input
             label='Messiah Email:'
             name='email'
