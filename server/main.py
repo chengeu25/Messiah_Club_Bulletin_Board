@@ -93,7 +93,8 @@ def signup():
 def reset_password():
     data = request.json
     cur = mysql.connection.cursor()
-    print(data["emailRequest"])
+    print("this is the email:\n")
+    print(data.user_id)
 
     # Retrieve the hashed password from the database
     cur.execute(
