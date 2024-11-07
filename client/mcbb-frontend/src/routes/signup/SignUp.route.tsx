@@ -159,7 +159,7 @@ const SignUp = () => {
 
           {/* Submit Button */}
           <div className='flex flex-row gap-2 mt-4'>
-            <Button color='blue' text='Sign Up' type='submit' name='signup' />
+            <Button color='blue' text='Sign Up' type='submit' name='signup' disabled={!isPasswordStrong || (password !== confirmPassword)}/>
           </div>
 
           {/* Link to Login */}
