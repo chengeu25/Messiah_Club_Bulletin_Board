@@ -17,6 +17,7 @@ interface SelectProps {
   name?: string;
   options: string[];
   label: string;
+  required?: boolean;
 }
 
 const Select = ({
@@ -25,10 +26,14 @@ const Select = ({
   name,
   filled = true,
   options,
-  label
+  label,
+  required
 }: SelectProps) => (
   <label className='flex flex-row items-center text-nowrap gap-2'>
-    <span>{label}</span>
+    <span>
+      {label}
+      {required && <span className='text-red-500'>*</span>}
+    </span>
     <select
       className={`${generateStyleClasses(color, filled)} bg-transparent`}
       onChange={onChange}
