@@ -12,8 +12,9 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 load_dotenv()
 
-# MySQL configurations
-app.config["MYSQL_HOST"] = "localhost"
+# MySQL configuration
+app.config["MYSQL_UNIX_SOCKET"] = os.getenv("MYSQL_UNIX_SOCKET")
+app.config["MYSQL_HOST"] = os.getenv("MYSQL_HOST")
 app.config["MYSQL_USER"] = os.getenv("DB_USER")
 app.config["MYSQL_PASSWORD"] = os.getenv("DB_PWD")
 app.config["MYSQL_DB"] = "sharc"
@@ -40,9 +41,22 @@ def check_user():
     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
         "last_activity"
     ) < timedelta(minutes=15):
-        return jsonify({"user_id": session["user_id"]}), 200
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """SELECT email, name
+                FROM users 
+                WHERE email = %s
+            """,
+            (session["user_id"],),
+        )
+        result = cur.fetchone()
+        cur.close()
+
+        if result is None:
+            return jsonify({"user_id": None, "name": None}), 401
+        return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
     else:
-        return jsonify({"user_id": None}), 401
+        return jsonify({"user_id": None, "name": None}), 401
 
 
 @app.route("/api/login", methods=["POST"])
