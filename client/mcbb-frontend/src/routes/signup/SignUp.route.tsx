@@ -88,6 +88,7 @@ const SignUp = () => {
               placeholder='First Last'
               color='blue'
               filled={false}
+              required
             />
           </div>
 
@@ -100,6 +101,7 @@ const SignUp = () => {
               placeholder='Messiah Email'
               color='blue'
               filled={false}
+              required
             />
           </div>
 
@@ -114,6 +116,7 @@ const SignUp = () => {
               filled={false}
               value={password} // Set value directly from state
               onInput={handlePasswordChange} // Handle changes to password
+              required
             />
             {/* Show password strength error if the password is not strong */}
             {!isPasswordStrong && (
@@ -156,6 +159,7 @@ const SignUp = () => {
                 
               ]}
               filled={false}
+              required
             />
           </div>
 
@@ -167,6 +171,7 @@ const SignUp = () => {
               type='submit'
               name='signup'
               disabled={!isPasswordStrong || password !== confirmPassword}
+              
             
             />
           </div>
