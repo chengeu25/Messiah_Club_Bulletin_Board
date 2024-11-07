@@ -1,4 +1,4 @@
-import React, { useEffect,useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -52,6 +52,14 @@ const SignUp = () => {
           <h1 className='text-3xl font-bold'>Sign Up</h1>
           {error && <p className='text-red-500'>{error}</p>}
           {message && <p className='text-green-500'>{message}</p>}
+          <Input
+            label='Name:'
+            name='name'
+            type='text'
+            placeholder='First Last'
+            color='blue'
+            filled={false}
+          />
           <Input
             label='Messiah Email:'
             name='email'

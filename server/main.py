@@ -132,15 +132,19 @@ def signup():
 
     # To check password strngth
     if not password_strong_or_nah(password):
-        return jsonify(
-            {
-                "Error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
-            }
+        return (
+            jsonify(
+                {
+                    "Error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
+                },
+            ),
+            400,
         )
     # Hash da password
     hashed_password = generate_password_hash(password)
     # Putting it all into the database if pass
 
+    print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
         "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 1, %s, %s, 0,0,1,1,%s)",
