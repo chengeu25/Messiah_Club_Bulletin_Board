@@ -135,6 +135,7 @@ const SignUp = () => {
               filled={false}
               value={confirmPassword} // Set value directly from state
               onInput={handleConfirmPasswordChange} // Handle changes to confirm password
+              required
             />
             {/* Show error if passwords do not match */}
             {!passwordMatch && (
@@ -152,6 +153,7 @@ const SignUp = () => {
                 'Male',
                 'Female',
                 "Don't recommend gender-specific events"
+                
               ]}
               filled={false}
             />
@@ -165,6 +167,7 @@ const SignUp = () => {
               type='submit'
               name='signup'
               disabled={!isPasswordStrong || password !== confirmPassword}
+            
             />
           </div>
 
