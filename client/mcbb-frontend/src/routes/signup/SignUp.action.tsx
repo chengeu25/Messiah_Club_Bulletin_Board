@@ -8,6 +8,7 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
     const password = formData.get('password');
     const confirmPassword = formData.get('confirm-password');
     const gender = formData.get('gender');
+    const name = formData.get('name');
     const captchaResponse = formData.get('captchaResponse'); // assuming you have a captcha field
 
     // Basic validation before making the request
@@ -24,7 +25,7 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password, gender, captchaResponse })
+      body: JSON.stringify({ email, password, gender, name, captchaResponse })
     });
 
     // Check if the response is OK (HTTP 200)
@@ -36,7 +37,6 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
     // Handle errors returned by the backend
     const result = await response.json();
     return json({ error: result.error || 'Signup failed' }, { status: 400 });
-
   } catch (error) {
     // Handle unexpected errors
     console.error('Signup action error:', error);
