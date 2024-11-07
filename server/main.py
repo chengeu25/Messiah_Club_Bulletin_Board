@@ -135,7 +135,7 @@ def signup():
         return (
             jsonify(
                 {
-                    "error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
+                    "error": "password is too weak! It must be at last 8 characters long, with one uppercase, one number and one special character"
                 },
             ),
             400,
