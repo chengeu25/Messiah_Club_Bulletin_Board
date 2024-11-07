@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import passwordStrongOrNah from '../../helper/passwordstrength';
 
 const ChangePassword = () => {
   const submit = useSubmit();
@@ -36,6 +37,8 @@ const ChangePassword = () => {
       setError('Please fill out all fields.');
     } else if (formData.get('npwd') !== formData.get('cnpwd')) {
       setError('Passwords do not match.');
+    } else if (!passwordStrongOrNah(formData.get('npwd') as string)) {
+      setError('Password must be at least 8 characters in length and inculde at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)')
     } else {
       formData.append('action', action);
       submit(formData, { method: 'post' });
