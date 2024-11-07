@@ -1,4 +1,5 @@
 import generateStyleClasses from './styleGenerator';
+import { FormEventHandler } from 'react';
 
 interface InputProps {
   label: string;
@@ -8,7 +9,7 @@ interface InputProps {
   filled?: boolean;
   placeholder?: string;
   required?: boolean;
-  onInput?: () => void;
+  onInput?: FormEventHandler<HTMLInputElement>;
   value?: string;
 }
 
