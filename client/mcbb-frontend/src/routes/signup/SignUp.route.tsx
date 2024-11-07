@@ -42,17 +42,21 @@ const SignUp = () => {
     if (password !== confirmPassword) {
       return;
     }
-    if (password === "" || confirmPassword === "" || formData.get("name") || formData.get("email")){
-      setError("Please fill out all required")
-      return
+    if (
+      password === '' ||
+      confirmPassword === '' ||
+      formData.get('name') === '' ||
+      formData.get('email') === ''
+    ) {
+      setError('Please fill out all required');
+      return;
     }
-    if (formData.get("email") === null) {
-      setError("Please use your Messiah email")
-      return
-    }
-    else if (!((formData.get("email")! as string).endsWith("messiah.edu")) ){
-      setError("Please use your Messiah email")
-      return
+    if (formData.get('email') === null) {
+      setError('Please use your Messiah email');
+      return;
+    } else if (!(formData.get('email')! as string).endsWith('messiah.edu')) {
+      setError('Please use your Messiah email');
+      return;
     }
 
     // Proceed with form submission if no errors
@@ -168,7 +172,6 @@ const SignUp = () => {
                 'Male',
                 'Female',
                 "Don't recommend gender-specific events"
-                
               ]}
               filled={false}
               required
@@ -183,8 +186,6 @@ const SignUp = () => {
               type='submit'
               name='signup'
               disabled={!isPasswordStrong || password !== confirmPassword}
-              
-            
             />
           </div>
 
