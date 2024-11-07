@@ -128,14 +128,14 @@ def signup():
     cur.close()
 
     if existing_user:
-        return jsonify({"Error": "email already in use"}), 400
+        return jsonify({"error": "email already in use"}), 400
 
     # To check password strngth
     if not password_strong_or_nah(password):
         return (
             jsonify(
                 {
-                    "Error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
+                    "error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
                 },
             ),
             400,
@@ -153,7 +153,7 @@ def signup():
     mysql.connection.commit()
     results = cur.fetchall()
     cur.close()
-    return jsonify({"Message ": "User Success!"}), 200
+    return jsonify({"message ": "User Success!"}), 200
 
 
 if __name__ == "__main__":
