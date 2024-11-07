@@ -29,6 +29,9 @@ import calendarLoader from './routes/dashboard/calendar/Calendar.loader.tsx';
 import clubsLoader from './routes/dashboard/clubs/Clubs.loader.tsx';
 import eventLoader from './routes/dashboard/event/Event.loader.tsx';
 import clubLoader from './routes/dashboard/club/Club.loader.tsx';
+import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
+import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
+import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -50,6 +53,12 @@ const router = createBrowserRouter(
         path='changePassword'
         element={<ChangePassword />}
         action={changePasswordAction}
+        loader={changePasswordLoader}
+      />
+      <Route
+        path='resetPassword'
+        element={<ResetPassword />}
+        action={resetPasswordAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} loader={homeLoader} />
