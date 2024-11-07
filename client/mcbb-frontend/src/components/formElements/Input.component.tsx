@@ -9,6 +9,7 @@ interface InputProps {
   placeholder?: string;
   required?: boolean;
   onInput?: () => void;
+  value?: string;
 }
 
 const Input = ({
@@ -19,7 +20,8 @@ const Input = ({
   filled,
   placeholder = '',
   required = false,
-  onInput
+  onInput,
+  value
 }: InputProps) => (
   <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
     <span>
@@ -38,6 +40,7 @@ const Input = ({
         'text-black'
       )} p-2 rounded-lg flex-grow`}
       onInput={onInput}
+      value={value}
     />
   </label>
 );
