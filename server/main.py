@@ -107,7 +107,7 @@ def reset_password():
     data = request.json
     cur = mysql.connection.cursor()
     print("this is the email:\n")
-    print(data.user_id)
+    print(data["emailRequest"]['email'])
 
     # Retrieve the hashed password from the database
     cur.execute(
@@ -115,7 +115,7 @@ def reset_password():
                 FROM users
                 WHERE email = %s
                     AND is_active = 1""",
-        (data["emailRequest"],),
+        (data["emailRequest"]["email"],),
     )
     result = cur.fetchone()
 
@@ -129,7 +129,7 @@ def reset_password():
         return jsonify({"error": "Invalid password"}), 401
 
     # Set the user ID and activity timestamp in the session
-    session["user_id"] = data["emailRequest"]
+    session["user_id"] = data["emailRequest"]["email"]
     session["last_activity"] = datetime.now(timezone.utc)
 
     # Check if email is verified
@@ -138,10 +138,17 @@ def reset_password():
         return jsonify({"error": "Email not verified"}), 401
 
     # Cascade passwords
+    print(f"""UPDATE users
+                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
+                WHERE email = {data['emailRequest']['email']}""")
     cur.execute("""UPDATE users
                 SET pwd3 = %s, pwd2 = %s, pwd1 = %s
                 WHERE email = %s""",
-        (result[1], result[0], data['newPassword'], data['emailRequset']))
+        (str(result[1]), str(result[0]), generate_password_hash(str(data['newPassword'])), str(data['emailRequest']['email'])))
+
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Password successfully reset"})
 
 
 if __name__ == "__main__":
