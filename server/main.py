@@ -38,6 +38,9 @@ def hello():
 
 @app.route("/api/checkUser", methods=["GET"])
 def check_user():
+    user_id = request.cookies.get("user_id")
+    if user_id:
+        session["user_id"] = user_id
     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
         "last_activity"
     ) < timedelta(minutes=15):
@@ -54,6 +57,8 @@ def check_user():
 
         if result is None:
             return jsonify({"user_id": None, "name": None}), 401
+
+        session["last_activity"] = datetime.now(timezone.utc)
         return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
     else:
         return jsonify({"user_id": None, "name": None}), 401
@@ -93,7 +98,20 @@ def login():
         return jsonify({"error": "Email not verified"}), 401
 
     cur.close()
-    return jsonify({"message": "Login successful"}), 200
+
+    email = data["email"]
+    remember = data["remember"]
+
+    print(remember)
+
+    response = jsonify({"message": "Login successful", "user_id": email})
+
+    if remember:
+        # Set a cookie that expires in 30 days
+        expires = datetime.now() + timedelta(days=30)
+        response.set_cookie("user_id", email, expires=expires, path="/api")
+
+    return response, 200
 
 
 RECAPTCHA_KEY = "All-of-the-stars"
@@ -158,6 +176,10 @@ def signup():
     )
     mysql.connection.commit()
     results = cur.fetchall()
+
+    session["user_id"] = email
+    session["last_activity"] = datetime.now(timezone.utc)
+
     cur.close()
     return jsonify({"message ": "User Success!"}), 200
 

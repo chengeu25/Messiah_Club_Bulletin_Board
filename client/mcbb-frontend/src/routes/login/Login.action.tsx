@@ -9,6 +9,8 @@ const loginAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get('email');
   const password = formData.get('password');
+  const remember = formData.get('remember');
+  console.log(remember);
   const action = formData.get('action');
 
   // Handle login on server
@@ -19,7 +21,7 @@ const loginAction: ActionFunction = async ({ request }) => {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, remember })
     });
 
     // Go to the dashboard if login worked
