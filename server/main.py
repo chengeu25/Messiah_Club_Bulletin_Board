@@ -5,6 +5,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import jwt
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -109,7 +112,7 @@ def reset_password():
     print("this is the email:\n")
     print(data["emailRequest"]['email'])
 
-    # Retrieve the hashed password from the database
+    # Retrieve the hashed passwords from the database
     cur.execute(
         """Select pwd1, pwd2, email_verified
                 FROM users
@@ -150,6 +153,49 @@ def reset_password():
     cur.close()
     return jsonify({"message": "Password successfully reset"})
 
+@app.route("/api/forgotPassword", methods=["POST"])
+def forgot_password():
+    data = request.json
+    cur = mysql.connection.cursor()
 
-if __name__ == "__main__":
-    app.run(debug=True, port=3000)
+    # Retrieve the hashed passwords from te database
+    cur.execute(
+        """Select pwd1, pwd2, email_verified
+                FROM users
+                WHERE email = %s
+                    AND is_active = 1""",
+        (data["email"])
+    )
+    result = cur.fetchone()
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email"}), 401
+
+    # Check if email is verified
+    is_email_verified = result[2]
+    if not is_email_verified == 1:
+        return jsonify({"error": "Email not verified"}), 401
+
+    # Generate a reset token
+    token = jwt.encode({'email': email, 'exp': datetime.utcnow() + timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm='HS256')
+    # Create reset link
+    reset_link = f'http://localhost:5173/forgot-password/{token}'
+
+    # Send email
+    send_email(email, reset_link)
+    return jsonify({"message": "Reset link sent to your email"}), 200
+
+def send_email(to_email, reset_link):
+    msg = MIMEText(f'Click the link to reset your password: {reset_link}')
+    msg['Subject'] = 'Password Reset'
+    msg['From'] = 'sharc.systems@gmail.com'
+    msg['To'] = to_email
+
+    with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        server.starttls()
+        server.login('sharc.systems@gmail.com', 'sharc471_')
+        server.send_message(msg)
+
+
+
