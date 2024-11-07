@@ -33,7 +33,7 @@ const Button = ({
 }: ButtonProps) => (
   <button
     disabled={disabled}
-    className={`${generateStyleClasses(color, filled)} ${className}`}
+    className={`${generateStyleClasses(color, filled, disabled)} ${className}`}
     onClick={onClick}
     type={type}
     name={name}
