@@ -32,11 +32,13 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
     if (response.ok) {
       // Redirect on successful signup
       return redirect('/verifyEmail');
+    } else {
+      const json = await response.json()
+      return redirect('/signup?error=' + json.error)
     }
 
     // Handle errors returned by the backend
-    const result = await response.json();
-    return json({ error: result.error || 'Signup failed' }, { status: 400 });
+   
   } catch (error) {
     // Handle unexpected errors
     console.error('Signup action error:', error);
