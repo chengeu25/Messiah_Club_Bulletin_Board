@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams } from 'react-router-dom';
+import { Form, useSubmit, useSearchParams, Link } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
@@ -97,7 +97,9 @@ const SignUp = () => {
           <div className='flex flex-row gap-2'>
             <Button color='blue' text='Sign Up' type='submit' name='signup' />
           </div>
+          <Link to="/login" className="underline">already have a login</Link>
         </Form>
+        
       </div>
     </div>
   );
