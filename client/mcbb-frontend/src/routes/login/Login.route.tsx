@@ -67,6 +67,7 @@ const Login = () => {
             placeholder='Messiah Email'
             color='blue'
             filled={false}
+            required
           />
           <Input
             label='Password:'
@@ -75,6 +76,7 @@ const Login = () => {
             placeholder='Password'
             color='blue'
             filled={false}
+            required
           />
           <Button color='blue' text='Sign In' type='submit' name='login' />
           <Button
