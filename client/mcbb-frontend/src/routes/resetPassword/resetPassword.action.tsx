@@ -5,7 +5,7 @@ const resetPasswordAction: ActionFunction = async ({ request }) => {
     const email = formData.get('email');
     const action = formData.get('action');
 
-    const loginRequest = await fetch('http://localhost:3000/api/resetPassword', {
+    const loginRequest = await fetch('http://localhost:5173/api/resetPassword', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

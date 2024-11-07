@@ -31,6 +31,7 @@ const Login = () => {
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setMessage(null);
     const formData = new FormData(event.currentTarget);
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement

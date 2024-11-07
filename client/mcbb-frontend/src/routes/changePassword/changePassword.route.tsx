@@ -1,11 +1,25 @@
-import React, { useState } from 'react';
-import { Form, useSubmit } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 
 const ChangePassword = () => {
   const submit = useSubmit();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  /**
+   * If the page is reloaded with an error, set the error state
+   */
+  useEffect(() => {
+    if (params.get('error')) {
+      setError(decodeURIComponent(params.get('error') ?? ''));
+    }
+    if (params.get('message')) {
+      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    }
+  }, [params]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError(null);
@@ -37,6 +51,7 @@ const ChangePassword = () => {
         >
           <h1 className='text-3xl font-bold'>Change Password</h1>
           {error && <div className='text-red-500'>{error}</div>}
+          {message && <p className='text-green-500'>{message}</p>}
           <Input
             label='Enter your current password:'
             name='pwd'

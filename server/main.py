@@ -115,7 +115,7 @@ def reset_password():
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        """Select pwd1, pwd2, email_verified
+        """Select pwd1, pwd2, pwd3, email_verified
                 FROM users
                 WHERE email = %s
                     AND is_active = 1""",
@@ -137,9 +137,18 @@ def reset_password():
     session["last_activity"] = datetime.now(timezone.utc)
 
     # Check if email is verified
-    is_email_verified = result[2]
+    is_email_verified = result[3]
     if not is_email_verified == 1:
         return jsonify({"error": "Email not verified"}), 401
+
+    # Check if new password is unique to the last three saved passwords
+    new_password = data["newPassword"]
+    print(new_password)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+        return jsonify({"error": "New password cannot be a previously used password"}), 400
 
     # Cascade passwords
     print(
@@ -168,6 +177,7 @@ def reset_password():
 def forgot_password():
     data = request.json
     cur = mysql.connection.cursor()
+    print(f"Received data: {data}")
 
     # Retrieve the hashed passwords from te database
     cur.execute(
@@ -175,7 +185,7 @@ def forgot_password():
                 FROM users
                 WHERE email = %s
                     AND is_active = 1""",
-        (data["email"]),
+        (data["email"],),
     )
     result = cur.fetchone()
 
@@ -190,15 +200,15 @@ def forgot_password():
 
     # Generate a reset token
     token = jwt.encode(
-        {"email": email, "exp": datetime.utcnow() + timedelta(hours=1)},
+        {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
         app.config["SECRET_KEY"],
         algorithm="HS256",
     )
     # Create reset link
-    reset_link = f"http://localhost:5173/forgot-password/{token}"
+    reset_link = f"http://localhost:3000/forgot-password/{token}"
 
     # Send email
-    send_email(email, reset_link)
+    send_email(str(data["email"]), reset_link)
     return jsonify({"message": "Reset link sent to your email"}), 200
 
 
@@ -210,7 +220,7 @@ def send_email(to_email, reset_link):
 
     with smtplib.SMTP("smtp.gmail.com", 587) as server:
         server.starttls()
-        server.login("sharc.systems@gmail.com", "sharc471_")
+        server.login("sharc.systems@gmail.com", sharc471_)
         server.send_message(msg)
 
 

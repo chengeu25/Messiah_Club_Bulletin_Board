@@ -23,7 +23,7 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
       return redirect('/login?message=' + 'Change%20password%20successful');
     } else {
       const json = await loginRequest.json();
-      return redirect('/login?error=' + json.error)
+      return redirect('/changePassword?error=' + json.error)
     }
   } else {
     return redirect('/login?error=' + 'Not%20logged%20in')
