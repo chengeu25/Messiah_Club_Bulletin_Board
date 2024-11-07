@@ -131,15 +131,7 @@ def signup():
         return jsonify({"error": "email already in use"}), 400
 
     # To check password strngth
-    if not password_strong_or_nah(password):
-        return (
-            jsonify(
-                {
-                    "error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
-                },
-            ),
-            400,
-        )
+
     # Hash da password
     hashed_password = generate_password_hash(password)
     # Putting it all into the database if pass
