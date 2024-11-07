@@ -8,6 +8,7 @@ interface InputProps {
   filled?: boolean;
   placeholder?: string;
   required?: boolean;
+  onInput?: () => void;
 }
 
 const Input = ({
@@ -17,10 +18,14 @@ const Input = ({
   color,
   filled,
   placeholder = '',
-  required = false
+  required = false,
+  onInput
 }: InputProps) => (
   <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
-    <span>{label}</span>
+    <span>
+      {label}
+      {required && <span className='text-red-500'>*</span>}
+    </span>
     <input
       type={type}
       name={name}
@@ -32,7 +37,7 @@ const Input = ({
         `text-${color ?? 'white'}`,
         'text-black'
       )} p-2 rounded-lg flex-grow`}
-      required={required}
+      onInput={onInput}
     />
   </label>
 );
