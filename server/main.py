@@ -112,7 +112,8 @@ def signup():
     email = data.get("email")  # These are to get the current inputs
     name = data.get("name")
     password = data.get("password")
-    gender = data.get("gender")
+    gender_str = data.get("gender")
+    gender = 1 if data.get("gender") == "male" else 0
     captcha_response = data.get("captchaResponse")
 
     ##if not is_it_a_robot(captcha_response): # to verify the robot or not
@@ -145,6 +146,7 @@ def signup():
         "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 1, %s, %s, 0,0,1,1,%s)",
         (email, hashed_password, gender, name),
     )
+    mysql.connection.commit()
     results = cur.fetchall()
     cur.close()
     return jsonify({"Message ": "User Success!"}), 200
