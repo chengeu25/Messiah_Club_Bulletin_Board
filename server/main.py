@@ -3,7 +3,6 @@ from flask import Flask, jsonify, request, session
 from flask_mysqldb import MySQL
 from flask_cors import CORS
 from dotenv import load_dotenv
-import bcrypt
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -18,7 +17,6 @@ app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = os.getenv("DB_USER")
 app.config["MYSQL_PASSWORD"] = os.getenv("DB_PWD")
 app.config["MYSQL_DB"] = "sharc"
-
 
 
 mysql = MySQL(app)
@@ -83,7 +81,9 @@ def login():
     cur.close()
     return jsonify({"message": "Login successful"}), 200
 
+
 RECAPTCHA_KEY = "All-of-the-stars"
+
 
 def password_strong_or_nah(password):
     if len(password) < 8:
@@ -95,39 +95,49 @@ def password_strong_or_nah(password):
     if not any(char in "!@#$%^&*" for char in password):
         return False
     return True
-def is_it_a_robot(captcha_response): #checks for if it is or is not a robot
-    payload = {
-        'secret': RECAPTCHA_KEY,
-        'response': captcha_response
-    }
-    response = requests.post('https://www.google.com/recaptcha/api/siteverify', data=payload)
+
+
+def is_it_a_robot(captcha_response):  # checks for if it is or is not a robot
+    payload = {"secret": RECAPTCHA_KEY, "response": captcha_response}
+    response = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify", data=payload
+    )
     result = response.json()
-    return result.get('success', False)
+    return result.get("success", False)
+
+
 @app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
-    email = data.get('email') #These are to get the current inputs
-    password = data.get('password')
-    gender = data.get('gender')
-    captcha_response = data.get('captchaResponse')  
-    
+    email = data.get("email")  # These are to get the current inputs
+    password = data.get("password")
+    gender = data.get("gender")
+    captcha_response = data.get("captchaResponse")
+
     ##if not is_it_a_robot(captcha_response): # to verify the robot or not
-       ##return jsonify({"error": "you may be a robot."}), 400
-    #to check if the email is unique
+    ##return jsonify({"error": "you may be a robot."}), 400
+    # to check if the email is unique
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM users WHERE email = %s", (email))
+    cur.execute(
+        "SELECT * FROM users WHERE email = %s",
+        (str(email),),
+    )
     existing_user = cur.fetchone()
     cur.close()
 
     if existing_user:
         return jsonify({"Error": "email already in use"}), 400
-    
-    #To check password strngth
+
+    # To check password strngth
     if not password_strong_or_nah(password):
-        return jsonify({"Error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"})
-    #Hash da password
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    #Putting it all into the database if pass
+        return jsonify(
+            {
+                "Error": "password is too weak! It must be at elast 8 characters long, with one uppercase, one number and one special character"
+            }
+        )
+    # Hash da password
+    hashed_password = generate_password_hash(password)
+    # Putting it all into the database if pass
 
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM users")
