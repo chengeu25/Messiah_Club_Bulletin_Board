@@ -143,7 +143,6 @@ const Root = () => {
               <CSelect<OptionType, false, GroupBase<OptionType>>
                 options={options}
                 onChange={(selected) => {
-                  console.log(selected);
                   if (selected?.value === 'Log Out') {
                     navigate('/logout');
                   } else if (selected?.value === 'Edit Interests') {

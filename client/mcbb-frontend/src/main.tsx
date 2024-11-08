@@ -29,12 +29,14 @@ import calendarLoader from './routes/dashboard/calendar/Calendar.loader.tsx';
 import clubsLoader from './routes/dashboard/clubs/Clubs.loader.tsx';
 import eventLoader from './routes/dashboard/event/Event.loader.tsx';
 import clubLoader from './routes/dashboard/club/Club.loader.tsx';
+import logoutLoader from './routes/logout/Logout.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path='/' element={<Root />} loader={rootLoader}>
       <Route path='/' element={<LandingPage />} />
       <Route path='login' element={<Login />} action={loginAction} />
+      <Route path='logout' loader={logoutLoader} />
       <Route path='signup' element={<SignUp />} action={signUpAction} />
       <Route
         path='verifyEmail'

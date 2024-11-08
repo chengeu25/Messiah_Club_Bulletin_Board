@@ -122,6 +122,14 @@ def login():
     return response, 200
 
 
+@app.route("/api/logout", methods=["POST"])
+def logout():
+    session.pop("user_id", None)
+    resp = jsonify({"message": "Logout successful"})
+    resp.set_cookie("user_id", "", expires=0, path="/api")
+    return resp, 200
+
+
 RECAPTCHA_KEY = "All-of-the-stars"
 
 
