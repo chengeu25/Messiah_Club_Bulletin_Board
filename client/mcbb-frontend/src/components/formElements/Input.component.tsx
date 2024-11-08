@@ -33,13 +33,12 @@ const Input = ({
       type={type}
       name={name}
       placeholder={placeholder}
-      className={`${generateStyleClasses(
-        color ?? 'white',
-        filled ?? true
-      ).replace(
-        `text-${color ?? 'white'}`,
-        'text-black'
-      )} p-2 rounded-lg flex-grow`}
+      className={`${generateStyleClasses(color ?? 'white', filled ?? true)
+        .replace(`text-${color ?? 'white'}`, 'text-black')
+        .replace(
+          'w-full',
+          type === 'checkbox' ? 'max-w-10' : 'w-full'
+        )} p-2 rounded-lg flex-grow`}
       onInput={onInput}
       value={value}
     />
