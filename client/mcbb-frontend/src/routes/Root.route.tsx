@@ -97,14 +97,24 @@ const Root = () => {
           {user ? (
             <></>
           ) : (
-            <Button
-              text='Log In'
-              color='white'
-              filled={false}
-              onClick={() => {
-                navigate('/login');
-              }}
-            />
+            <div className='flex flex-row gap-2 text-nowrap'>
+              <Button
+                text='Log In'
+                color='white'
+                filled={false}
+                onClick={() => {
+                  navigate('/login');
+                }}
+              />
+              <Button
+                text='Sign Up'
+                color='white'
+                filled={false}
+                onClick={() => {
+                  navigate('signup');
+                }}
+              />
+            </div>
           )}
         </div>
       </nav>
