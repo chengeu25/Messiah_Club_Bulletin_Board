@@ -22,10 +22,10 @@ const Root = () => {
   const location = useLocation();
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
-      <nav className='w-full bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-6'>
-        <span className='text-xl'>
-          <Link to='/'>
-            <img src='../../assets/logo.png' className='h-12' />
+      <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-6'>
+        <span className='text-xl h-full'>
+          <Link to='/' className='h-full'>
+            <img src='../../assets/logo.png' className='h-[100%]' />
           </Link>
         </span>
         {location.pathname.includes('/dashboard') &&
@@ -98,7 +98,7 @@ const Root = () => {
             <></>
           ) : (
             <Button
-              text='Log In or Sign Up'
+              text='Log In'
               color='white'
               filled={false}
               onClick={() => {
@@ -110,6 +110,37 @@ const Root = () => {
       </nav>
       <div className='w-full h-full relative overflow-y-scroll'>
         <Outlet />
+        <footer className='w-full bg-blue-950 text-white p-3 flex flex-col gap-2'>
+          SHARC is created by Caleb Rice, Matthew Merlo, Garret Van Dyke, and
+          Cheng Eu Sun.
+          <hr className='w-full border-white border-1' />
+          <div className='flex flex-col md:flex-row gap-2 w-full'>
+            <ul className='flex flex-col gap-2 w-full'>
+              <li>About Us</li>
+              <li>Contact Us</li>
+            </ul>
+            <ul className='flex flex-col gap-2 w-full'>
+              <li>
+                <Link
+                  to='https://messiah.edu'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  Messiah University
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to='https://falconlink.webapps.messiah.edu'
+                  target='_blank'
+                  rel='noopener noreferrer'
+                >
+                  FalconLink
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </footer>
       </div>
     </div>
   );

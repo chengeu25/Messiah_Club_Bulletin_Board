@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import home1 from '../../../assets/home1.png';
 import home2 from '../../../assets/home2.png';
@@ -80,37 +80,6 @@ const LandingPage = () => {
           </Card>
         </div>
       </div>
-      <footer className='w-full bg-blue-950 text-white p-3 flex flex-col gap-2'>
-        SHARC is created by Caleb Rice, Matthew Merlo, Garret Van Dyke, and
-        Cheng Eu Sun.
-        <hr className='w-full border-white border-1' />
-        <div className='flex flex-col md:flex-row gap-2 w-full'>
-          <ul className='flex flex-col gap-2 w-full'>
-            <li>About Us</li>
-            <li>Contact Us</li>
-          </ul>
-          <ul className='flex flex-col gap-2 w-full'>
-            <li>
-              <Link
-                to='https://messiah.edu'
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                Messiah University
-              </Link>
-            </li>
-            <li>
-              <Link
-                to='https://falconlink.webapps.messiah.edu'
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                FalconLink
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </footer>
     </div>
   );
 };
