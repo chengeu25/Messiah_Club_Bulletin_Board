@@ -112,8 +112,6 @@ def login():
     email = data["email"]
     remember = data["remember"]
 
-    print(remember)
-
     response = jsonify({"message": "Login successful", "user_id": email})
 
     if remember:
