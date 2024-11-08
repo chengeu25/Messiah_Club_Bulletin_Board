@@ -41,6 +41,7 @@ def check_user():
     user_id = request.cookies.get("user_id")
     if user_id:
         session["user_id"] = user_id
+        session["last_activity"] = datetime.now(timezone.utc)
     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
         "last_activity"
     ) < timedelta(minutes=15):
