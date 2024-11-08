@@ -9,8 +9,7 @@ const loginAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get('email');
   const password = formData.get('password');
-  const remember = formData.get('remember');
-  console.log(remember);
+  const remember = formData.get('remember') === 'true' ? true : false;
   const action = formData.get('action');
 
   // Handle login on server

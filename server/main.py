@@ -46,7 +46,7 @@ def check_user():
     ) < timedelta(minutes=15):
         cur = mysql.connection.cursor()
         cur.execute(
-            """SELECT email, name
+            """SELECT email, email_verified, name
                 FROM users 
                 WHERE email = %s
             """,
@@ -56,12 +56,21 @@ def check_user():
         cur.close()
 
         if result is None:
-            return jsonify({"user_id": None, "name": None}), 401
+            return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
 
         session["last_activity"] = datetime.now(timezone.utc)
-        return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
+        return (
+            jsonify(
+                {
+                    "user_id": session["user_id"],
+                    "name": result[2],
+                    "emailVerified": result[1],
+                }
+            ),
+            200,
+        )
     else:
-        return jsonify({"user_id": None, "name": None}), 401
+        return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
 
 
 @app.route("/api/login", methods=["POST"])
@@ -177,7 +186,9 @@ def signup():
     mysql.connection.commit()
     results = cur.fetchall()
 
+    print(email)
     session["user_id"] = email
+    print(session.get("user_id"))
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()

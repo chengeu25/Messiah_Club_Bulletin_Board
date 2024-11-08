@@ -79,7 +79,7 @@ const Login = () => {
             filled={false}
             required
           />
-          <Input type='checkbox' name='remember' label='Remember Me' />
+          <Input type='checkbox' name='remember' label='Remember Me' value='true' />
           <Button color='blue' text='Sign In' type='submit' name='login' />
           <Button
             color='blue'
