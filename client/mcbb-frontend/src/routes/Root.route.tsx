@@ -17,7 +17,7 @@ import {
   getNextSaturday
 } from '../helper/dateUtils';
 import { User } from '../helper/checkUser';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface OptionType {
   value: string;
@@ -29,28 +29,40 @@ const Root = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const options: OptionType[] = [
-    {
-      value: (user as User)?.name ? (user as User)?.name : '',
-      label: (user as User)?.name && (user as User)?.name
-    },
-    {
-      value: 'Edit Interests',
-      label: 'Edit Interests'
-    },
-    {
-      value: 'Change Password',
-      label: 'Change Password'
-    },
-    {
-      value: 'Log Out',
-      label: 'Log Out'
-    }
-  ];
+  const [options, setOptions] = useState<OptionType[]>([]);
 
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(
     options[0]
   );
+
+  useEffect(() => {
+    if (user) {
+      setOptions([
+        {
+          value: (user as User)?.name ? (user as User)?.name : '',
+          label: (user as User)?.name && (user as User)?.name
+        },
+        {
+          value: 'Edit Interests',
+          label: 'Edit Interests'
+        },
+        {
+          value: 'Change Password',
+          label: 'Change Password'
+        },
+        {
+          value: 'Log Out',
+          label: 'Log Out'
+        }
+      ]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (options.length > 0) {
+      setSelectedOption(options[0]);
+    }
+  }, [options]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
