@@ -43,6 +43,10 @@ const Root = () => {
           label: (user as User)?.name && (user as User)?.name
         },
         {
+          value: 'Dashboard',
+          label: 'Dashboard'
+        },
+        {
           value: 'Edit Interests',
           label: 'Edit Interests'
         },
@@ -149,6 +153,8 @@ const Root = () => {
                     navigate('/editinterest');
                   } else if (selected?.value === 'Change Password') {
                     navigate('/changePassword');
+                  } else if (selected?.value === 'Dashboard') {
+                    navigate('/dashboard');
                   }
                   setSelectedOption({
                     value: (user as User)?.name,
