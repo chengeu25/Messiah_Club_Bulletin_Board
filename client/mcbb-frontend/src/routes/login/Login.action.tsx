@@ -32,24 +32,7 @@ const loginAction: ActionFunction = async ({ request }) => {
     else {
       const json = await loginResponse.json();
       if (json?.error === 'Email not verified') {
-        // Trigger resend code before redirecting to verifyEmail page
-        const resendResponse = await fetch('http://localhost:3000/api/resend-code', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include',
-          body: JSON.stringify({ email })
-        });
-
-        // Optional: Check for errors in the resend request and handle accordingly
-        if (!resendResponse.ok) {
-          const resendError = await resendResponse.json();
-          return redirect('/login?error=' + encodeURIComponent(resendError.error));
-        }
-
-        // Redirect to the verify email page with a success message
-        return redirect('/verifyEmail?message=Verification%20code%20sent');
+        return redirect('/login?error=Email%20not%20verified');
       }
       return redirect('/login?error=' + json.error);
     }

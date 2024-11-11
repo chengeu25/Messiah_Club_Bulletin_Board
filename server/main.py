@@ -92,10 +92,8 @@ def resend_code():
     data = request.get_json()
     print("Received data:", data)  # Print received data
     #get email from session?
-    email = data.get('email')
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
-
+    email = session.get('user_id')
+    
     # Generate a new verification code
     new_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
@@ -285,7 +283,7 @@ def signup():
     print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 1, %s, %s, 0,0,1,1,%s)",
+        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
         (email, hashed_password, gender, name),
     )
     mysql.connection.commit()

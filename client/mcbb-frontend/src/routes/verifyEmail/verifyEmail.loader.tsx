@@ -12,9 +12,16 @@ const verifyEmailLoader: LoaderFunction = async ({ request }: LoaderFunctionArgs
     return redirect('/login');
   }
 
-  // Automatically resend verification code if user is redirected here
+  const url = new URL(request.url); 
+  const searchParams = new URLSearchParams(url.search); 
+  // Check if there are any search parameters 
+  if (searchParams.toString()) { 
+    // If there are search parameters, you can return early or handle it differently
+     return null; // or return some default data 
+     }
+     
   if (user !== true) {
-    await fetch('http://localhost:3000/api/resend-code', {
+    const resp = await fetch('http://localhost:3000/api/resend-code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,6 +29,12 @@ const verifyEmailLoader: LoaderFunction = async ({ request }: LoaderFunctionArgs
       credentials: 'include',
       body: JSON.stringify({ email: user.email }), // Assuming checkUser returns user email
     });
+
+    const json = await resp.json();
+
+    if (!resp.ok) {
+      return redirect('/verifyEmail?error=' + json.error);
+    }
   }
 
   // No redirection here; just return null to proceed with loading the verify email page
