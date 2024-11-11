@@ -15,7 +15,7 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, code })
     });
     
     if (request.ok) {
@@ -36,7 +36,7 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email })
     });
 
     if (request.ok) {

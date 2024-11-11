@@ -1,3 +1,4 @@
+// Login.action.tsx
 import { ActionFunction, redirect } from 'react-router';
 
 /**
@@ -13,7 +14,7 @@ const loginAction: ActionFunction = async ({ request }) => {
 
   // Handle login on server
   if (action === 'login') {
-    const request = await fetch('http://localhost:3000/api/login', {
+    const loginResponse = await fetch('http://localhost:3000/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -23,14 +24,31 @@ const loginAction: ActionFunction = async ({ request }) => {
     });
 
     // Go to the dashboard if login worked
-    if (request.ok) {
+    if (loginResponse.ok) {
       return redirect('/dashboard');
     }
-    // Go to the login page if login failed, with an error message
+    // Check if login failed because email is not verified
     else {
-      const json = await request.json();
+      const json = await loginResponse.json();
       if (json?.error === 'Email not verified') {
-        return redirect('/verifyEmail');
+        // Trigger resend code before redirecting to verifyEmail page
+        const resendResponse = await fetch('http://localhost:3000/api/resend-code', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email })
+        });
+
+        // Optional: Check for errors in the resend request and handle accordingly
+        if (!resendResponse.ok) {
+          const resendError = await resendResponse.json();
+          return redirect('/login?error=' + encodeURIComponent(resendError.error));
+        }
+
+        // Redirect to the verify email page with a success message
+        return redirect('/verifyEmail?message=Verification%20code%20sent');
       }
       return redirect('/login?error=' + json.error);
     }

@@ -5,6 +5,10 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -28,6 +32,27 @@ cors = CORS(
     },
 )
 
+# Function to get user by email from the database
+def get_code_by_email(email):
+    cursor = mysql.connection.cursor()
+    query = "SELECT verification_code FROM users WHERE email = %s"
+    cursor.execute(query, (email,))
+    user = cursor.fetchone()[0]  # Fetch the first result
+    cursor.close()
+    return user
+
+# Function to update the email verification status in the database
+def update_email_verified(email, **kwargs):
+    try: 
+        cursor = mysql.connection.cursor()
+        query = "UPDATE users SET EMAIL_VERIFIED = %s WHERE email = %s"
+        cursor.execute(query, (1 if kwargs["verified"] else 0, email))
+        mysql.connection.commit()  # Commit the transaction
+        cursor.close()
+        return True
+    except:
+        return False
+
 
 @app.route("/")
 def hello():
@@ -36,24 +61,35 @@ def hello():
 @app.route('/api/verify-email', methods=['POST'])
 def verify_email():
     data = request.get_json()
-    code = data.get('code')
-    if not code:
-        return jsonify({"error": "Code is required"}), 400
+    input_code = data.get('code')
+    email = session.get('user_id')
+    
+    if not input_code:
+        return jsonify({"error": "Verification code is required"}), 400
+    # if not email:
+    #     return jsonify({"error": "Email is required"}), 400
 
-    # Add logic to verify the code with the database
-    cursor = mysql.connection.cursor()
-    cursor.execute("SELECT * FROM users WHERE verification_code = %s", (code,))
-    user = cursor.fetchone()
-    if user:
-        cursor.execute("UPDATE users SET is_verified = 1 WHERE verification_code = %s", (code,))
-        mysql.connection.commit()
-        return jsonify({"message": "Email verified successfully"}), 200
+    # Retrieve user from the database
+    user = get_code_by_email(email)  # This function should query the database to find the user by email
+    print(user)
+
+    if user == input_code:
+        # Update EMAIL_VERIFIED field in the database
+        update_success = update_email_verified(email, verified=True)  # Function that updates EMAIL_VERIFIED field
+
+        if update_success:
+            return jsonify({"message": "Email verified successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to update verification status"}), 500
     else:
         return jsonify({"error": "Invalid verification code"}), 400
+
 
 @app.route('/api/resend-code', methods=['POST'])
 def resend_code():
     data = request.get_json()
+    print("Received data:", data)  # Print received data
+    #get email from session?
     email = data.get('email')
     if not email:
         return jsonify({"error": "Email is required"}), 400
@@ -74,20 +110,26 @@ def resend_code():
 def send_verification_email(email, code):
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
+
+    # Check if variables are loaded correctly
+    print(f"Sender Email: {sender_email}")
+    print(f"Sender Password: {sender_password}")
+
     subject = "Your Verification Code"
     body = f"Your new verification code is: {code}"
 
     msg = MIMEText(body)
     msg['Subject'] = subject
     msg['From'] = sender_email
-    msg['To'] = email
+    msg['To'] = email  # changed to 'email' to use the intended recipient
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, email, msg.as_string())
+        print("Email sent successfully.")
     except Exception as e:
-        print(f"Failed to send email: {e}")
+        print(f"Failed to send email to {email} with code {code}: {e}")
 
 
 @app.route("/api/checkUser", methods=["GET"])

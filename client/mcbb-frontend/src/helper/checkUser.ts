@@ -13,7 +13,7 @@ const checkUser = async (): Promise<boolean | User> => {
   });
   if (response.ok) {
     const json = await response.json();
-    return json;
+    return { name: json.name, email: json.user_id }
   }
   return false;
 };
