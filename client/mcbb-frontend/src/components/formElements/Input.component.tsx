@@ -1,4 +1,5 @@
 import generateStyleClasses from './styleGenerator';
+import { FormEventHandler } from 'react';
 
 interface InputProps {
   label: string;
@@ -8,6 +9,8 @@ interface InputProps {
   filled?: boolean;
   placeholder?: string;
   required?: boolean;
+  onInput?: FormEventHandler<HTMLInputElement>;
+  value?: string;
 }
 
 const Input = ({
@@ -17,22 +20,27 @@ const Input = ({
   color,
   filled,
   placeholder = '',
-  required = false
+  required = false,
+  onInput,
+  value
 }: InputProps) => (
   <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
-    <span>{label}</span>
+    <span>
+      {label}
+      {required && <span className='text-red-500'>*</span>}
+    </span>
     <input
       type={type}
       name={name}
       placeholder={placeholder}
-      className={`${generateStyleClasses(
-        color ?? 'white',
-        filled ?? true
-      ).replace(
-        `text-${color ?? 'white'}`,
-        'text-black'
-      )} p-2 rounded-lg flex-grow`}
-      required={required}
+      className={`${generateStyleClasses(color ?? 'white', filled ?? true)
+        .replace(`text-${color ?? 'white'}`, 'text-black')
+        .replace(
+          'w-full',
+          type === 'checkbox' ? 'max-w-10' : 'w-full'
+        )} p-2 rounded-lg flex-grow`}
+      onInput={onInput}
+      value={value}
     />
   </label>
 );

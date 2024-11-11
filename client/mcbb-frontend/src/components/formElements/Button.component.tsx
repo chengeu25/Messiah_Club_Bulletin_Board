@@ -17,6 +17,7 @@ interface ButtonProps {
   type?: 'button' | 'submit' | 'reset' | undefined;
   name?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const Button = ({
@@ -27,10 +28,12 @@ const Button = ({
   type = 'button',
   name,
   filled = true,
-  className
+  className,
+  disabled
 }: ButtonProps) => (
   <button
-    className={`${generateStyleClasses(color, filled)} ${className}`}
+    disabled={disabled}
+    className={`${generateStyleClasses(color, filled, disabled)} ${className}`}
     onClick={onClick}
     type={type}
     name={name}

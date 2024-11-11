@@ -32,6 +32,7 @@ const Login = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    console.log(formData.get('remember'));
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
@@ -67,6 +68,7 @@ const Login = () => {
             placeholder='Messiah Email'
             color='blue'
             filled={false}
+            required
           />
           <Input
             label='Password:'
@@ -75,7 +77,9 @@ const Login = () => {
             placeholder='Password'
             color='blue'
             filled={false}
+            required
           />
+          <Input type='checkbox' name='remember' label='Remember Me' value='true' />
           <Button color='blue' text='Sign In' type='submit' name='login' />
           <Button
             color='blue'
