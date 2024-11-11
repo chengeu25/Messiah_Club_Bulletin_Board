@@ -30,6 +30,7 @@ import clubsLoader from './routes/dashboard/clubs/Clubs.loader.tsx';
 import eventLoader from './routes/dashboard/event/Event.loader.tsx';
 import clubLoader from './routes/dashboard/club/Club.loader.tsx';
 import logoutLoader from './routes/logout/Logout.loader.tsx';
+import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -42,6 +43,7 @@ const router = createBrowserRouter(
         path='verifyEmail'
         element={<VerifyEmail />}
         action={verifyEmailAction}
+        loader={verifyEmailLoader}
       />
       <Route
         path='forgot'

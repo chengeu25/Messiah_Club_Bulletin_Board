@@ -6,6 +6,10 @@ from dotenv import load_dotenv
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import random
+import string
+import smtplib
+from email.mime.text import MIMEText
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
@@ -30,10 +34,102 @@ cors = CORS(
     },
 )
 
+# Function to get user by email from the database
+def get_code_by_email(email):
+    cursor = mysql.connection.cursor()
+    query = "SELECT verification_code FROM users WHERE email = %s"
+    cursor.execute(query, (email,))
+    user = cursor.fetchone()[0]  # Fetch the first result
+    cursor.close()
+    return user
+
+# Function to update the email verification status in the database
+def update_email_verified(email, **kwargs):
+    try: 
+        cursor = mysql.connection.cursor()
+        query = "UPDATE users SET EMAIL_VERIFIED = %s WHERE email = %s"
+        cursor.execute(query, (1 if kwargs["verified"] else 0, email))
+        mysql.connection.commit()  # Commit the transaction
+        cursor.close()
+        return True
+    except:
+        return False
+
 
 @app.route("/")
 def hello():
     return "Hello, World!"
+
+@app.route('/api/verify-email', methods=['POST'])
+def verify_email():
+    data = request.get_json()
+    input_code = data.get('code')
+    email = session.get('user_id')
+    
+    if not input_code:
+        return jsonify({"error": "Verification code is required"}), 400
+    # if not email:
+    #     return jsonify({"error": "Email is required"}), 400
+
+    # Retrieve user from the database
+    user = get_code_by_email(email)  # This function should query the database to find the user by email
+    print(user)
+
+    if user == input_code:
+        # Update EMAIL_VERIFIED field in the database
+        update_success = update_email_verified(email, verified=True)  # Function that updates EMAIL_VERIFIED field
+
+        if update_success:
+            return jsonify({"message": "Email verified successfully"}), 200
+        else:
+            return jsonify({"error": "Failed to update verification status"}), 500
+    else:
+        return jsonify({"error": "Invalid verification code"}), 400
+
+
+@app.route('/api/resend-code', methods=['POST'])
+def resend_code():
+    data = request.get_json()
+    print("Received data:", data)  # Print received data
+    #get email from session?
+    email = session.get('user_id')
+    
+    # Generate a new verification code
+    new_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+    # Update the verification code in the database
+    cursor = mysql.connection.cursor()
+    cursor.execute("UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email))
+    mysql.connection.commit()
+
+    # Send the new verification code to the user's email
+    send_verification_email(email, new_code)
+
+    return jsonify({"message": "Verification code resent"}), 200
+
+def send_verification_email(email, code):
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+
+    # Check if variables are loaded correctly
+    print(f"Sender Email: {sender_email}")
+    print(f"Sender Password: {sender_password}")
+
+    subject = "Your Verification Code"
+    body = f"Your new verification code is: {code}"
+
+    msg = MIMEText(body)
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = email  # changed to 'email' to use the intended recipient
+
+    try:
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, msg.as_string())
+        print("Email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send email to {email} with code {code}: {e}")
 
 
 @app.route("/api/checkUser", methods=["GET"])
@@ -187,7 +283,7 @@ def signup():
     print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 1, %s, %s, 0,0,1,1,%s)",
+        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
         (email, hashed_password, gender, name),
     )
     mysql.connection.commit()

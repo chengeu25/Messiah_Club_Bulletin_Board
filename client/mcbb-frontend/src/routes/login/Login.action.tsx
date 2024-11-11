@@ -1,3 +1,4 @@
+// Login.action.tsx
 import { ActionFunction, redirect } from 'react-router';
 
 /**
@@ -14,7 +15,7 @@ const loginAction: ActionFunction = async ({ request }) => {
 
   // Handle login on server
   if (action === 'login') {
-    const request = await fetch('http://localhost:3000/api/login', {
+    const loginResponse = await fetch('http://localhost:3000/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -24,14 +25,14 @@ const loginAction: ActionFunction = async ({ request }) => {
     });
 
     // Go to the dashboard if login worked
-    if (request.ok) {
+    if (loginResponse.ok) {
       return redirect('/dashboard');
     }
-    // Go to the login page if login failed, with an error message
+    // Check if login failed because email is not verified
     else {
-      const json = await request.json();
+      const json = await loginResponse.json();
       if (json?.error === 'Email not verified') {
-        return redirect('/verifyEmail');
+        return redirect('/login?error=Email%20not%20verified');
       }
       return redirect('/login?error=' + json.error);
     }
