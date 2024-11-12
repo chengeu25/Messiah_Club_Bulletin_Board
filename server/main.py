@@ -9,9 +9,12 @@ import os
 import jwt
 import smtplib
 from email.mime.text import MIMEText
+import urllib.parse
+import base64
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+app.config["SECRET_KEY"] = os.getenv("FLASK_SECRET_KEY")
 
 load_dotenv()
 
@@ -237,6 +240,7 @@ def reset_password():
 
     mysql.connection.commit()
     cur.close()
+    session.pop('user_id', None)
     return jsonify({"message": "Password successfully reset"})
 
 
@@ -246,7 +250,7 @@ def forgot_password():
     cur = mysql.connection.cursor()
     print(f"Received data: {data}")
 
-    # Retrieve the hashed passwords from te database
+    # Retrieve the hashed passwords from the database
     cur.execute(
         """Select pwd1, pwd2, email_verified
                 FROM users
@@ -266,29 +270,129 @@ def forgot_password():
         return jsonify({"error": "Email not verified"}), 401
 
     # Generate a reset token
-    token = jwt.encode(
+    token = urllib.parse.quote(jwt.encode(
         {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
         app.config["SECRET_KEY"],
-        algorithm="HS256",
+        algorithm="HS256",)
     )
+
+    print(f"""update users
+                SET reset_token = '{token}'
+                WHERE email = '{data["email"]}'""")
+
+    # Add token to database
+    cur.execute(
+        f"""update users
+                SET reset_token = '{token}'
+                WHERE email = '{data["email"]}'""",
+                #(data["email"])
+    )
+
+    # token = base64url_decode(token)
     # Create reset link
-    reset_link = f"http://localhost:3000/forgot-password/{token}"
+    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
 
     # Send email
     send_email(str(data["email"]), reset_link)
     return jsonify({"message": "Reset link sent to your email"}), 200
 
+def base64url_decode(encoded_data):
+    # Add the necessary padding before decoding
+    padding = '=' * (4 - len(encoded_data) % 4)
+    return base64.urlsafe_b64decode(encoded_data + padding).decode('utf-8')
 
 def send_email(to_email, reset_link):
-    msg = MIMEText(f"Click the link to reset your password: {reset_link}")
-    msg["Subject"] = "Password Reset"
-    msg["From"] = "sharc.systems@gmail.com"
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+
+    # Check
+    print(f"Sender Email: {sender_email}")
+    print(f"Sender Password: {sender_password}")
+
+    subject = "SHARC Forgot Password"
+    body = f"Click the link to reset your password: {reset_link}"
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
     msg["To"] = to_email
 
-    with smtplib.SMTP("smtp.gmail.com", 587) as server:
-        server.starttls()
-        server.login("sharc.systems@gmail.com", sharc471_)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, msg.as_string())
+            print("Email sent successfully")
+    except Exception as e:
+        print(f"Failed to send email to {to_email}: {e}")
+
+@app.route("/api/ForgotPasswordToken", methods=["POST"])
+def forgot_password_reset():
+    data = request.json
+    cur = mysql.connection.cursor()
+    print(data['token'])
+
+    # Retrieve the hashed passwords from the database
+    cur.execute(
+        f"""select pwd1, pwd2, pwd3, email_verified, reset_token
+                FROM users
+                WHERE reset_token = '{data['token']}'
+                    AND is_active = 1""",
+        # (data['token']),
+    )
+    result = cur.fetchone()
+    print("test 1")
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    print("test 3")
+
+    # Check if email is verified
+    #is_email_verified = result[3]
+    #if not is_email_verified == 1:
+    #    return jsonify({"error": "Email not verified"}), 401
+    
+    print("test 4")
+
+    # Check if new password is unique to the last three saved passwords
+    new_password = data["newPassword"]
+    print(new_password)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+        return jsonify({"error": "New password cannot be a previously used password"}), 400
+
+    print("test 5")
+
+
+    # Cascade passwords
+    print(
+        f"""UPDATE users
+                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
+                WHERE email = {data['emailRequest']['email']}"""
+    )
+    print((
+            str(result[1]),
+            str(result[0]),
+            generate_password_hash(str(data["newPassword"])),
+            str(data["token"]),
+        ))
+    cur.execute(
+        """UPDATE users
+                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
+                WHERE reset_token = %s""",
+        (
+            str(result[1]),
+            str(result[0]),
+            generate_password_hash(str(data["newPassword"])),
+            str(data["token"]),
+        ),
+    )
+    return jsonify({'message': "Password reset successful"}), 200
+    print("test 6")
 
 
 if __name__ == "__main__":
