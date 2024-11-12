@@ -56,7 +56,7 @@ const VerifyEmail = () => {
           />
           <div className='flex flex-row gap-2'>
             <Button
-              text='Verify Email'
+              text='Authenticate'
               type='submit'
               name='verifyEmail'
               color='blue'
