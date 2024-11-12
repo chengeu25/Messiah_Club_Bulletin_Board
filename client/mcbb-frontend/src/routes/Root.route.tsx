@@ -142,83 +142,89 @@ const Root = () => {
           <></>
         )}
         <div>
-          {user ? (
-            <div>
-              <CSelect<OptionType, false, GroupBase<OptionType>>
-                options={options}
-                onChange={(selected) => {
-                  if (selected?.value === 'Log Out') {
-                    navigate('/logout');
-                  } else if (selected?.value === 'Edit Interests') {
-                    navigate('/editinterest');
-                  } else if (selected?.value === 'Change Password') {
-                    navigate('/changePassword');
-                  } else if (selected?.value === 'Dashboard') {
-                    navigate('/dashboard');
-                  }
-                  setSelectedOption({
-                    value: (user as User)?.name,
-                    label: (user as User)?.name
-                  });
-                }}
-                value={selectedOption}
-                name='user'
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    'backgroundColor': 'rgb(23, 37, 84)', // Tailwind's blue-950
-                    'borderColor': 'white',
-                    'borderRadius': '5px',
-                    'color': 'white',
-                    'textAlign': 'center', // Center the text
-                    'padding': '3px', // Add some padding
-                    '&:hover': {
-                      borderColor: 'white' // Change border color on hover
-                    }
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    color: 'white', // Text color for the selected value
-                    textAlign: 'center' // Center the selected value
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: 'rgb(23, 37, 84)', // Tailwind's blue-950 for dropdown
-                    color: 'white'
-                  }),
-                  option: (base, { isFocused, isSelected }) => ({
-                    ...base,
-                    backgroundColor: isFocused
-                      ? 'rgb(43, 57, 104)'
-                      : isSelected
-                      ? 'rgb(43, 57, 104)'
-                      : 'rgb(23, 37, 84)',
-                    color: 'white',
-                    textAlign: 'center' // Center the option text
-                  })
-                }}
-              />
-            </div>
-          ) : (
-            <div className='flex flex-row gap-2 text-nowrap'>
-              <Button
-                text='Log In'
-                color='white'
-                filled={false}
-                onClick={() => {
-                  navigate('/login');
-                }}
-              />
-              <Button
-                text='Sign Up'
-                color='white'
-                filled={false}
-                onClick={() => {
-                  navigate('signup');
-                }}
-              />
-            </div>
-          )}
+          {!location.pathname.includes('/login') &&
+            !location.pathname.includes('/signup') &&
+            !location.pathname.includes('/verifyEmail') && (
+              <>
+                {user ? (
+                  <div>
+                    <CSelect<OptionType, false, GroupBase<OptionType>>
+                      options={options}
+                      onChange={(selected) => {
+                        if (selected?.value === 'Log Out') {
+                          navigate('/logout');
+                        } else if (selected?.value === 'Edit Interests') {
+                          navigate('/editinterest');
+                        } else if (selected?.value === 'Change Password') {
+                          navigate('/changePassword');
+                        } else if (selected?.value === 'Dashboard') {
+                          navigate('/dashboard');
+                        }
+                        setSelectedOption({
+                          value: (user as User)?.name,
+                          label: (user as User)?.name
+                        });
+                      }}
+                      value={selectedOption}
+                      name='user'
+                      styles={{
+                        control: (base) => ({
+                          ...base,
+                          'backgroundColor': 'rgb(23, 37, 84)', // Tailwind's blue-950
+                          'borderColor': 'white',
+                          'borderRadius': '5px',
+                          'color': 'white',
+                          'textAlign': 'center', // Center the text
+                          'padding': '3px', // Add some padding
+                          '&:hover': {
+                            borderColor: 'white' // Change border color on hover
+                          }
+                        }),
+                        singleValue: (base) => ({
+                          ...base,
+                          color: 'white', // Text color for the selected value
+                          textAlign: 'center' // Center the selected value
+                        }),
+                        menu: (base) => ({
+                          ...base,
+                          backgroundColor: 'rgb(23, 37, 84)', // Tailwind's blue-950 for dropdown
+                          color: 'white'
+                        }),
+                        option: (base, { isFocused, isSelected }) => ({
+                          ...base,
+                          backgroundColor: isFocused
+                            ? 'rgb(43, 57, 104)'
+                            : isSelected
+                            ? 'rgb(43, 57, 104)'
+                            : 'rgb(23, 37, 84)',
+                          color: 'white',
+                          textAlign: 'center' // Center the option text
+                        })
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className='flex flex-row gap-2 text-nowrap'>
+                    <Button
+                      text='Log In'
+                      color='white'
+                      filled={false}
+                      onClick={() => {
+                        navigate('/login');
+                      }}
+                    />
+                    <Button
+                      text='Sign Up'
+                      color='white'
+                      filled={false}
+                      onClick={() => {
+                        navigate('signup');
+                      }}
+                    />
+                  </div>
+                )}
+              </>
+            )}
         </div>
       </nav>
       <div className='w-full h-full relative overflow-y-scroll'>

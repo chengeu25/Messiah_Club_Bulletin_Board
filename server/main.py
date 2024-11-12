@@ -112,7 +112,10 @@ def resend_code():
     mysql.connection.commit()
 
     # Send the new verification code to the user's email
-    send_verification_email(email, new_code)
+    verified = send_verification_email(email, new_code)
+
+    if not verified:
+        return jsonify({"error": "Failed to send verification code"}), 500
 
     return jsonify({"message": "Verification code resent"}), 200
 
@@ -140,6 +143,9 @@ def send_verification_email(email, code):
         print("Email sent successfully.")
     except Exception as e:
         print(f"Failed to send email to {email} with code {code}: {e}")
+        return False
+
+    return True
 
 
 @app.route("/api/checkUser", methods=["GET"])
@@ -233,7 +239,8 @@ def login():
 
 @app.route("/api/logout", methods=["POST"])
 def logout():
-    session.pop("user_id", None)
+    session.clear()
+    session.modified = True
     resp = jsonify({"message": "Logout successful"})
     resp.set_cookie("user_id", "", expires=0, path="/api")
     return resp, 200
