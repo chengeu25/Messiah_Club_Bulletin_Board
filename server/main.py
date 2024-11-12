@@ -9,6 +9,19 @@ import os
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
+# Load the secret key from environment variables
+RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
+
+def is_it_a_robot(captcha_response):  
+    payload = {
+        "secret": RECAPTCHA_SECRET_KEY,  # Use the secret key from environment
+        "response": captcha_response
+    }
+    response = requests.post(
+        "https://www.google.com/recaptcha/api/siteverify", data=payload
+    )
+    result = response.json()
+    return result.get("success", False)
 
 load_dotenv()
 
@@ -145,15 +158,6 @@ def password_strong_or_nah(password):
     return True
 
 
-def is_it_a_robot(captcha_response):  # checks for if it is or is not a robot
-    payload = {"secret": RECAPTCHA_KEY, "response": captcha_response}
-    response = requests.post(
-        "https://www.google.com/recaptcha/api/siteverify", data=payload
-    )
-    result = response.json()
-    return result.get("success", False)
-
-
 @app.route("/api/signup", methods=["POST"])
 def signup():
     data = request.get_json()
@@ -164,8 +168,11 @@ def signup():
     gender = 1 if data.get("gender") == "male" else 0
     captcha_response = data.get("captchaResponse")
 
-    ##if not is_it_a_robot(captcha_response): # to verify the robot or not
-    ##return jsonify({"error": "you may be a robot."}), 400
+    # Validate reCAPTCHA response
+    print(f"Captcha Response: {captcha_response}")  # Debugging line
+    if not is_it_a_robot(captcha_response):
+        return jsonify({"error": "You may be a robot."}), 400
+
     # to check if the email is unique
     cur = mysql.connection.cursor()
     cur.execute(
@@ -187,7 +194,7 @@ def signup():
     print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 1, %s, %s, 0,0,1,1,%s)",
+        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
         (email, hashed_password, gender, name),
     )
     mysql.connection.commit()
