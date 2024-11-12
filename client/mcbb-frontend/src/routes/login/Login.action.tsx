@@ -26,13 +26,13 @@ const loginAction: ActionFunction = async ({ request }) => {
 
     // Go to the dashboard if login worked
     if (loginResponse.ok) {
-      return redirect('/dashboard');
+      return redirect('/verifyEmail');
     }
     // Check if login failed because email is not verified
     else {
       const json = await loginResponse.json();
       if (json?.error === 'Email not verified') {
-        return redirect('/login?error=Email%20not%20verified');
+        return redirect('/verifyEmail');
       }
       return redirect('/login?error=' + json.error);
     }

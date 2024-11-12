@@ -34,6 +34,7 @@ cors = CORS(
     },
 )
 
+
 # Function to get user by email from the database
 def get_code_by_email(email):
     cursor = mysql.connection.cursor()
@@ -43,9 +44,10 @@ def get_code_by_email(email):
     cursor.close()
     return user
 
+
 # Function to update the email verification status in the database
 def update_email_verified(email, **kwargs):
-    try: 
+    try:
         cursor = mysql.connection.cursor()
         query = "UPDATE users SET EMAIL_VERIFIED = %s WHERE email = %s"
         cursor.execute(query, (1 if kwargs["verified"] else 0, email))
@@ -60,24 +62,29 @@ def update_email_verified(email, **kwargs):
 def hello():
     return "Hello, World!"
 
-@app.route('/api/verify-email', methods=['POST'])
+
+@app.route("/api/verify-email", methods=["POST"])
 def verify_email():
     data = request.get_json()
-    input_code = data.get('code')
-    email = session.get('user_id')
-    
+    input_code = data.get("code")
+    email = session.get("user_id")
+
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
     # if not email:
     #     return jsonify({"error": "Email is required"}), 400
 
     # Retrieve user from the database
-    user = get_code_by_email(email)  # This function should query the database to find the user by email
+    user = get_code_by_email(
+        email
+    )  # This function should query the database to find the user by email
     print(user)
 
     if user == input_code:
         # Update EMAIL_VERIFIED field in the database
-        update_success = update_email_verified(email, verified=True)  # Function that updates EMAIL_VERIFIED field
+        update_success = update_email_verified(
+            email, verified=True
+        )  # Function that updates EMAIL_VERIFIED field
 
         if update_success:
             return jsonify({"message": "Email verified successfully"}), 200
@@ -87,25 +94,28 @@ def verify_email():
         return jsonify({"error": "Invalid verification code"}), 400
 
 
-@app.route('/api/resend-code', methods=['POST'])
+@app.route("/api/resend-code", methods=["POST"])
 def resend_code():
     data = request.get_json()
     print("Received data:", data)  # Print received data
-    #get email from session?
-    email = session.get('user_id')
-    
+    # get email from session?
+    email = session.get("user_id")
+
     # Generate a new verification code
-    new_code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     # Update the verification code in the database
     cursor = mysql.connection.cursor()
-    cursor.execute("UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email))
+    cursor.execute(
+        "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
+    )
     mysql.connection.commit()
 
     # Send the new verification code to the user's email
     send_verification_email(email, new_code)
 
     return jsonify({"message": "Verification code resent"}), 200
+
 
 def send_verification_email(email, code):
     sender_email = os.getenv("SENDER_EMAIL")
@@ -119,12 +129,12 @@ def send_verification_email(email, code):
     body = f"Your new verification code is: {code}"
 
     msg = MIMEText(body)
-    msg['Subject'] = subject
-    msg['From'] = sender_email
-    msg['To'] = email  # changed to 'email' to use the intended recipient
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = email  # changed to 'email' to use the intended recipient
 
     try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, email, msg.as_string())
         print("Email sent successfully.")
@@ -177,13 +187,16 @@ def login():
 
     # Retrieve the hashed password from the database
     cur.execute(
-        """SELECT pwd1, email_verified
+        """SELECT pwd1
                 FROM users 
                 WHERE email = %s
                     AND is_active = 1""",
         (data["email"],),
     )
     result = cur.fetchone()
+
+    # Turn off email verified
+    update_email_verified(data["email"], verified=False)
 
     # If no matching email is found, return an error
     if result is None:
@@ -199,9 +212,9 @@ def login():
     session["last_activity"] = datetime.now(timezone.utc)
 
     # Check if email is verified
-    is_email_verified = result[1]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
+    # is_email_verified = result[1]
+    # if not is_email_verified == 1:
+    #     return jsonify({"error": "Email not verified"}), 401
 
     cur.close()
 
