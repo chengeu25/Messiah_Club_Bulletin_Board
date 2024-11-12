@@ -4,12 +4,14 @@ import Input from '../../components/formElements/Input.component'; // Import Inp
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
 import passwordStrongOrNah from '../../helper/passwordstrength'; // Import password strength validator
+import ReCAPTCHA from "react-google-recaptcha";  // Import ReCAPTCHA component
 
 const SignUp = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [captchaResponse, setCaptchaResponse] = useState<string | null>(null); // Store captcha response
 
   // Local states to manage password input and matching
   const [password, setPassword] = useState<string>('');
@@ -30,6 +32,10 @@ const SignUp = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    if (captchaResponse) {
+      formData.append('captchaResponse', captchaResponse); // Add captcha response
+    }
+  
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
@@ -46,7 +52,8 @@ const SignUp = () => {
       password === '' ||
       confirmPassword === '' ||
       formData.get('name') === '' ||
-      formData.get('email') === ''
+      formData.get('email') === '' ||
+      !captchaResponse // Check if CAPTCHA is filled
     ) {
       setError('Please fill out all required');
       return;
@@ -83,6 +90,10 @@ const SignUp = () => {
     const newConfirmPassword = event.target.value;
     setConfirmPassword(newConfirmPassword);
     setPasswordMatch(newConfirmPassword === password); // Check if passwords match
+  };
+
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptchaResponse(value);
   };
 
   return (
@@ -175,6 +186,14 @@ const SignUp = () => {
               ]}
               filled={false}
               required
+            />
+          </div>
+
+          {/* CAPTCHA */}
+          <div className="w-full">
+            <ReCAPTCHA
+              sitekey="6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L" // Use your reCAPTCHA site key
+              onChange={handleCaptchaChange}
             />
           </div>
 
