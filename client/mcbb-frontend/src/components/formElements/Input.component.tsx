@@ -10,7 +10,9 @@ interface InputProps {
   placeholder?: string;
   required?: boolean;
   onInput?: FormEventHandler<HTMLInputElement>;
+  onChange?: FormEventHandler<HTMLInputElement>;
   value?: string;
+  checked?: boolean;
 }
 
 const Input = ({
@@ -22,7 +24,9 @@ const Input = ({
   placeholder = '',
   required = false,
   onInput,
-  value
+  onChange,
+  value,
+  checked
 }: InputProps) => (
   <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
     <span>
@@ -40,7 +44,9 @@ const Input = ({
           type === 'checkbox' ? 'max-w-10' : 'w-full'
         )} p-2 rounded-lg flex-grow`}
       onInput={onInput}
+      onChange={onChange}
       value={value}
+      checked={checked}
     />
   </label>
 );

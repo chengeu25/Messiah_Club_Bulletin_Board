@@ -16,16 +16,18 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 # Load the secret key from environment variables
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
-def is_it_a_robot(captcha_response):  
+
+def is_it_a_robot(captcha_response):
     payload = {
         "secret": RECAPTCHA_SECRET_KEY,  # Use the secret key from environment
-        "response": captcha_response
+        "response": captcha_response,
     }
     response = requests.post(
         "https://www.google.com/recaptcha/api/siteverify", data=payload
     )
     result = response.json()
     return result.get("success", False)
+
 
 load_dotenv()
 
@@ -161,12 +163,17 @@ def send_verification_email(email, code):
     return True
 
 
-@app.route("/api/checkUser", methods=["GET"])
-def check_user():
+@app.route("/api/checkUserCookie", methods=["GET"])
+def check_user_cookie():
     user_id = request.cookies.get("user_id")
     if user_id:
-        session["user_id"] = user_id
-        session["last_activity"] = datetime.now(timezone.utc)
+        return jsonify({"user_id": user_id}), 200
+    else:
+        return jsonify({"user_id": None}), 404
+
+
+@app.route("/api/checkUser", methods=["GET"])
+def check_user():
     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
         "last_activity"
     ) < timedelta(minutes=15):
@@ -246,6 +253,8 @@ def login():
         # Set a cookie that expires in 30 days
         expires = datetime.now() + timedelta(days=30)
         response.set_cookie("user_id", email, expires=expires, path="/api")
+    else:
+        response.set_cookie("user_id", email, expires=0, path="/api")
 
     return response, 200
 
