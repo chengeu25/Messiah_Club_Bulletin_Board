@@ -49,6 +49,7 @@ cors = CORS(
 
 
 # Function to get user by email from the database
+# return session.get("verification_code")
 def get_code_by_email(email):
     cursor = mysql.connection.cursor()
     query = "SELECT verification_code FROM users WHERE email = %s"
@@ -70,6 +71,33 @@ def update_email_verified(email, **kwargs):
     except:
         return False
 
+# Function to send a verification email
+def send_verification_email(email, code):
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+
+    # Check if variables are loaded correctly
+    print(f"Sender Email: {sender_email}")
+    print(f"Sender Password: {sender_password}")
+
+    subject = "Your Verification Code"
+    body = f"Your new verification code is: {code}"
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = email  # changed to 'email' to use the intended recipient
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, email, msg.as_string())
+        print("Email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send email to {email} with code {code}: {e}")
+        return False
+
+    return True
 
 @app.route("/")
 def hello():
@@ -118,6 +146,7 @@ def resend_code():
     new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     # Update the verification code in the database
+    #session['verification_code'] = new_code
     cursor = mysql.connection.cursor()
     cursor.execute(
         "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
@@ -133,32 +162,6 @@ def resend_code():
     return jsonify({"message": "Verification code resent"}), 200
 
 
-def send_verification_email(email, code):
-    sender_email = os.getenv("SENDER_EMAIL")
-    sender_password = os.getenv("SENDER_PASSWORD")
-
-    # Check if variables are loaded correctly
-    print(f"Sender Email: {sender_email}")
-    print(f"Sender Password: {sender_password}")
-
-    subject = "Your Verification Code"
-    body = f"Your new verification code is: {code}"
-
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = sender_email
-    msg["To"] = email  # changed to 'email' to use the intended recipient
-
-    try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, email, msg.as_string())
-        print("Email sent successfully.")
-    except Exception as e:
-        print(f"Failed to send email to {email} with code {code}: {e}")
-        return False
-
-    return True
 
 
 @app.route("/api/checkUser", methods=["GET"])
