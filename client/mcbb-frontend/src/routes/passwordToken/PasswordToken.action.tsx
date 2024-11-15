@@ -1,7 +1,7 @@
 import { ActionFunction, redirect } from 'react-router';
 // import { useSearchParams } from 'react-router-dom';
 
-const ForgotPasswordTokenAction: ActionFunction = async ({ request, params }) => {
+const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     try {
         // const [params] = useSearchParams();
         const formData = await request.formData();
@@ -18,18 +18,18 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request, params }) =>
             return redirect('/login?error=Token%20missing');
         }
 
-        const loginRequest = await fetch(`http://localhost:3000/api/ForgotPasswordToken`, {
+        const loginRequest = await fetch(`http://localhost:3000/api/forgotPasswordToken`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             credentials: 'include',
-            body: JSON.stringify({ token, newPassword, confirmPassword })
+            body: JSON.stringify({ token, newPassword })
         });
 
         // Go to dashboard if password reset is successful
         if (loginRequest.ok) {
-            return redirect('/dashboard?message=' + 'password%20reset%20successful');
+            return redirect('/login?message=' + 'password%20reset%20successful');
         } else {
             let errorMessage = "an error has occured";
             if (loginRequest.headers.get('content-type')?.includes('application/json')) {
@@ -42,7 +42,7 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request, params }) =>
             } else {
                 console.warn('Non-JSON error response received');
             }
-            return redirect(`/login?error=${encodeURIComponent(errorMessage)}`);
+            return redirect(`/forgotPasswordToken?error=${encodeURIComponent(errorMessage)}`);
             /*try {
                 const json = await loginRequest.json();
                 errorMessage = json.error || errorMessage;

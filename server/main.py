@@ -32,8 +32,8 @@ mysql = MySQL(app)
 cors = CORS(
     app,
     resources={
-        r"/api/*": {"origins": "http://localhost:5173", "supports_credentials": True}
-    },
+        r"/api/*": {"origins": "http://localhost:5173"}#, "supports_credentials": True}
+    }, supports_credentials=True
 )
 
 
@@ -42,28 +42,51 @@ def hello():
     return "Hello, World!"
 
 
+# @app.route("/api/checkUser", methods=["GET"])
+# def check_user():
+#     print("Last Activity: ", session.get("last_activity"))
+#     print("Time: ", datetime.now(timezone.utc) - session.get("last_activity"))
+#     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
+#         "last_activity"
+#     ) < timedelta(minutes=15):
+#         cur = mysql.connection.cursor()
+#         cur.execute(
+#             """SELECT email, name
+#                 FROM users 
+#                 WHERE email = %s
+#             """,
+#             (session["user_id"],),
+#         )
+#         result = cur.fetchone()
+#         cur.close()
+
+#         if result is None:
+#             return jsonify({"user_id": None, "name": None}), 401
+#         return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
+#     else:
+#         return jsonify({"user_id": None, "name": None}), 401
 @app.route("/api/checkUser", methods=["GET"])
 def check_user():
-    if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
-        "last_activity"
-    ) < timedelta(minutes=15):
-        cur = mysql.connection.cursor()
-        cur.execute(
-            """SELECT email, name
-                FROM users 
-                WHERE email = %s
-            """,
-            (session["user_id"],),
-        )
-        result = cur.fetchone()
-        cur.close()
+    print("Last Activity: ", session.get("last_activity"))
+    # print("Time: ", datetime.now(timezone.utc) - session.get("last_activity"))
+    if session.get("user_id") is not None:
+        if datetime.now(timezone.utc) - session.get("last_activity") < timedelta(minutes = 15):
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """SELECT email, name
+                    FROM users 
+                    WHERE email = %s
+                """,
+                (session["user_id"],),
+            )
+            result = cur.fetchone()
+            cur.close()
 
         if result is None:
             return jsonify({"user_id": None, "name": None}), 401
         return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
     else:
         return jsonify({"user_id": None, "name": None}), 401
-
 
 @app.route("/api/login", methods=["POST"])
 def login():
@@ -217,8 +240,9 @@ def reset_password():
     print(result[0])
     print(result[1])
     print(result[2])
-    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
-        return jsonify({"error": "New password cannot be a previously used password"}), 400
+    if result[1] != None and result[2] != None:
+        if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+            return jsonify({"error": "New password cannot be a previously used password"}), 400
 
     # Cascade passwords
     print(
@@ -244,11 +268,18 @@ def reset_password():
     return jsonify({"message": "Password successfully reset"})
 
 
+@app.after_request
+def apply_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
 @app.route("/api/forgotPassword", methods=["POST"])
 def forgot_password():
     data = request.json
     cur = mysql.connection.cursor()
-    print(f"Received data: {data}")
 
     # Retrieve the hashed passwords from the database
     cur.execute(
@@ -270,25 +301,22 @@ def forgot_password():
         return jsonify({"error": "Email not verified"}), 401
 
     # Generate a reset token
-    token = urllib.parse.quote(jwt.encode(
+    token = jwt.encode(
         {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
         app.config["SECRET_KEY"],
-        algorithm="HS256",)
+        algorithm="HS256",
     )
-
-    print(f"""update users
-                SET reset_token = '{token}'
-                WHERE email = '{data["email"]}'""")
 
     # Add token to database
     cur.execute(
-        f"""update users
-                SET reset_token = '{token}'
-                WHERE email = '{data["email"]}'""",
-                #(data["email"])
+        """update users
+                SET reset_token = %s
+                WHERE email = %s""",
+            (token, data["email"],),
     )
+    mysql.connection.commit()
+    result = cur.fetchone()
 
-    # token = base64url_decode(token)
     # Create reset link
     reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
 
@@ -304,10 +332,6 @@ def base64url_decode(encoded_data):
 def send_email(to_email, reset_link):
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
-
-    # Check
-    print(f"Sender Email: {sender_email}")
-    print(f"Sender Password: {sender_password}")
 
     subject = "SHARC Forgot Password"
     body = f"Click the link to reset your password: {reset_link}"
@@ -326,53 +350,46 @@ def send_email(to_email, reset_link):
     except Exception as e:
         print(f"Failed to send email to {to_email}: {e}")
 
-@app.route("/api/ForgotPasswordToken", methods=["POST"])
+@app.route("/api/forgotPasswordToken", methods=["POST"])
 def forgot_password_reset():
     data = request.json
     cur = mysql.connection.cursor()
-    print(data['token'])
+
+    try:
+        # Extract token from request data
+        token = request.json.get("token")
+        decoded_data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        user_email = decoded_data.get("email")
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token has expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        f"""select pwd1, pwd2, pwd3, email_verified, reset_token
+        """select pwd1, pwd2, pwd3, email_verified, reset_token, email
                 FROM users
-                WHERE reset_token = '{data['token']}'
+                WHERE reset_token = %s
                     AND is_active = 1""",
-        # (data['token']),
+        (token,),
     )
     result = cur.fetchone()
-    print("test 1")
 
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Invalid email or password"}), 401
 
-    print("test 3")
-
-    # Check if email is verified
-    #is_email_verified = result[3]
-    #if not is_email_verified == 1:
-    #    return jsonify({"error": "Email not verified"}), 401
-    
-    print("test 4")
-
     # Check if new password is unique to the last three saved passwords
     new_password = data["newPassword"]
-    print(new_password)
-    print(result[0])
-    print(result[1])
-    print(result[2])
+
     if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
         return jsonify({"error": "New password cannot be a previously used password"}), 400
-
-    print("test 5")
-
 
     # Cascade passwords
     print(
         f"""UPDATE users
                 SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
-                WHERE email = {data['emailRequest']['email']}"""
+                WHERE email = {result[5]}"""
     )
     print((
             str(result[1]),
@@ -391,8 +408,10 @@ def forgot_password_reset():
             str(data["token"]),
         ),
     )
+    mysql.connection.commit()
+    cur.close()
+    session.pop('user_id', None)
     return jsonify({'message': "Password reset successful"}), 200
-    print("test 6")
 
 
 if __name__ == "__main__":

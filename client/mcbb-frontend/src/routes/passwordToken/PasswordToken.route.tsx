@@ -18,7 +18,7 @@ const ForgotPassswordToken = () => {
             setMessage(decodeURIComponent(params.get('message') ?? ''));
         }
         if (!params.get('token')) {
-            navigate('/error');
+            navigate('/forgotPasswordToken?error=' + params.get("error"));
         }
     }, [params.get('token'), navigate, params]);
 

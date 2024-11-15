@@ -5,6 +5,8 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const oldPassword = formData.get('pwd');
   const newPassword = formData.get('npwd');
+  console.log("Old Password: ", oldPassword);
+  console.log("New Password: ", newPassword);
   
   const emailRequest = await checkUser()
   if (emailRequest) {
@@ -16,6 +18,8 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
       credentials: 'include',
       body: JSON.stringify({ oldPassword, newPassword, emailRequest })
     });
+
+    console.log("Email request: ", emailRequest);
   
 
     // Go to login if password has been changed and change error message to say password has been reset

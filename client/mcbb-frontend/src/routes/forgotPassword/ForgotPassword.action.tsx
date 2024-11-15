@@ -15,7 +15,7 @@ const forgotPasswordAction: ActionFunction = async ({ request }) => {
   });
 
   if (loginRequest.ok) {
-    return redirect('/ForgotPasswordMessage')
+    return redirect('/forgotPasswordMessage')
   } else {
     const json = await loginRequest.json();
     return redirect('/forgot?error=' + json.error)
