@@ -12,8 +12,8 @@ import smtplib
 from email.mime.text import MIMEText
 
 app = Flask(__name__)
+# Load the secret keys from environment variables
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
-# Load the secret key from environment variables
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
 
@@ -135,11 +135,6 @@ def resend_code():
 
     # Update the verification code in the database
     session["verification_code"] = new_code
-    # cursor = mysql.connection.cursor()
-    # cursor.execute(
-    #     "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
-    # )
-    # mysql.connection.commit()
 
     # Send the new verification code to the user's email
     verified = send_verification_email(email, new_code)
