@@ -200,15 +200,13 @@ def check_user():
                     """,
             (session["user_id"],),
         )
-        cur.close()
         result_2 = None
         try:
             result_2 = cur.fetchall()
+            result_2 = list(map(lambda x: x[0], result_2))
         except TypeError:
             result_2 = None
-
-        print(result_2)
-
+        cur.close()
         if result is None:
             return (
                 jsonify(
@@ -223,7 +221,6 @@ def check_user():
                 ),
                 401,
             )
-
         session["last_activity"] = datetime.now(timezone.utc)
         return (
             jsonify(
@@ -252,6 +249,34 @@ def check_user():
             ),
             401,
         )
+
+
+@app.route("/api/clubs", methods=["GET"])
+def get_clubs():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT club_id, club_name, description, club_logo FROM club WHERE is_active = 1"
+    )
+    result = None
+    try:
+        result = cur.fetchall()
+        result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "name": x[1],
+                    "description": x[2],
+                    "image": x[3],
+                },
+                result,
+            )
+        )
+    except TypeError:
+        result = None
+    if result is None:
+        return jsonify({"error": "No clubs found"}), 404
+    cur.close()
+    return jsonify(result), 200
 
 
 @app.route("/api/login", methods=["POST"])
