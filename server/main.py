@@ -50,17 +50,6 @@ cors = CORS(
 )
 
 
-# Function to get user by email from the database
-# return session.get("verification_code")
-def get_code_by_email(email):
-    cursor = mysql.connection.cursor()
-    query = "SELECT verification_code FROM users WHERE email = %s"
-    cursor.execute(query, (email,))
-    user = cursor.fetchone()[0]  # Fetch the first result
-    cursor.close()
-    return user
-
-
 # Function to update the email verification status in the database
 def update_email_verified(email, **kwargs):
     try:
@@ -116,17 +105,11 @@ def verify_email():
 
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
-    # if not email:
-    #     return jsonify({"error": "Email is required"}), 400
 
-    stored_code = session.get("verification_code")
-    # Retrieve user from the database
-    # user = get_code_by_email(
-    #     email
-    # )  # This function should query the database to find the user by email
-    # print(user)
-
-    if stored_code == input_code:
+    #store verification code in session
+    stored_session_code = session.get("verification_code")
+    
+    if stored_session_code == input_code:
         # Update EMAIL_VERIFIED field in the database
         update_success = update_email_verified(
             email, verified=True
