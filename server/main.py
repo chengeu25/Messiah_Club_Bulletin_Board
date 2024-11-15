@@ -73,6 +73,7 @@ def update_email_verified(email, **kwargs):
     except:
         return False
 
+
 # Function to send a verification email
 def send_verification_email(email, code):
     sender_email = os.getenv("SENDER_EMAIL")
@@ -100,6 +101,7 @@ def send_verification_email(email, code):
         return False
 
     return True
+
 
 @app.route("/")
 def hello():
@@ -149,7 +151,7 @@ def resend_code():
     new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     # Update the verification code in the database
-    session['verification_code'] = new_code
+    session["verification_code"] = new_code
     # cursor = mysql.connection.cursor()
     # cursor.execute(
     #     "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
@@ -163,8 +165,6 @@ def resend_code():
         return jsonify({"error": "Failed to send verification code"}), 500
 
     return jsonify({"message": "Verification code resent"}), 200
-
-
 
 
 @app.route("/api/checkUserCookie", methods=["GET"])
