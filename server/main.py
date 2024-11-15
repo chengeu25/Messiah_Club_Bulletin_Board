@@ -161,18 +161,44 @@ def check_user():
     ) < timedelta(minutes=15):
         cur = mysql.connection.cursor()
         cur.execute(
-            """SELECT email, email_verified, name
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty
                 FROM users 
                 WHERE email = %s
+                    AND is_active = 1
             """,
             (session["user_id"],),
         )
         result = cur.fetchone()
+        cur.execute(
+            """SELECT a.club_id 
+                        FROM club_admin a
+                        INNER JOIN users u ON u.email = a.user_id
+                        WHERE a.user_id = %s
+                            AND u.is_active = 1
+                    """,
+            (session["user_id"],),
+        )
+        result_2 = None
+        try:
+            result_2 = cur.fetchall()
+            result_2 = list(map(lambda x: x[0], result_2))
+        except TypeError:
+            result_2 = None
         cur.close()
-
         if result is None:
-            return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
-
+            return (
+                jsonify(
+                    {
+                        "user_id": None,
+                        "name": None,
+                        "emailVerified": None,
+                        "isFaculty": None,
+                        "canDeleteFaculty": None,
+                        "clubAdmins": None,
+                    }
+                ),
+                401,
+            )
         session["last_activity"] = datetime.now(timezone.utc)
         return (
             jsonify(
@@ -180,12 +206,55 @@ def check_user():
                     "user_id": session["user_id"],
                     "name": result[2],
                     "emailVerified": result[1],
+                    "isFaculty": result[3],
+                    "canDeleteFaculty": result[4],
+                    "clubAdmins": result_2,
                 }
             ),
             200,
         )
     else:
-        return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
+        return (
+            jsonify(
+                {
+                    "user_id": None,
+                    "name": None,
+                    "emailVerified": None,
+                    "isFaculty": None,
+                    "canDeleteFaculty": None,
+                    "clubAdmins": None,
+                }
+            ),
+            401,
+        )
+
+
+@app.route("/api/clubs", methods=["GET"])
+def get_clubs():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT club_id, club_name, description, club_logo FROM club WHERE is_active = 1"
+    )
+    result = None
+    try:
+        result = cur.fetchall()
+        result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "name": x[1],
+                    "description": x[2],
+                    "image": x[3],
+                },
+                result,
+            )
+        )
+    except TypeError:
+        result = None
+    if result is None:
+        return jsonify({"error": "No clubs found"}), 404
+    cur.close()
+    return jsonify(result), 200
 
 
 @app.route("/api/login", methods=["POST"])

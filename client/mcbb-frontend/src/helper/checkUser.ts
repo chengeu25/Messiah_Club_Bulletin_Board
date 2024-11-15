@@ -2,6 +2,9 @@ export interface User {
   name: string;
   email: string;
   emailVerified: boolean;
+  isFaculty: boolean;
+  canDeleteFaculty: boolean;
+  clubAdmins: number[];
 }
 
 const checkUser = async (): Promise<boolean | User> => {
@@ -17,7 +20,10 @@ const checkUser = async (): Promise<boolean | User> => {
     return {
       name: json.name,
       email: json.user_id,
-      emailVerified: json.emailVerified === 1 ? true : false
+      emailVerified: json.emailVerified === 1 ? true : false,
+      isFaculty: json.isFaculty === 1 ? true : false,
+      canDeleteFaculty: json.canDeleteFaculty === 1 ? true : false,
+      clubAdmins: json.clubAdmins
     };
   }
   return false;
