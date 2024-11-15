@@ -117,13 +117,14 @@ def verify_email():
     # if not email:
     #     return jsonify({"error": "Email is required"}), 400
 
+    stored_code = session.get("verification_code")
     # Retrieve user from the database
-    user = get_code_by_email(
-        email
-    )  # This function should query the database to find the user by email
-    print(user)
+    # user = get_code_by_email(
+    #     email
+    # )  # This function should query the database to find the user by email
+    # print(user)
 
-    if user == input_code:
+    if stored_code == input_code:
         # Update EMAIL_VERIFIED field in the database
         update_success = update_email_verified(
             email, verified=True
@@ -148,12 +149,12 @@ def resend_code():
     new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     # Update the verification code in the database
-    #session['verification_code'] = new_code
-    cursor = mysql.connection.cursor()
-    cursor.execute(
-        "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
-    )
-    mysql.connection.commit()
+    session['verification_code'] = new_code
+    # cursor = mysql.connection.cursor()
+    # cursor.execute(
+    #     "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
+    # )
+    # mysql.connection.commit()
 
     # Send the new verification code to the user's email
     verified = send_verification_email(email, new_code)
