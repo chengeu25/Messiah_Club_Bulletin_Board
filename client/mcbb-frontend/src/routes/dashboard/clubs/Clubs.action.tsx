@@ -5,7 +5,7 @@ const clubsAction: ActionFunction = async ({ request }) => {
   const action = formData.get('action');
   const id = formData.get('id');
   if (action === 'create') {
-    return redirect(`/dashboard/clubs/new`);
+    return redirect(`/dashboard/club/new`);
   } else if (action === 'edit') {
     return redirect(`/dashboard/club/${id}/edit`);
   } else if (action === 'delete') {

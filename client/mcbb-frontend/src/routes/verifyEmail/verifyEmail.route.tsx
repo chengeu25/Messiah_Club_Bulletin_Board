@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSearchParams, useSubmit } from 'react-router-dom';
+import { useSearchParams, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 const VerifyEmail = () => {
   const submit = useSubmit();
@@ -40,38 +41,34 @@ const VerifyEmail = () => {
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
-          <h1 className='text-3xl font-bold'>2-Factor Authentication</h1>
-          {error && <div className='text-red-500'>{error}</div>}
-          {message && <p className='text-green-500'>{message}</p>}
-          <Input
-            label='Enter the code sent to your email:'
-            name='code'
-            type='text'
-            placeholder='XXXXXX'
-            color='blue'
-            filled={false}
-          />
-          <div className='flex flex-row gap-2'>
-            <Button
-              text='Authenticate'
-              type='submit'
-              name='verifyEmail'
-              color='blue'
-            />
-            <Button
-              text='Resend Code'
-              type='submit'
-              name='resendCode'
-              color='blue'
-              filled={false}
-            />
-          </div>
-        </Form>
+    <ResponsiveForm onSubmit={handleSubmit}>
+      <h1 className='text-3xl font-bold'>2-Factor Authentication</h1>
+      {error && <div className='text-red-500'>{error}</div>}
+      {message && <p className='text-green-500'>{message}</p>}
+      <Input
+        label='Enter the code sent to your email:'
+        name='code'
+        type='text'
+        placeholder='XXXXXX'
+        color='blue'
+        filled={false}
+      />
+      <div className='flex flex-row gap-2'>
+        <Button
+          text='Authenticate'
+          type='submit'
+          name='verifyEmail'
+          color='blue'
+        />
+        <Button
+          text='Resend Code'
+          type='submit'
+          name='resendCode'
+          color='blue'
+          filled={false}
+        />
       </div>
-    </div>
+    </ResponsiveForm>
   );
 };
 

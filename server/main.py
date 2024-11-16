@@ -106,9 +106,9 @@ def verify_email():
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
 
-    #store verification code in session
+    # store verification code in session
     stored_session_code = session.get("verification_code")
-    
+
     if stored_session_code == input_code:
         # Update EMAIL_VERIFIED field in the database
         update_success = update_email_verified(
@@ -254,6 +254,39 @@ def get_clubs():
     if result is None:
         return jsonify({"error": "No clubs found"}), 404
     cur.close()
+    return jsonify(result), 200
+
+
+@app.route("/api/club/<club_id>", methods=["GET"])
+def get_club(club_id):
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT club_id, club_name, description, club_logo 
+            FROM club 
+            WHERE is_active = 1 
+                AND club_id = %s""",
+        (club_id,),
+    )
+    result = cur.fetchone()
+    if result is None:
+        return jsonify({"error": "The requested club was not found on the server"}), 404
+    result = {
+        "id": result[0],
+        "name": result[1],
+        "description": result[2],
+        "image": result[3],
+    }
+    cur.execute(
+        """SELECT user_id, club_admin_id FROM club_admin WHERE club_id = %s""",
+        (club_id,),
+    )
+    result["admins"] = list(map(lambda x: {"user": x[0], "id": x[1]}, cur.fetchall()))
+    cur.execute(
+        """SELECT image, club_photo_id FROM club_photo WHERE club_id = %s""", (club_id,)
+    )
+    result["images"] = list(map(lambda x: {"image": x[0], "id": x[1]}, cur.fetchall()))
+    cur.close()
+    print(result)
     return jsonify(result), 200
 
 

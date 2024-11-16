@@ -37,9 +37,6 @@ const Clubs = () => {
       {data.user.isFaculty && (
         <Form onSubmit={handleSubmit}>
           <Button
-            onClick={() => {
-              window.location.href = '/dashboard/clubs/new';
-            }}
             color='blue'
             text='Create New Club'
             filled

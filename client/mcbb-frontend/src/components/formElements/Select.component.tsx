@@ -31,11 +31,13 @@ const Select = ({
   required,
   className
 }: SelectProps) => (
-  <label className='flex flex-row items-center text-nowrap gap-2'>
-    <span>
-      {label}
-      {required && <span className='text-red-500'>*</span>}
-    </span>
+  <label className='flex flex-col text-nowrap gap-2'>
+    {label && (
+      <span>
+        {label}
+        {required && <span className='text-red-500'>*</span>}
+      </span>
+    )}
     <select
       className={`${generateStyleClasses(
         color,

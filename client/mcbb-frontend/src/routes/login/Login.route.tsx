@@ -1,12 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Form,
-  useSubmit,
-  useSearchParams,
-  useLoaderData
-} from 'react-router-dom';
+import { useSubmit, useSearchParams, useLoaderData } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 /**
  * Login page for the application
@@ -74,63 +70,57 @@ const Login = () => {
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
-          <h1 className='text-3xl font-bold'>Login</h1>
-          {error && <p className='text-red-500'>{error}</p>}
-          {message && <p className='text-green-500'>{message}</p>}
-          {!emailIsValid && email !== '' && (
-            <p className='text-red-500'>
-              Please enter your full Messiah email.
-            </p>
-          )}
-          <Input
-            label='Messiah Email:'
-            name='email'
-            type='text'
-            placeholder='Messiah Email'
-            color='blue'
-            filled={false}
-            onInput={validateEmail}
-            value={email}
-            required
-          />
-          <Input
-            label='Password:'
-            name='password'
-            type='password'
-            placeholder='Password'
-            color='blue'
-            filled={false}
-            required
-          />
-          <Input
-            type='checkbox'
-            name='remember'
-            label='Remember Me'
-            value='true'
-            checked={remember}
-            onChange={() => setRemember(!remember)}
-          />
-          <Button color='blue' text='Sign In' type='submit' name='login' />
-          <Button
-            color='blue'
-            text={"Don't have an account? Sign Up"}
-            type='submit'
-            name='signup'
-            filled={false}
-          />
-          <Button
-            color='blue'
-            text='Forgot Password?'
-            type='submit'
-            name='forgot'
-            filled={false}
-          />
-        </Form>
-      </div>
-    </div>
+    <ResponsiveForm onSubmit={handleSubmit}>
+      <h1 className='text-3xl font-bold'>Login</h1>
+      {error && <p className='text-red-500'>{error}</p>}
+      {message && <p className='text-green-500'>{message}</p>}
+      {!emailIsValid && email !== '' && (
+        <p className='text-red-500'>Please enter your full Messiah email.</p>
+      )}
+      <Input
+        label='Messiah Email:'
+        name='email'
+        type='text'
+        placeholder='Messiah Email'
+        color='blue'
+        filled={false}
+        onInput={validateEmail}
+        value={email}
+        required
+      />
+      <Input
+        label='Password:'
+        name='password'
+        type='password'
+        placeholder='Password'
+        color='blue'
+        filled={false}
+        required
+      />
+      <Input
+        type='checkbox'
+        name='remember'
+        label='Remember Me'
+        value='true'
+        checked={remember}
+        onChange={() => setRemember(!remember)}
+      />
+      <Button color='blue' text='Sign In' type='submit' name='login' />
+      <Button
+        color='blue'
+        text={"Don't have an account? Sign Up"}
+        type='submit'
+        name='signup'
+        filled={false}
+      />
+      <Button
+        color='blue'
+        text='Forgot Password?'
+        type='submit'
+        name='forgot'
+        filled={false}
+      />
+    </ResponsiveForm>
   );
 };
 

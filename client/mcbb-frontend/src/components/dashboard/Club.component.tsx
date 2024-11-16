@@ -31,8 +31,8 @@ const Club = ({
     >
       <img src={image} alt={name} className='h-20 bg-gray-800 rounded-lg' />
       <div className='flex flex-col flex-grow'>
-        <h1 className='text-xl font-bold'>{name}</h1>
-        <p>{description}</p>
+        <h1 className='text-xl font-bold text-center xl:text-left'>{name}</h1>
+        <p className='text-center xl:text-left'>{description}</p>
       </div>
       <Form onSubmit={onSubmit} className='flex flex-row gap-2'>
         <Button
@@ -54,6 +54,7 @@ const Club = ({
               color='blue'
               type='submit'
               name='edit'
+              filled={false}
             />
             {deletable && (
               <Button
@@ -61,9 +62,10 @@ const Club = ({
                 text='Delete'
                 icon={<CiTrash size={20} />}
                 onClick={() => {}}
-                color='red'
+                color='blue'
                 type='submit'
                 name='delete'
+                filled={false}
               />
             )}
           </>
