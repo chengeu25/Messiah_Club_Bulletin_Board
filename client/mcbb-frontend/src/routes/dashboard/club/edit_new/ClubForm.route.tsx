@@ -133,6 +133,7 @@ const ClubForm = () => {
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
     if (action === 'create' || action === 'update') {
+      // Validate form
       const newErrors = [
         name === '' && 'Please enter a name.',
         description === '' && 'Please enter a description.',
@@ -141,6 +142,7 @@ const ClubForm = () => {
         images.length === 0 && 'Please add at least one image.'
       ].filter(Boolean) as string[];
 
+      // Don't submit if form validation fails
       if (
         newErrors.length > 0 ||
         adminErrors.length > 0 ||
@@ -150,11 +152,16 @@ const ClubForm = () => {
         return;
       }
 
+      // Add admins and images to form
       formData.append('action', action);
       formData.append('admins', JSON.stringify(admins));
       formData.append('logo', image);
       formData.append('images', JSON.stringify(images));
+
+      // Submit form
       submit(formData, { method: 'post' });
+
+      // Handle intermediate form actions
     } else if (action === 'add-admin') {
       addAdmin(formData.get('admins-new') as string);
       setNewAdmin('');
