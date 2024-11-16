@@ -399,6 +399,21 @@ def update_club():
     return jsonify({"message": "Club updated successfully"}), 200
 
 
+@app.route("/api/delete-club/<club_id>", methods=["DELETE"])
+def delete_club(club_id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (club_id))
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to delete the club"}), 400
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Club deleted successfully"}), 200
+
+
 @app.route("/api/new-club", methods=["POST"])
 def new_club():
     data = request.json

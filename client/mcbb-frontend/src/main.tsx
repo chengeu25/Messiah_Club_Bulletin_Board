@@ -36,6 +36,7 @@ import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
 import ClubForm from './routes/dashboard/club/edit_new/ClubForm.route.tsx';
 import clubFormLoader from './routes/dashboard/club/edit_new/ClubForm.loader.tsx';
 import clubFormAction from './routes/dashboard/club/edit_new/ClubForm.action.tsx';
+import deleteClubLoader from './routes/dashboard/club/delete/DeleteClub.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -83,6 +84,7 @@ const router = createBrowserRouter(
             loader={clubFormLoader}
             action={clubFormAction}
           />
+          <Route path=':id/delete' loader={deleteClubLoader} />
           <Route
             path='new'
             element={<ClubForm />}
