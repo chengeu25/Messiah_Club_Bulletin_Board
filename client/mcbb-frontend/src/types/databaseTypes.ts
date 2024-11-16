@@ -17,6 +17,7 @@ export interface ClubType {
 export interface ClubAdminType {
   id: number;
   user: string;
+  name: string;
 }
 
 export interface ImageType {

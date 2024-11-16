@@ -287,10 +287,16 @@ def get_club(club_id):
         ),
     }
     cur.execute(
-        """SELECT user_id, club_admin_id FROM club_admin WHERE club_id = %s""",
+        """SELECT a.user_id, a.club_admin_id, u.name 
+            FROM club_admin a 
+            INNER JOIN users u ON u.email = a.user_id
+            WHERE club_id = %s""",
         (club_id,),
     )
-    result["admins"] = list(map(lambda x: {"user": x[0], "id": x[1]}, cur.fetchall()))
+    result["admins"] = list(
+        map(lambda x: {"user": x[0], "id": x[1], "name": x[2]}, cur.fetchall())
+    )
+    print(result["admins"])
     cur.execute(
         """SELECT image, club_photo_id, image_prefix FROM club_photo WHERE club_id = %s""",
         (club_id,),

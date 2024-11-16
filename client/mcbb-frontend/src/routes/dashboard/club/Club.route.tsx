@@ -2,19 +2,14 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Event from '../../../components/dashboard/Event.component';
 import Officer from '../../../components/clubDetails/Officer';
-
-const demoOfficers = [
-  {
-    name: 'Officer 1',
-    image: '../../../../assets/logo.png',
-    email: '5mZCz@example.com'
-  },
-  {
-    name: 'Officer 2',
-    image: '../../../../assets/logo.png',
-    email: '5zGaE@example.com'
-  }
-];
+import { useLoaderData } from 'react-router';
+import {
+  ClubAdminType,
+  ClubDetailType,
+  ImageType,
+  UserType
+} from '../../../types/databaseTypes';
+import React from 'react';
 
 const demoEvents = [
   {
@@ -86,6 +81,14 @@ const demoEvents = [
 ];
 
 const Club = () => {
+  const { user, club } = useLoaderData() as {
+    user: UserType;
+    club: ClubDetailType;
+  };
+
+  React.useEffect(() => {
+    console.log(user, club);
+  });
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
       <Card
@@ -93,38 +96,23 @@ const Club = () => {
         padding={4}
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
-        <h1 className='font-bold text-4xl flex-grow'>Club Name</h1>
+        <h1 className='font-bold text-4xl flex-grow'>{club?.name}</h1>
         <div className='flex-shrink-0 flex'>
           <Button color='blue' text='Subscribe' filled={true} />
         </div>
       </Card>
       <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
-        <p>
-          Club Description Lorem ipsum dolor sit amet, consectetur adipiscing
-          elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-          aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-          laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.
-        </p>
+        <p>{club?.description}</p>
       </Card>
       <div className='flex flex-row w-full gap-4 overflow-x-scroll min-h-48'>
-        <img
-          src='../../../../assets/logo.png'
-          alt='Event'
-          className='h-48 bg-gray-800 rounded-lg shadow-md'
-        />
-        <img
-          src='../../../../assets/logo.png'
-          alt='Event'
-          className='h-48 bg-gray-800 rounded-lg shadow-md'
-        />
-        <img
-          src='../../../../assets/logo.png'
-          alt='Event'
-          className='h-48 bg-gray-800 rounded-lg shadow-md'
-        />
+        {club?.images.map((image: ImageType, index: number) => (
+          <img
+            key={index}
+            src={image.image}
+            alt='Club Image'
+            className='h-full object-contain rounded-lg'
+          />
+        ))}
       </div>
       <div className='flex flex-col gap-4 lg:flex-row w-full h-1/2'>
         <Card
@@ -134,8 +122,8 @@ const Club = () => {
         >
           <h1 className='text-xl font-bold'>Club Officers</h1>
           <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
-            {demoOfficers.map((officer) => (
-              <Officer {...officer} />
+            {club.admins.map((officer: ClubAdminType, index: number) => (
+              <Officer key={index} {...officer} />
             ))}
           </div>
         </Card>
@@ -146,8 +134,8 @@ const Club = () => {
         >
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
           <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
-            {demoEvents.map((event) => (
-              <Event {...event} />
+            {demoEvents.map((event, index) => (
+              <Event key={index} {...event} />
             ))}
           </div>
         </Card>

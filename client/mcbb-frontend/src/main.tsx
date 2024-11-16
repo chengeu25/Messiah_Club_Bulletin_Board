@@ -77,7 +77,7 @@ const router = createBrowserRouter(
         />
         <Route path='event' element={<Event />} loader={eventLoader} />
         <Route path='club' loader={clubLoader}>
-          <Route path=':id' element={<Club />} loader={eventLoader} />
+          <Route path=':id' element={<Club />} loader={clubLoader} />
           <Route
             path=':id/edit'
             element={<ClubForm />}
