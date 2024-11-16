@@ -28,7 +28,28 @@ const clubFormAction: ActionFunction = async ({ request }) => {
   } else if (action === 'delete') {
     return redirect('/dashboard/clubs', {});
   } else if (action === 'update') {
-    return redirect('/dashboard/clubs');
+    const url = new URL(request.url);
+    const pathname = url.pathname;
+    const resp = await fetch('http://localhost:3000/api/update-club', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        id: formData.get('id'),
+        name: formData.get('name'),
+        description: formData.get('description'),
+        admins: JSON.parse(formData.get('admins') as string),
+        images: JSON.parse(formData.get('images') as string),
+        image: formData.get('logo')
+      })
+    });
+    if (resp.ok) {
+      return redirect('/dashboard/clubs');
+    }
+    const json = await resp.json();
+    return redirect(`${pathname}?error=` + json.error);
   }
 };
 

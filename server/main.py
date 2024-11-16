@@ -308,11 +308,101 @@ def get_club(club_id):
     return jsonify(result), 200
 
 
+@app.route("/api/update-club", methods=["PUT"])
+def update_club():
+    data = request.json
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute(
+            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP() WHERE club_id = %s",
+            (data["name"], data["description"], data["id"]),
+        )
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to update the club"}), 400
+    try:
+        if data["image"]:
+            cur.execute(
+                "UPDATE club SET club_logo = %s, logo_prefix = %s WHERE club_id = %s",
+                (
+                    base64.b64decode(data["image"].split(",")[1]),
+                    data["image"].split(",")[0],
+                    data["id"],
+                ),
+            )
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return (
+            jsonify(
+                {
+                    "error": "Failed to update the club, something may be wrong with the logo."
+                }
+            ),
+            400,
+        )
+    if data["images"]:
+        try:
+            cur.execute(
+                "DELETE FROM club_photo WHERE club_id = %s",
+                (data["id"],),
+            )
+            for image in data["images"]:
+                cur.execute(
+                    "INSERT INTO club_photo (club_id, image, image_prefix) VALUES (%s, %s, %s)",
+                    (
+                        data["id"],
+                        base64.b64decode(image["image"].split(",")[1]),
+                        image["image"].split(",")[0],
+                    ),
+                )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the images."
+                    }
+                ),
+                400,
+            )
+    if data["admins"]:
+        try:
+            cur.execute(
+                "DELETE FROM club_admin WHERE club_id = %s",
+                (data["id"],),
+            )
+            for admin in data["admins"]:
+                cur.execute(
+                    "INSERT INTO club_admin (user_id, club_id, club_admin_id) VALUES (%s, %s, %s)",
+                    (admin["user"], data["id"], admin["id"]),
+                )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Club updated successfully"}), 200
+
+
 @app.route("/api/new-club", methods=["POST"])
 def new_club():
     data = request.json
     cur = mysql.connection.cursor()
-    mysql.connection.rollback()
 
     # First create the new club instance
     base64_image = data["image"]
@@ -332,6 +422,8 @@ def new_club():
         )
     except Exception as e:
         print(e)
+        mysql.connection.rollback()
+        cur.close()
         return jsonify({"error": "Failed to create new club"}), 400
 
     # Now we need to get the ID of the new club for use in the other tables
@@ -355,6 +447,8 @@ def new_club():
             )
         except Exception as e:
             print(e)
+            mysql.connection.rollback()
+            cur.close()
             return jsonify({"error": f"User {admin['user']} does not exist"}), 400
 
     # Add the photos
@@ -374,6 +468,8 @@ def new_club():
             )
         except Exception as e:
             print(e)
+            mysql.connection.rollback()
+            cur.close()
             return (
                 jsonify({"error": "Failed to create new photo. It may be too large."}),
                 400,

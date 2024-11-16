@@ -143,11 +143,7 @@ const ClubForm = () => {
       ].filter(Boolean) as string[];
 
       // Don't submit if form validation fails
-      if (
-        newErrors.length > 0 ||
-        adminErrors.length > 0 ||
-        newAdminError !== ''
-      ) {
+      if (newErrors.length > 0 || adminErrors.length > 0) {
         setError(newErrors);
         return;
       }
@@ -163,11 +159,20 @@ const ClubForm = () => {
 
       // Handle intermediate form actions
     } else if (action === 'add-admin') {
+      if (
+        formData.get('admins-new') === '' ||
+        !(formData.get('admins-new') as string)?.endsWith('@messiah.edu')
+      ) {
+        return;
+      }
       addAdmin(formData.get('admins-new') as string);
       setNewAdmin('');
     } else if (action.startsWith('remove-admin-')) {
       removeAdmin(parseInt(action.split('-')[2]));
     } else if (action === 'add-image') {
+      if (!(formData.get('images-new') as File)?.type.startsWith('image/')) {
+        return;
+      }
       addImage(formData.get('images-new') as File);
     } else if (action.startsWith('remove-image-')) {
       removeImage(parseInt(action.split('-')[2]));
@@ -300,7 +305,10 @@ const ClubForm = () => {
                 placeholder='officeremail@domain.edu'
                 value={newAdmin}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (!e.target.value.endsWith('@messiah.edu'))
+                  if (
+                    !e.target.value.endsWith('@messiah.edu') &&
+                    e.target.value !== ''
+                  )
                     setNewAdminError('Please enter a valid Messiah email.');
                   else setNewAdminError('');
                   setNewAdmin(e.target.value);
