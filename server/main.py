@@ -10,6 +10,7 @@ import random
 import string
 import smtplib
 from email.mime.text import MIMEText
+import base64
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -233,7 +234,7 @@ def check_user():
 def get_clubs():
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT club_id, club_name, description, club_logo FROM club WHERE is_active = 1"
+        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 1"
     )
     result = None
     try:
@@ -244,12 +245,17 @@ def get_clubs():
                     "id": x[0],
                     "name": x[1],
                     "description": x[2],
-                    "image": x[3],
+                    "image": (
+                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
+                        if x[3]
+                        else None
+                    ),
                 },
                 result,
             )
         )
-    except TypeError:
+    except TypeError as e:
+        print(e)
         result = None
     if result is None:
         return jsonify({"error": "No clubs found"}), 404
@@ -288,6 +294,84 @@ def get_club(club_id):
     cur.close()
     print(result)
     return jsonify(result), 200
+
+
+@app.route("/api/new-club", methods=["POST"])
+def new_club():
+    data = request.json
+    cur = mysql.connection.cursor()
+    mysql.connection.rollback()
+
+    # First create the new club instance
+    base64_image = data["image"]
+
+    try:
+        base64_imagedata = base64_image.split(",")
+        base64_image = base64_imagedata[1]
+        prefix = base64_imagedata[0]
+
+        image_data = base64.b64decode(base64_image)
+    except Exception as e:
+        return jsonify({"error": "Invalid image"}), 400
+    try:
+        cur.execute(
+            "INSERT INTO club (club_name, is_active, description, last_updated, club_logo, logo_prefix) VALUES (%s, 1, %s, CURRENT_TIMESTAMP(), %s, %s)",
+            (data["name"], data["description"], image_data, prefix),
+        )
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Failed to create new club"}), 400
+
+    # Now we need to get the ID of the new club for use in the other tables
+    cur.execute(
+        """SELECT club_id 
+            FROM club 
+            WHERE is_active = 1 
+                AND club_name = %s 
+                AND description = %s 
+                AND club_logo = %s""",
+        (data["name"], data["description"], image_data),
+    )
+    new_club_id = cur.fetchone()[0]
+
+    # Add the admins
+    for admin in data["admins"]:
+        try:
+            cur.execute(
+                "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
+                (admin["user"], new_club_id),
+            )
+        except Exception as e:
+            print(e)
+            return jsonify({"error": f"User {admin['user']} does not exist"}), 400
+
+    # Add the photos
+    for image in data["images"]:
+        try:
+            base64_imagedata = image["image"].split(",")
+            base64_image = base64_imagedata[1]
+            prefix = base64_imagedata[0]
+
+            image_data = base64.b64decode(base64_image)
+        except Exception as e:
+            return jsonify({"error": "Invalid image"}), 400
+        try:
+            cur.execute(
+                "INSERT INTO club_photo (image, club_id, image_prefix) VALUES (%s, %s, %s)",
+                (image_data, new_club_id, prefix),
+            )
+        except Exception as e:
+            print(e)
+            return (
+                jsonify({"error": "Failed to create new photo. It may be too large."}),
+                400,
+            )
+
+    # Commit the changes to the database
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"id": int(new_club_id)}), 200
 
 
 @app.route("/api/login", methods=["POST"])

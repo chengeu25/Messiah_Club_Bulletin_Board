@@ -9,13 +9,17 @@ import Button from '../../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../../components/formElements/ResponsiveForm';
 import { useEffect, useState } from 'react';
 import { CiCirclePlus, CiTrash } from 'react-icons/ci';
-import { useSubmit } from 'react-router-dom';
+import { useSearchParams, useSubmit } from 'react-router-dom';
+import validateFileSize from '../../../../helper/fileSizeValidator';
 
 const ClubForm = () => {
   const submit = useSubmit();
+  const [params] = useSearchParams();
   const club = useLoaderData() as ClubDetailType | null;
 
   const [error, setError] = useState<string[]>([]);
+  const [newAdminError, setNewAdminError] = useState<string>('');
+  const [adminErrors, setAdminErrors] = useState<number[]>([]);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [admins, setAdmins] = useState<ClubAdminType[]>([]);
@@ -33,6 +37,9 @@ const ClubForm = () => {
   };
 
   const updateAdmin = (id: number, newAdmin: string) => {
+    if (newAdmin !== '' && !newAdmin.endsWith('@messiah.edu'))
+      setAdminErrors((prevErrors) => [...prevErrors, id]);
+    else setAdminErrors((prevErrors) => prevErrors.filter((e) => e !== id));
     setAdmins((prevAdmins) =>
       prevAdmins.map((admin) => {
         if (admin.id === id) {
@@ -49,6 +56,11 @@ const ClubForm = () => {
 
   const addImage = (file: File) => {
     if (file) {
+      const isValid = validateFileSize(file);
+      if (!isValid) {
+        alert('Your image was not uploaded. It must be less than 16MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setImages((prevImages) => [
@@ -69,9 +81,13 @@ const ClubForm = () => {
 
   const setLogo = (file: File) => {
     if (file) {
+      const isValid = validateFileSize(file);
+      if (!isValid) {
+        alert('Your image was not uploaded. It must be less than 16MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
-        console.log(reader.result);
         setImage(reader.result as string);
       };
       reader.readAsDataURL(file);
@@ -93,13 +109,18 @@ const ClubForm = () => {
         images.length === 0 && 'Please add at least one image.'
       ].filter(Boolean) as string[];
 
-      if (newErrors.length > 0) {
+      if (
+        newErrors.length > 0 ||
+        adminErrors.length > 0 ||
+        newAdminError !== ''
+      ) {
         setError(newErrors);
         return;
       }
 
       formData.append('action', action);
       formData.append('admins', JSON.stringify(admins));
+      formData.append('logo', image);
       formData.append('images', JSON.stringify(images));
       submit(formData, { method: 'post' });
     } else if (action === 'add-admin') {
@@ -131,6 +152,12 @@ const ClubForm = () => {
   }, [club]);
 
   useEffect(() => {
+    if (params.get('error')) {
+      setError([params.get('error') as string]);
+    }
+  }, [params]);
+
+  useEffect(() => {
     setHighestImageId(
       images.length > 0 ? Math.max(...images.map((image) => image.id)) : 0
     );
@@ -143,11 +170,11 @@ const ClubForm = () => {
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>{club ? 'Update' : 'Create'} Club</h1>
       {error && (
-        <p className='text-red-500'>
-          {error.map((e) => (
-            <div>{e}</div>
+        <div className='text-red-500'>
+          {error.map((e, i) => (
+            <div key={i}>{e}</div>
           ))}
-        </p>
+        </div>
       )}
       {club && <input type='hidden' name='id' value={club.id} />}
       <Input
@@ -182,58 +209,73 @@ const ClubForm = () => {
       </span>
       <ul className='flex flex-col gap-2 list-disc'>
         {admins.map((user, idx) => (
-          <li key={idx} className='flex-row inline-flex gap-2'>
+          <li key={idx} className='flex-col inline-flex gap-2'>
+            {adminErrors.includes(user.id) && (
+              <span className='text-red-500'>
+                Please enter a valid Messiah email.
+              </span>
+            )}
+            <div className='flex flex-row items-center gap-2'>
+              <span className='flex-grow'>
+                <Input
+                  value={user.user}
+                  type='text'
+                  name={`admin-${user.id}`}
+                  label=''
+                  color='blue'
+                  filled={false}
+                  placeholder='officeremail@domain.edu'
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    updateAdmin(user.id, e.target.value)
+                  }
+                />
+              </span>
+              <Button
+                text='Remove'
+                color='blue'
+                filled={false}
+                className='inline-flex flex-row items-center justify-center gap-2 h-12'
+                icon={<CiTrash size={20} />}
+                grow={false}
+                name={`remove-admin-${user.id}`}
+                type='submit'
+              />
+            </div>
+          </li>
+        ))}
+        <li className='flex-col inline-flex gap-2'>
+          {newAdminError && (
+            <span className='text-red-500'>{newAdminError}</span>
+          )}
+          <div className='flex flex-row items-center gap-2'>
             <span className='flex-grow'>
               <Input
-                value={user.user}
                 type='text'
-                name={`admin-${user.id}`}
+                name='admins-new'
                 label=''
                 color='blue'
                 filled={false}
                 placeholder='officeremail@domain.edu'
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  updateAdmin(user.id, e.target.value)
-                }
+                value={newAdmin}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (!e.target.value.endsWith('@messiah.edu'))
+                    setNewAdminError('Please enter a valid Messiah email.');
+                  else setNewAdminError('');
+                  setNewAdmin(e.target.value);
+                }}
               />
             </span>
             <Button
-              text='Remove'
+              text='Add'
               color='blue'
               filled={false}
               className='inline-flex flex-row items-center justify-center gap-2'
-              icon={<CiTrash size={20} />}
+              icon={<CiCirclePlus size={20} />}
               grow={false}
-              name={`remove-admin-${user.id}`}
+              name='add-admin'
               type='submit'
             />
-          </li>
-        ))}
-        <li className='flex-row inline-flex gap-2'>
-          <span className='flex-grow'>
-            <Input
-              type='text'
-              name='admins-new'
-              label=''
-              color='blue'
-              filled={false}
-              placeholder='officeremail@domain.edu'
-              value={newAdmin}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setNewAdmin(e.target.value)
-              }
-            />
-          </span>
-          <Button
-            text='Add'
-            color='blue'
-            filled={false}
-            className='inline-flex flex-row items-center justify-center gap-2'
-            icon={<CiCirclePlus size={20} />}
-            grow={false}
-            name='add-admin'
-            type='submit'
-          />
+          </div>
         </li>
       </ul>
       <div className='flex flex-row gap-2 items-center'>

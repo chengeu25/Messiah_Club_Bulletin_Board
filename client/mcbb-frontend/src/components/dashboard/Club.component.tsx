@@ -29,7 +29,12 @@ const Club = ({
       color='slate-200'
       className='flex flex-col xl:flex-row gap-4 border-2 border-blue-900 w-full items-center'
     >
-      <img src={image} alt={name} className='h-20 bg-gray-800 rounded-lg' />
+      <img
+        src={image}
+        alt={name}
+        style={{ objectFit: 'cover' }}
+        className='h-[200px] w-[200px] sm:h-[100px] sm:w-[100px] bg-gray-800 rounded-lg'
+      />
       <div className='flex flex-col flex-grow'>
         <h1 className='text-xl font-bold text-center xl:text-left'>{name}</h1>
         <p className='text-center xl:text-left'>{description}</p>
