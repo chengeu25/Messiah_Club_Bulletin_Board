@@ -83,7 +83,12 @@ const router = createBrowserRouter(
             loader={clubFormLoader}
             action={clubFormAction}
           />
-          <Route path='new' element={<ClubForm />} action={clubFormAction} />
+          <Route
+            path='new'
+            element={<ClubForm />}
+            action={clubFormAction}
+            loader={clubFormLoader}
+          />
           <Route path=':id/delete' />
         </Route>
       </Route>

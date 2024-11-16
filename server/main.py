@@ -267,7 +267,7 @@ def get_clubs():
 def get_club(club_id):
     cur = mysql.connection.cursor()
     cur.execute(
-        """SELECT club_id, club_name, description, club_logo 
+        """SELECT club_id, club_name, description, club_logo, logo_prefix 
             FROM club 
             WHERE is_active = 1 
                 AND club_id = %s""",
@@ -280,7 +280,11 @@ def get_club(club_id):
         "id": result[0],
         "name": result[1],
         "description": result[2],
-        "image": result[3],
+        "image": (
+            f"{result[4]},{base64.b64encode(result[3]).decode('utf-8')}"
+            if result[3]
+            else None
+        ),
     }
     cur.execute(
         """SELECT user_id, club_admin_id FROM club_admin WHERE club_id = %s""",
@@ -288,11 +292,19 @@ def get_club(club_id):
     )
     result["admins"] = list(map(lambda x: {"user": x[0], "id": x[1]}, cur.fetchall()))
     cur.execute(
-        """SELECT image, club_photo_id FROM club_photo WHERE club_id = %s""", (club_id,)
+        """SELECT image, club_photo_id, image_prefix FROM club_photo WHERE club_id = %s""",
+        (club_id,),
     )
-    result["images"] = list(map(lambda x: {"image": x[0], "id": x[1]}, cur.fetchall()))
+    result["images"] = list(
+        map(
+            lambda x: {
+                "image": f"{x[2]},{base64.b64encode(x[0]).decode('utf-8')}",
+                "id": x[1],
+            },
+            cur.fetchall(),
+        )
+    )
     cur.close()
-    print(result)
     return jsonify(result), 200
 
 
