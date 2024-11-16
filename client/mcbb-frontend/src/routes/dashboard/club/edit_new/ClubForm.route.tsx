@@ -12,6 +12,9 @@ import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
 import validateFileSize from '../../../../helper/fileSizeValidator';
 
+/**
+ * ClubForm component for creating or updating club details.
+ */
 const ClubForm = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
@@ -29,6 +32,10 @@ const ClubForm = () => {
   const [highestImageId, setHighestImageId] = useState<number>(0);
   const [highestAdminId, setHighestAdminId] = useState<number>(0);
 
+  /**
+   * Adds a new admin to the list of admins.
+   * @param newAdmin - The email of the new admin.
+   */
   const addAdmin = (newAdmin: string) => {
     setAdmins((prevAdmins) => [
       ...prevAdmins,
@@ -36,6 +43,11 @@ const ClubForm = () => {
     ]);
   };
 
+  /**
+   * Updates an admin's email.
+   * @param id - The ID of the admin to update.
+   * @param newAdmin - The new email for the admin.
+   */
   const updateAdmin = (id: number, newAdmin: string) => {
     if (newAdmin !== '' && !newAdmin.endsWith('@messiah.edu'))
       setAdminErrors((prevErrors) => [...prevErrors, id]);
@@ -50,10 +62,18 @@ const ClubForm = () => {
     );
   };
 
+  /**
+   * Removes an admin from the list.
+   * @param id - The ID of the admin to remove.
+   */
   const removeAdmin = (id: number) => {
     setAdmins((prevAdmins) => prevAdmins.filter((admin) => admin.id !== id));
   };
 
+  /**
+   * Adds a new image to the club's image list.
+   * @param file - The image file to add.
+   */
   const addImage = (file: File) => {
     if (file) {
       const isValid = validateFileSize(file);
@@ -75,10 +95,18 @@ const ClubForm = () => {
     }
   };
 
+  /**
+   * Removes an image from the club's image list.
+   * @param id - The ID of the image to remove.
+   */
   const removeImage = (id: number) => {
     setImages((prevImages) => prevImages.filter((image) => image.id !== id));
   };
 
+  /**
+   * Sets the club's logo.
+   * @param file - The image file to set as the logo.
+   */
   const setLogo = (file: File) => {
     if (file) {
       const isValid = validateFileSize(file);
@@ -94,6 +122,10 @@ const ClubForm = () => {
     }
   };
 
+  /**
+   * Handles form submission.
+   * @param event - The form submission event.
+   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -141,6 +173,7 @@ const ClubForm = () => {
     return;
   };
 
+  // Load existing club data if available
   useEffect(() => {
     if (club) {
       setName(club?.name ?? '');
@@ -151,12 +184,14 @@ const ClubForm = () => {
     }
   }, [club]);
 
+  // Handle error messages from URL parameters
   useEffect(() => {
     if (params.get('error')) {
       setError([params.get('error') as string]);
     }
   }, [params]);
 
+  // Update highest image and admin IDs
   useEffect(() => {
     setHighestImageId(
       images.length > 0 ? Math.max(...images.map((image) => image.id)) : 0
