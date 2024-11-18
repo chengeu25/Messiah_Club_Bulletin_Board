@@ -78,10 +78,7 @@ const router = createBrowserRouter(
         element={<ResetPassword />}
         action={resetPasswordAction}
       />
-      <Route
-        path='forgotPasswordMessage'
-        element={<ForgotPasswordMessage />}
-      />
+      <Route path='forgotPasswordMessage' element={<ForgotPasswordMessage />} />
       <Route
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
@@ -97,7 +94,7 @@ const router = createBrowserRouter(
           action={clubsAction}
         />
         <Route path='event' element={<Event />} loader={eventLoader} />
-        <Route path='club' loader={clubLoader}>
+        <Route path='club'>
           <Route path=':id' element={<Club />} loader={clubLoader} />
           <Route
             path=':id/edit'
@@ -112,7 +109,6 @@ const router = createBrowserRouter(
             action={clubFormAction}
             loader={clubFormLoader}
           />
-          <Route path=':id/delete' />
         </Route>
       </Route>
       <Route path='editinterest' element={<EditInterest />} />

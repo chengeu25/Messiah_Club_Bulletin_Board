@@ -408,8 +408,9 @@ def update_club():
 @app.route("/api/delete-club/<club_id>", methods=["DELETE"])
 def delete_club(club_id):
     cur = mysql.connection.cursor()
+    mysql.connection.rollback()
     try:
-        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (club_id))
+        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (int(club_id),))
     except Exception as e:
         print(e)
         mysql.connection.rollback()

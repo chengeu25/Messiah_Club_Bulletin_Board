@@ -10,7 +10,8 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     return redirect('/verifyEmail');
   }
   const id = params.id;
-  if (id) {
+  console.log(id);
+  if (id !== undefined) {
     if (
       !(user as User).isFaculty &&
       !(user as User).clubAdmins.includes(parseInt(id))
@@ -30,7 +31,7 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     return club;
   } else if (!(user as User).isFaculty) {
     return redirect('/dashboard/clubs');
-  }
+  } else return null;
 };
 
 export default clubFormLoader;
