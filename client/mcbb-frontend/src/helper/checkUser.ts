@@ -1,6 +1,7 @@
-interface User {
+export interface User {
   name: string;
   email: string;
+  emailVerified: boolean;
 }
 
 const checkUser = async (): Promise<boolean | User> => {
@@ -13,8 +14,11 @@ const checkUser = async (): Promise<boolean | User> => {
   });
   if (response.ok) {
     const json = await response.json();
-    console.log(json);
-    return { name: json.name, email: json.user_id };
+    return {
+      name: json.name,
+      email: json.user_id,
+      emailVerified: json.emailVerified === 1 ? true : false
+    };
   }
   return false;
 };

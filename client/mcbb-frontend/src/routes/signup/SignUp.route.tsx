@@ -4,12 +4,14 @@ import Input from '../../components/formElements/Input.component'; // Import Inp
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
 import passwordStrongOrNah from '../../helper/passwordstrength'; // Import password strength validator
+import ReCAPTCHA from "react-google-recaptcha";  // Import ReCAPTCHA component
 
 const SignUp = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [captchaResponse, setCaptchaResponse] = useState<string | null>(null); // Store captcha response
 
   // Local states to manage password input and matching
   const [password, setPassword] = useState<string>('');
@@ -30,6 +32,10 @@ const SignUp = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    if (captchaResponse) {
+      formData.append('captchaResponse', captchaResponse); // Add captcha response
+    }
+  
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
@@ -40,6 +46,23 @@ const SignUp = () => {
     }
 
     if (password !== confirmPassword) {
+      return;
+    }
+    if (
+      password === '' ||
+      confirmPassword === '' ||
+      formData.get('name') === '' ||
+      formData.get('email') === '' ||
+      !captchaResponse // Check if CAPTCHA is filled
+    ) {
+      setError('Please fill out all required');
+      return;
+    }
+    if (formData.get('email') === null) {
+      setError('Please use your Messiah email');
+      return;
+    } else if (!(formData.get('email')! as string).endsWith('messiah.edu')) {
+      setError('Please use your Messiah email');
       return;
     }
 
@@ -69,6 +92,10 @@ const SignUp = () => {
     setPasswordMatch(newConfirmPassword === password); // Check if passwords match
   };
 
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptchaResponse(value);
+  };
+
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
       <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
@@ -88,6 +115,7 @@ const SignUp = () => {
               placeholder='First Last'
               color='blue'
               filled={false}
+              required
             />
           </div>
 
@@ -100,6 +128,7 @@ const SignUp = () => {
               placeholder='Messiah Email'
               color='blue'
               filled={false}
+              required
             />
           </div>
 
@@ -114,6 +143,7 @@ const SignUp = () => {
               filled={false}
               value={password} // Set value directly from state
               onInput={handlePasswordChange} // Handle changes to password
+              required
             />
             {/* Show password strength error if the password is not strong */}
             {!isPasswordStrong && (
@@ -135,6 +165,7 @@ const SignUp = () => {
               filled={false}
               value={confirmPassword} // Set value directly from state
               onInput={handleConfirmPasswordChange} // Handle changes to confirm password
+              required
             />
             {/* Show error if passwords do not match */}
             {!passwordMatch && (
@@ -154,12 +185,27 @@ const SignUp = () => {
                 "Don't recommend gender-specific events"
               ]}
               filled={false}
+              required
+            />
+          </div>
+
+          {/* CAPTCHA */}
+          <div className="w-full">
+            <ReCAPTCHA
+              sitekey="6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L" // Use your reCAPTCHA site key
+              onChange={handleCaptchaChange}
             />
           </div>
 
           {/* Submit Button */}
           <div className='flex flex-row gap-2 mt-4'>
-            <Button color='blue' text='Sign Up' type='submit' name='signup' />
+            <Button
+              color='blue'
+              text='Sign Up'
+              type='submit'
+              name='signup'
+              disabled={!isPasswordStrong || password !== confirmPassword}
+            />
           </div>
 
           {/* Link to Login */}

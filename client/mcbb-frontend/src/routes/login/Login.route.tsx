@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Form,
+  useSubmit,
+  useSearchParams,
+  useLoaderData
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 
@@ -10,8 +15,12 @@ import Button from '../../components/formElements/Button.component';
 const Login = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
+  const { userId } = useLoaderData() as { userId: string };
   const [error, setError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string>('');
   const [message, setMessage] = useState<string | null>(null);
+  const [remember, setRemember] = useState<boolean>(false);
+  const emailIsValid = useMemo(() => email.endsWith('@messiah.edu'), [email]);
 
   /**
    * If the page is reloaded with an error, set the error state
@@ -24,6 +33,13 @@ const Login = () => {
       setMessage(decodeURIComponent(params.get('message') ?? ''));
     }
   }, [params]);
+
+  useEffect(() => {
+    if (userId) {
+      setEmail(userId);
+      setRemember(true);
+    }
+  }, [userId]);
 
   /**
    * Handles the form submission
@@ -54,6 +70,10 @@ const Login = () => {
     }
   };
 
+  const validateEmail = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+  };
+
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
       <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
@@ -61,6 +81,11 @@ const Login = () => {
           <h1 className='text-3xl font-bold'>Login</h1>
           {error && <p className='text-red-500'>{error}</p>}
           {message && <p className='text-green-500'>{message}</p>}
+          {!emailIsValid && email !== '' && (
+            <p className='text-red-500'>
+              Please enter your full Messiah email.
+            </p>
+          )}
           <Input
             label='Messiah Email:'
             name='email'
@@ -68,6 +93,8 @@ const Login = () => {
             placeholder='Messiah Email'
             color='blue'
             filled={false}
+            onInput={validateEmail}
+            value={email}
             required
           />
           <Input
@@ -78,6 +105,14 @@ const Login = () => {
             color='blue'
             filled={false}
             required
+          />
+          <Input
+            type='checkbox'
+            name='remember'
+            label='Remember Me'
+            value='true'
+            checked={remember}
+            onChange={() => setRemember(!remember)}
           />
           <Button color='blue' text='Sign In' type='submit' name='login' />
           <Button

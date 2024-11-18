@@ -25,7 +25,8 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ email, password, gender, name, captchaResponse })
+      body: JSON.stringify({ email, password, gender, name, captchaResponse }),
+      credentials: 'include'
     });
 
     // Check if the response is OK (HTTP 200)
@@ -33,12 +34,11 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
       // Redirect on successful signup
       return redirect('/verifyEmail');
     } else {
-      const json = await response.json()
-      return redirect('/signup?error=' + json.error)
+      const json = await response.json();
+      return redirect('/signup?error=' + json.error);
     }
 
     // Handle errors returned by the backend
-   
   } catch (error) {
     // Handle unexpected errors
     console.error('Signup action error:', error);
