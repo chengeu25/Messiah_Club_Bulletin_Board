@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams, Link } from 'react-router-dom';
+import { useSubmit, useSearchParams, Link } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component'; // Import Input component
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
 import passwordStrongOrNah from '../../helper/passwordstrength'; // Import password strength validator
-import ReCAPTCHA from "react-google-recaptcha";  // Import ReCAPTCHA component
+import ReCAPTCHA from 'react-google-recaptcha'; // Import ReCAPTCHA component
+import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 const SignUp = () => {
   const submit = useSubmit();
@@ -35,7 +36,7 @@ const SignUp = () => {
     if (captchaResponse) {
       formData.append('captchaResponse', captchaResponse); // Add captcha response
     }
-  
+
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
@@ -97,126 +98,118 @@ const SignUp = () => {
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form onSubmit={handleSubmit} className='flex flex-col gap-4 w-full'>
-          <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
+    <ResponsiveForm onSubmit={handleSubmit}>
+      <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
 
-          {/* Error and success messages */}
-          {error && <p className='text-red-500 mb-3'>{error}</p>}
-          {message && <p className='text-green-500 mb-3'>{message}</p>}
+      {/* Error and success messages */}
+      {error && <p className='text-red-500 mb-3'>{error}</p>}
+      {message && <p className='text-green-500 mb-3'>{message}</p>}
 
-          {/* Name Input */}
-          <div className='w-full'>
-            <Input
-              label='Name:'
-              name='name'
-              type='text'
-              placeholder='First Last'
-              color='blue'
-              filled={false}
-              required
-            />
-          </div>
-
-          {/* Email Input */}
-          <div className='w-full'>
-            <Input
-              label='Messiah Email:'
-              name='email'
-              type='text'
-              placeholder='Messiah Email'
-              color='blue'
-              filled={false}
-              required
-            />
-          </div>
-
-          {/* Password Input */}
-          <div className='w-full'>
-            <Input
-              label='Password:'
-              name='password'
-              type='password'
-              placeholder='Password'
-              color='blue'
-              filled={false}
-              value={password} // Set value directly from state
-              onInput={handlePasswordChange} // Handle changes to password
-              required
-            />
-            {/* Show password strength error if the password is not strong */}
-            {!isPasswordStrong && (
-              <p className='text-red-500 text-sm'>
-                Password must be at least 8 characters, contain an uppercase
-                letter, a digit, and a special character.
-              </p>
-            )}
-          </div>
-
-          {/* Confirm Password Input */}
-          <div className='w-full'>
-            <Input
-              label='Confirm Password:'
-              name='confirm-password'
-              type='password'
-              placeholder='Confirm Password'
-              color='blue'
-              filled={false}
-              value={confirmPassword} // Set value directly from state
-              onInput={handleConfirmPasswordChange} // Handle changes to confirm password
-              required
-            />
-            {/* Show error if passwords do not match */}
-            {!passwordMatch && (
-              <p className='text-red-500 text-sm'>Passwords do not match.</p>
-            )}
-          </div>
-
-          {/* Gender Select */}
-          <div className='w-full'>
-            <Select
-              color='blue'
-              label='Gender:'
-              name='gender'
-              options={[
-                'Male',
-                'Female',
-                "Don't recommend gender-specific events"
-              ]}
-              filled={false}
-              required
-            />
-          </div>
-
-          {/* CAPTCHA */}
-          <div className="w-full">
-            <ReCAPTCHA
-              sitekey="6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L" // Use your reCAPTCHA site key
-              onChange={handleCaptchaChange}
-            />
-          </div>
-
-          {/* Submit Button */}
-          <div className='flex flex-row gap-2 mt-4'>
-            <Button
-              color='blue'
-              text='Sign Up'
-              type='submit'
-              name='signup'
-              disabled={!isPasswordStrong || password !== confirmPassword}
-            />
-          </div>
-
-          {/* Link to Login */}
-          <div className='mt-4 text-center'>
-            <Link to='/login' className='underline text-blue-500'>
-              Already have a login?
-            </Link>
-          </div>
-        </Form>
+      {/* Name Input */}
+      <div className='w-full'>
+        <Input
+          label='Name:'
+          name='name'
+          type='text'
+          placeholder='First Last'
+          color='blue'
+          filled={false}
+          required
+        />
       </div>
-    </div>
+
+      {/* Email Input */}
+      <div className='w-full'>
+        <Input
+          label='Messiah Email:'
+          name='email'
+          type='text'
+          placeholder='Messiah Email'
+          color='blue'
+          filled={false}
+          required
+        />
+      </div>
+
+      {/* Password Input */}
+      <div className='w-full'>
+        <Input
+          label='Password:'
+          name='password'
+          type='password'
+          placeholder='Password'
+          color='blue'
+          filled={false}
+          value={password} // Set value directly from state
+          onInput={handlePasswordChange} // Handle changes to password
+          required
+        />
+        {/* Show password strength error if the password is not strong */}
+        {!isPasswordStrong && (
+          <p className='text-red-500 text-sm'>
+            Password must be at least 8 characters, contain an uppercase letter,
+            a digit, and a special character.
+          </p>
+        )}
+      </div>
+
+      {/* Confirm Password Input */}
+      <div className='w-full'>
+        <Input
+          label='Confirm Password:'
+          name='confirm-password'
+          type='password'
+          placeholder='Confirm Password'
+          color='blue'
+          filled={false}
+          value={confirmPassword} // Set value directly from state
+          onInput={handleConfirmPasswordChange} // Handle changes to confirm password
+          required
+        />
+        {/* Show error if passwords do not match */}
+        {!passwordMatch && (
+          <p className='text-red-500 text-sm'>Passwords do not match.</p>
+        )}
+      </div>
+
+      {/* Gender Select */}
+      <div className='w-full'>
+        <Select
+          color='blue'
+          label='Gender:'
+          name='gender'
+          options={['Male', 'Female', "Don't recommend gender-specific events"]}
+          filled={false}
+          required
+        />
+      </div>
+
+      {/* CAPTCHA */}
+      <div className='w-full'>
+        <ReCAPTCHA
+          sitekey='6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L' // Use your reCAPTCHA site key
+          onChange={handleCaptchaChange}
+        />
+      </div>
+
+      {/* Submit Button */}
+      <div className='flex flex-row gap-2 mt-4'>
+        <Button
+          color='blue'
+          text='Sign Up'
+          type='submit'
+          name='signup'
+          disabled={!isPasswordStrong || password !== confirmPassword}
+        />
+      </div>
+
+      {/* Link to Login */}
+      <div className='mt-4 text-center'>
+        <Link to='/login' className='underline text-blue-500'>
+          Already have a login?
+        </Link>
+      </div>
+    </ResponsiveForm>
   );
 };
 

@@ -17,7 +17,8 @@ import {
   getNextSaturday
 } from '../helper/dateUtils';
 import { User } from '../helper/checkUser';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toTitleCase from '../helper/titleCase';
 
 interface OptionType {
   value: string;
@@ -68,34 +69,39 @@ const Root = () => {
     }
   }, [options]);
 
+  const currentPage = useMemo(
+    () =>
+      toTitleCase(
+        location.pathname.split('/')[location.pathname.split('/').length - 1]
+      )
+        .replace('Home', 'Events')
+        .replace('Calendar', 'Events'),
+    [location.pathname]
+  );
+
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
-      <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-6'>
+      <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
             <img src='../../assets/logo.png' className='h-[100%]' />
           </Link>
         </span>
         {location.pathname.includes('/dashboard') &&
-        !location.pathname.includes('/home') ? (
-          <div className='flex flex-row gap-6 flex-grow items-center justify-center'>
+        (currentPage === 'Clubs' || currentPage === 'Events') ? (
+          <div className='flex flex-row gap-2 flex-grow items-center justify-center'>
             <Input
-              label={`Search for ${
-                location.pathname.split('/')[
-                  location.pathname.split('/').length - 1
-                ] === 'clubs'
-                  ? 'Clubs'
-                  : 'Events'
-              }`}
+              placeholder={`Search for ${currentPage}`}
               name='search'
               type='text'
               color='blue'
-              placeholder='Search'
+              label=''
               filled={false}
             />
             <Select
+              label=''
               options={[
-                'All',
+                `All ${currentPage}`,
                 'Suggested',
                 location.pathname.includes('/clubs')
                   ? 'Subscribed'
@@ -104,7 +110,6 @@ const Root = () => {
                   ? ['Attending']
                   : [])
               ]}
-              label='Filter'
               color='white'
               filled={false}
             />
@@ -141,13 +146,13 @@ const Root = () => {
         ) : (
           <></>
         )}
-        <div>
+        <div className='flex items-center justify-center'>
           {!location.pathname.includes('/login') &&
             !location.pathname.includes('/signup') &&
             !location.pathname.includes('/verifyEmail') && (
               <>
                 {user ? (
-                  <div>
+                  <div className='flex items-center justify-center'>
                     <CSelect<OptionType, false, GroupBase<OptionType>>
                       options={options}
                       onChange={(selected) => {
@@ -172,7 +177,8 @@ const Root = () => {
                           ...base,
                           'backgroundColor': 'rgb(23, 37, 84)', // Tailwind's blue-950
                           'borderColor': 'white',
-                          'borderRadius': '5px',
+                          'borderRadius': '10px',
+                          'borderWidth': '2px',
                           'color': 'white',
                           'textAlign': 'center', // Center the text
                           'padding': '3px', // Add some padding
