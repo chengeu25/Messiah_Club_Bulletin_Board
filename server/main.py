@@ -9,6 +9,7 @@ import os
 import random
 import string
 import smtplib
+import jwt
 from email.mime.text import MIMEText
 
 app = Flask(__name__)
@@ -45,8 +46,8 @@ mysql = MySQL(app)
 cors = CORS(
     app,
     resources={
-        r"/api/*": {"origins": "http://localhost:5173", "supports_credentials": True}
-    },
+        r"/api/*": {"origins": "http://localhost:5173"}#, "supports_credentials": True}
+    }, supports_credentials=True
 )
 
 
@@ -335,6 +336,221 @@ def signup():
 
     cur.close()
     return jsonify({"message ": "User Success!"}), 200
+
+
+@app.route("/api/passwordReset", methods=["POST"])
+def reset_password():
+    data = request.json
+    cur = mysql.connection.cursor()
+    print("this is the email:\n")
+    print(data["emailRequest"]["email"])
+
+    # Retrieve the hashed passwords from the database
+    cur.execute(
+        """Select pwd1, pwd2, pwd3, email_verified
+                FROM users
+                WHERE email = %s
+                    AND is_active = 1""",
+        (data["emailRequest"]["email"],),
+    )
+    result = cur.fetchone()
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    # Verify the provided current password against the hashed password
+    hashed_password = result[0]
+    if not check_password_hash(hashed_password, data["oldPassword"]):
+        return jsonify({"error": "Invalid password"}), 401
+
+    # Set the user ID and activity timestamp in the session
+    session["user_id"] = data["emailRequest"]["email"]
+    session["last_activity"] = datetime.now(timezone.utc)
+
+    # Check if email is verified
+    is_email_verified = result[3]
+    if not is_email_verified == 1:
+        return jsonify({"error": "Email not verified"}), 401
+
+    # Check if new password is unique to the last three saved passwords
+    new_password = data["newPassword"]
+    print(new_password)
+    print(result[0])
+    print(result[1])
+    print(result[2])
+    if result[1] != None and result[2] != None:
+        if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+            return jsonify({"error": "New password cannot be a previously used password"}), 400
+
+    # Cascade passwords
+    print(
+        f"""UPDATE users
+                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
+                WHERE email = {data['emailRequest']['email']}"""
+    )
+    cur.execute(
+        """UPDATE users
+                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
+                WHERE email = %s""",
+        (
+            str(result[1]),
+            str(result[0]),
+            generate_password_hash(str(data["newPassword"])),
+            str(data["emailRequest"]["email"]),
+        ),
+    )
+
+    mysql.connection.commit()
+    cur.close()
+    session.pop('user_id', None)
+    return jsonify({"message": "Password successfully reset"})
+
+
+@app.after_request
+def apply_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+@app.route("/api/forgotPassword", methods=["POST"])
+def forgot_password():
+    data = request.json
+    cur = mysql.connection.cursor()
+
+    # Retrieve the hashed passwords from the database
+    cur.execute(
+        """Select pwd1, pwd2, email_verified
+                FROM users
+                WHERE email = %s
+                    AND is_active = 1""",
+        (data["email"],),
+    )
+    result = cur.fetchone()
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email"}), 401
+
+    # Check if email is verified
+    is_email_verified = result[2]
+    if not is_email_verified == 1:
+        return jsonify({"error": "Email not verified"}), 401
+
+    # Generate a reset token
+    token = jwt.encode(
+        {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
+        app.config["SECRET_KEY"],
+        algorithm="HS256",
+    )
+
+    # Add token to database
+    cur.execute(
+        """update users
+                SET reset_token = %s
+                WHERE email = %s""",
+            (token, data["email"],),
+    )
+    mysql.connection.commit()
+    result = cur.fetchone()
+
+    # Create reset link
+    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
+
+    # Send email
+    send_email(str(data["email"]), reset_link)
+    return jsonify({"message": "Reset link sent to your email"}), 200
+
+def base64url_decode(encoded_data):
+    # Add the necessary padding before decoding
+    padding = '=' * (4 - len(encoded_data) % 4)
+    return base64.urlsafe_b64decode(encoded_data + padding).decode('utf-8')
+
+def send_email(to_email, reset_link):
+    sender_email = os.getenv("SENDER_EMAIL")
+    sender_password = os.getenv("SENDER_PASSWORD")
+
+    subject = "SHARC Forgot Password"
+    body = f"Click the link to reset your password: {reset_link}"
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.sendmail(sender_email, to_email, msg.as_string())
+            print("Email sent successfully")
+    except Exception as e:
+        print(f"Failed to send email to {to_email}: {e}")
+
+@app.route("/api/forgotPasswordToken", methods=["POST"])
+def forgot_password_reset():
+    data = request.json
+    cur = mysql.connection.cursor()
+
+    try:
+        # Extract token from request data
+        token = request.json.get("token")
+        decoded_data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
+        user_email = decoded_data.get("email")
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token has expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 401
+
+    # Retrieve the hashed passwords from the database
+    cur.execute(
+        """select pwd1, pwd2, pwd3, email_verified, reset_token, email
+                FROM users
+                WHERE reset_token = %s
+                    AND is_active = 1""",
+        (token,),
+    )
+    result = cur.fetchone()
+
+    # If no matching email is found, return an error
+    if result is None:
+        return jsonify({"error": "Invalid email or password"}), 401
+
+    # Check if new password is unique to the last three saved passwords
+    new_password = data["newPassword"]
+
+    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+        return jsonify({"error": "New password cannot be a previously used password"}), 400
+
+    # Cascade passwords
+    print(
+        f"""UPDATE users
+                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
+                WHERE email = {result[5]}"""
+    )
+    print((
+            str(result[1]),
+            str(result[0]),
+            generate_password_hash(str(data["newPassword"])),
+            str(data["token"]),
+        ))
+    cur.execute(
+        """UPDATE users
+                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
+                WHERE reset_token = %s""",
+        (
+            str(result[1]),
+            str(result[0]),
+            generate_password_hash(str(data["newPassword"])),
+            str(data["token"]),
+        ),
+    )
+    mysql.connection.commit()
+    cur.close()
+    session.pop('user_id', None)
+    return jsonify({'message': "Password reset successful"}), 200
 
 
 if __name__ == "__main__":

@@ -15,6 +15,7 @@ import verifyEmailAction from './routes/verifyEmail/verifyEmail.action.tsx';
 import Home from './routes/dashboard/home/Home.route.tsx';
 import ForgotPassword from './routes/forgotPassword/ForgotPassword.route.tsx';
 import forgotPasswordAction from './routes/forgotPassword/ForgotPassword.action.tsx';
+import ForgotPasswordMessage from './routes/forgotPasswordMessage/ForgotPasswordMessage.route.tsx';
 import Calendar from './routes/dashboard/calendar/Calendar.route.tsx';
 import Clubs from './routes/dashboard/clubs/Clubs.route.tsx';
 import changePasswordAction from './routes/changePassword/changePassword.action.tsx';
@@ -32,6 +33,11 @@ import clubLoader from './routes/dashboard/club/Club.loader.tsx';
 import logoutLoader from './routes/logout/Logout.loader.tsx';
 import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
 import loginLoader from './routes/login/Login.loader.tsx';
+import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
+import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
+import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
+import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
+import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -60,6 +66,21 @@ const router = createBrowserRouter(
         path='changePassword'
         element={<ChangePassword />}
         action={changePasswordAction}
+        loader={changePasswordLoader}
+      />
+      <Route
+        path='resetPassword'
+        element={<ResetPassword />}
+        action={resetPasswordAction}
+      />
+      <Route
+        path='forgotPasswordMessage'
+        element={<ForgotPasswordMessage />}
+      />
+      <Route
+        path='forgotPasswordToken'
+        element={<ForgotPasswordToken />}
+        action={forgotPasswordTokenAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} loader={homeLoader} />

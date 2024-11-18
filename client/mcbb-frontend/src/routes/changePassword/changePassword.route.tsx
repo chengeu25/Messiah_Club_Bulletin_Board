@@ -1,11 +1,26 @@
-import React, { useState } from 'react';
-import { Form, useSubmit } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import passwordStrongOrNah from '../../helper/passwordstrength';
 
 const ChangePassword = () => {
   const submit = useSubmit();
+  const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  /**
+   * If the page is reloaded with an error, set the error state
+   */
+  useEffect(() => {
+    if (params.get('error')) {
+      setError(decodeURIComponent(params.get('error') ?? ''));
+    }
+    if (params.get('message')) {
+      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    }
+  }, [params]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     setError(null);
@@ -22,6 +37,8 @@ const ChangePassword = () => {
       setError('Please fill out all fields.');
     } else if (formData.get('npwd') !== formData.get('cnpwd')) {
       setError('Passwords do not match.');
+    } else if (!passwordStrongOrNah(formData.get('npwd') as string)) {
+      setError('Password must be at least 8 characters in length and inculde at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)')
     } else {
       formData.append('action', action);
       submit(formData, { method: 'post' });
@@ -30,13 +47,14 @@ const ChangePassword = () => {
 
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:w-1/2 sm:h-1/2 justify-center items-center shadow-md rounded-lg p-5 bg-white'>
+      <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form
           onSubmit={handleSubmit}
-          className='flex flex-col gap-2 w-full h-full'
+          className='flex flex-col gap-2 w-full'
         >
           <h1 className='text-3xl font-bold'>Change Password</h1>
           {error && <div className='text-red-500'>{error}</div>}
+          {message && <p className='text-green-500'>{message}</p>}
           <Input
             label='Enter your current password:'
             name='pwd'
