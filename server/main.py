@@ -42,51 +42,28 @@ def hello():
     return "Hello, World!"
 
 
-# @app.route("/api/checkUser", methods=["GET"])
-# def check_user():
-#     print("Last Activity: ", session.get("last_activity"))
-#     print("Time: ", datetime.now(timezone.utc) - session.get("last_activity"))
-#     if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
-#         "last_activity"
-#     ) < timedelta(minutes=15):
-#         cur = mysql.connection.cursor()
-#         cur.execute(
-#             """SELECT email, name
-#                 FROM users 
-#                 WHERE email = %s
-#             """,
-#             (session["user_id"],),
-#         )
-#         result = cur.fetchone()
-#         cur.close()
-
-#         if result is None:
-#             return jsonify({"user_id": None, "name": None}), 401
-#         return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
-#     else:
-#         return jsonify({"user_id": None, "name": None}), 401
 @app.route("/api/checkUser", methods=["GET"])
 def check_user():
-    print("Last Activity: ", session.get("last_activity"))
-    # print("Time: ", datetime.now(timezone.utc) - session.get("last_activity"))
-    if session.get("user_id") is not None:
-        if datetime.now(timezone.utc) - session.get("last_activity") < timedelta(minutes = 15):
-            cur = mysql.connection.cursor()
-            cur.execute(
-                """SELECT email, name
-                    FROM users 
-                    WHERE email = %s
-                """,
-                (session["user_id"],),
-            )
-            result = cur.fetchone()
-            cur.close()
+    if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
+        "last_activity"
+    ) < timedelta(minutes=15):
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """SELECT email, name
+                FROM users 
+                WHERE email = %s
+            """,
+            (session["user_id"],),
+        )
+        result = cur.fetchone()
+        cur.close()
 
         if result is None:
             return jsonify({"user_id": None, "name": None}), 401
         return jsonify({"user_id": session["user_id"], "name": result[1]}), 200
     else:
         return jsonify({"user_id": None, "name": None}), 401
+
 
 @app.route("/api/login", methods=["POST"])
 def login():
