@@ -9,6 +9,7 @@ import {
   ImageType,
   UserType
 } from '../../../types/databaseTypes';
+import { OptionType } from '../../../components/formElements/Select.styles';
 
 const demoEvents = [
   {
@@ -100,16 +101,32 @@ const Club = () => {
       <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
         <p>{club?.description}</p>
       </Card>
-      <div className='flex flex-row w-full gap-4 overflow-x-scroll min-h-48'>
-        {club?.images.map((image: ImageType, index: number) => (
-          <img
-            key={index}
-            src={image.image}
-            alt='Club Image'
-            className='h-full object-contain rounded-lg'
-          />
-        ))}
-      </div>
+      {(club?.images?.length ?? 0) > 0 && (
+        <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48'>
+          {club?.images.map((image: ImageType, index: number) => (
+            <img
+              key={index}
+              src={image.image}
+              alt='Club Image'
+              className='h-full object-contain rounded-lg'
+            />
+          ))}
+        </div>
+      )}
+      {(club?.tags?.length ?? 0) > 0 && (
+        <div className='inline-flex flex-row w-full gap-2 items-center flex-wrap'>
+          {club?.tags?.map((tag: OptionType, index: number) => (
+            <Card
+              key={index}
+              color='slate-300'
+              padding={4}
+              className='w-min text-nowrap'
+            >
+              {tag.label}
+            </Card>
+          ))}
+        </div>
+      )}
       <div className='flex flex-col gap-4 lg:flex-row w-full h-1/2'>
         <Card
           color='slate-300'
