@@ -320,8 +320,8 @@ def update_club():
     data = request.json
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s",
-        (data["name"],),
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s AND club_id != %s",
+        (data["name"], data["id"]),
     )
     if not (cur.fetchone()[0] == 0):
         return jsonify({"error": "An active club with this name already exists."}), 400
@@ -418,6 +418,9 @@ def delete_club(club_id):
     mysql.connection.rollback()
     try:
         cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (int(club_id),))
+        cur.execute(
+            "UPDATE club_admin SET is_active = 0 WHERE club_id = %s", (int(club_id),)
+        )
     except Exception as e:
         print(e)
         mysql.connection.rollback()
