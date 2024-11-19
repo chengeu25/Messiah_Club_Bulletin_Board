@@ -15,6 +15,7 @@ interface InputProps {
   checked?: boolean;
   defaultValue?: string;
   multiline?: boolean;
+  accept?: string;
 }
 
 const Input = ({
@@ -30,7 +31,8 @@ const Input = ({
   value,
   checked,
   defaultValue,
-  multiline = false
+  multiline = false,
+  accept
 }: InputProps) => (
   <label
     className={`flex ${
@@ -74,6 +76,7 @@ const Input = ({
         value={value}
         checked={checked}
         defaultValue={defaultValue}
+        accept={accept}
       />
     )}
   </label>

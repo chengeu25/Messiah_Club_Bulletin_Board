@@ -9,7 +9,6 @@ import {
   ImageType,
   UserType
 } from '../../../types/databaseTypes';
-import React from 'react';
 
 const demoEvents = [
   {
@@ -81,14 +80,11 @@ const demoEvents = [
 ];
 
 const Club = () => {
-  const { user, club } = useLoaderData() as {
+  const { club } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
   };
 
-  React.useEffect(() => {
-    console.log(user, club);
-  });
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
       <Card

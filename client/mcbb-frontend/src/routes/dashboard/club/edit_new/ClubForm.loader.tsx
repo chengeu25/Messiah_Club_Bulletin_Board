@@ -10,7 +10,6 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     return redirect('/verifyEmail');
   }
   const id = params.id;
-  console.log(id);
   if (id !== undefined) {
     if (
       !(user as User).isFaculty &&
@@ -28,7 +27,7 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
       throw new Error('Failed to fetch club');
     }
     const club = await clubResponse.json();
-    return club;
+    return {user, club};
   } else if (!(user as User).isFaculty) {
     return redirect('/dashboard/clubs');
   } else return null;

@@ -3,7 +3,8 @@ import Input from '../../../../components/formElements/Input.component';
 import {
   ClubAdminType,
   ClubDetailType,
-  ImageType
+  ImageType,
+  UserType
 } from '../../../../types/databaseTypes';
 import Button from '../../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../../components/formElements/ResponsiveForm';
@@ -12,13 +13,19 @@ import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
 import validateFileSize from '../../../../helper/fileSizeValidator';
 
+interface LoaderData {
+  user: UserType;
+  club: ClubDetailType;
+}
+
 /**
  * ClubForm component for creating or updating club details.
  */
 const ClubForm = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
-  const club = useLoaderData() as ClubDetailType | null;
+  const data = useLoaderData() as LoaderData | null;
+  const { user, club } = data || {};
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
@@ -138,8 +145,18 @@ const ClubForm = () => {
         name === '' && 'Please enter a name.',
         description === '' && 'Please enter a description.',
         admins.length === 0 && 'Please add at least one officer.',
-        image === '' && 'Please add a club logo.',
-        images.length === 0 && 'Please add at least one image.'
+        image === '' &&
+          (formData.get('image') as File)?.name === '' &&
+          'Please add a club logo.',
+        image === '' &&
+          (formData.get('image') as File)?.name !== '' &&
+          'Please click the add logo button.',
+        images.length === 0 &&
+          (formData.get('images-new') as File)?.name === '' &&
+          'Please add at least one image.',
+        images.length === 0 &&
+          (formData.get('images-new') as File)?.name !== '' &&
+          'Please click the add image button.'
       ].filter(Boolean) as string[];
 
       // Don't submit if form validation fails
@@ -251,85 +268,99 @@ const ClubForm = () => {
         multiline
         required
       />
-      <span className='flex flex-row justify-start'>
-        Club Officers:<span className='text-red-500'>*</span>
-      </span>
-      <ul className='flex flex-col gap-2 list-disc'>
-        {admins.map((user, idx) => (
-          <li key={idx} className='flex-col inline-flex gap-2'>
-            {adminErrors.includes(user.id) && (
-              <span className='text-red-500'>
-                Please enter a valid Messiah email.
-              </span>
-            )}
-            <div className='flex flex-row items-center gap-2'>
-              <span className='flex-grow'>
-                <Input
-                  value={user.user}
-                  type='text'
-                  name={`admin-${user.id}`}
-                  label=''
+      {/* This row checks if this is a create form (i.e. no user because no loader data) or if the user is a faculty
+          member since only faculty should be able to add/remove admins */}
+      {(!user || user?.isFaculty) && (
+        <>
+          {' '}
+          <span className='flex flex-row justify-start'>
+            Club Officers:<span className='text-red-500'>*</span>
+          </span>
+          <ul className='flex flex-col gap-2 list-disc'>
+            {admins.map((user, idx) => (
+              <li key={idx} className='flex-col inline-flex gap-2'>
+                {adminErrors.includes(user.id) && (
+                  <span className='text-red-500'>
+                    Please enter a valid Messiah email.
+                  </span>
+                )}
+                <div className='flex flex-row items-center gap-2'>
+                  <span className='flex-grow'>
+                    <Input
+                      value={user.user}
+                      type='text'
+                      name={`admin-${user.id}`}
+                      label=''
+                      color='blue'
+                      filled={false}
+                      placeholder='officeremail@domain.edu'
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateAdmin(user.id, e.target.value)
+                      }
+                    />
+                  </span>
+                  <Button
+                    text='Remove'
+                    color='blue'
+                    filled={false}
+                    className='inline-flex flex-row items-center justify-center gap-2 h-12'
+                    icon={<CiTrash size={20} />}
+                    grow={false}
+                    name={`remove-admin-${user.id}`}
+                    type='submit'
+                  />
+                </div>
+              </li>
+            ))}
+            <li className='flex-col inline-flex gap-2'>
+              {newAdminError && (
+                <span className='text-red-500'>{newAdminError}</span>
+              )}
+              <div className='flex flex-row items-center gap-2'>
+                <span className='flex-grow'>
+                  <Input
+                    type='text'
+                    name='admins-new'
+                    label=''
+                    color='blue'
+                    filled={false}
+                    placeholder='officeremail@domain.edu'
+                    value={newAdmin}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (
+                        !e.target.value.endsWith('@messiah.edu') &&
+                        e.target.value !== ''
+                      )
+                        setNewAdminError('Please enter a valid Messiah email.');
+                      else setNewAdminError('');
+                      setNewAdmin(e.target.value);
+                    }}
+                  />
+                </span>
+                <Button
+                  text='Add'
                   color='blue'
                   filled={false}
-                  placeholder='officeremail@domain.edu'
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    updateAdmin(user.id, e.target.value)
-                  }
+                  className='inline-flex flex-row items-center justify-center gap-2'
+                  icon={<CiCirclePlus size={20} />}
+                  grow={false}
+                  name='add-admin'
+                  type='submit'
                 />
-              </span>
-              <Button
-                text='Remove'
-                color='blue'
-                filled={false}
-                className='inline-flex flex-row items-center justify-center gap-2 h-12'
-                icon={<CiTrash size={20} />}
-                grow={false}
-                name={`remove-admin-${user.id}`}
-                type='submit'
-              />
-            </div>
-          </li>
-        ))}
-        <li className='flex-col inline-flex gap-2'>
-          {newAdminError && (
-            <span className='text-red-500'>{newAdminError}</span>
-          )}
-          <div className='flex flex-row items-center gap-2'>
-            <span className='flex-grow'>
-              <Input
-                type='text'
-                name='admins-new'
-                label=''
-                color='blue'
-                filled={false}
-                placeholder='officeremail@domain.edu'
-                value={newAdmin}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (
-                    !e.target.value.endsWith('@messiah.edu') &&
-                    e.target.value !== ''
-                  )
-                    setNewAdminError('Please enter a valid Messiah email.');
-                  else setNewAdminError('');
-                  setNewAdmin(e.target.value);
-                }}
-              />
-            </span>
-            <Button
-              text='Add'
-              color='blue'
-              filled={false}
-              className='inline-flex flex-row items-center justify-center gap-2'
-              icon={<CiCirclePlus size={20} />}
-              grow={false}
-              name='add-admin'
-              type='submit'
-            />
-          </div>
-        </li>
-      </ul>
+              </div>
+            </li>
+          </ul>
+        </>
+      )}
       <div className='flex flex-row gap-2 items-center'>
-        <Input required label='Club Logo: ' type='file' name='image' filled />
+        <Input
+          required
+          label='Club Logo: '
+          type='file'
+          accept='image/*'
+          name='image'
+          filled
+        />
         <Button
           text='Set Logo'
           color='blue'
@@ -374,7 +405,7 @@ const ClubForm = () => {
         ))}
         <li className='flex-row inline-flex gap-2'>
           <span className='flex-grow'>
-            <Input type='file' name='images-new' label='' />
+            <Input type='file' accept='image/*' name='images-new' label='' />
           </span>
           <Button
             text='Add'

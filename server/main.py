@@ -319,6 +319,12 @@ def get_club(club_id):
 def update_club():
     data = request.json
     cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s",
+        (data["name"],),
+    )
+    if not (cur.fetchone()[0] == 0):
+        return jsonify({"error": "An active club with this name already exists."}), 400
     try:
         cur.execute(
             "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP() WHERE club_id = %s",
@@ -427,7 +433,15 @@ def new_club():
     data = request.json
     cur = mysql.connection.cursor()
 
-    # First create the new club instance
+    # Check if a club with the same name already exists
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s",
+        (data["name"],),
+    )
+    if not (cur.fetchone()[0] == 0):
+        return jsonify({"error": "An active club with this name already exists."}), 400
+
+    # Create the new club instance
     base64_image = data["image"]
 
     try:
@@ -632,22 +646,19 @@ def signup():
     cur.close()
     return jsonify({"message ": "User Success!"}), 200
 
+
 @app.route("/api/getinterests")
 def getinterests():
     user_id = session.get("user_id")
     cur = mysql.connection.cursor()
-    cur.execute("select t.tag_name from tag t inner join user_tags ut on t.tag_id = ut.tag_id where ut.user_id = %s ", (user_id,) )
-    result = cur.fetchall()
-    result = list(
-        map(
-            lambda x: 
-            x[0], result
-
-
-            
-        )
+    cur.execute(
+        "select t.tag_name from tag t inner join user_tags ut on t.tag_id = ut.tag_id where ut.user_id = %s ",
+        (user_id,),
     )
+    result = cur.fetchall()
+    result = list(map(lambda x: x[0], result))
     return jsonify({"interests": result}), 200
+
 
 def get_tag_id(interest):
     """Retrieve the tag_id for a given interest (tag name)."""
@@ -656,14 +667,14 @@ def get_tag_id(interest):
         # Query the tags table to find the tag_id based on the interest name
         cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (interest,))
         result = cur.fetchone()
-        
+
         if result is None:
             # If no tag found for the interest, return None or handle accordingly
             print(f"Tag not found for interest: {interest}")  # Optional logging
             return None
-        
+
         return result[0]  # Return the tag_id
-        
+
     except Exception as e:
         print(f"Error fetching tag_id for {interest}: {str(e)}")  # Log any exceptions
         return None
@@ -675,11 +686,11 @@ def get_tag_id(interest):
 def editinterestpage():
     # Debugging: Check if user is logged in
     user_id = session.get("user_id")
-    print (user_id)
+    print(user_id)
     if not user_id:
 
         return jsonify({"error": "User not logged in"}), 401
-    
+
     # Debugging: Log the received data
     data = request.json
     print("Received data:", data)  # Log the incoming JSON data
@@ -705,11 +716,13 @@ def editinterestpage():
             if tag_id:
                 cur.execute(
                     "INSERT INTO user_tags (user_id, tag_id) VALUES (%s, %s)",
-                    (user_id, tag_id)
+                    (user_id, tag_id),
                 )
             else:
-                print(f"Tag ID not found for interest: {interest}")  # Log if tag is missing
-        
+                print(
+                    f"Tag ID not found for interest: {interest}"
+                )  # Log if tag is missing
+
         # Commit the transaction
         mysql.connection.commit()
         cur.close()
@@ -722,7 +735,6 @@ def editinterestpage():
         cur.close()
         print(f"Error occurred: {str(e)}")  # Log any exceptions
         return jsonify({"error": str(e)}), 500
-
 
 
 if __name__ == "__main__":
