@@ -231,6 +231,16 @@ def check_user():
         )
 
 
+@app.route("/api/getAvailableTags", methods=["GET"])
+def get_avaliable_tags():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT tag_id, tag_name FROM tag")
+    result = cur.fetchall()
+    result = list(map(lambda x: {"tag": x[1], "tag_id": x[0]}, result))
+    cur.close()
+    return jsonify({"tags": result}), 200
+
+
 @app.route("/api/clubs", methods=["GET"])
 def get_clubs():
     cur = mysql.connection.cursor()
@@ -297,7 +307,6 @@ def get_club(club_id):
     result["admins"] = list(
         map(lambda x: {"user": x[0], "id": x[1], "name": x[2]}, cur.fetchall())
     )
-    print(result["admins"])
     cur.execute(
         """SELECT image, club_photo_id, image_prefix FROM club_photo WHERE club_id = %s""",
         (club_id,),
@@ -311,6 +320,16 @@ def get_club(club_id):
             cur.fetchall(),
         )
     )
+    cur.execute(
+        """SELECT c.tag_id, t.tag_name 
+            FROM club_tags c 
+            INNER JOIN tag t 
+                ON c.tag_id = t.tag_id 
+            WHERE club_id = %s""",
+        (club_id,),
+    )
+    result["tags"] = list(map(lambda x: {"label": x[1], "value": x[0]}, cur.fetchall()))
+    print(result["tags"])
     cur.close()
     return jsonify(result), 200
 
@@ -384,6 +403,19 @@ def update_club():
                 ),
                 400,
             )
+    # Add the tags
+    cur.execute("DELETE FROM club_tags WHERE club_id = %s", (data["id"],))
+    for tag in data["tags"]:
+        try:
+            cur.execute(
+                "INSERT INTO club_tags (club_id, tag_id) VALUES (%s, %s)",
+                (data["id"], tag["value"]),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({"error": f"Tag {tag['label']} does not exist"}), 400
     if data["admins"]:
         try:
             # Fetch existing admin user_ids for the club
@@ -554,6 +586,19 @@ def new_club():
                 jsonify({"error": "Failed to create new photo. It may be too large."}),
                 400,
             )
+
+    # Add the tags
+    for tag in data["tags"]:
+        try:
+            cur.execute(
+                "INSERT INTO club_tags (club_id, tag_id) VALUES (%s, %s)",
+                (new_club_id, tag["value"]),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({"error": f"Tag {tag['label']} does not exist"}), 400
 
     # Commit the changes to the database
     mysql.connection.commit()

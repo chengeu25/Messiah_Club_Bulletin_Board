@@ -12,10 +12,13 @@ import { useEffect, useState } from 'react';
 import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
 import validateFileSize from '../../../../helper/fileSizeValidator';
+import Select from 'react-select';
+import { OptionType } from '../../../../components/formElements/Select.styles';
 
 interface LoaderData {
   user: UserType;
   club: ClubDetailType;
+  tagsAvailable: OptionType[];
 }
 
 /**
@@ -25,13 +28,14 @@ const ClubForm = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const data = useLoaderData() as LoaderData | null;
-  const { user, club } = data || {};
+  const { user, club, tagsAvailable } = data || {};
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
   const [adminErrors, setAdminErrors] = useState<number[]>([]);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [tags, setTags] = useState<OptionType[]>([]);
   const [admins, setAdmins] = useState<ClubAdminType[]>([]);
   const [newAdmin, setNewAdmin] = useState<string>('');
   const [images, setImages] = useState<ImageType[]>([]);
@@ -156,7 +160,8 @@ const ClubForm = () => {
           'Please add at least one image.',
         images.length === 0 &&
           (formData.get('images-new') as File)?.name !== '' &&
-          'Please click the add image button.'
+          'Please click the add image button.',
+        tags.length === 0 && 'Please add at least one tag.'
       ].filter(Boolean) as string[];
 
       // Don't submit if form validation fails
@@ -170,6 +175,7 @@ const ClubForm = () => {
       formData.append('admins', JSON.stringify(admins));
       formData.append('logo', image);
       formData.append('images', JSON.stringify(images));
+      formData.append('tags', JSON.stringify(tags));
 
       // Submit form
       submit(formData, { method: 'post' });
@@ -210,6 +216,7 @@ const ClubForm = () => {
       setAdmins(club?.admins ?? []);
       setImages(club?.images ?? []);
       setImage(club?.image ?? '');
+      setTags(club?.tags ?? []);
     }
   }, [club]);
 
@@ -267,6 +274,26 @@ const ClubForm = () => {
         placeholder='Tell us a little bit about this club...'
         multiline
         required
+      />
+      <div>
+        Tags:<span className='text-red-500'>*</span>
+      </div>
+      <Select
+        isMulti
+        value={tags}
+        options={tagsAvailable}
+        onChange={(value) => setTags(value as OptionType[])}
+        styles={{
+          control: (base) => ({
+            ...base,
+            'borderColor': 'black',
+            'borderWidth': '2px',
+            'borderRadius': '0.5rem',
+            '&:hover': {
+              borderColor: '#1A2551'
+            }
+          })
+        }}
       />
       {/* This row checks if this is a create form (i.e. no user because no loader data) or if the user is a faculty
           member since only faculty should be able to add/remove admins */}
