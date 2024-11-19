@@ -28,9 +28,10 @@ const LandingPage = () => {
 
             <Button
               color='blue'
-              text='Log In or Sign Up'
+              text='Sign Up'
+              className='p-4'
               onClick={() => {
-                navigate('/login');
+                navigate('/signup');
               }}
               filled={true}
             />
