@@ -11,7 +11,7 @@ import {
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
 import Input from '../components/formElements/Input.component';
-import Select from '../components/formElements/Select.component';
+import CSelect from 'react-select';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { BiHome } from 'react-icons/bi';
 import {
@@ -19,15 +19,18 @@ import {
   getMostRecentSunday,
   getNextSaturday
 } from '../helper/dateUtils';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/userDropdown/UserDropdown.component';
 import { User } from '../helper/checkUser';
+import selectStyles from '../components/formElements/Select.styles';
 
 const Root = () => {
   const user = useLoaderData();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [selectedFilter, setSelectedFilter] = useState('');
 
   /**
    * Returns the current page name based on the location pathname.
@@ -42,6 +45,10 @@ const Root = () => {
         .replace('Calendar', 'Events'),
     [location.pathname]
   );
+
+  useEffect(() => {
+    setSelectedFilter(`All ${currentPage}`);
+  }, [currentPage]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
@@ -62,8 +69,7 @@ const Root = () => {
               label=''
               filled={false}
             />
-            <Select
-              label=''
+            <CSelect
               options={[
                 `All ${currentPage}`,
                 'Suggested',
@@ -73,9 +79,10 @@ const Root = () => {
                 ...(location.pathname.includes('/calendar')
                   ? ['Attending']
                   : [])
-              ]}
-              color='white'
-              filled={false}
+              ].map((item) => ({ label: item, value: item }))}
+              styles={selectStyles}
+              value={{ value: selectedFilter, label: selectedFilter }}
+              onChange={(value) => setSelectedFilter(value?.value as string)}
             />
             {location.pathname.includes('/calendar') && (
               <div className='flex flex-row gap-2 h-full justify-center items-center'>

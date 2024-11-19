@@ -1,5 +1,4 @@
 import generateStyleClasses from './styleGenerator';
-import './Select.component.module.css';
 
 interface SelectProps {
   color:
