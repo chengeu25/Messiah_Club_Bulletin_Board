@@ -386,15 +386,55 @@ def update_club():
             )
     if data["admins"]:
         try:
+            # Fetch existing admin user_ids for the club
             cur.execute(
-                "DELETE FROM club_admin WHERE club_id = %s",
+                "SELECT user_id FROM club_admin WHERE club_id = %s",
                 (data["id"],),
             )
-            for admin in data["admins"]:
+            existing_admins = set(admin[0] for admin in cur.fetchall())
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+        # Determine the new admins
+        new_admins = {admin["user"] for admin in data["admins"]}
+        try:
+            # Set is_active to 0 for admins no longer in the list
+            inactive_admins = existing_admins - new_admins
+            if inactive_admins:
                 cur.execute(
-                    "INSERT INTO club_admin (user_id, club_id, club_admin_id) VALUES (%s, %s, %s)",
-                    (admin["user"], data["id"], admin["id"]),
+                    "UPDATE club_admin SET is_active = 0 WHERE club_id = %s AND user_id IN %s",
+                    (data["id"], tuple(inactive_admins)),
                 )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+        try:
+            # Insert new admins
+            for admin in data["admins"]:
+                if admin["user"] not in existing_admins:
+                    print(admin["user"], existing_admins)
+                    cur.execute(
+                        "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
+                        (admin["user"], data["id"]),
+                    )
         except Exception as e:
             print(e)
             mysql.connection.rollback()
