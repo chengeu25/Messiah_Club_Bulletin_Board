@@ -10,8 +10,6 @@ import {
   useLocation
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
-import Input from '../components/formElements/Input.component';
-import CSelect from 'react-select';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { BiHome } from 'react-icons/bi';
 import {
@@ -24,6 +22,7 @@ import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/userDropdown/UserDropdown.component';
 import { User } from '../helper/checkUser';
 import selectStyles from '../components/formElements/Select.styles';
+import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 
 const Root = () => {
   const user = useLoaderData();
@@ -31,6 +30,7 @@ const Root = () => {
   const location = useLocation();
 
   const [selectedFilter, setSelectedFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   /**
    * Returns the current page name based on the location pathname.
@@ -50,6 +50,10 @@ const Root = () => {
     setSelectedFilter(`All ${currentPage}`);
   }, [currentPage]);
 
+  useEffect(() => {
+    console.log(searchQuery);
+  }, [searchQuery]);
+
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
@@ -61,28 +65,14 @@ const Root = () => {
         {location.pathname.includes('/dashboard') &&
         (currentPage === 'Clubs' || currentPage === 'Events') ? (
           <div className='flex flex-row gap-2 flex-grow items-center justify-center'>
-            <Input
-              placeholder={`Search for ${currentPage}`}
-              name='search'
-              type='text'
-              color='blue'
-              label=''
-              filled={false}
-            />
-            <CSelect
-              options={[
-                `All ${currentPage}`,
-                'Suggested',
-                location.pathname.includes('/clubs')
-                  ? 'Subscribed'
-                  : 'Hosted by Subscribed Clubs',
-                ...(location.pathname.includes('/calendar')
-                  ? ['Attending']
-                  : [])
-              ].map((item) => ({ label: item, value: item }))}
-              styles={selectStyles}
-              value={{ value: selectedFilter, label: selectedFilter }}
-              onChange={(value) => setSelectedFilter(value?.value as string)}
+            <SearchAndFilter
+              location={location}
+              currentPage={currentPage}
+              selectedFilter={selectedFilter}
+              setSelectedFilter={setSelectedFilter}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectStyles={selectStyles}
             />
             {location.pathname.includes('/calendar') && (
               <div className='flex flex-row gap-2 h-full justify-center items-center'>
