@@ -1,3 +1,7 @@
+/**
+ * The main route component for the application. This component
+ * renders the top navigation bar and the main content of the page.
+ */
 import {
   Outlet,
   useLoaderData,
@@ -8,7 +12,6 @@ import {
 import Button from '../components/formElements/Button.component';
 import Input from '../components/formElements/Input.component';
 import Select from '../components/formElements/Select.component';
-import CSelect, { GroupBase } from 'react-select';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
 import { BiHome } from 'react-icons/bi';
 import {
@@ -16,59 +19,20 @@ import {
   getMostRecentSunday,
   getNextSaturday
 } from '../helper/dateUtils';
-import { User } from '../helper/checkUser';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import toTitleCase from '../helper/titleCase';
-
-interface OptionType {
-  value: string;
-  label: string;
-}
+import UserDropdown from '../components/userDropdown/UserDropdown.component';
+import { User } from '../helper/checkUser';
 
 const Root = () => {
   const user = useLoaderData();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [options, setOptions] = useState<OptionType[]>([]);
-
-  const [selectedOption, setSelectedOption] = useState<OptionType | null>(
-    options[0]
-  );
-
-  useEffect(() => {
-    if (user) {
-      setOptions([
-        {
-          value: (user as User)?.name ? (user as User)?.name : '',
-          label: (user as User)?.name && (user as User)?.name
-        },
-        {
-          value: 'Dashboard',
-          label: 'Dashboard'
-        },
-        {
-          value: 'Edit Interests',
-          label: 'Edit Interests'
-        },
-        {
-          value: 'Change Password',
-          label: 'Change Password'
-        },
-        {
-          value: 'Log Out',
-          label: 'Log Out'
-        }
-      ]);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (options.length > 0) {
-      setSelectedOption(options[0]);
-    }
-  }, [options]);
-
+  /**
+   * Returns the current page name based on the location pathname.
+   * @returns {string} The current page name.
+   */
   const currentPage = useMemo(
     () =>
       toTitleCase(
@@ -152,63 +116,7 @@ const Root = () => {
             !location.pathname.includes('/verifyEmail') && (
               <>
                 {user ? (
-                  <div className='flex items-center justify-center'>
-                    <CSelect<OptionType, false, GroupBase<OptionType>>
-                      options={options}
-                      onChange={(selected) => {
-                        if (selected?.value === 'Log Out') {
-                          navigate('/logout');
-                        } else if (selected?.value === 'Edit Interests') {
-                          navigate('/editinterest');
-                        } else if (selected?.value === 'Change Password') {
-                          navigate('/changePassword');
-                        } else if (selected?.value === 'Dashboard') {
-                          navigate('/dashboard');
-                        }
-                        setSelectedOption({
-                          value: (user as User)?.name,
-                          label: (user as User)?.name
-                        });
-                      }}
-                      value={selectedOption}
-                      name='user'
-                      styles={{
-                        control: (base) => ({
-                          ...base,
-                          'backgroundColor': 'rgb(23, 37, 84)', // Tailwind's blue-950
-                          'borderColor': 'white',
-                          'borderRadius': '10px',
-                          'borderWidth': '2px',
-                          'color': 'white',
-                          'textAlign': 'center', // Center the text
-                          'padding': '3px', // Add some padding
-                          '&:hover': {
-                            borderColor: 'white' // Change border color on hover
-                          }
-                        }),
-                        singleValue: (base) => ({
-                          ...base,
-                          color: 'white', // Text color for the selected value
-                          textAlign: 'center' // Center the selected value
-                        }),
-                        menu: (base) => ({
-                          ...base,
-                          backgroundColor: 'rgb(23, 37, 84)', // Tailwind's blue-950 for dropdown
-                          color: 'white'
-                        }),
-                        option: (base, { isFocused, isSelected }) => ({
-                          ...base,
-                          backgroundColor: isFocused
-                            ? 'rgb(43, 57, 104)'
-                            : isSelected
-                            ? 'rgb(43, 57, 104)'
-                            : 'rgb(23, 37, 84)',
-                          color: 'white',
-                          textAlign: 'center' // Center the option text
-                        })
-                      }}
-                    />
-                  </div>
+                  <UserDropdown user={user as User} />
                 ) : (
                   <div className='flex flex-row gap-2 text-nowrap'>
                     <Button
