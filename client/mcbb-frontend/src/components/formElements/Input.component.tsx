@@ -54,7 +54,7 @@ const Input = ({
           .replace(
             'w-full',
             type === 'checkbox' ? 'max-w-10' : 'w-full'
-          )} p-2 rounded-lg flex-grow`}
+          )} p-2 rounded-lg flex-grow text-black`}
         defaultValue={defaultValue}
         onInput={onInput}
         onChange={onChange}
@@ -67,10 +67,11 @@ const Input = ({
         placeholder={placeholder}
         className={`${generateStyleClasses(color ?? 'white', filled ?? true)
           .replace(`text-${color ?? 'white'}`, 'text-black')
+          .replace(`text-white`, 'text-black')
           .replace(
             'w-full',
             type === 'checkbox' ? 'max-w-10' : 'w-full'
-          )} p-2 rounded-lg flex-grow`}
+          )} p-2 rounded-lg flex-grow ${!filled && 'text-black'}`}
         onInput={onInput}
         onChange={onChange}
         value={value}
