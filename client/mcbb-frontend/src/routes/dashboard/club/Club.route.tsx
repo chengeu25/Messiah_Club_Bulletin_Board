@@ -10,6 +10,7 @@ import {
   UserType
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
+import { Form } from 'react-router-dom';
 
 const demoEvents = [
   {
@@ -81,9 +82,18 @@ const demoEvents = [
 ];
 
 const Club = () => {
-  const { club } = useLoaderData() as {
+  const { user, club } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
+  };
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const action = (
+      (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
+    ).name;
+    formData.append('action', action);
   };
 
   return (
@@ -94,9 +104,25 @@ const Club = () => {
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{club?.name}</h1>
-        <div className='flex-shrink-0 flex'>
-          <Button color='blue' text='Subscribe' filled={true} />
-        </div>
+        <Form
+          onSubmit={handleSubmit}
+          className='flex-shrink-0 flex gap-2 text-nowrap'
+        >
+          {user?.clubAdmins.includes(club?.id) && (
+            <Button
+              color='blue'
+              text='New Event'
+              filled={true}
+              name='newEvent'
+            />
+          )}
+          <Button
+            color='blue'
+            text='Subscribe'
+            name='subscribe'
+            filled={true}
+          />
+        </Form>
       </Card>
       <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
         <p>{club?.description}</p>
