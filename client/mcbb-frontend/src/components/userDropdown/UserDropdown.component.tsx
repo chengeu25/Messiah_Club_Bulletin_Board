@@ -8,6 +8,11 @@ interface UserDropdownProps {
   user: User | null | Record<string, never>;
 }
 
+/**
+ * UserDropdown component. Renders a dropdown menu for the user.
+ * @param {User} user - The user object.
+ * @returns {JSX.Element} The rendered UserDropdown component.
+ */
 const UserDropdown = ({ user }: UserDropdownProps) => {
   const navigate = useNavigate();
 
