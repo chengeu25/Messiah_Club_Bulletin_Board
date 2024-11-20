@@ -7,7 +7,8 @@ import {
   useLoaderData,
   useNavigate,
   Link,
-  useLocation
+  useLocation,
+  useSearchParams
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
@@ -28,9 +29,18 @@ const Root = () => {
   const user = useLoaderData();
   const navigate = useNavigate();
   const location = useLocation();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_params, setParams] = useSearchParams();
 
   const [selectedFilter, setSelectedFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    setParams({
+      search: searchQuery,
+      filter: selectedFilter
+    });
+  }, [searchQuery, selectedFilter, setParams]);
 
   /**
    * Returns the current page name based on the location pathname.
@@ -48,6 +58,7 @@ const Root = () => {
 
   useEffect(() => {
     setSelectedFilter(`All ${currentPage}`);
+    setSearchQuery('');
   }, [currentPage]);
 
   return (

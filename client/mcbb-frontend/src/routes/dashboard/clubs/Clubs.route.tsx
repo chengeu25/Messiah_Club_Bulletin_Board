@@ -1,4 +1,9 @@
-import { Form, useLoaderData, useSubmit } from 'react-router-dom';
+import {
+  Form,
+  useLoaderData,
+  useSearchParams,
+  useSubmit
+} from 'react-router-dom';
 import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
@@ -12,6 +17,7 @@ interface LoaderData {
 const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
+  const [params] = useSearchParams();
 
   /**
    * Handles the form submission
@@ -46,30 +52,42 @@ const Clubs = () => {
           />
         </Form>
       )}
-      {data.clubs.map((club) => (
-        <Club
-          key={club.name}
-          {...club}
-          editable={
-            data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
-          }
-          deletable={data.user.isFaculty}
-          onSubmit={(e) => handleSubmit(e, club.id)}
-        />
-      ))}
+      {data.clubs
+        .filter((club) =>
+          club.name
+            .toLowerCase()
+            .includes(params.get('search')?.toLowerCase() ?? '')
+        )
+        .map((club) => (
+          <Club
+            key={club.name}
+            {...club}
+            editable={
+              data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
+            }
+            deletable={data.user.isFaculty}
+            onSubmit={(e) => handleSubmit(e, club.id)}
+          />
+        ))}
       {data.user.isFaculty && (
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
-          {data.inactiveClubs.map((club) => (
-            <Club
-              key={club.name + '-' + club.id}
-              {...club}
-              editable={false}
-              deletable={false}
-              inactive
-              onSubmit={(e) => handleSubmit(e, club.id)}
-            />
-          ))}
+          {data.inactiveClubs
+            .filter((club) =>
+              club.name
+                .toLowerCase()
+                .includes(params.get('search')?.toLowerCase() ?? '')
+            )
+            .map((club) => (
+              <Club
+                key={club.name + '-' + club.id}
+                {...club}
+                editable={false}
+                deletable={false}
+                inactive
+                onSubmit={(e) => handleSubmit(e, club.id)}
+              />
+            ))}
         </>
       )}
     </div>

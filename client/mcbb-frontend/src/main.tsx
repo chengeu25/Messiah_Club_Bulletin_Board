@@ -113,7 +113,12 @@ const router = createBrowserRouter(
           />
         </Route>
       </Route>
-      <Route path='editinterest' element={<EditInterest />}action={EditInterestsAction}loader={EditInterestLoader} />
+      <Route
+        path='editinterest'
+        element={<EditInterest />}
+        action={EditInterestsAction}
+        loader={EditInterestLoader}
+      />
     </Route>
   )
 );

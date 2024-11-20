@@ -70,10 +70,6 @@ def send_verification_email(email, code):
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
 
-    # Check if variables are loaded correctly
-    print(f"Sender Email: {sender_email}")
-    print(f"Sender Password: {sender_password}")
-
     subject = "Your Verification Code"
     body = f"Your new verification code is: {code}"
 
@@ -86,7 +82,6 @@ def send_verification_email(email, code):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, email, msg.as_string())
-        print("Email sent successfully.")
     except Exception as e:
         print(f"Failed to send email to {email} with code {code}: {e}")
         return False
@@ -128,7 +123,6 @@ def verify_email():
 @app.route("/api/resend-code", methods=["POST"])
 def resend_code():
     data = request.get_json()
-    print("Received data:", data)  # Print received data
     # get email from session?
     email = session.get("user_id")
 
@@ -362,7 +356,6 @@ def get_club(club_id):
         (club_id,),
     )
     result["tags"] = list(map(lambda x: {"label": x[1], "value": x[0]}, cur.fetchall()))
-    print(result["tags"])
     cur.close()
     return jsonify(result), 200
 
@@ -495,7 +488,6 @@ def update_club():
             # Insert new admins
             for admin in data["admins"]:
                 if admin["user"] not in existing_admins:
-                    print(admin["user"], existing_admins)
                     cur.execute(
                         "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
                         (admin["user"], data["id"]),
@@ -728,7 +720,6 @@ def signup():
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
-    print(f"Captcha Response: {captcha_response}")  # Debugging line
     if not is_it_a_robot(captcha_response):
         return jsonify({"error": "You may be a robot."}), 400
 
@@ -750,7 +741,6 @@ def signup():
     hashed_password = generate_password_hash(password)
     # Putting it all into the database if pass
 
-    print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
         "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
@@ -759,9 +749,7 @@ def signup():
     mysql.connection.commit()
     results = cur.fetchall()
 
-    print(email)
     session["user_id"] = email
-    print(session.get("user_id"))
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()
@@ -807,21 +795,17 @@ def get_tag_id(interest):
 def editinterestpage():
     # Debugging: Check if user is logged in
     user_id = session.get("user_id")
-    print(user_id)
     if not user_id:
 
         return jsonify({"error": "User not logged in"}), 401
 
-    # Debugging: Log the received data
     data = request.json
-    print("Received data:", data)  # Log the incoming JSON data
 
     if not data.get("interests"):
         return jsonify({"error": "No interests provided"}), 400
 
     interests = data["interests"]
     interests = json.loads(interests)
-    print("Interests to be updated:", interests)  # Log the interests array
 
     # Step 1: Get the user_id from the session and delete existing tags for the user
     cur = mysql.connection.cursor()
