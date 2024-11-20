@@ -15,6 +15,18 @@ interface SearchAndFilterProps {
   location: Location;
 }
 
+/**
+ * A component that renders a search bar and a filter dropdown.
+ * @param {Object} props - The component props
+ * @param {string} props.currentPage - The current page name
+ * @param {string} props.selectedFilter - The currently selected filter
+ * @param {Function} props.setSelectedFilter - Function to update the selected filter
+ * @param {string} props.searchQuery - The current search query
+ * @param {Function} props.setSearchQuery - Function to update the search query
+ * @param {StylesConfig<OptionType, false, GroupBase<OptionType>>} props.selectStyles - Styles for the select component
+ * @param {Location} props.location - The current location object
+ * @returns {JSX.Element} The rendered SearchAndFilter component
+ */
 const SearchAndFilter = ({
   currentPage,
   selectedFilter,
@@ -27,14 +39,16 @@ const SearchAndFilter = ({
   const [isSearchVisible, setSearchVisible] = useState(false);
   const [isSelectVisible, setSelectVisible] = useState(false);
 
+  /** Toggles the visibility of the search component */
   const toggleSearch = () => {
     setSearchVisible(!isSearchVisible);
-    setSelectVisible(false); // Hide select when search is opened
+    setSelectVisible(false);
   };
 
+  /** Toggles the visibility of the select component */
   const toggleSelect = () => {
     setSelectVisible(!isSelectVisible);
-    setSearchVisible(false); // Hide search when select is opened
+    setSearchVisible(false);
   };
 
   return (
