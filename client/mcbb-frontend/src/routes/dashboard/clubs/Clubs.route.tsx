@@ -82,25 +82,19 @@ const Clubs = () => {
           onSubmit={(e) => handleSubmit(e, club.id)}
         />
       ))}
-      {data.user.isFaculty && (
+      {data.user.isFaculty && data.inactiveClubs.length > 0 && (
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
-          {data.inactiveClubs
-            .filter((club) =>
-              club.name
-                .toLowerCase()
-                .includes(params.get('search')?.toLowerCase() ?? '')
-            )
-            .map((club) => (
-              <Club
-                key={club.name + '-' + club.id}
-                {...club}
-                editable={false}
-                deletable={false}
-                inactive
-                onSubmit={(e) => handleSubmit(e, club.id)}
-              />
-            ))}
+          {data.inactiveClubs.filter(passesSearch).map((club) => (
+            <Club
+              key={club.name + '-' + club.id}
+              {...club}
+              editable={false}
+              deletable={false}
+              inactive
+              onSubmit={(e) => handleSubmit(e, club.id)}
+            />
+          ))}
         </>
       )}
     </div>

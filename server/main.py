@@ -322,6 +322,31 @@ def get_inactive_clubs():
         result = None
     if result is None:
         return jsonify({"error": "No clubs found"}), 404
+    try:
+        cur.execute(
+            """SELECT c.club_id, t.tag_name 
+                FROM club_tags c 
+                INNER JOIN tag t 
+                    ON c.tag_id = t.tag_id""",
+        )
+        tags = cur.fetchall()
+        tags = list(map(lambda x: {"tag": x[1], "club_id": x[0]}, tags))
+        result = list(
+            map(
+                lambda x: {
+                    **x,
+                    "tags": list(
+                        map(
+                            lambda y: y["tag"],
+                            filter(lambda y: y["club_id"] == x["id"], tags),
+                        )
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
     cur.close()
     return jsonify(result), 200
 
