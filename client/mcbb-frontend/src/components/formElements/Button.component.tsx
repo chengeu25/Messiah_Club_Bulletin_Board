@@ -18,6 +18,7 @@ interface ButtonProps {
   name?: string;
   className?: string;
   disabled?: boolean;
+  grow?: boolean;
 }
 
 const Button = ({
@@ -29,11 +30,14 @@ const Button = ({
   name,
   filled = true,
   className,
-  disabled
+  disabled,
+  grow = true
 }: ButtonProps) => (
   <button
     disabled={disabled}
-    className={`${generateStyleClasses(color, filled, disabled)} ${className}`}
+    className={`${generateStyleClasses(color, filled, disabled)
+      .replace(!grow ? 'w-full' : '', '')
+      .replace(!grow ? 'flex-grow' : '', '')} ${className}`}
     onClick={onClick}
     type={type}
     name={name}

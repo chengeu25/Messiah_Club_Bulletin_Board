@@ -11,10 +11,11 @@ import string
 import smtplib
 import jwt
 from email.mime.text import MIMEText
+import base64
 
 app = Flask(__name__)
+# Load the secret keys from environment variables
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
-# Load the secret key from environment variables
 RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
 
@@ -46,20 +47,9 @@ mysql = MySQL(app)
 cors = CORS(
     app,
     resources={
-        r"/api/*": {"origins": "http://localhost:5173"}#, "supports_credentials": True}
-    }, supports_credentials=True
+        r"/api/*": {"origins": "http://localhost:5173", "supports_credentials": True}
+    },
 )
-
-
-# Function to get user by email from the database
-# return session.get("verification_code")
-def get_code_by_email(email):
-    cursor = mysql.connection.cursor()
-    query = "SELECT verification_code FROM users WHERE email = %s"
-    cursor.execute(query, (email,))
-    user = cursor.fetchone()[0]  # Fetch the first result
-    cursor.close()
-    return user
 
 
 # Function to update the email verification status in the database
@@ -73,6 +63,7 @@ def update_email_verified(email, **kwargs):
         return True
     except:
         return False
+
 
 # Function to send a verification email
 def send_verification_email(email, code):
@@ -102,6 +93,7 @@ def send_verification_email(email, code):
 
     return True
 
+
 @app.route("/")
 def hello():
     return "Hello, World!"
@@ -115,16 +107,11 @@ def verify_email():
 
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
-    # if not email:
-    #     return jsonify({"error": "Email is required"}), 400
 
-    # Retrieve user from the database
-    user = get_code_by_email(
-        email
-    )  # This function should query the database to find the user by email
-    print(user)
+    # store verification code in session
+    stored_session_code = session.get("verification_code")
 
-    if user == input_code:
+    if stored_session_code == input_code:
         # Update EMAIL_VERIFIED field in the database
         update_success = update_email_verified(
             email, verified=True
@@ -149,12 +136,7 @@ def resend_code():
     new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
     # Update the verification code in the database
-    #session['verification_code'] = new_code
-    cursor = mysql.connection.cursor()
-    cursor.execute(
-        "UPDATE users SET verification_code = %s WHERE email = %s", (new_code, email)
-    )
-    mysql.connection.commit()
+    session["verification_code"] = new_code
 
     # Send the new verification code to the user's email
     verified = send_verification_email(email, new_code)
@@ -163,8 +145,6 @@ def resend_code():
         return jsonify({"error": "Failed to send verification code"}), 500
 
     return jsonify({"message": "Verification code resent"}), 200
-
-
 
 
 @app.route("/api/checkUserCookie", methods=["GET"])
@@ -183,18 +163,44 @@ def check_user():
     ) < timedelta(minutes=15):
         cur = mysql.connection.cursor()
         cur.execute(
-            """SELECT email, email_verified, name
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty
                 FROM users 
                 WHERE email = %s
+                    AND is_active = 1
             """,
             (session["user_id"],),
         )
         result = cur.fetchone()
+        cur.execute(
+            """SELECT a.club_id 
+                        FROM club_admin a
+                        INNER JOIN users u ON u.email = a.user_id
+                        WHERE a.user_id = %s
+                            AND u.is_active = 1
+                    """,
+            (session["user_id"],),
+        )
+        result_2 = None
+        try:
+            result_2 = cur.fetchall()
+            result_2 = list(map(lambda x: x[0], result_2))
+        except TypeError:
+            result_2 = None
         cur.close()
-
         if result is None:
-            return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
-
+            return (
+                jsonify(
+                    {
+                        "user_id": None,
+                        "name": None,
+                        "emailVerified": None,
+                        "isFaculty": None,
+                        "canDeleteFaculty": None,
+                        "clubAdmins": None,
+                    }
+                ),
+                401,
+            )
         session["last_activity"] = datetime.now(timezone.utc)
         return (
             jsonify(
@@ -202,12 +208,300 @@ def check_user():
                     "user_id": session["user_id"],
                     "name": result[2],
                     "emailVerified": result[1],
+                    "isFaculty": result[3],
+                    "canDeleteFaculty": result[4],
+                    "clubAdmins": result_2,
                 }
             ),
             200,
         )
     else:
-        return jsonify({"user_id": None, "name": None, "emailVerified": None}), 401
+        return (
+            jsonify(
+                {
+                    "user_id": None,
+                    "name": None,
+                    "emailVerified": None,
+                    "isFaculty": None,
+                    "canDeleteFaculty": None,
+                    "clubAdmins": None,
+                }
+            ),
+            401,
+        )
+
+
+@app.route("/api/clubs", methods=["GET"])
+def get_clubs():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 1"
+    )
+    result = None
+    try:
+        result = cur.fetchall()
+        result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "name": x[1],
+                    "description": x[2],
+                    "image": (
+                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
+                        if x[3]
+                        else None
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
+        result = None
+    if result is None:
+        return jsonify({"error": "No clubs found"}), 404
+    cur.close()
+    return jsonify(result), 200
+
+
+@app.route("/api/club/<club_id>", methods=["GET"])
+def get_club(club_id):
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT club_id, club_name, description, club_logo, logo_prefix 
+            FROM club 
+            WHERE is_active = 1 
+                AND club_id = %s""",
+        (club_id,),
+    )
+    result = cur.fetchone()
+    if result is None:
+        return jsonify({"error": "The requested club was not found on the server"}), 404
+    result = {
+        "id": result[0],
+        "name": result[1],
+        "description": result[2],
+        "image": (
+            f"{result[4]},{base64.b64encode(result[3]).decode('utf-8')}"
+            if result[3]
+            else None
+        ),
+    }
+    cur.execute(
+        """SELECT a.user_id, a.club_admin_id, u.name 
+            FROM club_admin a 
+            INNER JOIN users u ON u.email = a.user_id
+            WHERE club_id = %s""",
+        (club_id,),
+    )
+    result["admins"] = list(
+        map(lambda x: {"user": x[0], "id": x[1], "name": x[2]}, cur.fetchall())
+    )
+    print(result["admins"])
+    cur.execute(
+        """SELECT image, club_photo_id, image_prefix FROM club_photo WHERE club_id = %s""",
+        (club_id,),
+    )
+    result["images"] = list(
+        map(
+            lambda x: {
+                "image": f"{x[2]},{base64.b64encode(x[0]).decode('utf-8')}",
+                "id": x[1],
+            },
+            cur.fetchall(),
+        )
+    )
+    cur.close()
+    return jsonify(result), 200
+
+
+@app.route("/api/update-club", methods=["PUT"])
+def update_club():
+    data = request.json
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute(
+            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP() WHERE club_id = %s",
+            (data["name"], data["description"], data["id"]),
+        )
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to update the club"}), 400
+    try:
+        if data["image"]:
+            cur.execute(
+                "UPDATE club SET club_logo = %s, logo_prefix = %s WHERE club_id = %s",
+                (
+                    base64.b64decode(data["image"].split(",")[1]),
+                    data["image"].split(",")[0],
+                    data["id"],
+                ),
+            )
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return (
+            jsonify(
+                {
+                    "error": "Failed to update the club, something may be wrong with the logo."
+                }
+            ),
+            400,
+        )
+    if data["images"]:
+        try:
+            cur.execute(
+                "DELETE FROM club_photo WHERE club_id = %s",
+                (data["id"],),
+            )
+            for image in data["images"]:
+                cur.execute(
+                    "INSERT INTO club_photo (club_id, image, image_prefix) VALUES (%s, %s, %s)",
+                    (
+                        data["id"],
+                        base64.b64decode(image["image"].split(",")[1]),
+                        image["image"].split(",")[0],
+                    ),
+                )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the images."
+                    }
+                ),
+                400,
+            )
+    if data["admins"]:
+        try:
+            cur.execute(
+                "DELETE FROM club_admin WHERE club_id = %s",
+                (data["id"],),
+            )
+            for admin in data["admins"]:
+                cur.execute(
+                    "INSERT INTO club_admin (user_id, club_id, club_admin_id) VALUES (%s, %s, %s)",
+                    (admin["user"], data["id"], admin["id"]),
+                )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Club updated successfully"}), 200
+
+
+@app.route("/api/delete-club/<club_id>", methods=["DELETE"])
+def delete_club(club_id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (club_id))
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to delete the club"}), 400
+    mysql.connection.commit()
+    cur.close()
+    return jsonify({"message": "Club deleted successfully"}), 200
+
+
+@app.route("/api/new-club", methods=["POST"])
+def new_club():
+    data = request.json
+    cur = mysql.connection.cursor()
+
+    # First create the new club instance
+    base64_image = data["image"]
+
+    try:
+        base64_imagedata = base64_image.split(",")
+        base64_image = base64_imagedata[1]
+        prefix = base64_imagedata[0]
+
+        image_data = base64.b64decode(base64_image)
+    except Exception as e:
+        return jsonify({"error": "Invalid image"}), 400
+    try:
+        cur.execute(
+            "INSERT INTO club (club_name, is_active, description, last_updated, club_logo, logo_prefix) VALUES (%s, 1, %s, CURRENT_TIMESTAMP(), %s, %s)",
+            (data["name"], data["description"], image_data, prefix),
+        )
+    except Exception as e:
+        print(e)
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to create new club"}), 400
+
+    # Now we need to get the ID of the new club for use in the other tables
+    cur.execute(
+        """SELECT club_id 
+            FROM club 
+            WHERE is_active = 1 
+                AND club_name = %s 
+                AND description = %s 
+                AND club_logo = %s""",
+        (data["name"], data["description"], image_data),
+    )
+    new_club_id = cur.fetchone()[0]
+
+    # Add the admins
+    for admin in data["admins"]:
+        try:
+            cur.execute(
+                "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
+                (admin["user"], new_club_id),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({"error": f"User {admin['user']} does not exist"}), 400
+
+    # Add the photos
+    for image in data["images"]:
+        try:
+            base64_imagedata = image["image"].split(",")
+            base64_image = base64_imagedata[1]
+            prefix = base64_imagedata[0]
+
+            image_data = base64.b64decode(base64_image)
+        except Exception as e:
+            return jsonify({"error": "Invalid image"}), 400
+        try:
+            cur.execute(
+                "INSERT INTO club_photo (image, club_id, image_prefix) VALUES (%s, %s, %s)",
+                (image_data, new_club_id, prefix),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify({"error": "Failed to create new photo. It may be too large."}),
+                400,
+            )
+
+    # Commit the changes to the database
+    mysql.connection.commit()
+    cur.close()
+
+    return jsonify({"id": int(new_club_id)}), 200
 
 
 @app.route("/api/login", methods=["POST"])
@@ -336,221 +630,6 @@ def signup():
 
     cur.close()
     return jsonify({"message ": "User Success!"}), 200
-
-
-@app.route("/api/passwordReset", methods=["POST"])
-def reset_password():
-    data = request.json
-    cur = mysql.connection.cursor()
-    print("this is the email:\n")
-    print(data["emailRequest"]["email"])
-
-    # Retrieve the hashed passwords from the database
-    cur.execute(
-        """Select pwd1, pwd2, pwd3, email_verified
-                FROM users
-                WHERE email = %s
-                    AND is_active = 1""",
-        (data["emailRequest"]["email"],),
-    )
-    result = cur.fetchone()
-
-    # If no matching email is found, return an error
-    if result is None:
-        return jsonify({"error": "Invalid email or password"}), 401
-
-    # Verify the provided current password against the hashed password
-    hashed_password = result[0]
-    if not check_password_hash(hashed_password, data["oldPassword"]):
-        return jsonify({"error": "Invalid password"}), 401
-
-    # Set the user ID and activity timestamp in the session
-    session["user_id"] = data["emailRequest"]["email"]
-    session["last_activity"] = datetime.now(timezone.utc)
-
-    # Check if email is verified
-    is_email_verified = result[3]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
-
-    # Check if new password is unique to the last three saved passwords
-    new_password = data["newPassword"]
-    print(new_password)
-    print(result[0])
-    print(result[1])
-    print(result[2])
-    if result[1] != None and result[2] != None:
-        if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
-            return jsonify({"error": "New password cannot be a previously used password"}), 400
-
-    # Cascade passwords
-    print(
-        f"""UPDATE users
-                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
-                WHERE email = {data['emailRequest']['email']}"""
-    )
-    cur.execute(
-        """UPDATE users
-                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
-                WHERE email = %s""",
-        (
-            str(result[1]),
-            str(result[0]),
-            generate_password_hash(str(data["newPassword"])),
-            str(data["emailRequest"]["email"]),
-        ),
-    )
-
-    mysql.connection.commit()
-    cur.close()
-    session.pop('user_id', None)
-    return jsonify({"message": "Password successfully reset"})
-
-
-@app.after_request
-def apply_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    return response
-
-@app.route("/api/forgotPassword", methods=["POST"])
-def forgot_password():
-    data = request.json
-    cur = mysql.connection.cursor()
-
-    # Retrieve the hashed passwords from the database
-    cur.execute(
-        """Select pwd1, pwd2, email_verified
-                FROM users
-                WHERE email = %s
-                    AND is_active = 1""",
-        (data["email"],),
-    )
-    result = cur.fetchone()
-
-    # If no matching email is found, return an error
-    if result is None:
-        return jsonify({"error": "Invalid email"}), 401
-
-    # Check if email is verified
-    is_email_verified = result[2]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
-
-    # Generate a reset token
-    token = jwt.encode(
-        {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
-        app.config["SECRET_KEY"],
-        algorithm="HS256",
-    )
-
-    # Add token to database
-    cur.execute(
-        """update users
-                SET reset_token = %s
-                WHERE email = %s""",
-            (token, data["email"],),
-    )
-    mysql.connection.commit()
-    result = cur.fetchone()
-
-    # Create reset link
-    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
-
-    # Send email
-    send_email(str(data["email"]), reset_link)
-    return jsonify({"message": "Reset link sent to your email"}), 200
-
-def base64url_decode(encoded_data):
-    # Add the necessary padding before decoding
-    padding = '=' * (4 - len(encoded_data) % 4)
-    return base64.urlsafe_b64decode(encoded_data + padding).decode('utf-8')
-
-def send_email(to_email, reset_link):
-    sender_email = os.getenv("SENDER_EMAIL")
-    sender_password = os.getenv("SENDER_PASSWORD")
-
-    subject = "SHARC Forgot Password"
-    body = f"Click the link to reset your password: {reset_link}"
-
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = sender_email
-    msg["To"] = to_email
-
-    try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
-            print("Email sent successfully")
-    except Exception as e:
-        print(f"Failed to send email to {to_email}: {e}")
-
-@app.route("/api/forgotPasswordToken", methods=["POST"])
-def forgot_password_reset():
-    data = request.json
-    cur = mysql.connection.cursor()
-
-    try:
-        # Extract token from request data
-        token = request.json.get("token")
-        decoded_data = jwt.decode(token, app.config["SECRET_KEY"], algorithms=["HS256"])
-        user_email = decoded_data.get("email")
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Token has expired"}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "Invalid token"}), 401
-
-    # Retrieve the hashed passwords from the database
-    cur.execute(
-        """select pwd1, pwd2, pwd3, email_verified, reset_token, email
-                FROM users
-                WHERE reset_token = %s
-                    AND is_active = 1""",
-        (token,),
-    )
-    result = cur.fetchone()
-
-    # If no matching email is found, return an error
-    if result is None:
-        return jsonify({"error": "Invalid email or password"}), 401
-
-    # Check if new password is unique to the last three saved passwords
-    new_password = data["newPassword"]
-
-    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
-        return jsonify({"error": "New password cannot be a previously used password"}), 400
-
-    # Cascade passwords
-    print(
-        f"""UPDATE users
-                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
-                WHERE email = {result[5]}"""
-    )
-    print((
-            str(result[1]),
-            str(result[0]),
-            generate_password_hash(str(data["newPassword"])),
-            str(data["token"]),
-        ))
-    cur.execute(
-        """UPDATE users
-                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
-                WHERE reset_token = %s""",
-        (
-            str(result[1]),
-            str(result[0]),
-            generate_password_hash(str(data["newPassword"])),
-            str(data["token"]),
-        ),
-    )
-    mysql.connection.commit()
-    cur.close()
-    session.pop('user_id', None)
-    return jsonify({'message': "Password reset successful"}), 200
 
 
 if __name__ == "__main__":

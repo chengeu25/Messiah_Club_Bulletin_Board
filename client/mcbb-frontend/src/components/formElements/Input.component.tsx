@@ -9,10 +9,12 @@ interface InputProps {
   filled?: boolean;
   placeholder?: string;
   required?: boolean;
-  onInput?: FormEventHandler<HTMLInputElement>;
-  onChange?: FormEventHandler<HTMLInputElement>;
+  onInput?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onChange?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   value?: string;
   checked?: boolean;
+  defaultValue?: string;
+  multiline?: boolean;
 }
 
 const Input = ({
@@ -26,28 +28,54 @@ const Input = ({
   onInput,
   onChange,
   value,
-  checked
+  checked,
+  defaultValue,
+  multiline = false
 }: InputProps) => (
-  <label className='flex flex-row items-center gap-2 text-nowrap flex-grow'>
-    <span>
-      {label}
-      {required && <span className='text-red-500'>*</span>}
-    </span>
-    <input
-      type={type}
-      name={name}
-      placeholder={placeholder}
-      className={`${generateStyleClasses(color ?? 'white', filled ?? true)
-        .replace(`text-${color ?? 'white'}`, 'text-black')
-        .replace(
-          'w-full',
-          type === 'checkbox' ? 'max-w-10' : 'w-full'
-        )} p-2 rounded-lg flex-grow`}
-      onInput={onInput}
-      onChange={onChange}
-      value={value}
-      checked={checked}
-    />
+  <label
+    className={`flex ${
+      type === 'checkbox' ? 'flex-row items-center' : 'flex-col'
+    } gap-2 text-nowrap flex-grow`}
+  >
+    {label && (
+      <span>
+        {label}
+        {required && <span className='text-red-500'>*</span>}
+      </span>
+    )}
+    {multiline ? (
+      <textarea
+        name={name}
+        placeholder={placeholder}
+        className={`${generateStyleClasses(color ?? 'white', filled ?? true)
+          .replace(`text-${color ?? 'white'}`, 'text-black')
+          .replace(
+            'w-full',
+            type === 'checkbox' ? 'max-w-10' : 'w-full'
+          )} p-2 rounded-lg flex-grow`}
+        defaultValue={defaultValue}
+        onInput={onInput}
+        onChange={onChange}
+        value={value}
+      ></textarea>
+    ) : (
+      <input
+        type={type}
+        name={name}
+        placeholder={placeholder}
+        className={`${generateStyleClasses(color ?? 'white', filled ?? true)
+          .replace(`text-${color ?? 'white'}`, 'text-black')
+          .replace(
+            'w-full',
+            type === 'checkbox' ? 'max-w-10' : 'w-full'
+          )} p-2 rounded-lg flex-grow`}
+        onInput={onInput}
+        onChange={onChange}
+        value={value}
+        checked={checked}
+        defaultValue={defaultValue}
+      />
+    )}
   </label>
 );
 export default Input;
