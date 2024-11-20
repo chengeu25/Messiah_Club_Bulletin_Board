@@ -12,10 +12,16 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
   const navigate = useNavigate();
 
   const [options, setOptions] = useState<OptionType[]>([]);
-
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(
     options[0]
   );
+  const [menuPosition, setMenuPosition] = useState<{
+    left: string | number;
+    right: string | number;
+  }>({
+    left: 'auto',
+    right: 0
+  });
 
   /**
    * Handles the user dropdown change event. If the selected option is
@@ -33,12 +39,30 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     } else if (selected?.value === 'Change Password') {
       navigate('/changePassword');
     } else if (selected?.value === 'Dashboard') {
-      navigate('/dashboard');
+      navigate('/dashboard/home');
     }
-    setSelectedOption({
-      value: (user as User)?.name,
-      label: (user as User)?.name
-    });
+    setSelectedOption(options[0]);
+  };
+
+  /**
+   * Handles the user dropdown open event. Adjusts the position of the menu
+   * depending on the right edge of the button and the window width.
+   */
+  const handleMenuOpen = () => {
+    const menuWidth = 200; // Set this to your minWidth
+    const rect = document
+      .querySelector('.react-select__control')
+      ?.getBoundingClientRect();
+
+    if (rect) {
+      const rightEdge = rect.right + menuWidth;
+
+      if (rightEdge > window.innerWidth) {
+        setMenuPosition({ left: 'auto', right: '0' }); // Align to the right
+      } else {
+        setMenuPosition({ left: '0', right: 'auto' }); // Default position
+      }
+    }
   };
 
   useEffect(() => {
@@ -46,7 +70,10 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
       setOptions([
         {
           value: (user as User)?.name ? (user as User)?.name : '',
-          label: (user as User)?.name && (user as User)?.name
+          label:
+            window.innerWidth > 600
+              ? (user as User)?.name && (user as User)?.name
+              : 'Me'
         },
         {
           value: 'Dashboard',
@@ -81,7 +108,18 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
         onChange={handleUserDropdownChanged}
         value={selectedOption}
         name='user'
-        styles={selectStyles}
+        styles={{
+          ...selectStyles,
+          menu: (base) => ({
+            ...base,
+            ...(selectStyles.menu as () => object)(),
+            ...menuPosition,
+            minWidth: '200px'
+          })
+        }}
+        menuPortalTarget={document.body}
+        menuPosition='absolute'
+        onMenuOpen={handleMenuOpen}
       />
     </div>
   );
