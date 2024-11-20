@@ -274,14 +274,46 @@ def get_clubs():
     return jsonify(result), 200
 
 
+@app.route("/api/inactiveClubs", methods=["GET"])
+def get_inactive_clubs():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 0"
+    )
+    result = None
+    try:
+        result = cur.fetchall()
+        result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "name": x[1],
+                    "description": x[2],
+                    "image": (
+                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
+                        if x[3]
+                        else None
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
+        result = None
+    if result is None:
+        return jsonify({"error": "No clubs found"}), 404
+    cur.close()
+    return jsonify(result), 200
+
+
 @app.route("/api/club/<club_id>", methods=["GET"])
 def get_club(club_id):
     cur = mysql.connection.cursor()
     cur.execute(
         """SELECT club_id, club_name, description, club_logo, logo_prefix 
             FROM club 
-            WHERE is_active = 1 
-                AND club_id = %s""",
+            WHERE club_id = %s""",
         (club_id,),
     )
     result = cur.fetchone()
@@ -301,7 +333,8 @@ def get_club(club_id):
         """SELECT a.user_id, a.club_admin_id, u.name 
             FROM club_admin a 
             INNER JOIN users u ON u.email = a.user_id
-            WHERE club_id = %s""",
+            WHERE club_id = %s
+                AND a.is_active = 1""",
         (club_id,),
     )
     result["admins"] = list(
@@ -346,7 +379,7 @@ def update_club():
         return jsonify({"error": "An active club with this name already exists."}), 400
     try:
         cur.execute(
-            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP() WHERE club_id = %s",
+            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP(), is_active = 1 WHERE club_id = %s",
             (data["name"], data["description"], data["id"]),
         )
     except Exception as e:

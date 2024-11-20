@@ -2,6 +2,7 @@ import { CiEdit, CiTrash } from 'react-icons/ci';
 import Button from '../formElements/Button.component';
 import Card from '../ui/Card';
 import { CgDetailsMore } from 'react-icons/cg';
+import { LiaTrashRestoreSolid } from 'react-icons/lia';
 import { Form } from 'react-router-dom';
 
 interface ClubProps {
@@ -10,6 +11,7 @@ interface ClubProps {
   image: string;
   editable?: boolean;
   deletable?: boolean;
+  inactive?: boolean;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
 }
 
@@ -19,6 +21,7 @@ const Club = ({
   image,
   editable = false,
   deletable = false,
+  inactive = false,
   onSubmit = (event) =>
     new Promise(() => {
       console.log(event);
@@ -49,6 +52,18 @@ const Club = ({
           type='submit'
           name='details'
         />
+        {inactive && (
+          <Button
+            className='w-auto flex-row gap-2 inline-flex items-center'
+            text='Reactivate'
+            onClick={() => {}}
+            icon={<LiaTrashRestoreSolid size={20} />}
+            color='blue'
+            type='submit'
+            name='reactivate'
+            filled={false}
+          />
+        )}
         {editable && (
           <>
             <Button

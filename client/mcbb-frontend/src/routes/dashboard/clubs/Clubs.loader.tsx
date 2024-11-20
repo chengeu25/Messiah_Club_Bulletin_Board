@@ -21,8 +21,24 @@ const clubsLoader: LoaderFunction = async () => {
     throw new Error('Failed to fetch clubs');
   }
 
+  const inactiveClubsResponse = await fetch(
+    'http://localhost:3000/api/inactiveClubs',
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  if (!inactiveClubsResponse.ok) {
+    throw new Error('Failed to fetch inactive clubs');
+  }
+
   const clubs = await clubsResponse.json();
-  return json({ user: user, clubs: clubs }, { status: 200 });
+  const inactiveClubs = await inactiveClubsResponse.json();
+  return json({ user, clubs, inactiveClubs }, { status: 200 });
 };
 
 export default clubsLoader;

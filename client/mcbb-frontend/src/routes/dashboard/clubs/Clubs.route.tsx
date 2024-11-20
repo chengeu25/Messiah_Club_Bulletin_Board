@@ -5,6 +5,7 @@ import Button from '../../../components/formElements/Button.component';
 
 interface LoaderData {
   clubs: ClubType[];
+  inactiveClubs: ClubType[];
   user: UserType;
 }
 
@@ -56,6 +57,21 @@ const Clubs = () => {
           onSubmit={(e) => handleSubmit(e, club.id)}
         />
       ))}
+      {data.user.isFaculty && (
+        <>
+          <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
+          {data.inactiveClubs.map((club) => (
+            <Club
+              key={club.name + '-' + club.id}
+              {...club}
+              editable={false}
+              deletable={false}
+              inactive
+              onSubmit={(e) => handleSubmit(e, club.id)}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };

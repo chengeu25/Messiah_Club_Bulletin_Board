@@ -50,10 +50,6 @@ const Root = () => {
     setSelectedFilter(`All ${currentPage}`);
   }, [currentPage]);
 
-  useEffect(() => {
-    console.log(searchQuery);
-  }, [searchQuery]);
-
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
