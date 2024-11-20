@@ -112,7 +112,9 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
           ...selectStyles,
           menu: (base) => ({
             ...base,
-            ...(selectStyles.menu as () => object)(),
+            ...(selectStyles.menu !== undefined
+              ? (selectStyles.menu as () => object)
+              : () => ({}))(),
             ...menuPosition,
             minWidth: '200px'
           })
