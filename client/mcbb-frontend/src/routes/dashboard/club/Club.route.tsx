@@ -9,7 +9,8 @@ import {
   ImageType,
   UserType
 } from '../../../types/databaseTypes';
-import React from 'react';
+import { OptionType } from '../../../components/formElements/Select.styles';
+import { Form } from 'react-router-dom';
 
 const demoEvents = [
   {
@@ -86,9 +87,15 @@ const Club = () => {
     club: ClubDetailType;
   };
 
-  React.useEffect(() => {
-    console.log(user, club);
-  });
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const action = (
+      (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
+    ).name;
+    formData.append('action', action);
+  };
+
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
       <Card
@@ -97,23 +104,55 @@ const Club = () => {
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{club?.name}</h1>
-        <div className='flex-shrink-0 flex'>
-          <Button color='blue' text='Subscribe' filled={true} />
-        </div>
+        <Form
+          onSubmit={handleSubmit}
+          className='flex-shrink-0 flex gap-2 text-nowrap'
+        >
+          {user?.clubAdmins.includes(club?.id) && (
+            <Button
+              color='blue'
+              text='New Event'
+              filled={true}
+              name='newEvent'
+            />
+          )}
+          <Button
+            color='blue'
+            text='Subscribe'
+            name='subscribe'
+            filled={true}
+          />
+        </Form>
       </Card>
       <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
         <p>{club?.description}</p>
       </Card>
-      <div className='flex flex-row w-full gap-4 overflow-x-scroll min-h-48'>
-        {club?.images.map((image: ImageType, index: number) => (
-          <img
-            key={index}
-            src={image.image}
-            alt='Club Image'
-            className='h-full object-contain rounded-lg'
-          />
-        ))}
-      </div>
+      {(club?.images?.length ?? 0) > 0 && (
+        <div className='flex flex-row w-full gap-4 overflow-x-auto h-48'>
+          {club?.images.map((image: ImageType, index: number) => (
+            <img
+              key={index}
+              src={image.image}
+              alt='Club Image'
+              className='h-full object-contain rounded-lg'
+            />
+          ))}
+        </div>
+      )}
+      {(club?.tags?.length ?? 0) > 0 && (
+        <div className='inline-flex flex-row w-full gap-2 items-center flex-wrap'>
+          {club?.tags?.map((tag: OptionType, index: number) => (
+            <Card
+              key={index}
+              color='slate-300'
+              padding={4}
+              className='w-min text-nowrap'
+            >
+              {tag.label}
+            </Card>
+          ))}
+        </div>
+      )}
       <div className='flex flex-col gap-4 lg:flex-row w-full h-1/2'>
         <Card
           color='slate-300'

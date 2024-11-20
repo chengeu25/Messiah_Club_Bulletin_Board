@@ -17,7 +17,8 @@ const clubFormAction: ActionFunction = async ({ request }) => {
         description: formData.get('description'),
         admins: JSON.parse(formData.get('admins') as string),
         images: JSON.parse(formData.get('images') as string),
-        image: formData.get('logo')
+        image: formData.get('logo'),
+        tags: JSON.parse(formData.get('tags') as string)
       })
     });
     if (resp.ok) {
@@ -42,7 +43,8 @@ const clubFormAction: ActionFunction = async ({ request }) => {
         description: formData.get('description'),
         admins: JSON.parse(formData.get('admins') as string),
         images: JSON.parse(formData.get('images') as string),
-        image: formData.get('logo')
+        image: formData.get('logo'),
+        tags: JSON.parse(formData.get('tags') as string)
       })
     });
     if (resp.ok) {

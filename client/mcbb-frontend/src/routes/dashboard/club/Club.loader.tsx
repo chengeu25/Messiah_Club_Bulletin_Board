@@ -9,6 +9,9 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
+  if (params.id === undefined) {
+    return redirect('/dashboard/clubs/new');
+  }
   const clubResp = await fetch(`http://localhost:3000/api/club/${params.id}`, {
     method: 'GET',
     credentials: 'include',
@@ -18,7 +21,7 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   });
 
   if (!clubResp.ok) {
-    throw new Error('Failed to fetch club');
+    return null;
   }
 
   const club = await clubResp.json();

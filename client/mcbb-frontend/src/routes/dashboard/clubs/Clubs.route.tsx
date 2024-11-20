@@ -1,16 +1,23 @@
-import { Form, useLoaderData, useSubmit } from 'react-router-dom';
+import {
+  Form,
+  useLoaderData,
+  useSearchParams,
+  useSubmit
+} from 'react-router-dom';
 import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 
 interface LoaderData {
   clubs: ClubType[];
+  inactiveClubs: ClubType[];
   user: UserType;
 }
 
 const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
+  const [params] = useSearchParams();
 
   /**
    * Handles the form submission
@@ -32,6 +39,25 @@ const Clubs = () => {
     submit(formData, { method: 'post' });
   };
 
+  /**
+   * Checks if the club passes the search query
+   * Passes if the name includes the search query or if any of the words in the search query
+   * include a tag of the club
+   * @param club The club to check
+   * @returns True if the club passes the search query
+   */
+  const passesSearch = (club: ClubType) =>
+    club.name
+      .toLowerCase()
+      .includes(params.get('search')?.toLowerCase() ?? '') ||
+    params
+      .get('search')
+      ?.toLowerCase()
+      .split(' ')
+      .some((tag) =>
+        club.tags?.some((clubTag) => tag.includes(clubTag.toLowerCase()))
+      );
+
   return (
     <div className='w-full flex flex-col gap-4 flex-grow overflow-y-scroll p-4 md:px-[15%] items-center'>
       {data.user.isFaculty && (
@@ -45,7 +71,7 @@ const Clubs = () => {
           />
         </Form>
       )}
-      {data.clubs.map((club) => (
+      {data.clubs.filter(passesSearch).map((club) => (
         <Club
           key={club.name}
           {...club}
@@ -56,6 +82,21 @@ const Clubs = () => {
           onSubmit={(e) => handleSubmit(e, club.id)}
         />
       ))}
+      {data.user.isFaculty && data.inactiveClubs.length > 0 && (
+        <>
+          <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
+          {data.inactiveClubs.filter(passesSearch).map((club) => (
+            <Club
+              key={club.name + '-' + club.id}
+              {...club}
+              editable={false}
+              deletable={false}
+              inactive
+              onSubmit={(e) => handleSubmit(e, club.id)}
+            />
+          ))}
+        </>
+      )}
     </div>
   );
 };

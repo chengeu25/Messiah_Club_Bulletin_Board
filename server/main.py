@@ -12,6 +12,7 @@ import smtplib
 import jwt
 from email.mime.text import MIMEText
 import base64
+import json
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -70,10 +71,6 @@ def send_verification_email(email, code):
     sender_email = os.getenv("SENDER_EMAIL")
     sender_password = os.getenv("SENDER_PASSWORD")
 
-    # Check if variables are loaded correctly
-    print(f"Sender Email: {sender_email}")
-    print(f"Sender Password: {sender_password}")
-
     subject = "Your Verification Code"
     body = f"Your new verification code is: {code}"
 
@@ -86,7 +83,6 @@ def send_verification_email(email, code):
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.sendmail(sender_email, email, msg.as_string())
-        print("Email sent successfully.")
     except Exception as e:
         print(f"Failed to send email to {email} with code {code}: {e}")
         return False
@@ -128,7 +124,6 @@ def verify_email():
 @app.route("/api/resend-code", methods=["POST"])
 def resend_code():
     data = request.get_json()
-    print("Received data:", data)  # Print received data
     # get email from session?
     email = session.get("user_id")
 
@@ -231,6 +226,16 @@ def check_user():
         )
 
 
+@app.route("/api/getAvailableTags", methods=["GET"])
+def get_avaliable_tags():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT tag_id, tag_name FROM tag")
+    result = cur.fetchall()
+    result = list(map(lambda x: {"tag": x[1], "tag_id": x[0]}, result))
+    cur.close()
+    return jsonify({"tags": result}), 200
+
+
 @app.route("/api/clubs", methods=["GET"])
 def get_clubs():
     cur = mysql.connection.cursor()
@@ -260,6 +265,89 @@ def get_clubs():
         result = None
     if result is None:
         return jsonify({"error": "No clubs found"}), 404
+    try:
+        cur.execute(
+            """SELECT c.club_id, t.tag_name 
+                FROM club_tags c 
+                INNER JOIN tag t 
+                    ON c.tag_id = t.tag_id""",
+        )
+        tags = cur.fetchall()
+        tags = list(map(lambda x: {"tag": x[1], "club_id": x[0]}, tags))
+        result = list(
+            map(
+                lambda x: {
+                    **x,
+                    "tags": list(
+                        map(
+                            lambda y: y["tag"],
+                            filter(lambda y: y["club_id"] == x["id"], tags),
+                        )
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
+    cur.close()
+    return jsonify(result), 200
+
+
+@app.route("/api/inactiveClubs", methods=["GET"])
+def get_inactive_clubs():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 0"
+    )
+    result = None
+    try:
+        result = cur.fetchall()
+        result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "name": x[1],
+                    "description": x[2],
+                    "image": (
+                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
+                        if x[3]
+                        else None
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
+        result = None
+    if result is None:
+        return jsonify({"error": "No clubs found"}), 404
+    try:
+        cur.execute(
+            """SELECT c.club_id, t.tag_name 
+                FROM club_tags c 
+                INNER JOIN tag t 
+                    ON c.tag_id = t.tag_id""",
+        )
+        tags = cur.fetchall()
+        tags = list(map(lambda x: {"tag": x[1], "club_id": x[0]}, tags))
+        result = list(
+            map(
+                lambda x: {
+                    **x,
+                    "tags": list(
+                        map(
+                            lambda y: y["tag"],
+                            filter(lambda y: y["club_id"] == x["id"], tags),
+                        )
+                    ),
+                },
+                result,
+            )
+        )
+    except TypeError as e:
+        print(e)
     cur.close()
     return jsonify(result), 200
 
@@ -270,8 +358,7 @@ def get_club(club_id):
     cur.execute(
         """SELECT club_id, club_name, description, club_logo, logo_prefix 
             FROM club 
-            WHERE is_active = 1 
-                AND club_id = %s""",
+            WHERE club_id = %s""",
         (club_id,),
     )
     result = cur.fetchone()
@@ -291,13 +378,13 @@ def get_club(club_id):
         """SELECT a.user_id, a.club_admin_id, u.name 
             FROM club_admin a 
             INNER JOIN users u ON u.email = a.user_id
-            WHERE club_id = %s""",
+            WHERE club_id = %s
+                AND a.is_active = 1""",
         (club_id,),
     )
     result["admins"] = list(
         map(lambda x: {"user": x[0], "id": x[1], "name": x[2]}, cur.fetchall())
     )
-    print(result["admins"])
     cur.execute(
         """SELECT image, club_photo_id, image_prefix FROM club_photo WHERE club_id = %s""",
         (club_id,),
@@ -311,6 +398,15 @@ def get_club(club_id):
             cur.fetchall(),
         )
     )
+    cur.execute(
+        """SELECT c.tag_id, t.tag_name 
+            FROM club_tags c 
+            INNER JOIN tag t 
+                ON c.tag_id = t.tag_id 
+            WHERE club_id = %s""",
+        (club_id,),
+    )
+    result["tags"] = list(map(lambda x: {"label": x[1], "value": x[0]}, cur.fetchall()))
     cur.close()
     return jsonify(result), 200
 
@@ -319,9 +415,15 @@ def get_club(club_id):
 def update_club():
     data = request.json
     cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s AND club_id != %s",
+        (data["name"], data["id"]),
+    )
+    if not (cur.fetchone()[0] == 0):
+        return jsonify({"error": "An active club with this name already exists."}), 400
     try:
         cur.execute(
-            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP() WHERE club_id = %s",
+            "UPDATE club SET club_name = %s, description = %s, last_updated = CURRENT_TIMESTAMP(), is_active = 1 WHERE club_id = %s",
             (data["name"], data["description"], data["id"]),
         )
     except Exception as e:
@@ -378,17 +480,69 @@ def update_club():
                 ),
                 400,
             )
-    if data["admins"]:
+    # Add the tags
+    cur.execute("DELETE FROM club_tags WHERE club_id = %s", (data["id"],))
+    for tag in data["tags"]:
         try:
             cur.execute(
-                "DELETE FROM club_admin WHERE club_id = %s",
+                "INSERT INTO club_tags (club_id, tag_id) VALUES (%s, %s)",
+                (data["id"], tag["value"]),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({"error": f"Tag {tag['label']} does not exist"}), 400
+    if data["admins"]:
+        try:
+            # Fetch existing admin user_ids for the club
+            cur.execute(
+                "SELECT user_id FROM club_admin WHERE club_id = %s",
                 (data["id"],),
             )
-            for admin in data["admins"]:
+            existing_admins = set(admin[0] for admin in cur.fetchall())
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+        # Determine the new admins
+        new_admins = {admin["user"] for admin in data["admins"]}
+        try:
+            # Set is_active to 0 for admins no longer in the list
+            inactive_admins = existing_admins - new_admins
+            if inactive_admins:
                 cur.execute(
-                    "INSERT INTO club_admin (user_id, club_id, club_admin_id) VALUES (%s, %s, %s)",
-                    (admin["user"], data["id"], admin["id"]),
+                    "UPDATE club_admin SET is_active = 0 WHERE club_id = %s AND user_id IN %s",
+                    (data["id"], tuple(inactive_admins)),
                 )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return (
+                jsonify(
+                    {
+                        "error": "Failed to update the club, something may be wrong with the admin emails."
+                    }
+                ),
+                400,
+            )
+        try:
+            # Insert new admins
+            for admin in data["admins"]:
+                if admin["user"] not in existing_admins:
+                    cur.execute(
+                        "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
+                        (admin["user"], data["id"]),
+                    )
         except Exception as e:
             print(e)
             mysql.connection.rollback()
@@ -409,8 +563,12 @@ def update_club():
 @app.route("/api/delete-club/<club_id>", methods=["DELETE"])
 def delete_club(club_id):
     cur = mysql.connection.cursor()
+    mysql.connection.rollback()
     try:
-        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (club_id))
+        cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (int(club_id),))
+        cur.execute(
+            "UPDATE club_admin SET is_active = 0 WHERE club_id = %s", (int(club_id),)
+        )
     except Exception as e:
         print(e)
         mysql.connection.rollback()
@@ -426,7 +584,15 @@ def new_club():
     data = request.json
     cur = mysql.connection.cursor()
 
-    # First create the new club instance
+    # Check if a club with the same name already exists
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s",
+        (data["name"],),
+    )
+    if not (cur.fetchone()[0] == 0):
+        return jsonify({"error": "An active club with this name already exists."}), 400
+
+    # Create the new club instance
     base64_image = data["image"]
 
     try:
@@ -496,6 +662,19 @@ def new_club():
                 jsonify({"error": "Failed to create new photo. It may be too large."}),
                 400,
             )
+
+    # Add the tags
+    for tag in data["tags"]:
+        try:
+            cur.execute(
+                "INSERT INTO club_tags (club_id, tag_id) VALUES (%s, %s)",
+                (new_club_id, tag["value"]),
+            )
+        except Exception as e:
+            print(e)
+            mysql.connection.rollback()
+            cur.close()
+            return jsonify({"error": f"Tag {tag['label']} does not exist"}), 400
 
     # Commit the changes to the database
     mysql.connection.commit()
@@ -592,7 +771,6 @@ def signup():
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
-    print(f"Captcha Response: {captcha_response}")  # Debugging line
     if not is_it_a_robot(captcha_response):
         return jsonify({"error": "You may be a robot."}), 400
 
@@ -614,7 +792,6 @@ def signup():
     hashed_password = generate_password_hash(password)
     # Putting it all into the database if pass
 
-    print((email, hashed_password, gender, name))
     cur = mysql.connection.cursor()
     cur.execute(
         "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
@@ -623,13 +800,97 @@ def signup():
     mysql.connection.commit()
     results = cur.fetchall()
 
-    print(email)
     session["user_id"] = email
-    print(session.get("user_id"))
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()
     return jsonify({"message ": "User Success!"}), 200
+
+
+@app.route("/api/getinterests")
+def getinterests():
+    user_id = session.get("user_id")
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "select t.tag_name from tag t inner join user_tags ut on t.tag_id = ut.tag_id where ut.user_id = %s ",
+        (user_id,),
+    )
+    result = cur.fetchall()
+    result = list(map(lambda x: x[0], result))
+    return jsonify({"interests": result}), 200
+
+
+def get_tag_id(interest):
+    """Retrieve the tag_id for a given interest (tag name)."""
+    cur = mysql.connection.cursor()
+    try:
+        # Query the tags table to find the tag_id based on the interest name
+        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (interest,))
+        result = cur.fetchone()
+
+        if result is None:
+            # If no tag found for the interest, return None or handle accordingly
+            print(f"Tag not found for interest: {interest}")  # Optional logging
+            return None
+
+        return result[0]  # Return the tag_id
+
+    except Exception as e:
+        print(f"Error fetching tag_id for {interest}: {str(e)}")  # Log any exceptions
+        return None
+    finally:
+        cur.close()
+
+
+@app.route("/api/editinterestpage", methods=["POST"])
+def editinterestpage():
+    # Debugging: Check if user is logged in
+    user_id = session.get("user_id")
+    if not user_id:
+
+        return jsonify({"error": "User not logged in"}), 401
+
+    data = request.json
+
+    if not data.get("interests"):
+        return jsonify({"error": "No interests provided"}), 400
+
+    interests = data["interests"]
+    interests = json.loads(interests)
+
+    # Step 1: Get the user_id from the session and delete existing tags for the user
+    cur = mysql.connection.cursor()
+
+    try:
+        # Delete existing tags for the user (clear old interests)
+        cur.execute("DELETE FROM user_tags WHERE user_id = %s", (user_id,))
+        mysql.connection.commit()  # Commit after delete
+
+        # Step 2: Insert new tags
+        for interest in interests:
+            tag_id = get_tag_id(interest)  # Get the tag_id for the interest
+            if tag_id:
+                cur.execute(
+                    "INSERT INTO user_tags (user_id, tag_id) VALUES (%s, %s)",
+                    (user_id, tag_id),
+                )
+            else:
+                print(
+                    f"Tag ID not found for interest: {interest}"
+                )  # Log if tag is missing
+
+        # Commit the transaction
+        mysql.connection.commit()
+        cur.close()
+
+        # Debugging: Return success message
+        return jsonify({"message": "Interests updated successfully"}), 200
+
+    except Exception as e:
+        mysql.connection.rollback()
+        cur.close()
+        print(f"Error occurred: {str(e)}")  # Log any exceptions
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
