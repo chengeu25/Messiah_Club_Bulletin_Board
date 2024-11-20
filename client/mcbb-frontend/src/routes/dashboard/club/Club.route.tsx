@@ -102,7 +102,7 @@ const Club = () => {
         <p>{club?.description}</p>
       </Card>
       {(club?.images?.length ?? 0) > 0 && (
-        <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48'>
+        <div className='flex flex-row w-full gap-4 overflow-x-auto h-48'>
           {club?.images.map((image: ImageType, index: number) => (
             <img
               key={index}

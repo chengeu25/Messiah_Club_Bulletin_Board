@@ -11,7 +11,6 @@ import ResponsiveForm from '../../../../components/formElements/ResponsiveForm';
 import { useEffect, useState } from 'react';
 import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
-import validateFileSize from '../../../../helper/fileSizeValidator';
 import Select from 'react-select';
 import { OptionType } from '../../../../components/formElements/Select.styles';
 
@@ -82,25 +81,84 @@ const ClubForm = () => {
   };
 
   /**
+   * Resizes an image to a maximum width and height.
+   * @param dataUrl - The data URL of the image to resize.
+   * @param maxWidth - The maximum width of the resized image.
+   * @param maxHeight - The maximum height of the resized image.
+   * @returns A promise that resolves to the resized image data URL.
+   */
+  const resizeImage = async (
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number
+  ) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = dataUrl;
+
+      img.onload = () => {
+        // Create a canvas to resize the image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Calculate the new dimensions
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        // Set the canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the image on the canvas
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert the canvas to a data URL
+        const resizedImage = canvas.toDataURL('image/jpeg');
+        resolve(resizedImage);
+      };
+
+      img.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
+  /**
    * Adds a new image to the club's image list.
    * @param file - The image file to add.
    */
   const addImage = (file: File) => {
     if (file) {
-      const isValid = validateFileSize(file);
-      if (!isValid) {
-        alert('Your image was not uploaded. It must be less than 16MB.');
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages((prevImages) => [
-          ...prevImages,
-          {
-            image: reader.result as string,
-            id: highestImageId + 1
-          } as ImageType
-        ]);
+      reader.onloadend = async () => {
+        try {
+          const resizedImage = await resizeImage(
+            reader.result as string,
+            1000,
+            1000
+          );
+          setImages((prevImages) => [
+            ...prevImages,
+            {
+              image: resizedImage as string,
+              id: highestImageId + 1
+            } as ImageType
+          ]);
+        } catch (e) {
+          console.error(e);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -120,14 +178,18 @@ const ClubForm = () => {
    */
   const setLogo = (file: File) => {
     if (file) {
-      const isValid = validateFileSize(file);
-      if (!isValid) {
-        alert('Your image was not uploaded. It must be less than 16MB.');
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
+      reader.onloadend = async () => {
+        try {
+          const resizedImage = await resizeImage(
+            reader.result as string,
+            1000,
+            1000
+          );
+          setImage(resizedImage as string);
+        } catch (e) {
+          console.error(e);
+        }
       };
       reader.readAsDataURL(file);
     }
