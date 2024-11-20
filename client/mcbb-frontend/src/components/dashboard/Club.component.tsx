@@ -9,6 +9,7 @@ interface ClubProps {
   name: string;
   description: string;
   image: string;
+  tags: string[];
   editable?: boolean;
   deletable?: boolean;
   inactive?: boolean;
@@ -19,6 +20,7 @@ const Club = ({
   name,
   description,
   image,
+  tags,
   editable = false,
   deletable = false,
   inactive = false,
@@ -41,6 +43,13 @@ const Club = ({
       <div className='flex flex-col flex-grow'>
         <h1 className='text-xl font-bold text-center xl:text-left'>{name}</h1>
         <p className='text-center xl:text-left'>{description}</p>
+        <div className='inline-flex jusify-center xl:justify-start gap-2'>
+          {tags?.map((tag, index) => (
+            <div key={index} className='text-center bg-blue-200 p-2 rounded-lg'>
+              {tag}
+            </div>
+          ))}
+        </div>
       </div>
       <Form onSubmit={onSubmit} className='flex flex-row gap-2'>
         <Button

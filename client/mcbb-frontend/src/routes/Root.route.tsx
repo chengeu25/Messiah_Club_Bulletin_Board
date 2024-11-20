@@ -35,13 +35,6 @@ const Root = () => {
   const [selectedFilter, setSelectedFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  useEffect(() => {
-    setParams({
-      search: searchQuery,
-      filter: selectedFilter
-    });
-  }, [searchQuery, selectedFilter, setParams]);
-
   /**
    * Returns the current page name based on the location pathname.
    * @returns {string} The current page name.
@@ -55,6 +48,18 @@ const Root = () => {
         .replace('Calendar', 'Events'),
     [location.pathname]
   );
+
+  useEffect(() => {
+    if (currentPage === 'Events' || currentPage === 'Clubs') {
+      setParams(
+        {
+          search: searchQuery,
+          filter: selectedFilter
+        },
+        { replace: true }
+      );
+    }
+  }, [searchQuery, selectedFilter, setParams, currentPage]);
 
   useEffect(() => {
     setSelectedFilter(`All ${currentPage}`);

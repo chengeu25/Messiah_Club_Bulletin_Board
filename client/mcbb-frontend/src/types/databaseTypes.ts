@@ -14,6 +14,7 @@ export interface ClubType {
   description: string;
   id: number;
   image: string;
+  tags: string[];
 }
 
 export interface ClubAdminType {
