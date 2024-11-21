@@ -43,7 +43,7 @@ const Club = ({
       <div className='flex flex-col flex-grow'>
         <h1 className='text-xl font-bold text-center xl:text-left'>{name}</h1>
         <p className='text-center xl:text-left'>{description}</p>
-        <div className='inline-flex jusify-center xl:justify-start gap-2'>
+        <div className='inline-flex justify-center xl:justify-start gap-2'>
           {tags?.map((tag, index) => (
             <div key={index} className='text-center bg-blue-200 p-2 rounded-lg'>
               {tag}
