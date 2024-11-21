@@ -159,9 +159,6 @@ def check_user_cookie():
 
 @app.route("/api/checkUser", methods=["GET"])
 def check_user():
-    #if session.get("user_id") is not None and datetime.now(timezone.utc) - session.get(
-    #    "last_activity"
-    #) < timedelta(minutes=15):
     if session.get("user_id") is not None:
         if datetime.now(timezone.utc) - session.get("last_activity") < timedelta(minutes=15):
             cur = mysql.connection.cursor()
@@ -638,8 +635,6 @@ def signup():
 def reset_password():
     data = request.json
     cur = mysql.connection.cursor()
-    print("this is the email:\n")
-    print(data["emailRequest"]["email"])
 
     # Retrieve the hashed passwords from the database
     cur.execute(
@@ -671,20 +666,11 @@ def reset_password():
 
     # Check if new password is unique to the last three saved passwords
     new_password = data["newPassword"]
-    print(new_password)
-    print(result[0])
-    print(result[1])
-    print(result[2])
-    if result[1] != None and result[2] != None:
-        if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
-            return jsonify({"error": "New password cannot be a previously used password"}), 400
+
+    if check_password_hash(result[0], new_password) or check_password_hash(result[1], new_password) or check_password_hash(result[2], new_password):
+        return jsonify({"error": "New password cannot be a previously used password"}), 400
 
     # Cascade passwords
-    print(
-        f"""UPDATE users
-                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
-                WHERE email = {data['emailRequest']['email']}"""
-    )
     cur.execute(
         """UPDATE users
                 SET pwd3 = %s, pwd2 = %s, pwd1 = %s
@@ -701,15 +687,6 @@ def reset_password():
     cur.close()
     session.pop('user_id', None)
     return jsonify({"message": "Password successfully reset"})
-
-
-@app.after_request
-def apply_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    return response
 
 @app.route("/api/forgotPassword", methods=["POST"])
 def forgot_password():
@@ -737,7 +714,7 @@ def forgot_password():
 
     # Generate a reset token
     token = jwt.encode(
-        {"email": data["email"], "exp": datetime.utcnow() + timedelta(hours=1)},
+        {"email": data["email"], "exp": datetime.utcnow() + timedelta(minutes=15)},
         app.config["SECRET_KEY"],
         algorithm="HS256",
     )
@@ -758,11 +735,6 @@ def forgot_password():
     # Send email
     send_email(str(data["email"]), reset_link)
     return jsonify({"message": "Reset link sent to your email"}), 200
-
-def base64url_decode(encoded_data):
-    # Add the necessary padding before decoding
-    padding = '=' * (4 - len(encoded_data) % 4)
-    return base64.urlsafe_b64decode(encoded_data + padding).decode('utf-8')
 
 def send_email(to_email, reset_link):
     sender_email = os.getenv("SENDER_EMAIL")
@@ -821,17 +793,6 @@ def forgot_password_reset():
         return jsonify({"error": "New password cannot be a previously used password"}), 400
 
     # Cascade passwords
-    print(
-        f"""UPDATE users
-                SET pwd3 = {result[1]}, pwd2 = {result[0]}, pwd1 = {data['newPassword']}
-                WHERE email = {result[5]}"""
-    )
-    print((
-            str(result[1]),
-            str(result[0]),
-            generate_password_hash(str(data["newPassword"])),
-            str(data["token"]),
-        ))
     cur.execute(
         """UPDATE users
                 SET pwd3 = %s, pwd2 = %s, pwd1 = %s
