@@ -1,5 +1,6 @@
 import { json, LoaderFunction, redirect } from 'react-router';
-import checkUser, { User } from '../../../helper/checkUser';
+import checkUser from '../../../helper/checkUser';
+import { UserType as User } from '../../../types/databaseTypes';
 
 const clubLoader: LoaderFunction = async ({ params }) => {
   const user = await checkUser();

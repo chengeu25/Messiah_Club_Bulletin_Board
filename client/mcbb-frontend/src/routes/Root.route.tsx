@@ -21,7 +21,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/userDropdown/UserDropdown.component';
-import { User } from '../helper/checkUser';
+import { UserType as User } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 

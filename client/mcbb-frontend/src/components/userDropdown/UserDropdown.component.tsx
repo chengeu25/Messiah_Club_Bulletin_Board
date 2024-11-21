@@ -1,7 +1,7 @@
 import Select, { GroupBase } from 'react-select';
 import selectStyles, { OptionType } from '../formElements/Select.styles';
 import { useEffect, useState } from 'react';
-import { User } from '../../helper/checkUser';
+import { UserType as User } from '../../types/databaseTypes';
 import { useNavigate } from 'react-router-dom';
 
 interface UserDropdownProps {

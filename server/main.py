@@ -182,6 +182,20 @@ def check_user():
             result_2 = list(map(lambda x: x[0], result_2))
         except TypeError:
             result_2 = None
+        cur.execute(
+            """SELECT tag_name 
+                    FROM tag t 
+                    INNER JOIN user_tags ut 
+                        ON t.tag_id = ut.tag_id 
+                    WHERE ut.user_id = %s""",
+            (session["user_id"],),
+        )
+        result_3 = None
+        try:
+            result_3 = cur.fetchall()
+            result_3 = list(map(lambda x: x[0], result_3))
+        except TypeError:
+            result_3 = None
         cur.close()
         if result is None:
             return (
@@ -193,6 +207,7 @@ def check_user():
                         "isFaculty": None,
                         "canDeleteFaculty": None,
                         "clubAdmins": None,
+                        "tags": None,
                     }
                 ),
                 401,
@@ -207,6 +222,7 @@ def check_user():
                     "isFaculty": result[3],
                     "canDeleteFaculty": result[4],
                     "clubAdmins": result_2,
+                    "tags": result_3,
                 }
             ),
             200,
@@ -221,6 +237,7 @@ def check_user():
                     "isFaculty": None,
                     "canDeleteFaculty": None,
                     "clubAdmins": None,
+                    "tags": None,
                 }
             ),
             401,

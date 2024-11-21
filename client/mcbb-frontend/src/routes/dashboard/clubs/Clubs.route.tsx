@@ -58,6 +58,11 @@ const Clubs = () => {
         club.tags?.some((clubTag) => tag.includes(clubTag.toLowerCase()))
       );
 
+  const passesFilter = (club: ClubType) =>
+    params.get('filter') === 'Suggested'
+      ? club.tags.some((tag) => data.user.tags.includes(tag))
+      : true;
+
   return (
     <div className='w-full flex flex-col gap-4 flex-grow overflow-y-scroll p-4 md:px-[15%] items-center'>
       {data.user.isFaculty && (
@@ -71,30 +76,34 @@ const Clubs = () => {
           />
         </Form>
       )}
-      {data.clubs.filter(passesSearch).map((club) => (
-        <Club
-          key={club.name}
-          {...club}
-          editable={
-            data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
-          }
-          deletable={data.user.isFaculty}
-          onSubmit={(e) => handleSubmit(e, club.id)}
-        />
-      ))}
+      {data.clubs
+        .filter((club) => passesSearch(club) && passesFilter(club))
+        .map((club) => (
+          <Club
+            key={club.name}
+            {...club}
+            editable={
+              data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
+            }
+            deletable={data.user.isFaculty}
+            onSubmit={(e) => handleSubmit(e, club.id)}
+          />
+        ))}
       {data.user.isFaculty && data.inactiveClubs.length > 0 && (
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
-          {data.inactiveClubs.filter(passesSearch).map((club) => (
-            <Club
-              key={club.name + '-' + club.id}
-              {...club}
-              editable={false}
-              deletable={false}
-              inactive
-              onSubmit={(e) => handleSubmit(e, club.id)}
-            />
-          ))}
+          {data.inactiveClubs
+            .filter((club) => passesSearch(club) && passesFilter(club))
+            .map((club) => (
+              <Club
+                key={club.name + '-' + club.id}
+                {...club}
+                editable={false}
+                deletable={false}
+                inactive
+                onSubmit={(e) => handleSubmit(e, club.id)}
+              />
+            ))}
         </>
       )}
     </div>

@@ -7,6 +7,7 @@ export interface UserType {
   isFaculty: boolean;
   canDeleteFaculty: boolean;
   clubAdmins: number[];
+  tags: string[];
 }
 
 export interface ClubType {
