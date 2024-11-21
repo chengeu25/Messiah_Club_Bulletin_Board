@@ -946,8 +946,16 @@ def reset_password():
 
     if (
         check_password_hash(result[0], new_password)
-        or check_password_hash(result[1], new_password)
-        or check_password_hash(result[2], new_password)
+        or (
+            check_password_hash(result[1], new_password)
+            if result[1] is not None
+            else False
+        )
+        or (
+            check_password_hash(result[2], new_password)
+            if result[2] is not None
+            else False
+        )
     ):
         return (
             jsonify({"error": "New password cannot be a previously used password"}),

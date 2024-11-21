@@ -7,7 +7,7 @@ const ForgotPassword = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<String | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (params.get('error')) {
@@ -36,10 +36,7 @@ const ForgotPassword = () => {
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
       <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form
-          onSubmit={handleSubmit}
-          className='flex flex-col gap-2 w-full'
-        >
+        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Forgot Password?</h1>
           {error && <div className='text-red-500'>{error}</div>}
           {message && <p className='text-green-500'>{message}</p>}
@@ -53,7 +50,7 @@ const ForgotPassword = () => {
           />
           <div className='flex flex-row gap-2'>
             <Button
-              text='Send Temporary Password'
+              text='Send Reset Link'
               type='submit'
               name='sendTemporaryPassword'
               color='blue'
