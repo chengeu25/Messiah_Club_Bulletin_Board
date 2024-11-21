@@ -30,14 +30,14 @@ import calendarLoader from './routes/dashboard/calendar/Calendar.loader.tsx';
 import clubsLoader from './routes/dashboard/clubs/Clubs.loader.tsx';
 import eventLoader from './routes/dashboard/event/Event.loader.tsx';
 import clubLoader from './routes/dashboard/club/Club.loader.tsx';
+import logoutLoader from './routes/logout/Logout.loader.tsx';
+import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
+import loginLoader from './routes/login/Login.loader.tsx';
 import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
 import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
 import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
-import logoutLoader from './routes/logout/Logout.loader.tsx';
-import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
-import loginLoader from './routes/login/Login.loader.tsx';
 import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
 import ClubForm from './routes/dashboard/club/edit_new/ClubForm.route.tsx';
 import clubFormLoader from './routes/dashboard/club/edit_new/ClubForm.loader.tsx';
@@ -100,6 +100,7 @@ const router = createBrowserRouter(
           action={clubsAction}
         />
         <Route path='event' element={<Event />} loader={eventLoader} />
+        <Route path='club' element={<Club />} loader={clubLoader} />
         <Route path='club'>
           <Route
             path=':id'
