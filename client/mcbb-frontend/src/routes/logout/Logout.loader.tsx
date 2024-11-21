@@ -8,7 +8,6 @@ const logoutLoader = async () => {
       'Content-Type': 'application/json'
     }
   });
-  window.location.reload();
   return redirect('/login');
 };
 
