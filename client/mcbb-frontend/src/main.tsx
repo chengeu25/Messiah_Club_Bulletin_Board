@@ -90,7 +90,12 @@ const router = createBrowserRouter(
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} loader={homeLoader} />
         <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
-        <Route path='clubs' element={<Clubs />} loader={clubsLoader} />
+        <Route
+          path='clubs'
+          element={<Clubs />}
+          loader={clubsLoader}
+          action={clubsAction}
+        />
         <Route path='event' element={<Event />} loader={eventLoader} />
         <Route path='club' element={<Club />} loader={clubLoader} />
         <Route path='club'>

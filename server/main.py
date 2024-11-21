@@ -172,6 +172,7 @@ def check_user():
                         INNER JOIN users u ON u.email = a.user_id
                         WHERE a.user_id = %s
                             AND u.is_active = 1
+                            AND a.is_active = 1
                     """,
             (session["user_id"],),
         )
@@ -493,68 +494,64 @@ def update_club():
             mysql.connection.rollback()
             cur.close()
             return jsonify({"error": f"Tag {tag['label']} does not exist"}), 400
-    if data["admins"]:
-        try:
-            # Fetch existing admin user_ids for the club
-            cur.execute(
-                "SELECT user_id FROM club_admin WHERE club_id = %s",
-                (data["id"],),
-            )
-            existing_admins = set(admin[0] for admin in cur.fetchall())
-        except Exception as e:
-            print(e)
-            mysql.connection.rollback()
-            cur.close()
-            return (
-                jsonify(
-                    {
-                        "error": "Failed to update the club, something may be wrong with the admin emails."
-                    }
-                ),
-                400,
-            )
-        # Determine the new admins
-        new_admins = {admin["user"] for admin in data["admins"]}
-        try:
-            # Set is_active to 0 for admins no longer in the list
-            inactive_admins = existing_admins - new_admins
-            if inactive_admins:
+        if data["admins"]:
+            try:
+                # Fetch existing admin user_ids for the club
                 cur.execute(
-                    "UPDATE club_admin SET is_active = 0 WHERE club_id = %s AND user_id IN %s",
-                    (data["id"], tuple(inactive_admins)),
+                    "SELECT user_id FROM club_admin WHERE club_id = %s",
+                    (data["id"],),
                 )
-        except Exception as e:
-            print(e)
-            mysql.connection.rollback()
-            cur.close()
-            return (
-                jsonify(
-                    {
-                        "error": "Failed to update the club, something may be wrong with the admin emails."
-                    }
-                ),
-                400,
-            )
-        try:
-            # Insert new admins
-            for admin in data["admins"]:
-                if admin["user"] not in existing_admins:
+                existing_admins = {admin[0] for admin in cur.fetchall()}
+            except Exception as e:
+                print(e)
+                mysql.connection.rollback()
+                cur.close()
+                return (
+                    jsonify(
+                        {
+                            "error": "Failed to update the club, something may be wrong with the admin emails."
+                        }
+                    ),
+                    400,
+                )
+
+            # Determine the new admins
+            new_admins = {admin["user"] for admin in data["admins"]}
+
+            try:
+                # Set is_active to 0 for admins no longer in the list
+                inactive_admins = existing_admins - new_admins
+                if inactive_admins:
                     cur.execute(
-                        "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
-                        (admin["user"], data["id"]),
+                        "UPDATE club_admin SET is_active = 0 WHERE club_id = %s AND user_id IN %s",
+                        (data["id"], tuple(inactive_admins)),
                     )
-        except Exception as e:
-            print(e)
-            mysql.connection.rollback()
-            cur.close()
-            return (
-                jsonify(
-                    {
-                        "error": "Failed to update the club, something may be wrong with the admin emails."
-                    }
-                ),
-                400,
-            )
+
+                # Reactivate admins who are inactive
+                for admin in new_admins:
+                    if admin in existing_admins:
+                        cur.execute(
+                            "UPDATE club_admin SET is_active = 1 WHERE club_id = %s AND user_id = %s",
+                            (data["id"], admin),
+                        )
+                    else:
+                        # Insert new admins
+                        cur.execute(
+                            "INSERT INTO club_admin (user_id, club_id, is_active) VALUES (%s, %s, 1)",
+                            (admin, data["id"]),
+                        )
+            except Exception as e:
+                print(e)
+                mysql.connection.rollback()
+                cur.close()
+                return (
+                    jsonify(
+                        {
+                            "error": "Failed to update the club, something may be wrong with the admin emails."
+                        }
+                    ),
+                    400,
+                )
     mysql.connection.commit()
     cur.close()
     return jsonify({"message": "Club updated successfully"}), 200
