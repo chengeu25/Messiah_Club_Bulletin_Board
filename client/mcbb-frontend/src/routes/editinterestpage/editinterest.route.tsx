@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, useSubmit } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Form, useLoaderData, useSubmit } from 'react-router-dom';
 import Button from '../../components/formElements/Button.component';
 
 const EditInterest = () => {
@@ -13,13 +13,17 @@ const EditInterest = () => {
     'Art',
     'Computer Science (Unfortunately)'
   ];
-
+  const interest = useLoaderData()
 
   const [checkedInterests, setCheckedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const submit = useSubmit();
 
- 
+  useEffect(() => {
+    setCheckedInterests((interest as {interests: string[]}).interests)
+  }, [interest]
+
+  )
   const handleCheckboxChange = (interest: string) => {
     setCheckedInterests((prev) =>
       prev.includes(interest)
@@ -37,9 +41,7 @@ const EditInterest = () => {
     } else {
       setError(null);
       const formData = new FormData(event.currentTarget);
-      checkedInterests.forEach((interest) => {
-        formData.append('interests[]', interest);
-      });
+      formData.append("interests", JSON.stringify(checkedInterests)) 
  
       submit(formData, { method: 'post' });
     }

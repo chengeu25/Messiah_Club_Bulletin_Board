@@ -2,14 +2,17 @@ import { CiEdit, CiTrash } from 'react-icons/ci';
 import Button from '../formElements/Button.component';
 import Card from '../ui/Card';
 import { CgDetailsMore } from 'react-icons/cg';
+import { LiaTrashRestoreSolid } from 'react-icons/lia';
 import { Form } from 'react-router-dom';
 
 interface ClubProps {
   name: string;
   description: string;
   image: string;
+  tags: string[];
   editable?: boolean;
   deletable?: boolean;
+  inactive?: boolean;
   onSubmit?: (event: React.FormEvent<HTMLFormElement>) => Promise<void>;
 }
 
@@ -17,8 +20,10 @@ const Club = ({
   name,
   description,
   image,
+  tags,
   editable = false,
   deletable = false,
+  inactive = false,
   onSubmit = (event) =>
     new Promise(() => {
       console.log(event);
@@ -38,6 +43,13 @@ const Club = ({
       <div className='flex flex-col flex-grow'>
         <h1 className='text-xl font-bold text-center xl:text-left'>{name}</h1>
         <p className='text-center xl:text-left'>{description}</p>
+        <div className='inline-flex justify-center xl:justify-start gap-2'>
+          {tags?.map((tag, index) => (
+            <div key={index} className='text-center bg-blue-200 p-2 rounded-lg'>
+              {tag}
+            </div>
+          ))}
+        </div>
       </div>
       <Form onSubmit={onSubmit} className='flex flex-row gap-2'>
         <Button
@@ -49,6 +61,18 @@ const Club = ({
           type='submit'
           name='details'
         />
+        {inactive && (
+          <Button
+            className='w-auto flex-row gap-2 inline-flex items-center'
+            text='Reactivate'
+            onClick={() => {}}
+            icon={<LiaTrashRestoreSolid size={20} />}
+            color='blue'
+            type='submit'
+            name='reactivate'
+            filled={false}
+          />
+        )}
         {editable && (
           <>
             <Button

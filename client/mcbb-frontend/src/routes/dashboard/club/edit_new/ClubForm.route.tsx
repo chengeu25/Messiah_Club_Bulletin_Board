@@ -3,14 +3,22 @@ import Input from '../../../../components/formElements/Input.component';
 import {
   ClubAdminType,
   ClubDetailType,
-  ImageType
+  ImageType,
+  UserType
 } from '../../../../types/databaseTypes';
 import Button from '../../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../../components/formElements/ResponsiveForm';
 import { useEffect, useState } from 'react';
 import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
-import validateFileSize from '../../../../helper/fileSizeValidator';
+import Select from 'react-select';
+import { OptionType } from '../../../../components/formElements/Select.styles';
+
+interface LoaderData {
+  user: UserType;
+  club: ClubDetailType;
+  tagsAvailable: OptionType[];
+}
 
 /**
  * ClubForm component for creating or updating club details.
@@ -18,13 +26,15 @@ import validateFileSize from '../../../../helper/fileSizeValidator';
 const ClubForm = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
-  const club = useLoaderData() as ClubDetailType | null;
+  const data = useLoaderData() as LoaderData | null;
+  const { user, club, tagsAvailable } = data || {};
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
   const [adminErrors, setAdminErrors] = useState<number[]>([]);
   const [name, setName] = useState<string>('');
   const [description, setDescription] = useState<string>('');
+  const [tags, setTags] = useState<OptionType[]>([]);
   const [admins, setAdmins] = useState<ClubAdminType[]>([]);
   const [newAdmin, setNewAdmin] = useState<string>('');
   const [images, setImages] = useState<ImageType[]>([]);
@@ -71,25 +81,84 @@ const ClubForm = () => {
   };
 
   /**
+   * Resizes an image to a maximum width and height.
+   * @param dataUrl - The data URL of the image to resize.
+   * @param maxWidth - The maximum width of the resized image.
+   * @param maxHeight - The maximum height of the resized image.
+   * @returns A promise that resolves to the resized image data URL.
+   */
+  const resizeImage = async (
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number
+  ) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = dataUrl;
+
+      img.onload = () => {
+        // Create a canvas to resize the image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Calculate the new dimensions
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        // Set the canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the image on the canvas
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert the canvas to a data URL
+        const resizedImage = canvas.toDataURL('image/jpeg');
+        resolve(resizedImage);
+      };
+
+      img.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
+  /**
    * Adds a new image to the club's image list.
    * @param file - The image file to add.
    */
   const addImage = (file: File) => {
     if (file) {
-      const isValid = validateFileSize(file);
-      if (!isValid) {
-        alert('Your image was not uploaded. It must be less than 16MB.');
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages((prevImages) => [
-          ...prevImages,
-          {
-            image: reader.result as string,
-            id: highestImageId + 1
-          } as ImageType
-        ]);
+      reader.onloadend = async () => {
+        try {
+          const resizedImage = await resizeImage(
+            reader.result as string,
+            1000,
+            1000
+          );
+          setImages((prevImages) => [
+            ...prevImages,
+            {
+              image: resizedImage as string,
+              id: highestImageId + 1
+            } as ImageType
+          ]);
+        } catch (e) {
+          console.error(e);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -109,14 +178,18 @@ const ClubForm = () => {
    */
   const setLogo = (file: File) => {
     if (file) {
-      const isValid = validateFileSize(file);
-      if (!isValid) {
-        alert('Your image was not uploaded. It must be less than 16MB.');
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
+      reader.onloadend = async () => {
+        try {
+          const resizedImage = await resizeImage(
+            reader.result as string,
+            1000,
+            1000
+          );
+          setImage(resizedImage as string);
+        } catch (e) {
+          console.error(e);
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -138,8 +211,19 @@ const ClubForm = () => {
         name === '' && 'Please enter a name.',
         description === '' && 'Please enter a description.',
         admins.length === 0 && 'Please add at least one officer.',
-        image === '' && 'Please add a club logo.',
-        images.length === 0 && 'Please add at least one image.'
+        image === '' &&
+          (formData.get('image') as File)?.name === '' &&
+          'Please add a club logo.',
+        image === '' &&
+          (formData.get('image') as File)?.name !== '' &&
+          'Please click the add logo button.',
+        images.length === 0 &&
+          (formData.get('images-new') as File)?.name === '' &&
+          'Please add at least one image.',
+        images.length === 0 &&
+          (formData.get('images-new') as File)?.name !== '' &&
+          'Please click the add image button.',
+        tags.length === 0 && 'Please add at least one tag.'
       ].filter(Boolean) as string[];
 
       // Don't submit if form validation fails
@@ -153,6 +237,7 @@ const ClubForm = () => {
       formData.append('admins', JSON.stringify(admins));
       formData.append('logo', image);
       formData.append('images', JSON.stringify(images));
+      formData.append('tags', JSON.stringify(tags));
 
       // Submit form
       submit(formData, { method: 'post' });
@@ -193,6 +278,7 @@ const ClubForm = () => {
       setAdmins(club?.admins ?? []);
       setImages(club?.images ?? []);
       setImage(club?.image ?? '');
+      setTags(club?.tags ?? []);
     }
   }, [club]);
 
@@ -251,85 +337,119 @@ const ClubForm = () => {
         multiline
         required
       />
-      <span className='flex flex-row justify-start'>
-        Club Officers:<span className='text-red-500'>*</span>
-      </span>
-      <ul className='flex flex-col gap-2 list-disc'>
-        {admins.map((user, idx) => (
-          <li key={idx} className='flex-col inline-flex gap-2'>
-            {adminErrors.includes(user.id) && (
-              <span className='text-red-500'>
-                Please enter a valid Messiah email.
-              </span>
-            )}
-            <div className='flex flex-row items-center gap-2'>
-              <span className='flex-grow'>
-                <Input
-                  value={user.user}
-                  type='text'
-                  name={`admin-${user.id}`}
-                  label=''
+      <div>
+        Tags:<span className='text-red-500'>*</span>
+      </div>
+      <Select
+        isMulti
+        value={tags}
+        options={tagsAvailable}
+        onChange={(value) => setTags(value as OptionType[])}
+        styles={{
+          control: (base) => ({
+            ...base,
+            'borderColor': 'black',
+            'borderWidth': '2px',
+            'borderRadius': '0.5rem',
+            '&:hover': {
+              borderColor: '#1A2551'
+            }
+          })
+        }}
+      />
+      {/* This row checks if this is a create form (i.e. no user because no loader data) or if the user is a faculty
+          member since only faculty should be able to add/remove admins */}
+      {(!user || user?.isFaculty) && (
+        <>
+          {' '}
+          <span className='flex flex-row justify-start'>
+            Club Officers:<span className='text-red-500'>*</span>
+          </span>
+          <ul className='flex flex-col gap-2 list-disc'>
+            {admins.map((user, idx) => (
+              <li key={idx} className='flex-col inline-flex gap-2'>
+                {adminErrors.includes(user.id) && (
+                  <span className='text-red-500'>
+                    Please enter a valid Messiah email.
+                  </span>
+                )}
+                <div className='flex flex-row items-center gap-2'>
+                  <span className='flex-grow'>
+                    <Input
+                      value={user.user}
+                      type='text'
+                      name={`admin-${user.id}`}
+                      label=''
+                      color='blue'
+                      filled={false}
+                      placeholder='officeremail@domain.edu'
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        updateAdmin(user.id, e.target.value)
+                      }
+                    />
+                  </span>
+                  <Button
+                    text='Remove'
+                    color='blue'
+                    filled={false}
+                    className='inline-flex flex-row items-center justify-center gap-2 h-12'
+                    icon={<CiTrash size={20} />}
+                    grow={false}
+                    name={`remove-admin-${user.id}`}
+                    type='submit'
+                  />
+                </div>
+              </li>
+            ))}
+            <li className='flex-col inline-flex gap-2'>
+              {newAdminError && (
+                <span className='text-red-500'>{newAdminError}</span>
+              )}
+              <div className='flex flex-row items-center gap-2'>
+                <span className='flex-grow'>
+                  <Input
+                    type='text'
+                    name='admins-new'
+                    label=''
+                    color='blue'
+                    filled={false}
+                    placeholder='officeremail@domain.edu'
+                    value={newAdmin}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      if (
+                        !e.target.value.endsWith('@messiah.edu') &&
+                        e.target.value !== ''
+                      )
+                        setNewAdminError('Please enter a valid Messiah email.');
+                      else setNewAdminError('');
+                      setNewAdmin(e.target.value);
+                    }}
+                  />
+                </span>
+                <Button
+                  text='Add'
                   color='blue'
                   filled={false}
-                  placeholder='officeremail@domain.edu'
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    updateAdmin(user.id, e.target.value)
-                  }
+                  className='inline-flex flex-row items-center justify-center gap-2'
+                  icon={<CiCirclePlus size={20} />}
+                  grow={false}
+                  name='add-admin'
+                  type='submit'
                 />
-              </span>
-              <Button
-                text='Remove'
-                color='blue'
-                filled={false}
-                className='inline-flex flex-row items-center justify-center gap-2 h-12'
-                icon={<CiTrash size={20} />}
-                grow={false}
-                name={`remove-admin-${user.id}`}
-                type='submit'
-              />
-            </div>
-          </li>
-        ))}
-        <li className='flex-col inline-flex gap-2'>
-          {newAdminError && (
-            <span className='text-red-500'>{newAdminError}</span>
-          )}
-          <div className='flex flex-row items-center gap-2'>
-            <span className='flex-grow'>
-              <Input
-                type='text'
-                name='admins-new'
-                label=''
-                color='blue'
-                filled={false}
-                placeholder='officeremail@domain.edu'
-                value={newAdmin}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (
-                    !e.target.value.endsWith('@messiah.edu') &&
-                    e.target.value !== ''
-                  )
-                    setNewAdminError('Please enter a valid Messiah email.');
-                  else setNewAdminError('');
-                  setNewAdmin(e.target.value);
-                }}
-              />
-            </span>
-            <Button
-              text='Add'
-              color='blue'
-              filled={false}
-              className='inline-flex flex-row items-center justify-center gap-2'
-              icon={<CiCirclePlus size={20} />}
-              grow={false}
-              name='add-admin'
-              type='submit'
-            />
-          </div>
-        </li>
-      </ul>
+              </div>
+            </li>
+          </ul>
+        </>
+      )}
       <div className='flex flex-row gap-2 items-center'>
-        <Input required label='Club Logo: ' type='file' name='image' filled />
+        <Input
+          required
+          label='Club Logo: '
+          type='file'
+          accept='image/*'
+          name='image'
+          filled
+        />
         <Button
           text='Set Logo'
           color='blue'
@@ -374,7 +494,7 @@ const ClubForm = () => {
         ))}
         <li className='flex-row inline-flex gap-2'>
           <span className='flex-grow'>
-            <Input type='file' name='images-new' label='' />
+            <Input type='file' accept='image/*' name='images-new' label='' />
           </span>
           <Button
             text='Add'

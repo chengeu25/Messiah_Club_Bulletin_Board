@@ -1,3 +1,5 @@
+import { OptionType } from '../components/formElements/Select.styles';
+
 export interface UserType {
   name: string;
   email: string;
@@ -5,6 +7,7 @@ export interface UserType {
   isFaculty: boolean;
   canDeleteFaculty: boolean;
   clubAdmins: number[];
+  tags: string[];
 }
 
 export interface ClubType {
@@ -12,6 +15,7 @@ export interface ClubType {
   description: string;
   id: number;
   image: string;
+  tags: string[];
 }
 
 export interface ClubAdminType {
@@ -32,4 +36,5 @@ export interface ClubDetailType {
   image: string;
   admins: ClubAdminType[];
   images: ImageType[];
+  tags?: OptionType[];
 }

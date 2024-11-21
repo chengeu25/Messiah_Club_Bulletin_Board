@@ -38,6 +38,14 @@ import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
 import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
+import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
+import ClubForm from './routes/dashboard/club/edit_new/ClubForm.route.tsx';
+import clubFormLoader from './routes/dashboard/club/edit_new/ClubForm.loader.tsx';
+import clubFormAction from './routes/dashboard/club/edit_new/ClubForm.action.tsx';
+import deleteClubLoader from './routes/dashboard/club/delete/DeleteClub.loader.tsx';
+import EditInterestsAction from './routes/editinterestpage/editinterest.action.tsx';
+import EditInterestLoader from './routes/editinterestpage/editinterest.loader.tsx';
+import clubAction from './routes/dashboard/club/Club.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -73,10 +81,7 @@ const router = createBrowserRouter(
         element={<ResetPassword />}
         action={resetPasswordAction}
       />
-      <Route
-        path='forgotPasswordMessage'
-        element={<ForgotPasswordMessage />}
-      />
+      <Route path='forgotPasswordMessage' element={<ForgotPasswordMessage />} />
       <Route
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
@@ -85,11 +90,42 @@ const router = createBrowserRouter(
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route path='home' element={<Home />} loader={homeLoader} />
         <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
-        <Route path='clubs' element={<Clubs />} loader={clubsLoader} />
+        <Route
+          path='clubs'
+          element={<Clubs />}
+          loader={clubsLoader}
+          action={clubsAction}
+        />
         <Route path='event' element={<Event />} loader={eventLoader} />
         <Route path='club' element={<Club />} loader={clubLoader} />
+        <Route path='club'>
+          <Route
+            path=':id'
+            element={<Club />}
+            loader={clubLoader}
+            action={clubAction}
+          />
+          <Route
+            path=':id/edit'
+            element={<ClubForm />}
+            loader={clubFormLoader}
+            action={clubFormAction}
+          />
+          <Route path=':id/delete' loader={deleteClubLoader} />
+          <Route
+            path='new'
+            element={<ClubForm />}
+            action={clubFormAction}
+            loader={clubFormLoader}
+          />
+        </Route>
       </Route>
-      <Route path='editinterest' element={<EditInterest />} />
+      <Route
+        path='editinterest'
+        element={<EditInterest />}
+        action={EditInterestsAction}
+        loader={EditInterestLoader}
+      />
     </Route>
   )
 );
