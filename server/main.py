@@ -891,6 +891,55 @@ def editinterestpage():
         print(f"Error occurred: {str(e)}")  # Log any exceptions
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/club/events", methods=["POST"])
+def create_event():
+    # Check if the user is logged in
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Get the event data from the request
+    data = request.get_json()
+    event_name = data.get("eventName")
+    description = data.get("description")
+    start_date = data.get("startDate")
+    end_date = data.get("endDate")
+    location = data.get("location")
+    event_cost = data.get("eventCost")
+    tags = data.get("tags")
+    event_photos = data.get("eventPhotos")  # This is an array of photos
+
+    # Validate the data
+    if not event_name or not description or not start_date or not end_date or not location:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        # Convert start and end dates from string to datetime objects
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S")
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S")
+
+        # Insert the event into the database
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """INSERT INTO events (event_name, start_time, end_time, location, description, cost, school_id)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (event_name, start_date_obj, end_date_obj, location, description, event_cost, user_id),
+        )
+        mysql.connection.commit()  # Commit the transaction
+
+        # Insert tags into the tags table if needed and associate them with the event (optional)
+
+        # Handle event photos (you need to save the files to the server and store file paths in the database)
+        # You would need to save the files to a folder and store the file paths in the database
+
+        cur.close()
+
+        # Return a success response
+        return jsonify({"message": "Event created successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)

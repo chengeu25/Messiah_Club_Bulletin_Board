@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, useSubmit } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
@@ -15,14 +15,41 @@ const ClubEventForm = () => {
   const [location, setLocation] = useState('');
   const [eventPhotos, setEventPhotos] = useState<File[]>([]);
   const [eventCost, setEventCost] = useState('');
+  const [selectedTags, setSelectedTags] = useState<number[]>([]); // Store selected tags
+  const [tags, setTags] = useState<{ id: number; name: string }[]>([]); // List of available tags
   const [error, setError] = useState<string[]>([]);
   const submit = useSubmit();
+
+  // Mock function to simulate fetching tags from the database
+  useEffect(() => {
+    const fetchTags = async () => {
+      // Replace this with an actual API call or database query to get tags
+      const fetchedTags = [
+        { id: 1, name: 'Technology' },
+        { id: 2, name: 'Sports' },
+        { id: 3, name: 'Music' },
+        { id: 4, name: 'Art' },
+      ];
+      setTags(fetchedTags);
+    };
+
+    fetchTags();
+  }, []);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
       setEventPhotos((prevPhotos) => [...prevPhotos, ...selectedFiles]);
     }
+  };
+
+  const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const tagId = parseInt(e.target.value);
+    setSelectedTags((prevSelectedTags) =>
+      prevSelectedTags.includes(tagId)
+        ? prevSelectedTags.filter((id) => id !== tagId)
+        : [...prevSelectedTags, tagId]
+    );
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -51,24 +78,26 @@ const ClubEventForm = () => {
     formData.append('location', location);
     formData.append('eventCost', eventCost);
 
+    // Append selected tags
+    formData.append('tags', JSON.stringify(selectedTags));
+
     eventPhotos.forEach((photo, index) => {
       formData.append(`eventPhotos[${index}]`, photo);
     });
 
     submit(formData, { method: 'post' });
-  };
+};
+
 
   return (
-    <ResponsiveForm onSubmit={function (): Promise<void> {
-      throw new Error('Function not implemented.');
-    } }>
+    <ResponsiveForm onSubmit={function (): Promise<void> { throw new Error('Function not implemented.'); }}>
       <Form
         method="post"
         onSubmit={handleSubmit}
         className="flex flex-col gap-4"
         encType="multipart/form-data"
       >
-        <h1 className="text-2xl font-bold text-center">Create/Update Event</h1>
+        <h1 className="text-2xl font-bold text-center">Create Event</h1>
         {error.length > 0 && (
           <div className="text-red-500">
             {error.map((err, idx) => (
@@ -83,18 +112,26 @@ const ClubEventForm = () => {
           value={eventName}
           onChange={(e) => setEventName((e.target as HTMLInputElement).value)}
           placeholder="Enter the event name"
-          color="blue"
+          color='blue'
           filled={false}
+          required
         />
-        <label htmlFor="description">Description:</label>
-        <TextArea
-          name="description"
+        <Input
+          label='Description:'
+          name='description'
+          type='text'
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Enter the event description"
-        />
+          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+            setDescription(e.target.value)
+          }
+          color='blue'
+          filled={false}
+          placeholder='Enter the event description'
+          multiline
+          required
+      />
         <div>
-          <label htmlFor="startDate">Start Date:</label>
+          <label htmlFor="startDate">Start Date:<span className='text-red-500'>*</span> </label>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
@@ -102,11 +139,11 @@ const ClubEventForm = () => {
             timeFormat="HH:mm"
             timeIntervals={15}
             dateFormat="MMMM d, yyyy h:mm aa"
-            className="input"
+            className="input rounded-lg border-blue-950 border-2"
           />
         </div>
         <div>
-          <label htmlFor="endDate">End Date:</label>
+          <label htmlFor="endDate">End Date:<span className='text-red-500'>*</span> </label>
           <DatePicker
             selected={endDate}
             onChange={(date) => setEndDate(date)}
@@ -114,7 +151,7 @@ const ClubEventForm = () => {
             timeFormat="HH:mm"
             timeIntervals={15}
             dateFormat="MMMM d, yyyy h:mm aa"
-            className="input"
+            className="input rounded-lg border-blue-950 border-2"
           />
         </div>
         <Input
@@ -126,9 +163,20 @@ const ClubEventForm = () => {
           placeholder="Enter the event location"
           color="blue"
           filled={false}
+          required
         />
         <div>
-          <label htmlFor="eventPhotos">Event Photos:</label>
+          <Input 
+            label="Event Photos:"
+            name="eventPhotos"
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoChange}
+            color="blue"
+            filled={false}
+            required
+          />
+          {/* <label htmlFor="eventPhotos">Event Photos: </label>
           <input
             type="file"
             name="eventPhotos"
@@ -136,7 +184,8 @@ const ClubEventForm = () => {
             multiple
             onChange={handlePhotoChange}
             className="input"
-          />
+            required
+          /> */}
           <p className="text-gray-500 text-sm">You can select multiple photos.</p>
           {eventPhotos.length > 0 && (
             <div className="mt-2">
@@ -161,6 +210,27 @@ const ClubEventForm = () => {
           color="blue"
           filled={false}
         />
+        
+        {/* Event Tags */}
+        <div>
+          <label htmlFor="eventTags">Event Tags: <span className='text-red-500'>*</span></label>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <div key={tag.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  value={tag.id}
+                  checked={selectedTags.includes(tag.id)}
+                  onChange={handleTagChange}
+                  className="mr-2"
+
+                />
+                <span>{tag.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-row gap-2">
           <Button text="Submit" color="blue" type="submit" filled />
           <Button text="Cancel" color="blue" filled={false} type="reset" />
