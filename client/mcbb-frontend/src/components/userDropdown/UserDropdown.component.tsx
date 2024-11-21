@@ -70,7 +70,7 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     }
   };
 
-  useEffect(() => {
+  const createOptionList = () => {
     if (user) {
       setOptions([
         {
@@ -98,7 +98,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
         }
       ]);
     }
-  }, [user]);
+  };
+
+  window.onresize = createOptionList;
+
+  useEffect(createOptionList, [user]);
 
   useEffect(() => {
     if (options.length > 0) {
