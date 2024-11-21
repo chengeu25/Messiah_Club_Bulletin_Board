@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams } from 'react-router-dom';
+import { useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
+import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 const ForgotPassword = () => {
   const submit = useSubmit();
@@ -34,31 +35,27 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
-          <h1 className='text-3xl font-bold'>Forgot Password?</h1>
-          {error && <div className='text-red-500'>{error}</div>}
-          {message && <p className='text-green-500'>{message}</p>}
-          <Input
-            label='Enter your Messiah email:'
-            name='email'
-            type='text'
-            placeholder='Messiah Email'
-            color='blue'
-            filled={false}
-          />
-          <div className='flex flex-row gap-2'>
-            <Button
-              text='Send Reset Link'
-              type='submit'
-              name='sendTemporaryPassword'
-              color='blue'
-            />
-          </div>
-        </Form>
+    <ResponsiveForm onSubmit={handleSubmit}>
+      <h1 className='text-3xl font-bold'>Forgot Password?</h1>
+      {error && <div className='text-red-500'>{error}</div>}
+      {message && <p className='text-green-500'>{message}</p>}
+      <Input
+        label='Enter your Messiah email:'
+        name='email'
+        type='text'
+        placeholder='Messiah Email'
+        color='blue'
+        filled={false}
+      />
+      <div className='flex flex-row gap-2'>
+        <Button
+          text='Send Reset Link'
+          type='submit'
+          name='sendTemporaryPassword'
+          color='blue'
+        />
       </div>
-    </div>
+    </ResponsiveForm>
   );
 };
 
