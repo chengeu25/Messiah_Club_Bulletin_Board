@@ -14,7 +14,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
 
     if (action === 'cancel') {
         return redirect('/dashboard/clubs');
-    } else if (action === 'create') {
+    } else if (action === 'submit') {
     const response = await fetch('http://localhost:3000/api/club/events', {
         method: 'POST',
         credentials: 'include',
@@ -37,7 +37,9 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
     return redirect('/dashboard/clubs');
   }
   const json = await response.json();
-  return redirect('/dashboard/club/new?error=' + json.error);
+    console.log(json);
+    return redirect('/dashboard/clubs');
+//   return redirect('/dashboard/club/new?error=' + json.error);
   }
 };
 

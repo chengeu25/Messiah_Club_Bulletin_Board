@@ -93,6 +93,7 @@ const ClubEventForm = () => {
     <ResponsiveForm onSubmit={function (): Promise<void> { throw new Error('Function not implemented.'); }}>
       <Form
         method="post"
+        action="/dashboard/clubs/newEvent"
         onSubmit={handleSubmit}
         className="flex flex-col gap-4"
         encType="multipart/form-data"
@@ -175,6 +176,7 @@ const ClubEventForm = () => {
             color="blue"
             filled={false}
             required
+            multiple
           />
           {/* <label htmlFor="eventPhotos">Event Photos: </label>
           <input
@@ -232,8 +234,8 @@ const ClubEventForm = () => {
         </div>
 
         <div className="flex flex-row gap-2">
-          <Button text="Submit" color="blue" type="submit" filled />
-          <Button text="Cancel" color="blue" filled={false} type="reset" />
+          <Button text="Submit" color="blue" type="submit" filled name='submit' />
+          <Button text="Cancel" color="blue" filled={false} type="reset" name='cancel' />
         </div>
       </Form>
     </ResponsiveForm>
