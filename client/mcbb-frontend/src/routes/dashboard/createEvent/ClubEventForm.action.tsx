@@ -3,43 +3,45 @@ import { ActionFunction, redirect } from 'react-router';
 const clubEventFormAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');
-  const eventName = formData.get('eventName');
-  const description = formData.get('description');
-  const startDate = formData.get('startDate');
-  const endDate = formData.get('endDate');
-  const location = formData.get('location');
-  const eventCost = formData.get('eventCost');
-  const tags = JSON.parse(formData.get('tags') as string); // Parse the selected tags
-  const eventPhotos = formData.getAll('eventPhotos[]'); // Assuming the file input is named 'eventPhotos[]'
+  const eventName = formData.get('eventName') as string;
+  const description = formData.get('description') as string;
+  const startDate = formData.get('startDate') as string;
+  const endDate = formData.get('endDate') as string;
+  const location = formData.get('location') as string;
+  const eventCost = formData.get('eventCost') as string;
+  const tags = formData.get('tags') ? JSON.parse(formData.get('tags') as string) : [];
+  const eventPhotos = formData.getAll('eventPhotos[]');
 
-    if (action === 'cancel') {
-        return redirect('/dashboard/clubs');
-    } else if (action === 'submit') {
-    const response = await fetch('http://localhost:3000/api/club/events', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-        eventName,
-        description,
-        startDate,
-        endDate,
-        location,
-        eventCost,
-        tags,
-        eventPhotos,
-    }),
-  });
-
-  if (response.ok) {
+  if (action === 'cancel') {
     return redirect('/dashboard/clubs');
   }
-  const json = await response.json();
-    console.log(json);
+
+  try {
+    const data = new FormData();
+    data.append('eventName', eventName);
+    data.append('description', description);
+    data.append('startDate', startDate);
+    data.append('endDate', endDate);
+    data.append('location', location);
+    data.append('eventCost', eventCost);
+    data.append('tags', JSON.stringify(tags));
+    eventPhotos.forEach(photo => formData.append('eventPhotos[]', photo));
+
+    const response = await fetch('http://localhost:3000/api/club/events', {
+      method: 'POST',
+      credentials: 'include',
+      body: data,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return redirect(`/dashboard/club/new?error=${encodeURIComponent(errorData.error)}`);
+    }
+
     return redirect('/dashboard/clubs');
-//   return redirect('/dashboard/club/new?error=' + json.error);
+  } catch (error) {
+    console.error('Error submitting event:', error);
+    return redirect('/dashboard/club/new?error=Unexpected error occurred');
   }
 };
 
