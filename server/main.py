@@ -987,6 +987,9 @@ def create_event():
             except Exception as e:
                 return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
 
+
+        # insert club_name and event_id into club_event table**
+        
         # Save photos into the database as blobs and store the file names
         for image_data, filename in saved_photos:
             try:

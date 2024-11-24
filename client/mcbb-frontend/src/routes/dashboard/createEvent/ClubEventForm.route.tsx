@@ -5,6 +5,7 @@ import Button from '../../../components/formElements/Button.component';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
+import Select from 'react-select';
 
 const ClubEventForm = () => {
   const [eventName, setEventName] = useState('');
