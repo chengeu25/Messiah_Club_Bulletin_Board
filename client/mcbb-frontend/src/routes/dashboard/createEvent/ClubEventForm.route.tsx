@@ -8,6 +8,7 @@ import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from 'react-select';
 
 const ClubEventForm = () => {
+  const [clubName, setClubName] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -94,6 +95,17 @@ const ClubEventForm = () => {
           ))}
         </div>
       )}
+      <Input
+      label="Club Name:"
+      name="clubName"
+      type="text"
+      value={clubName}
+      onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
+      placeholder="Enter the club name"
+      color="blue"
+      filled={false}
+      required
+      />
       <Input
         label="Event Name:"
         name="eventName"

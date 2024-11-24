@@ -901,6 +901,14 @@ def allowed_file(filename):
     """Check if the file is allowed based on its extension"""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def get_club_id(cur, club_name):
+    cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
+    result = cur.fetchone()
+    if result:
+        return result[0]
+    else:
+        raise ValueError("Club not found")
+
 import json
 
 @app.route("/api/club/events", methods=["POST"])
@@ -911,6 +919,7 @@ def create_event():
         return jsonify({"error": "User not logged in"}), 401
 
     # Get the event data from the request
+    club_name = request.form.get("clubName")
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
@@ -988,7 +997,15 @@ def create_event():
                 return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
 
 
-        # insert club_name and event_id into club_event table**
+        # insert club_id and event_id into event_host table**
+        club_id = get_club_id(cur, club_name)
+        print(club_id)
+        print(club_name)
+        
+        cur.execute(
+            """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
+            (club_id, event_id)
+        )
         
         # Save photos into the database as blobs and store the file names
         for image_data, filename in saved_photos:

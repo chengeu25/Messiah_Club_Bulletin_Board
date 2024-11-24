@@ -3,6 +3,7 @@ import { ActionFunction, redirect } from 'react-router';
 const clubEventFormAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');
+  const clubName = formData.get('clubName') as string;
   const eventName = formData.get('eventName') as string;
   const description = formData.get('description') as string;
   const startDate = formData.get('startDate') as string;
@@ -18,6 +19,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
 
   try {
     const data = new FormData();
+    data.append('clubName', clubName);
     data.append('eventName', eventName);
     data.append('description', description);
     data.append('startDate', startDate);
