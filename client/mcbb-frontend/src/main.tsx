@@ -47,7 +47,6 @@ import EditInterestsAction from './routes/editinterestpage/editinterest.action.t
 import EditInterestLoader from './routes/editinterestpage/editinterest.loader.tsx';
 import clubAction from './routes/dashboard/club/Club.action.tsx';
 import AddedInterest from './routes/dashboard/addeditinterestpage/addeditinterest.route.tsx';
-import AddedInterestLoader from './routes/dashboard/addeditinterestpage/addeditinterest.loader.tsx';
 import addInterestAction from './routes/dashboard/addeditinterestpage/addedinterest.action.tsx';
 
 const router = createBrowserRouter(
