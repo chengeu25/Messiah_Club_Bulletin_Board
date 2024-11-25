@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useSubmit } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
@@ -8,7 +7,6 @@ const AddedInterest = () => {
   const [interestName, setInterestName] = useState('');
   const [error, setError] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
-  const submit = useSubmit();
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
