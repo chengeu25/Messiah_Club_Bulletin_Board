@@ -3,6 +3,7 @@ import { useSubmit, useSearchParams, useLoaderData } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import Loading from '../../components/ui/Loading';
 
 /**
  * Login page for the application
@@ -16,6 +17,7 @@ const Login = () => {
   const [email, setEmail] = useState<string>('');
   const [message, setMessage] = useState<string | null>(null);
   const [remember, setRemember] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const emailIsValid = useMemo(() => email.endsWith('@messiah.edu'), [email]);
 
   /**
@@ -43,6 +45,7 @@ const Login = () => {
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
     setMessage(null);
     const formData = new FormData(event.currentTarget);
     const action = (
@@ -70,7 +73,9 @@ const Login = () => {
     setEmail(event.target.value);
   };
 
-  return (
+  return isLoading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Login</h1>
       {error && <p className='text-red-500'>{error}</p>}
