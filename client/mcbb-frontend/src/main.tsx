@@ -46,8 +46,6 @@ import deleteClubLoader from './routes/dashboard/club/delete/DeleteClub.loader.t
 import EditInterestsAction from './routes/editinterestpage/editinterest.action.tsx';
 import EditInterestLoader from './routes/editinterestpage/editinterest.loader.tsx';
 import clubAction from './routes/dashboard/club/Club.action.tsx';
-import AddedInterest from './routes/dashboard/addeditinterestpage/addeditinterest.route.tsx';
-import addInterestAction from './routes/dashboard/addeditinterestpage/addedinterest.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -120,6 +118,8 @@ const router = createBrowserRouter(
             action={clubFormAction}
           />
           <Route path=':id/delete' loader={deleteClubLoader} />
+          <Route path=':id/newEvent' loader={clubEventFormLoader} element={<ClubEventForm />} action={clubEventFormAction} /> 
+          
           <Route
             path='new'
             element={<ClubForm />}

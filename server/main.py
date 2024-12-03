@@ -5,6 +5,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import requests
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import os
 import random
 import string
@@ -13,6 +14,7 @@ import jwt
 from email.mime.text import MIMEText
 import base64
 import json
+import io
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -907,6 +909,142 @@ def editinterestpage():
         print(f"Error occurred: {str(e)}")  # Log any exceptions
         return jsonify({"error": str(e)}), 500
 
+# Configure your upload folder and allowed extensions
+UPLOAD_FOLDER = 'uploads/'  # Specify your uploads folder
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+def allowed_file(filename):
+    """Check if the file is allowed based on its extension"""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def get_club_id(cur, club_name):
+    cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
+    result = cur.fetchone()
+    if result:
+        return result[0]
+    else:
+        raise ValueError("Club not found")
+
+import json
+
+@app.route("/api/club/events", methods=["POST"])
+def create_event():
+    # Check if the user is logged in
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Get the event data from the request
+    club_name = request.form.get("clubName")
+    event_name = request.form.get("eventName")
+    description = request.form.get("description")
+    start_date = request.form.get("startDate")
+    end_date = request.form.get("endDate")
+    location = request.form.get("location")
+    event_cost = request.form.get("eventCost")
+    tags = request.form.get("tags")  # This should be a JSON string (e.g., "[1, 2, 3]")
+
+    if tags:
+        try:
+            # Convert the tags string into a list of integers
+            tags = json.loads(tags)  # This will handle strings like "[1, 2, 3]" as a Python list
+        except json.JSONDecodeError:
+            return jsonify({"error": "Invalid tags format, should be a JSON array"}), 400
+    else:
+        tags = []
+
+    # Validate the data
+    if not event_name or not description or not start_date or not end_date or not location:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    # Validate event cost (set to None if empty or invalid)
+    try:
+        if event_cost:
+            event_cost = float(event_cost)  # Try to convert the cost to a float
+        else:
+            event_cost = None  # If no cost is provided, set it to None (nullable)
+    except ValueError:
+        return jsonify({"error": "Invalid event cost value"}), 400
+
+    # Handle file uploads
+    event_photos = request.files.getlist("eventPhotos[]")
+    saved_photos = []
+
+    for photo in event_photos:
+        if photo and allowed_file(photo.filename):
+            filename = secure_filename(photo.filename)
+            image_data = photo.read()  # Read the image file into binary data
+            saved_photos.append((image_data, filename))  # Store image data and filename
+
+    try:
+        # Updated date parsing logic
+        try:
+            # Handle ISO 8601 with milliseconds and 'Z' for UTC
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+            end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            try:
+                # Fallback if no milliseconds are present
+                start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
+                end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
+            except ValueError as e:
+                return jsonify({"error": f"Invalid date format: {str(e)}"}), 400
+
+        # Insert the event into the database
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (event_name, start_date_obj, end_date_obj, location, description, event_cost, '1'),
+        )
+        event_id = cur.lastrowid  # Get the ID of the newly created event
+
+        # Optional: Associate tags with the event
+        for tag in tags:
+            try:
+                tag_id = int(tag)  # Ensure tag is an integer
+                cur.execute(
+                    """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
+                    (event_id, tag_id)
+                )
+            except ValueError:
+                return jsonify({"error": f"Invalid tag format: {tag}"}), 400
+            except Exception as e:
+                return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
+
+
+        # insert club_id and event_id into event_host table**
+        club_id = get_club_id(cur, club_name)
+        print(club_id)
+        print(club_name)
+        
+        cur.execute(
+            """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
+            (club_id, event_id)
+        )
+        
+        # Save photos into the database as blobs and store the file names
+        for image_data, filename in saved_photos:
+            try:
+                image_prefix = filename  # You can store the filename as the prefix
+                cur.execute(
+                    """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
+                    VALUES (%s, %s, %s)""",
+                    (event_id, image_data, image_prefix)
+                )
+            except Exception as e:
+                return jsonify({"error": f"Failed to insert photo: {str(e)}"}), 500
+
+        mysql.connection.commit()  # Commit the transaction
+        cur.close()
+
+        # Return a success response
+        return jsonify({"message": "Event created successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
 
 @app.route("/api/passwordReset", methods=["POST"])
 def reset_password():
