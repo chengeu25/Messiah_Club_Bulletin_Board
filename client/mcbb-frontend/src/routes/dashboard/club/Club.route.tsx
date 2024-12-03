@@ -97,7 +97,7 @@ const Club = () => {
     console.log(action);
     formData.append('clubId', club.id.toString());
     formData.append('action', action);
-    submit(formData, {method: 'post'});
+    submit(formData, { method: 'post' });
   };
 
   return (
@@ -110,11 +110,11 @@ const Club = () => {
         <h1 className='font-bold text-4xl flex-grow'>{club?.name}</h1>
         <Form
           onSubmit={handleSubmit}
-          className='flex-shrink-0 flex gap-2 text-nowrap'
+          className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
           {user?.clubAdmins.includes(club?.id) && (
             <Button
-              type = 'submit'
+              type='submit'
               color='blue'
               text='New Event'
               filled={true}
@@ -180,7 +180,7 @@ const Club = () => {
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
           <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
             {demoEvents.map((event, index) => (
-              <Event key={index} {...event} />
+              <Event key={index} {...event} small />
             ))}
           </div>
         </Card>

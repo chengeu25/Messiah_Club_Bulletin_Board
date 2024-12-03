@@ -21,14 +21,10 @@ const Event = ({
 }: EventProps) => {
   return (
     <div>
-      <div
-        className={`flex ${
-          small ? 'flex-col' : 'flex-row'
-        } justify-between rounded-lg border-blue-900 border-2 p-2`}
-      >
+      <div className='flex flex-col sm:flex-row justify-between rounded-lg border-blue-900 border-2 p-2'>
         <div className='flex-grow'>
           <h1 className='text-xl font-bold'>{title}</h1>
-          <div className={`flex ${small ? 'flex-col' : 'flex-row'} gap-2`}>
+          <div className='flex flex-col sm:flex-row gap-2'>
             {!small && (
               <img
                 src={image}
@@ -53,12 +49,10 @@ const Event = ({
             </div>
           </div>
         </div>
-        {!small && (
-          <div className='flex flex-row justify-center items-center gap-2'>
-            <Button color='blue' text='View Details' className='text-nowrap' />
-            <Button color='blue' text='RSVP' />
-          </div>
-        )}
+        <div className='flex flex-row justify-center items-center gap-2'>
+          <Button color='blue' text='View Details' className='text-nowrap' />
+          <Button color='blue' text='RSVP' />
+        </div>
       </div>
     </div>
   );
