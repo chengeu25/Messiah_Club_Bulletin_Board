@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from 'react-router';
 
-const clubEventFormAction: ActionFunction = async ({ request }) => {
+  const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get('action');
   const clubName = formData.get('clubName') as string;
@@ -37,7 +37,9 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return redirect(`/dashboard/club/new?error=${encodeURIComponent(errorData.error)}`);
+      const { clubId } = params; // Retrieve clubId from params
+      return redirect(`/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(errorData.error)}`);
+
     }
 
     return redirect('/dashboard/clubs');

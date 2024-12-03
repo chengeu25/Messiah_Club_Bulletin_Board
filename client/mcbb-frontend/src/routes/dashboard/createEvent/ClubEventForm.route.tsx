@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { useSubmit } from 'react-router-dom';
+import { useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
-import Select from 'react-select';
 
 const ClubEventForm = () => {
+  const [searchParams] = useSearchParams();
+  const serverError = searchParams.get('error'); // Retrieve "error" from query parameters
+
   const [clubName, setClubName] = useState('');
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -18,7 +20,7 @@ const ClubEventForm = () => {
   const [eventCost, setEventCost] = useState('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [tags, setTags] = useState<{ id: number; name: string }[]>([]);
-  const [error, setError] = useState<string[]>([]);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const submit = useSubmit();
 
   useEffect(() => {
@@ -56,6 +58,7 @@ const ClubEventForm = () => {
     const formData = new FormData(event.currentTarget);
     const errors: string[] = [];
 
+    if (!clubName.trim()) errors.push('Club name is required.');
     if (!eventName.trim()) errors.push('Event name is required.');
     if (!description.trim()) errors.push('Event description is required.');
     if (!startDate || !endDate) errors.push('Event dates are required.');
@@ -66,7 +69,7 @@ const ClubEventForm = () => {
       errors.push('Event cost must be a valid number.');
 
     if (errors.length > 0) {
-      setError(errors);
+      setValidationErrors(errors);
       return;
     }
 
@@ -88,23 +91,33 @@ const ClubEventForm = () => {
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className="text-2xl font-bold text-center">Create Event</h1>
-      {error.length > 0 && (
+
+      {/* Display server-side error */}
+      {serverError && (
+        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+          <strong>Error:</strong> {serverError}
+        </div>
+      )}
+
+      {/* Display client-side validation errors */}
+      {validationErrors.length > 0 && (
         <div className="text-red-500">
-          {error.map((err, idx) => (
+          {validationErrors.map((err, idx) => (
             <div key={idx}>{err}</div>
           ))}
         </div>
       )}
+
       <Input
-      label="Club Name:"
-      name="clubName"
-      type="text"
-      value={clubName}
-      onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
-      placeholder="Enter the club name"
-      color="blue"
-      filled={false}
-      required
+        label="Club Name:"
+        name="clubName"
+        type="text"
+        value={clubName}
+        onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
+        placeholder="Enter the club name"
+        color="blue"
+        filled={false}
+        required
       />
       <Input
         label="Event Name:"
@@ -130,7 +143,9 @@ const ClubEventForm = () => {
         required
       />
       <div>
-        <label htmlFor="startDate">Start Date:<span className='text-red-500'>*</span> </label>
+        <label htmlFor="startDate">
+          Start Date: <span className="text-red-500">*</span>{' '}
+        </label>
         <DatePicker
           selected={startDate}
           onChange={(date) => setStartDate(date)}
@@ -142,7 +157,9 @@ const ClubEventForm = () => {
         />
       </div>
       <div>
-        <label htmlFor="endDate">End Date:<span className='text-red-500'>*</span> </label>
+        <label htmlFor="endDate">
+          End Date: <span className="text-red-500">*</span>{' '}
+        </label>
         <DatePicker
           selected={endDate}
           onChange={(date) => setEndDate(date)}
@@ -165,7 +182,7 @@ const ClubEventForm = () => {
         required
       />
       <div>
-        <Input 
+        <Input
           label="Event Photos:"
           name="eventPhotos"
           type="file"
@@ -201,7 +218,9 @@ const ClubEventForm = () => {
         filled={false}
       />
       <div>
-        <label htmlFor="eventTags">Event Tags: <span className='text-red-500'>*</span></label>
+        <label htmlFor="eventTags">
+          Event Tags: <span className="text-red-500">*</span>
+        </label>
         <div className="flex flex-wrap gap-2">
           {tags.map((tag) => (
             <div key={tag.id} className="flex items-center">
@@ -218,8 +237,8 @@ const ClubEventForm = () => {
         </div>
       </div>
       <div className="flex flex-row gap-2">
-        <Button text="Submit" color="blue" type="submit" filled name='submit' />
-        <Button text="Cancel" color="blue" filled={false} type="reset" name='cancel' />
+        <Button text="Submit" color="blue" type="submit" filled name="submit" />
+        <Button text="Cancel" color="blue" filled={false} type="reset" name="cancel" />
       </div>
     </ResponsiveForm>
   );
