@@ -906,6 +906,32 @@ def editinterestpage():
         cur.close()
         print(f"Error occurred: {str(e)}")  # Log any exceptions
         return jsonify({"error": str(e)}), 500
+@app.route('/api/add_tag', methods=['POST'])
+def add_tag():
+
+    try:
+        # Parse the JSON request data
+        data = request.json
+        tag_name = data.get('tag_name')
+
+        if not tag_name:
+            return jsonify({"error": "Tag name is required"}), 400
+
+        # Insert tag into the database
+        cursor = mysql.connection.cursor()
+        query = "INSERT INTO tag (tag_name) VALUES (%s)"
+        cursor.execute(query, (tag_name,))
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({"message": f"Tag '{tag_name}' added successfully!"}), 201
+
+    except mysql.connection.IntegrityError:
+        return jsonify({"error": f"Tag '{tag_name}' already exists."}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 @app.route("/api/passwordReset", methods=["POST"])
