@@ -10,7 +10,7 @@ import {
   UserType
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
-import { Form } from 'react-router-dom';
+import { Form, useSubmit } from 'react-router-dom';
 
 const demoEvents = [
   {
@@ -82,6 +82,7 @@ const demoEvents = [
 ];
 
 const Club = () => {
+  const submit = useSubmit();
   const { user, club } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
@@ -93,7 +94,10 @@ const Club = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
+    console.log(action);
+    formData.append('clubId', club.id.toString());
     formData.append('action', action);
+    submit(formData, {method: 'post'});
   };
 
   return (
@@ -110,6 +114,7 @@ const Club = () => {
         >
           {user?.clubAdmins.includes(club?.id) && (
             <Button
+              type = 'submit'
               color='blue'
               text='New Event'
               filled={true}
@@ -117,6 +122,7 @@ const Club = () => {
             />
           )}
           <Button
+            type='submit'
             color='blue'
             text='Subscribe'
             name='subscribe'
