@@ -51,10 +51,16 @@ import addInterestAction from './routes/dashboard/addeditinterestpage/addedinter
 import clubEventFormAction from './routes/dashboard/createEvent/ClubEventForm.action.tsx';
 import clubEventFormLoader from './routes/dashboard/createEvent/ClubEventForm.loader.tsx';
 import ClubEventForm from './routes/dashboard/createEvent/ClubEventForm.route.tsx';
+import ErrorPage from './routes/error/ErrorPage.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path='/' element={<Root />} loader={rootLoader}>
+    <Route
+      path='/'
+      element={<Root />}
+      loader={rootLoader}
+      errorElement={<ErrorPage />}
+    >
       <Route path='/' element={<LandingPage />} />
       <Route
         path='login'
@@ -102,10 +108,9 @@ const router = createBrowserRouter(
           action={clubsAction}
         />
         <Route
-        path="addeditinterestpage"
-        element={<AddedInterest />}
-        action={addInterestAction}
-        
+          path='addeditinterestpage'
+          element={<AddedInterest />}
+          action={addInterestAction}
         />
         <Route path='event' element={<Event />} loader={eventLoader} />
         <Route path='club' element={<Club />} loader={clubLoader} />
@@ -123,8 +128,13 @@ const router = createBrowserRouter(
             action={clubFormAction}
           />
           <Route path=':id/delete' loader={deleteClubLoader} />
-          <Route path=':id/newEvent' loader={clubEventFormLoader} element={<ClubEventForm />} action={clubEventFormAction} /> 
-          
+          <Route
+            path=':id/newEvent'
+            loader={clubEventFormLoader}
+            element={<ClubEventForm />}
+            action={clubEventFormAction}
+          />
+
           <Route
             path='new'
             element={<ClubForm />}
@@ -139,8 +149,6 @@ const router = createBrowserRouter(
         action={EditInterestsAction}
         loader={EditInterestLoader}
       />
-
-
     </Route>
   )
 );
