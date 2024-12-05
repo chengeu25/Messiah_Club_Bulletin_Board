@@ -1,12 +1,15 @@
 import { ActionFunction, redirect } from 'react-router-dom';
 
-const EditInterestsAction:ActionFunction = async ({ request }) => {
-  
-    const formData = await request.formData();
-    const checkedInterests = formData.get("interests")
+const EditInterestsAction: ActionFunction = async ({ request }) => {
+  const formData = await request.formData();
+  const interests = formData.get('interests');
+
+  // Ensure the interests data is parsed correctly (it's a JSON string)
+  const parsedInterests = interests ? JSON.parse(interests as string) : [];
+
   // Prepare the data to be sent to the backend
   const data = {
-    interests: checkedInterests
+    interests: parsedInterests,
   };
 
   try {
@@ -16,24 +19,24 @@ const EditInterestsAction:ActionFunction = async ({ request }) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
-      credentials: "include"
+      credentials: 'include',
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      // If the request is successful, trigger the form submission
-      
       alert(result.message);
+      return redirect('/dashboard');
     } else {
-      // If the request fails, display an error message
       alert(result.error || 'An error occurred while updating interests');
     }
   } catch (error) {
     console.error('Error updating interests:', error);
     alert('An error occurred while updating interests');
   }
-  return redirect('/dashboard')
+  return null; // No redirect if an error occurs
 };
 
 export default EditInterestsAction;
+
+

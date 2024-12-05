@@ -10,8 +10,8 @@ const AddedInterest = () => {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
-    setError([]); // Clear previous errors
-    setSuccessMessage(''); // Clear previous success messages
+    setError([]);
+    setSuccessMessage('');
 
     if (!interestName.trim()) {
       setError(['Interest name is required.']);
@@ -30,10 +30,40 @@ const AddedInterest = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        // Handle errors from the backend
         setError([result.error || 'An unexpected error occurred.']);
       } else {
-        // Display success message and clear input
+        setSuccessMessage(result.message);
+        setInterestName('');
+      }
+    } catch (err) {
+      setError(['Failed to connect to the server. Please try again later.']);
+      console.error('Error:', err);
+    }
+  };
+
+  const handleRemove = async (): Promise<void> => {
+    setError([]);
+    setSuccessMessage('');
+
+    if (!interestName.trim()) {
+      setError(['Interest name is required.']);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://127.0.0.1:3000/api/remove_tag', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tag_name: interestName }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError([result.error || 'An unexpected error occurred.']);
+      } else {
         setSuccessMessage(result.message);
         setInterestName('');
       }
@@ -66,13 +96,14 @@ const AddedInterest = () => {
         required
       />
       <div className="flex flex-row gap-2 mt-4">
-        <Button text="Submit" color="blue" type="submit" filled name="submit" />
-        <Button text="Cancel" color="blue" filled={false} type="reset" name="cancel" />
+        <Button text="Add" color="blue" type="submit" filled name="add" />
+        <Button text="Remove" color="red" filled={false} onClick={handleRemove} name="remove" />
       </div>
     </ResponsiveForm>
   );
 };
 
 export default AddedInterest;
+
 
 

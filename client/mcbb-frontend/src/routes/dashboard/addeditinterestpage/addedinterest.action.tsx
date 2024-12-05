@@ -4,6 +4,7 @@ const addInterestAction: ActionFunction = async ({ request }) => {
   try {
     // Parse form data from the request
     const formData = await request.formData();
+    const actionType = formData.get('action') as string; // Determines whether to add or remove
     const tagName = formData.get('tag_name') as string;
 
     // Validate the input
@@ -11,9 +12,23 @@ const addInterestAction: ActionFunction = async ({ request }) => {
       return { error: 'Interest name is required' };
     }
 
+    let endpoint = '';
+    let method = '';
+
+    // Determine the action type and set endpoint/method
+    if (actionType === 'add') {
+      endpoint = 'http://127.0.0.1:3000/api/add_tag';
+      method = 'POST';
+    } else if (actionType === 'remove') {
+      endpoint = 'http://127.0.0.1:3000/api/remove_tag';
+      method = 'DELETE';
+    } else {
+      return { error: 'Invalid action type' };
+    }
+
     // Make the fetch request to the backend
-    const response = await fetch('http://127.0.0.1:3000/api/add_tag', {
-      method: 'POST',
+    const response = await fetch(endpoint, {
+      method,
       headers: {
         'Content-Type': 'application/json',
       },
@@ -33,7 +48,7 @@ const addInterestAction: ActionFunction = async ({ request }) => {
     console.error('Error in addInterestAction:', err);
     return { error: 'Failed to connect to the server. Please try again later.' };
   }
-  
 };
 
 export default addInterestAction;
+

@@ -1,89 +1,111 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useLoaderData, useSubmit, useNavigate } from 'react-router-dom';
-import Button from '../../components/formElements/Button.component';
 
-const EditInterest = () => {
-  const interests = [
-    'Sports',
-    'Outdoors',
-    'Music',
-    'Cultural',
-    'Academic',
-    'Gaming',
-    'Art',
-    'Computer Science (Unfortunately)'
-  ];
-  const interest = useLoaderData();
-
-  const [checkedInterests, setCheckedInterests] = useState<string[]>([]);
+const EditInterests: React.FC = () => {
+  const [allInterests, setAllInterests] = useState<string[]>([]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const submit = useSubmit();
-  const navigate = useNavigate(); // Hook to handle redirection
 
   useEffect(() => {
-    setCheckedInterests((interest as { interests: string[] }).interests);
-  }, [interest]);
+    // Fetch all available interests
+    fetch('http://localhost:3000/api/getallinterests', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.interests) {
+          setAllInterests(data.interests);
+        }
+      })
+      .catch((error) => console.error('Error fetching all interests:', error));
+
+    // Fetch the user's current selected interests
+    fetch('http://localhost:3000/api/getinterests', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.interests) {
+          setSelectedInterests(data.interests);
+        }
+      })
+      .catch((error) => console.error('Error fetching selected interests:', error));
+  }, []);
 
   const handleCheckboxChange = (interest: string) => {
-    setCheckedInterests((prev) =>
+    setSelectedInterests((prev) =>
       prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
+        ? prev.filter((i) => i !== interest) // Remove interest
+        : [...prev, interest] // Add interest
     );
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (checkedInterests.length === 0) {
-      setError('Please select at least one interest.');
-    } else {
-      setError(null);
-      const formData = new FormData(event.currentTarget);
-      formData.append('interests', JSON.stringify(checkedInterests));
 
-      submit(formData, { method: 'post' });
+    try {
+      const response = await fetch('http://localhost:3000/api/editinterestpage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ interests: selectedInterests }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(result.message);
+      } else {
+        setError(result.error || 'An error occurred');
+      }
+    } catch (error) {
+      console.error('Error submitting interests:', error);
+      setError('An error occurred');
     }
   };
 
-  // Function to handle redirect to Add Interest page
   const handleRedirect = () => {
-    navigate('/dashboard/addeditinterestpage'); // Redirect to the Add Interest page
+    window.location.href = '/dashboard/addeditinterestpage';
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:w-1/2 sm:h-1/2 justify-center items-center shadow-md rounded-lg p-5 bg-white'>
-        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full h-full'>
-          <h1 className='text-3xl font-bold'>Edit Interests</h1>
-          {error && <p className='text-red-500'>{error}</p>}
-          <div className='flex flex-col gap-2 overflow-y-auto' style={{ maxHeight: '200px' }}>
-            {interests.map((interest) => (
+    <div className="w-full h-full flex justify-center items-center bg-gray-100">
+      <div className="flex w-full h-full sm:w-3/4 sm:h-3/4 justify-center items-center shadow-md rounded-lg p-5 bg-white">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full h-full">
+          <h1 className="text-3xl font-bold">Edit Interests</h1>
+          {error && <p className="text-red-500">{error}</p>}
+          <div
+            className="flex flex-col gap-2 overflow-y-auto"
+            style={{ maxHeight: '200px' }}
+          >
+            {allInterests.map((interest) => (
               <label key={interest} style={{ display: 'block', margin: '10px 0' }}>
                 <input
                   type="checkbox"
-                  checked={checkedInterests.includes(interest)}
+                  checked={selectedInterests.includes(interest)}
                   onChange={() => handleCheckboxChange(interest)}
-                  className='mr-2'
+                  className="mr-2"
                 />
                 {interest}
               </label>
             ))}
           </div>
-          <Button color='blue' text='Save Changes' type='submit' />
-        </Form>
-
-        {/* Button to redirect to the Add Interest page */}
-        <div className='mt-4'>
-          <Button
-            text="Go to Add Interest Page"
-            color="blue"
-            filled={true}
-            onClick={handleRedirect} // Trigger redirection
-          />
-        </div>
+          <button
+            className="bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900"
+            type="submit"
+          >
+            Save Changes
+          </button>
+          <button
+            className="bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900"
+            type="button"
+            onClick={handleRedirect}
+          >
+            Go to Add Interest Page
+          </button>
+        </form>
       </div>
     </div>
   );
 };
 
-export default EditInterest;
+export default EditInterests;
+
+
+
+
