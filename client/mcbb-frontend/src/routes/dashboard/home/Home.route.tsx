@@ -37,7 +37,7 @@ const Home = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
-      <div className='flex flex-col gap-4 flex-1'>
+      <div className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .map((day) => (

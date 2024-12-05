@@ -20,7 +20,7 @@ const Day = ({
   return (
     <Card
       color='slate-200'
-      className='flex flex-col gap-4 border-2 border-blue-900'
+      className='flex flex-col w-full gap-4 border-2 border-blue-900'
     >
       <div className='text-xl font-bold'>{date.toLocaleDateString()}</div>
       {events?.length === 0 ? (
