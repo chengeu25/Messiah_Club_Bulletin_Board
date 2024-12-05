@@ -826,88 +826,94 @@ def signup():
 
 @app.route("/api/getinterests")
 def getinterests():
+    """Fetch the current user's selected interests from the database."""
     user_id = session.get("user_id")
-    cur = mysql.connection.cursor()
-    cur.execute(
-        "select t.tag_name from tag t inner join user_tags ut on t.tag_id = ut.tag_id where ut.user_id = %s ",
-        (user_id,),
-    )
-    result = cur.fetchall()
-    result = list(map(lambda x: x[0], result))
-    return jsonify({"interests": result}), 200
+    if not user_id:
+        return jsonify({"error": "User not logged in"}), 401
 
-
-def get_tag_id(interest):
-    """Retrieve the tag_id for a given interest (tag name)."""
     cur = mysql.connection.cursor()
     try:
-        # Query the tags table to find the tag_id based on the interest name
-        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (interest,))
-        result = cur.fetchone()
-
-        if result is None:
-            # If no tag found for the interest, return None or handle accordingly
-            print(f"Tag not found for interest: {interest}")  # Optional logging
-            return None
-
-        return result[0]  # Return the tag_id
-
+        cur.execute(
+            """
+            SELECT t.tag_name
+            FROM tag t
+            INNER JOIN user_tags ut ON t.tag_id = ut.tag_id
+            WHERE ut.user_id = %s
+            """,
+            (user_id,),
+        )
+        result = cur.fetchall()
+        interests = [row[0] for row in result]
+        return jsonify({"interests": interests}), 200
     except Exception as e:
-        print(f"Error fetching tag_id for {interest}: {str(e)}")  # Log any exceptions
-        return None
+        print(f"Error fetching interests: {e}")
+        return jsonify({"error": "Failed to fetch interests"}), 500
+    finally:
+        cur.close()
+@app.route("/api/getallinterests")
+def getallinterests():
+    """Fetch all available interests."""
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("SELECT tag_name FROM tag")
+        result = cur.fetchall()
+        all_interests = [row[0] for row in result]
+        return jsonify({"interests": all_interests}), 200
+    except Exception as e:
+        print(f"Error fetching all interests: {e}")
+        return jsonify({"error": "Failed to fetch all interests"}), 500
     finally:
         cur.close()
 
 
+
 @app.route("/api/editinterestpage", methods=["POST"])
 def editinterestpage():
-    # Debugging: Check if user is logged in
+    """Update the current user's interests."""
     user_id = session.get("user_id")
     if not user_id:
-
         return jsonify({"error": "User not logged in"}), 401
 
     data = request.json
-
-    if not data.get("interests"):
-        return jsonify({"error": "No interests provided"}), 400
+    if not data or not isinstance(data.get("interests"), list):
+        return jsonify({"error": "Invalid data provided"}), 400
 
     interests = data["interests"]
-    interests = json.loads(interests)
 
-    # Step 1: Get the user_id from the session and delete existing tags for the user
     cur = mysql.connection.cursor()
-
     try:
-        # Delete existing tags for the user (clear old interests)
+        # Step 1: Clear existing user interests
         cur.execute("DELETE FROM user_tags WHERE user_id = %s", (user_id,))
-        mysql.connection.commit()  # Commit after delete
+        mysql.connection.commit()
 
-        # Step 2: Insert new tags
+        # Step 2: Insert new interests
         for interest in interests:
-            tag_id = get_tag_id(interest)  # Get the tag_id for the interest
-            if tag_id:
+            cur.execute(
+                "SELECT tag_id FROM tag WHERE tag_name = %s", (interest,)
+            )
+            tag_result = cur.fetchone()
+
+            if tag_result:
+                tag_id = tag_result[0]
                 cur.execute(
                     "INSERT INTO user_tags (user_id, tag_id) VALUES (%s, %s)",
                     (user_id, tag_id),
                 )
             else:
-                print(
-                    f"Tag ID not found for interest: {interest}"
-                )  # Log if tag is missing
+                print(f"Tag not found for interest: {interest}")
 
-        # Commit the transaction
         mysql.connection.commit()
-        cur.close()
-
-        # Debugging: Return success message
         return jsonify({"message": "Interests updated successfully"}), 200
-
     except Exception as e:
+        print(f"Error updating interests: {e}")
         mysql.connection.rollback()
+        return jsonify({"error": "Failed to update interests"}), 500
+    finally:
         cur.close()
-        print(f"Error occurred: {str(e)}")  # Log any exceptions
-        return jsonify({"error": str(e)}), 500
+
+
+    
+    
 @app.route('/api/add_tag', methods=['POST'])
 def add_tag():
 
@@ -926,13 +932,40 @@ def add_tag():
         mysql.connection.commit()
         cursor.close()
 
-        return jsonify({"message": f"Tag '{tag_name}' added successfully!"}), 201
+        return jsonify({"message": f"Interest '{tag_name}' added successfully!"}), 201
 
     except mysql.connection.IntegrityError:
-        return jsonify({"error": f"Tag '{tag_name}' already exists."}), 400
+        return jsonify({"error": f"Interest '{tag_name}' already exists."}), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/api/remove_tag', methods=['DELETE'])
+def remove_tag():
+    try:
+        # Parse the JSON request data
+        data = request.json
+        tag_name = data.get('tag_name')
+
+        if not tag_name:
+            return jsonify({"error": "Interest name is required"}), 400
+
+        # Delete tag from the database
+        cursor = mysql.connection.cursor()
+        query = "DELETE FROM tag WHERE tag_name = %s"
+        cursor.execute(query, (tag_name,))
+        mysql.connection.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"error": f"Interest '{tag_name}' does not exist."}), 404
+
+        cursor.close()
+
+        return jsonify({"message": f"Interest '{tag_name}' removed successfully!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 # Configure your upload folder and allowed extensions
