@@ -268,28 +268,46 @@ def get_events():
             end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
             cur = mysql.connection.cursor()
             cur.execute(
-                """SELECT start_time, end_time, location, description, cost, event_name FROM event 
+                """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
                     WHERE start_time BETWEEN %s AND %s
                         AND is_active = 1
                         AND is_approved = 1""",
                 (start_date, end_date),
             )
             result = cur.fetchall()
-            result = list(
+            cur.execute(
+                """SELECT c.club_name, eh.event_id FROM event_host eh
+                        INNER JOIN club c ON c.club_id = eh.club_id
+                        WHERE c.is_active = 1""",
+            )
+            result_2 = cur.fetchall()
+            result_2 = list(map(lambda x: {"club": x[0], "event": x[1]}, result_2))
+            final_result = list(
                 map(
                     lambda x: {
-                        "startTime": x[0],
-                        "endTime": x[1],
-                        "location": x[2],
-                        "description": x[3],
-                        "cost": x[4],
-                        "title": x[5],
+                        "startTime": x[1],
+                        "endTime": x[2],
+                        "location": x[3],
+                        "description": x[4],
+                        "cost": x[5],
+                        "title": x[6],
+                        "host": list(
+                            map(
+                                lambda y: y["club"],
+                                list(
+                                    filter(
+                                        lambda y: y["event"] == x[0],
+                                        result_2,
+                                    )
+                                ),
+                            )
+                        ),
                     },
                     result,
                 )
             )
             cur.close()
-            return jsonify({"events": result}), 200
+            return jsonify({"events": final_result}), 200
         except ValueError:
             return jsonify({"error": "Invalid date format"}), 400
         except Exception as e:
