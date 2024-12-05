@@ -1506,7 +1506,34 @@ def RSVP():
         # Close the cursor
         cur.close()
 
-    
+@app.route("/api/checkRSVP", methods=["GET"])
+def checkRSVP(event_id):
+    try:
+        cur = mysql.connection.cursor()
+
+        cur.execute("SELECT type FROM rsvp WHERE event_id = %s", (event_id,))
+        result = cur.fetchone()
+
+        if result is None:
+            return jsonify({'rsvp': None}), 200
+        else:
+            rsvp_type = result[0]
+            if rsvp_type == 0:
+                return jsonify({'rsvp': 'block'}), 200
+            elif rsvp_type == 1:
+                return jsonify({'rsvp': 'rsvp'}), 200
+            else:
+                return jsonify({'error': 'Invalid RSVP type'}), 500
+
+    except Exception as e:
+
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        cur.close()
+
+
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
