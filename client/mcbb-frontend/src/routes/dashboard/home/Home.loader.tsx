@@ -10,7 +10,29 @@ const homeLoader: LoaderFunction = async () => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  return json({ user: user }, { status: 200 });
+  const response = await fetch(
+    `http://localhost:3000/api/events?start_date=${encodeURIComponent(
+      new Date().toISOString()
+    )}&end_date=${encodeURIComponent(
+      new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    )}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch events');
+  }
+
+  const eventsJson = await response.json();
+  const events = eventsJson?.events;
+  console.log(events);
+  return json({ user, events }, { status: 200 });
 };
 
 export default homeLoader;

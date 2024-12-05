@@ -7,7 +7,7 @@ export interface EventProps {
   image: string;
   description: string;
   small?: boolean;
-  host: string;
+  host: string[];
 }
 
 const Event = ({

@@ -257,6 +257,48 @@ def get_avaliable_tags():
     return jsonify({"tags": result}), 200
 
 
+@app.route("/api/events", methods=["GET"])
+def get_events():
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    print(start_date, end_date)
+    if start_date is not None and end_date is not None:
+        try:
+            start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
+            end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """SELECT start_time, end_time, location, description, cost, event_name FROM event 
+                    WHERE start_time BETWEEN %s AND %s
+                        AND is_active = 1
+                        AND is_approved = 1""",
+                (start_date, end_date),
+            )
+            result = cur.fetchall()
+            result = list(
+                map(
+                    lambda x: {
+                        "startTime": x[0],
+                        "endTime": x[1],
+                        "location": x[2],
+                        "description": x[3],
+                        "cost": x[4],
+                        "title": x[5],
+                    },
+                    result,
+                )
+            )
+            cur.close()
+            return jsonify({"events": result}), 200
+        except ValueError:
+            return jsonify({"error": "Invalid date format"}), 400
+        except Exception as e:
+            print(e)
+            return jsonify({"error": f"Failed to get events"}), 500
+    else:
+        return jsonify({"error": "Missing start_date or end_date"}), 400
+
+
 @app.route("/api/clubs", methods=["GET"])
 def get_clubs():
     cur = mysql.connection.cursor()
@@ -908,13 +950,15 @@ def editinterestpage():
         cur.close()
         print(f"Error occurred: {str(e)}")  # Log any exceptions
         return jsonify({"error": str(e)}), 500
-@app.route('/api/add_tag', methods=['POST'])
+
+
+@app.route("/api/add_tag", methods=["POST"])
 def add_tag():
 
     try:
         # Parse the JSON request data
         data = request.json
-        tag_name = data.get('tag_name')
+        tag_name = data.get("tag_name")
 
         if not tag_name:
             return jsonify({"error": "Tag name is required"}), 400
@@ -936,14 +980,16 @@ def add_tag():
 
 
 # Configure your upload folder and allowed extensions
-UPLOAD_FOLDER = 'uploads/'  # Specify your uploads folder
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+UPLOAD_FOLDER = "uploads/"  # Specify your uploads folder
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 
 def allowed_file(filename):
     """Check if the file is allowed based on its extension"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def get_club_id(cur, club_name):
     cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
@@ -953,7 +999,9 @@ def get_club_id(cur, club_name):
     else:
         raise ValueError("Club not found")
 
+
 import json
+
 
 @app.route("/api/club/events", methods=["POST"])
 def create_event():
@@ -975,14 +1023,25 @@ def create_event():
     if tags:
         try:
             # Convert the tags string into a list of integers
-            tags = json.loads(tags)  # This will handle strings like "[1, 2, 3]" as a Python list
+            tags = json.loads(
+                tags
+            )  # This will handle strings like "[1, 2, 3]" as a Python list
         except json.JSONDecodeError:
-            return jsonify({"error": "Invalid tags format, should be a JSON array"}), 400
+            return (
+                jsonify({"error": "Invalid tags format, should be a JSON array"}),
+                400,
+            )
     else:
         tags = []
 
     # Validate the data
-    if not event_name or not description or not start_date or not end_date or not location:
+    if (
+        not event_name
+        or not description
+        or not start_date
+        or not end_date
+        or not location
+    ):
         return jsonify({"error": "Missing required fields"}), 400
 
     # Validate event cost (set to None if empty or invalid)
@@ -1023,7 +1082,15 @@ def create_event():
         cur.execute(
             """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id)
                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (event_name, start_date_obj, end_date_obj, location, description, event_cost, '1'),
+            (
+                event_name,
+                start_date_obj,
+                end_date_obj,
+                location,
+                description,
+                event_cost,
+                "1",
+            ),
         )
         event_id = cur.lastrowid  # Get the ID of the newly created event
 
@@ -1033,24 +1100,23 @@ def create_event():
                 tag_id = int(tag)  # Ensure tag is an integer
                 cur.execute(
                     """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
-                    (event_id, tag_id)
+                    (event_id, tag_id),
                 )
             except ValueError:
                 return jsonify({"error": f"Invalid tag format: {tag}"}), 400
             except Exception as e:
                 return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
 
-
         # insert club_id and event_id into event_host table**
         club_id = get_club_id(cur, club_name)
         print(club_id)
         print(club_name)
-        
+
         cur.execute(
             """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
-            (club_id, event_id)
+            (club_id, event_id),
         )
-        
+
         # Save photos into the database as blobs and store the file names
         for image_data, filename in saved_photos:
             try:
@@ -1058,7 +1124,7 @@ def create_event():
                 cur.execute(
                     """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
                     VALUES (%s, %s, %s)""",
-                    (event_id, image_data, image_prefix)
+                    (event_id, image_data, image_prefix),
                 )
             except Exception as e:
                 return jsonify({"error": f"Failed to insert photo: {str(e)}"}), 500
@@ -1071,6 +1137,7 @@ def create_event():
 
     except Exception as e:
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
+
 
 @app.route("/api/passwordReset", methods=["POST"])
 def reset_password():
