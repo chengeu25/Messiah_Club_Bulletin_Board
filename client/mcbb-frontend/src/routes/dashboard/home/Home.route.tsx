@@ -1,10 +1,11 @@
-import { useLoaderData } from 'react-router';
+import { useLoaderData, useNavigate } from 'react-router';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
 import { EventType } from '../../../types/databaseTypes';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 const Home = () => {
   const { events } = useLoaderData() as { events: EventType[] };
+  const navigate = useNavigate();
 
   const eventsOnDays = useMemo(
     () =>
@@ -14,7 +15,12 @@ const Home = () => {
           const dateKey = localDate.toLocaleDateString('en-CA'); // ISO format yyyy-MM-dd
 
           if (!acc[dateKey]) {
-            acc[dateKey] = { date: localDate, events: [] };
+            acc[dateKey] = {
+              date: localDate,
+              events: [],
+              handleDetailsClick: (id) => navigate(`/dashboard/event/${id}`),
+              handleRSVPClick: (id) => navigate(`/dashboard/event/${id}`)
+            };
           }
 
           acc[dateKey].events.push({
@@ -31,7 +37,7 @@ const Home = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
-      <div className='flex flex-col gap-4 flex-1'>
+      <div className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .map((day) => (

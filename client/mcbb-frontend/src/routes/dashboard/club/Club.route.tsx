@@ -12,75 +12,6 @@ import {
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
 
-const demoEvents = [
-  {
-    startTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      14,
-      0,
-      0
-    ),
-    endTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      15,
-      0,
-      0
-    ),
-    title: 'Event 1',
-    image: '../../../../assets/logo.png',
-    description: 'This is an event where all this stuff happens...',
-    host: 'Club 1'
-  },
-  {
-    startTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      12,
-      0,
-      0
-    ),
-    endTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      13,
-      0,
-      0
-    ),
-    title: 'Event 2',
-    image: './../../../assets/logo.png',
-    description: 'This is an event where all this stuff happens...',
-    host: 'Club 1'
-  },
-  {
-    startTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      12,
-      0,
-      0
-    ),
-    endTime: new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      new Date().getDate(),
-      13,
-      0,
-      0
-    ),
-    title: 'Event 3',
-    image: './../../../assets/logo.png',
-    description: 'This is an event where all this stuff happens...',
-    host: 'Club 1'
-  }
-];
-
 const Club = () => {
   const submit = useSubmit();
   const { user, club } = useLoaderData() as {
@@ -178,11 +109,7 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
-            {demoEvents.map((event, index) => (
-              <Event key={index} {...event} small />
-            ))}
-          </div>
+          <div className='overflow-y-scroll h-full flex gap-2 flex-col'></div>
         </Card>
       </div>
     </div>

@@ -25,7 +25,7 @@ const Comment = ({
         <div className='text-sm text-slate-500 underline'>Report this</div>
       </div>
       <div className='text-sm text-black'>{content}</div>
-      <div className='flex flex-row w-full gap-2'>
+      <div className='flex flex-row w-full gap-2 items-center'>
         <Input
           label='Reply: '
           placeholder='Reply'
@@ -33,6 +33,7 @@ const Comment = ({
           type='text'
           color='blue'
           filled={false}
+          labelOnSameLine
         />
         <div className='flex-shrink-0'>
           <Button color='blue' text='Reply' filled={true} className='w-auto' />

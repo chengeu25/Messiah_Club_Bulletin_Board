@@ -1,24 +1,20 @@
+import { EventType } from '../../types/databaseTypes';
 import Button from '../formElements/Button.component';
 
 export interface EventProps {
-  startTime: Date;
-  endTime: Date;
-  title: string;
-  image: string;
-  description: string;
+  event: EventType;
   small?: boolean;
-  host: string[];
+  handleDetailsClick: () => void;
+  handleRSVPClick: () => void;
 }
 
 const Event = ({
-  startTime,
-  endTime,
-  title,
-  image,
-  description,
+  event,
   small = false,
-  host
+  handleDetailsClick,
+  handleRSVPClick
 }: EventProps) => {
+  const { title, startTime, endTime, description, host, image } = event;
   return (
     <div>
       <div className='flex flex-col sm:flex-row justify-between rounded-lg border-blue-900 border-2 p-2'>
@@ -45,13 +41,18 @@ const Event = ({
                 })}
               </p>
               {!small && <p>{description}</p>}
-              <p className='font-bold'>Hosted by {host}</p>
+              <p className='font-bold'>Hosted by {host.join(', ')}</p>
             </div>
           </div>
         </div>
         <div className='flex flex-row justify-center items-center gap-2'>
-          <Button color='blue' text='View Details' className='text-nowrap' />
-          <Button color='blue' text='RSVP' />
+          <Button
+            color='blue'
+            text='View Details'
+            className='text-nowrap'
+            onClick={handleDetailsClick}
+          />
+          <Button color='blue' text='RSVP' onClick={handleRSVPClick} />
         </div>
       </div>
     </div>
