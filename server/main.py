@@ -257,6 +257,50 @@ def get_avaliable_tags():
     return jsonify({"tags": result}), 200
 
 
+@app.route("/api/event/<event_id>", methods=["GET"])
+def get_event(event_id):
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
+            WHERE event_id = %s
+                AND is_active = 1
+                AND is_approved = 1""",
+        (event_id,),
+    )
+    result = cur.fetchone()
+    if result is None:
+        return (
+            jsonify({"error": "The requested event was not found on the server"}),
+            404,
+        )
+    cur.execute(
+        """SELECT c.club_name, c.club_id FROM event_host eh
+                INNER JOIN club c 
+                    ON c.club_id = eh.club_id
+                WHERE eh.event_id = %s
+                    AND c.is_active = 1""",
+        (event_id,),
+    )
+    result_2 = None
+    try:
+        result_2 = cur.fetchall()
+        result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, result_2))
+    except TypeError:
+        result_2 = None
+    final_result = {
+        "id": result[0],
+        "startTime": result[1],
+        "endTime": result[2],
+        "location": result[3],
+        "description": result[4],
+        "cost": result[5],
+        "title": result[6],
+        "host": result_2,
+    }
+    cur.close()
+    return jsonify({"event": final_result}), 200
+
+
 @app.route("/api/events", methods=["GET"])
 def get_events():
     start_date = request.args.get("start_date")
@@ -285,6 +329,7 @@ def get_events():
             final_result = list(
                 map(
                     lambda x: {
+                        "id": x[0],
                         "startTime": x[1],
                         "endTime": x[2],
                         "location": x[3],

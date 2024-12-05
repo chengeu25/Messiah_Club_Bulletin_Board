@@ -51,3 +51,22 @@ export interface EventType {
   tags: string[];
   images: ImageType[];
 }
+
+export interface EventHostType {
+  id: number;
+  name: string;
+}
+
+export interface EventDetailType {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  startTime: Date;
+  endTime: Date;
+  location: string;
+  host: EventHostType[];
+  tags: string[];
+  images: ImageType[];
+  cost: number;
+}

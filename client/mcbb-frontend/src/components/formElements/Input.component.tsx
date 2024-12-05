@@ -17,6 +17,7 @@ interface InputProps {
   multiline?: boolean;
   accept?: string;
   multiple?: boolean;
+  labelOnSameLine?: boolean;
 }
 
 const Input = ({
@@ -34,11 +35,14 @@ const Input = ({
   defaultValue,
   multiline = false,
   accept,
-  multiple = false
+  multiple = false,
+  labelOnSameLine = false
 }: InputProps) => (
   <label
     className={`flex ${
-      type === 'checkbox' ? 'flex-row items-center' : 'flex-col'
+      type === 'checkbox' || labelOnSameLine
+        ? 'flex-row items-center'
+        : 'flex-col'
     } gap-2 text-nowrap flex-grow`}
   >
     {label && (

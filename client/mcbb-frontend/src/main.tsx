@@ -112,7 +112,9 @@ const router = createBrowserRouter(
           element={<AddedInterest />}
           action={addInterestAction}
         />
-        <Route path='event' element={<Event />} loader={eventLoader} />
+        <Route path='event' element={<Event />} loader={eventLoader}>
+          <Route path=':id' element={<Event />} loader={eventLoader} />
+        </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
         <Route path='club'>
           <Route

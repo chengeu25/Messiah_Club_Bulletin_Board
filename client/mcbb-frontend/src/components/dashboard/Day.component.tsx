@@ -1,13 +1,22 @@
+import { EventType } from '../../types/databaseTypes';
 import Card from '../ui/Card';
-import Event, { EventProps } from './Event.component';
+import Event from './Event.component';
 
 export interface DayProps {
-  events: EventProps[];
+  events: EventType[];
   date: Date;
   small?: boolean;
+  handleRSVPClick: (eventId: number) => void;
+  handleDetailsClick: (eventId: number) => void;
 }
 
-const Day = ({ events, date, small = false }: DayProps) => {
+const Day = ({
+  events,
+  date,
+  small = false,
+  handleRSVPClick,
+  handleDetailsClick
+}: DayProps) => {
   return (
     <Card
       color='slate-200'
@@ -21,7 +30,15 @@ const Day = ({ events, date, small = false }: DayProps) => {
       ) : (
         events
           .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
-          .map((event, i) => <Event key={i} {...event} small={small} />)
+          .map((event, i) => (
+            <Event
+              key={i}
+              event={event}
+              small={small}
+              handleDetailsClick={() => handleDetailsClick(event.id)}
+              handleRSVPClick={() => handleRSVPClick(event.id)}
+            />
+          ))
       )}
     </Card>
   );
