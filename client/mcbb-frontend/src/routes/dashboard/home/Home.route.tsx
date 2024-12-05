@@ -43,11 +43,15 @@ const Home = () => {
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
-        {eventsOnDays
-          .sort((a, b) => a.date.getTime() - b.date.getTime())
-          .map((day) => (
-            <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
-          ))}
+        {eventsOnDays.length > 0 ? (
+          eventsOnDays
+            .sort((a, b) => a.date.getTime() - b.date.getTime())
+            .map((day) => (
+              <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
+            ))
+        ) : (
+          <div className='text-2xl font-bold'>No events this week yet.</div>
+        )}
       </Form>
     </div>
   );
