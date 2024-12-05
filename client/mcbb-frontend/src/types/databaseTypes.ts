@@ -38,3 +38,16 @@ export interface ClubDetailType {
   images: ImageType[];
   tags?: OptionType[];
 }
+
+export interface EventType {
+  id: number;
+  title: string;
+  description: string;
+  image: string;
+  startTime: Date;
+  endTime: Date;
+  location: string;
+  host: string[];
+  tags: string[];
+  images: ImageType[];
+}

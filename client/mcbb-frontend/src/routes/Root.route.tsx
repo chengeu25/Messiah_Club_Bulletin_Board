@@ -24,6 +24,7 @@ import UserDropdown from '../components/userDropdown/UserDropdown.component';
 import { UserType as User } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
+import logo from '../../assets/logo.png';
 
 const Root = () => {
   const user = useLoaderData();
@@ -71,7 +72,7 @@ const Root = () => {
       <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
-            <img src='../../assets/logo.png' className='h-[100%]' />
+            <img src={logo} className='h-[100%]' />
           </Link>
         </span>
         {location.pathname.includes('/dashboard') &&

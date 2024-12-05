@@ -1,115 +1,38 @@
+import { useLoaderData } from 'react-router';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
-
-const demoDays: DayProps[] = [
-  {
-    events: [
-      {
-        startTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          12,
-          0,
-          0
-        ),
-        endTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          13,
-          0,
-          0
-        ),
-        title: 'Event 1',
-        image: '../../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...',
-        host: 'Club 1'
-      },
-      {
-        startTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          12,
-          0,
-          0
-        ),
-        endTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          13,
-          0,
-          0
-        ),
-        title: 'Event 2',
-        image: './../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...',
-        host: 'Club 1'
-      }
-    ],
-    date: new Date('2025-01-01T00:00:00Z')
-  },
-  {
-    events: [],
-    date: new Date('2025-01-02T00:00:00Z')
-  },
-  {
-    events: [
-      {
-        startTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          14,
-          0,
-          0
-        ),
-        endTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          15,
-          0,
-          0
-        ),
-        title: 'Event 1',
-        image: '../../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...',
-        host: 'Club 1'
-      },
-      {
-        startTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          12,
-          0,
-          0
-        ),
-        endTime: new Date(
-          new Date().getFullYear(),
-          new Date().getMonth(),
-          new Date().getDate(),
-          13,
-          0,
-          0
-        ),
-        title: 'Event 2',
-        image: './../../../assets/logo.png',
-        description: 'This is an event where all this stuff happens...',
-        host: 'Club 1'
-      }
-    ],
-    date: new Date('2025-01-05T00:00:00Z')
-  }
-];
+import { EventType } from '../../../types/databaseTypes';
+import { useEffect, useMemo } from 'react';
 
 const Home = () => {
+  const { events } = useLoaderData() as { events: EventType[] };
+
+  const eventsOnDays = useMemo(
+    () =>
+      Object.entries(
+        events.reduce((acc, event) => {
+          const localDate = new Date(event.startTime);
+          const dateKey = localDate.toLocaleDateString('en-CA'); // ISO format yyyy-MM-dd
+
+          if (!acc[dateKey]) {
+            acc[dateKey] = { date: localDate, events: [] };
+          }
+
+          acc[dateKey].events.push({
+            ...event,
+            startTime: localDate,
+            endTime: new Date(event.endTime)
+          });
+
+          return acc;
+        }, {} as Record<string, DayProps>)
+      ).map(([, value]) => value),
+    [events]
+  );
+
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
       <div className='flex flex-col gap-4 flex-1'>
-        {demoDays
+        {eventsOnDays
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .map((day) => (
             <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
