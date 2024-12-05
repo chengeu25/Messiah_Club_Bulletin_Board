@@ -50,6 +50,7 @@ export interface EventType {
   host: string[];
   tags: string[];
   images: ImageType[];
+  rsvp: string;
 }
 
 export interface EventHostType {
@@ -69,4 +70,5 @@ export interface EventDetailType {
   tags: string[];
   images: ImageType[];
   cost: number;
+  rsvp: string;
 }

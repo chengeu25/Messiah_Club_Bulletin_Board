@@ -15,7 +15,6 @@ const resetPasswordAction: ActionFunction = async ({ request }) => {
   });
 
   // delete the next three lines once finally finished
-  console.log(email, action);
   alert('Temporary password sent to ' + email);
   return redirect('/login');
 };

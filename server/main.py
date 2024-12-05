@@ -287,6 +287,16 @@ def get_event(event_id):
         result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, result_2))
     except TypeError:
         result_2 = None
+    cur.execute(
+        """SELECT type FROM rsvp
+                WHERE event_id = %s
+                    AND user_id = %s
+                    AND is_active = 1""",
+        (event_id, session["user_id"]),
+    )
+    result_3 = cur.fetchone()
+    if result_3 is not None:
+        result_3 = result_3[0]
     final_result = {
         "id": result[0],
         "startTime": result[1],
@@ -296,6 +306,7 @@ def get_event(event_id):
         "cost": result[5],
         "title": result[6],
         "host": result_2,
+        "rsvp": "block" if result_3 == 0 else ("rsvp" if result_3 == 1 else None),
     }
     cur.close()
     return jsonify({"event": final_result}), 200
@@ -326,6 +337,18 @@ def get_events():
             )
             result_2 = cur.fetchall()
             result_2 = list(map(lambda x: {"club": x[0], "event": x[1]}, result_2))
+            cur.execute(
+                """SELECT r.event_id, r.type FROM rsvp r
+                        INNER JOIN event e 
+                            ON e.event_id = r.event_id
+                        WHERE r.user_id = %s
+                            AND e.is_active = 1
+                            AND e.is_approved = 1
+                            AND r.is_active = 1""",
+                (session["user_id"],),
+            )
+            result_3 = cur.fetchall()
+            result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
             final_result = list(
                 map(
                     lambda x: {
@@ -346,6 +369,14 @@ def get_events():
                                     )
                                 ),
                             )
+                        ),
+                        "rsvp": next(
+                            (
+                                ("block" if item["type"] == 0 else "rsvp")
+                                for item in result_3
+                                if item["event"] == x[0]
+                            ),
+                            None,
                         ),
                     },
                     result,
@@ -955,6 +986,8 @@ def getinterests():
         return jsonify({"error": "Failed to fetch interests"}), 500
     finally:
         cur.close()
+
+
 @app.route("/api/getallinterests")
 def getallinterests():
     """Fetch all available interests."""
@@ -971,10 +1004,9 @@ def getallinterests():
         cur.close()
 
 
-
 @app.route("/api/editinterestpage", methods=["POST"])
 def editinterestpage():
-    """Update the current user's interests."""
+    """Update the current users interests"""
     user_id = session.get("user_id")
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
@@ -993,9 +1025,7 @@ def editinterestpage():
 
         # Step 2: Insert new interests
         for interest in interests:
-            cur.execute(
-                "SELECT tag_id FROM tag WHERE tag_name = %s", (interest,)
-            )
+            cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (interest,))
             tag_result = cur.fetchone()
 
             if tag_result:
@@ -1044,13 +1074,14 @@ def add_tag():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
-@app.route('/api/remove_tag', methods=['DELETE'])
+
+
+@app.route("/api/remove_tag", methods=["DELETE"])
 def remove_tag():
     try:
         # Parse the JSON request data
         data = request.json
-        tag_name = data.get('tag_name')
+        tag_name = data.get("tag_name")
 
         if not tag_name:
             return jsonify({"error": "Interest name is required"}), 400
@@ -1070,7 +1101,6 @@ def remove_tag():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 
 # Configure your upload folder and allowed extensions
@@ -1439,10 +1469,12 @@ def forgot_password_reset():
     session.pop("user_id", None)
     return jsonify({"message": "Password reset successful"}), 200
 
-@app.route("/api/rsvp", methods=["GET"])
+
+@app.route("/api/rsvp", methods=["POST"])
 def RSVP():
     event_id = request.args.get("event_id")  # Event ID
-    user_id = request.args.get("user_id")  # User ID
+    print(event_id)
+    user_id = session.get("user_id")
     typeofRSVP = request.args.get("type")  # Type parameter
 
     # Validate input parameters
@@ -1453,7 +1485,7 @@ def RSVP():
         cur = mysql.connection.cursor()
 
         # Check if the user_id exists
-        cur.execute("SELECT COUNT(*) FROM users WHERE user_id = %s", (user_id,))
+        cur.execute("SELECT COUNT(*) FROM users WHERE email = %s", (user_id,))
         user_exists = cur.fetchone()[0]
 
         if not user_exists:
@@ -1462,10 +1494,9 @@ def RSVP():
         if typeofRSVP == "block":
             # Insert or update the RSVP to set type to False
             cur.execute(
-                """
-                INSERT INTO rsvp (event_id, user_id, type)
-                VALUES (%s, %s, FALSE)
-                ON DUPLICATE KEY UPDATE type = FALSE
+                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                     VALUES (%s, %s, FALSE, TRUE)
+                     ON DUPLICATE KEY UPDATE type = FALSE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1475,10 +1506,9 @@ def RSVP():
         elif typeofRSVP == "rsvp":
             # Insert or update the RSVP to set type to True
             cur.execute(
-                """
-                INSERT INTO rsvp (event_id, user_id, type)
-                VALUES (%s, %s, TRUE)
-                ON DUPLICATE KEY UPDATE type = TRUE
+                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                    VALUES (%s, %s, TRUE, TRUE)
+                    ON DUPLICATE KEY UPDATE type = TRUE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1488,7 +1518,10 @@ def RSVP():
         elif typeofRSVP == "cancel":
             # Delete RSVP from the database
             cur.execute(
-                "DELETE FROM rsvp WHERE event_id = %s AND user_id = %s",
+                """UPDATE rsvp 
+                    SET is_active = FALSE 
+                    WHERE event_id = %s AND user_id = %s
+                """,
                 (event_id, user_id),
             )
             mysql.connection.commit()
@@ -1500,39 +1533,43 @@ def RSVP():
     except Exception as e:
         # Rollback in case of an error
         mysql.connection.rollback()
+        print(e)
         return jsonify({"error": str(e)}), 500
 
     finally:
         # Close the cursor
         cur.close()
 
-@app.route("/api/checkRSVP", methods=["GET"])
+
+@app.route("/api/checkRSVP/<event_id>", methods=["GET"])
 def checkRSVP(event_id):
+    user_id = session.get("user_id")
     try:
         cur = mysql.connection.cursor()
 
-        cur.execute("SELECT type FROM rsvp WHERE event_id = %s", (event_id,))
+        cur.execute(
+            "SELECT type FROM rsvp WHERE event_id = %s AND user_id = %s",
+            (event_id, user_id),
+        )
         result = cur.fetchone()
 
         if result is None:
-            return jsonify({'rsvp': None}), 200
+            return jsonify({"rsvp": None}), 200
         else:
             rsvp_type = result[0]
             if rsvp_type == 0:
-                return jsonify({'rsvp': 'block'}), 200
+                return jsonify({"rsvp": "block"}), 200
             elif rsvp_type == 1:
-                return jsonify({'rsvp': 'rsvp'}), 200
+                return jsonify({"rsvp": "rsvp"}), 200
             else:
-                return jsonify({'error': 'Invalid RSVP type'}), 500
+                return jsonify({"error": "Invalid RSVP type"}), 500
 
     except Exception as e:
 
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
     finally:
         cur.close()
-
-
 
 
 if __name__ == "__main__":

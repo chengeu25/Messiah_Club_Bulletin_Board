@@ -1,11 +1,11 @@
-import { useLoaderData, useNavigate } from 'react-router';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
 import { EventType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
+import { Form, useSubmit, useLoaderData } from 'react-router-dom';
 
 const Home = () => {
   const { events } = useLoaderData() as { events: EventType[] };
-  const navigate = useNavigate();
+  const submit = useSubmit();
 
   const eventsOnDays = useMemo(
     () =>
@@ -18,8 +18,13 @@ const Home = () => {
             acc[dateKey] = {
               date: localDate,
               events: [],
-              handleDetailsClick: (id) => navigate(`/dashboard/event/${id}`),
-              handleRSVPClick: (id) => navigate(`/dashboard/event/${id}`)
+              handleDetailsClick: (id) =>
+                submit({ id: id, action: 'details' }, { method: 'post' }),
+              handleRSVPClick: (id, type) =>
+                submit(
+                  { id: id, type: type, action: 'rsvp' },
+                  { method: 'post' }
+                )
             };
           }
 
@@ -37,13 +42,13 @@ const Home = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
-      <div className='flex flex-col gap-4 flex-1 w-full'>
+      <Form className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays
           .sort((a, b) => a.date.getTime() - b.date.getTime())
           .map((day) => (
             <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
           ))}
-      </div>
+      </Form>
     </div>
   );
 };

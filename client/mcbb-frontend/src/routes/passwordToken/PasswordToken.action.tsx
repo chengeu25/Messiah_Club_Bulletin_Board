@@ -6,12 +6,7 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     // const [params] = useSearchParams();
     const formData = await request.formData();
     const newPassword = formData.get('newPassword');
-    const confirmPassword = formData.get('confirmPassword');
     const token = formData.get('token');
-    console.log('token: ', token);
-    console.log('npw: ', newPassword);
-    console.log('cnpw: ', confirmPassword);
-    // console.log("Params received:", params);
 
     if (!token) {
       console.error('Token is missing from the parameters.');
