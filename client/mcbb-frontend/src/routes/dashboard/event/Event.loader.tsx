@@ -26,8 +26,6 @@ const eventLoader: LoaderFunction = async ({ params }) => {
   const eventJson = await response.json();
   const event = eventJson?.event;
 
-  console.log(event);
-
   return json({ user, event }, { status: 200 });
 };
 

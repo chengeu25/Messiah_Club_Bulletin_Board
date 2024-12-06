@@ -6,7 +6,7 @@ export interface DayProps {
   events: EventType[];
   date: Date;
   small?: boolean;
-  handleRSVPClick: (eventId: number) => void;
+  handleRSVPClick: (eventId: number, type: string) => void;
   handleDetailsClick: (eventId: number) => void;
 }
 
@@ -18,10 +18,7 @@ const Day = ({
   handleDetailsClick
 }: DayProps) => {
   return (
-    <Card
-      color='slate-200'
-      className='flex flex-col w-full gap-4 border-2 border-blue-900'
-    >
+    <>
       <div className='text-xl font-bold'>{date.toLocaleDateString()}</div>
       {events?.length === 0 ? (
         <div className='font-italic text-gray-500'>
@@ -36,11 +33,11 @@ const Day = ({
               event={event}
               small={small}
               handleDetailsClick={() => handleDetailsClick(event.id)}
-              handleRSVPClick={() => handleRSVPClick(event.id)}
+              handleRSVPClick={(type) => handleRSVPClick(event.id, type)}
             />
           ))
       )}
-    </Card>
+    </>
   );
 };
 

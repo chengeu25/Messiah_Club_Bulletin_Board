@@ -11,9 +11,7 @@ const ErrorPage = () => {
       </Link>
       <h1 className='text-xl'>
         An unexpected error occurred:{' '}
-        {errorMessage instanceof Error
-          ? errorMessage.message
-          : 'Unknown error.'}
+        {errorMessage instanceof Error ? errorMessage.message : 'Unknown error'}
         .
       </h1>
       <p>

@@ -25,7 +25,6 @@ const Club = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    console.log(action);
     formData.append('clubId', club.id.toString());
     formData.append('action', action);
     submit(formData, { method: 'post' });

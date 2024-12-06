@@ -52,6 +52,8 @@ import clubEventFormAction from './routes/dashboard/createEvent/ClubEventForm.ac
 import clubEventFormLoader from './routes/dashboard/createEvent/ClubEventForm.loader.tsx';
 import ClubEventForm from './routes/dashboard/createEvent/ClubEventForm.route.tsx';
 import ErrorPage from './routes/error/ErrorPage.tsx';
+import homeAction from './routes/dashboard/home/Home.action.tsx';
+import eventAction from './routes/dashboard/event/Event.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -99,7 +101,12 @@ const router = createBrowserRouter(
         action={forgotPasswordTokenAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
-        <Route path='home' element={<Home />} loader={homeLoader} />
+        <Route
+          path='home'
+          element={<Home />}
+          loader={homeLoader}
+          action={homeAction}
+        />
         <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
         <Route
           path='clubs'
@@ -112,8 +119,18 @@ const router = createBrowserRouter(
           element={<AddedInterest />}
           action={addInterestAction}
         />
-        <Route path='event' element={<Event />} loader={eventLoader}>
-          <Route path=':id' element={<Event />} loader={eventLoader} />
+        <Route
+          path='event'
+          element={<Event />}
+          loader={eventLoader}
+          action={eventAction}
+        >
+          <Route
+            path=':id'
+            element={<Event />}
+            loader={eventLoader}
+            action={eventAction}
+          />
         </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
         <Route path='club'>
