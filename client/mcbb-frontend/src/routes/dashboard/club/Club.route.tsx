@@ -1,6 +1,6 @@
+import React, { useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
-import Event from '../../../components/dashboard/Event.component';
 import Officer from '../../../components/clubDetails/Officer';
 import { useLoaderData } from 'react-router';
 import {
@@ -19,15 +19,32 @@ const Club = () => {
     club: ClubDetailType;
   };
 
+  // Check if the user is already subscribed
+  const [isSubscribed, setIsSubscribed] = useState(
+    club?.subscribers?.some(
+      (subscriber: { userId: any; isActive: any; }) => subscriber.userId === user.email && subscriber.isActive
+    )
+  );
+
+  console.log('User:', user.email);
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    console.log(action);
     formData.append('clubId', club.id.toString());
     formData.append('action', action);
+    formData.append('userId', user.email);
+
+    // Update UI state based on the action
+    if (action === 'subscribe') {
+      setIsSubscribed(true);
+    } else if (action === 'unsubscribe') {
+      setIsSubscribed(false);
+    }
+
     submit(formData, { method: 'post' });
   };
 
@@ -55,8 +72,8 @@ const Club = () => {
           <Button
             type='submit'
             color='blue'
-            text='Subscribe'
-            name='subscribe'
+            text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+            name={isSubscribed ? 'unsubscribe' : 'subscribe'}
             filled={true}
           />
         </Form>

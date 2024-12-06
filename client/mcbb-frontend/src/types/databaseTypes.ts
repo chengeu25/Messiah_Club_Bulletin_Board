@@ -1,6 +1,7 @@
 import { OptionType } from '../components/formElements/Select.styles';
 
 export interface UserType {
+  id: any;
   name: string;
   email: string;
   emailVerified: boolean;
@@ -30,6 +31,7 @@ export interface ImageType {
 }
 
 export interface ClubDetailType {
+  subscribers: any;
   id: number;
   name: string;
   description: string;

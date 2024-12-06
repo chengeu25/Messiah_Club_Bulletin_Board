@@ -1531,9 +1531,70 @@ def checkRSVP(event_id):
 
     finally:
         cur.close()
+        
+# Handle subscribe and unsubscribe actions
+@app.route('/api/subscribe', methods=['POST'])
+def manage_subscription():
+    data = request.json
+    action = data.get('action')
+    club_id = data.get('clubId')
+    user_id = request.args.get("email")  # Ensure this matches the query string
 
+    print(f"Received data: {data}")
+    print(f"Query parameters: user_id={user_id}")
 
+    # Validate input
+    if not user_id or not club_id or not action:
+        print("Error: Missing required fields")
+        return jsonify({"error": "Missing required fields"}), 400
 
+    try:
+        cur = mysql.connection.cursor()
+        if action == 'subscribe':
+            # Check if subscription exists
+            subscription = cur.execute(
+                """
+                SELECT * FROM user_subscription
+                WHERE user_id = %s AND club_id = %s
+                """,
+                (user_id, club_id),
+            ) 
+            if subscription:
+                # Update existing subscription
+                cur.execute(
+                    """
+                    UPDATE user_subscription
+                    SET is_active = 1
+                    WHERE user_id = %s AND club_id = %s
+                    """,
+                    (user_id, club_id),
+                )
+            else:
+                # Insert new subscription
+                cur.execute(
+                    """
+                    INSERT INTO user_subscription (user_id, club_id, is_active)
+                    VALUES (%s, %s, 1)
+                    """,
+                    (user_id, club_id),
+                )
+        elif action == 'unsubscribe':
+            # Deactivate subscription
+            cur.execute(
+                """
+                UPDATE user_subscription
+                SET is_active = 0
+                WHERE user_id = %s AND club_id = %s
+                """,
+                (user_id, club_id),
+            )
+
+        mysql.connection.commit()
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Database operation failed"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
