@@ -297,6 +297,28 @@ def get_event(event_id):
     result_3 = cur.fetchone()
     if result_3 is not None:
         result_3 = result_3[0]
+    cur.execute(
+        """SELECT t.tag_name FROM tag t
+                INNER JOIN event_tags et
+                    ON t.tag_id = et.tag_id
+                WHERE et.event_id = %s""",
+        (event_id,),
+    )
+    result_4 = cur.fetchall()
+    result_4 = list(map(lambda x: x[0], result_4))
+    cur.execute(
+        """SELECT image, event_photo_id, image_prefix FROM event_photo WHERE event_id = %s""",
+        (event_id,),
+    )
+    result_5 = list(
+        map(
+            lambda x: {
+                "image": f"{x[2]},{base64.b64encode(x[0]).decode('utf-8')}",
+                "id": x[1],
+            },
+            cur.fetchall(),
+        )
+    )
     final_result = {
         "id": result[0],
         "startTime": result[1],
@@ -307,6 +329,8 @@ def get_event(event_id):
         "title": result[6],
         "host": result_2,
         "rsvp": "block" if result_3 == 0 else ("rsvp" if result_3 == 1 else None),
+        "tags": result_4,
+        "images": result_5,
     }
     cur.close()
     return jsonify({"event": final_result}), 200
@@ -349,6 +373,18 @@ def get_events():
             )
             result_3 = cur.fetchall()
             result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
+            cur.execute(
+                """SELECT et.event_id, t.tag_name FROM tag t
+                        INNER JOIN event_tags et
+                            ON t.tag_id = et.tag_id"""
+            )
+            result_4 = cur.fetchall()
+            result_4 = list(
+                map(
+                    lambda x: {"event": x[0], "tag": x[1]},
+                    result_4,
+                )
+            )
             final_result = list(
                 map(
                     lambda x: {
@@ -377,6 +413,17 @@ def get_events():
                                 if item["event"] == x[0]
                             ),
                             None,
+                        ),
+                        "tags": list(
+                            map(
+                                lambda y: y["tag"],
+                                list(
+                                    filter(
+                                        lambda y: y["event"] == x[0],
+                                        result_4,
+                                    )
+                                ),
+                            )
                         ),
                     },
                     result,
