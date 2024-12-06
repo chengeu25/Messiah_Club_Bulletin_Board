@@ -1,6 +1,6 @@
+import React, { useEffect, useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
-import Event from '../../../components/dashboard/Event.component';
 import Officer from '../../../components/clubDetails/Officer';
 import { useLoaderData } from 'react-router';
 import {
@@ -19,15 +19,58 @@ const Club = () => {
     club: ClubDetailType;
   };
 
+  // Check if the user is already subscribed
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  // Fetch subscription status when the component mounts
+  useEffect(() => {
+    const checkSubscription = async () => {
+      try {
+        const response = await fetch('http://localhost:3000/api/check_subscription', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            userId: user.email,
+            clubId: club.id.toString(),
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsSubscribed(data.isSubscribed);
+        } else {
+          console.error('Failed to fetch subscription status');
+        }
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+      }
+    };
+
+    if (user?.email && club?.id) checkSubscription();
+  }, [user?.email, club?.id]);
+
+  console.log('User:', user.email);
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    console.log(action);
     formData.append('clubId', club.id.toString());
     formData.append('action', action);
+    formData.append('userId', user.email);
+
+    // Update UI state based on the action
+    if (action === 'subscribe') {
+      setIsSubscribed(true);
+    } else if (action === 'unsubscribe') {
+      setIsSubscribed(false);
+    }
+
     submit(formData, { method: 'post' });
   };
 
@@ -55,8 +98,8 @@ const Club = () => {
           <Button
             type='submit'
             color='blue'
-            text='Subscribe'
-            name='subscribe'
+            text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
+            name={isSubscribed ? 'unsubscribe' : 'subscribe'}
             filled={true}
           />
         </Form>
