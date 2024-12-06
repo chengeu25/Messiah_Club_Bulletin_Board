@@ -2,7 +2,6 @@ import { EventType } from '../../types/databaseTypes';
 import Button from '../formElements/Button.component';
 import Card from '../ui/Card';
 import RSVPDropdown from '../specialDropdowns/RSVPDropdown.component';
-import { useEffect } from 'react';
 import { CgDetailsMore } from 'react-icons/cg';
 
 export interface EventProps {
