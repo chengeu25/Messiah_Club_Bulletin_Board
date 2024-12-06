@@ -1538,7 +1538,7 @@ def manage_subscription():
     data = request.json
     action = data.get('action')
     club_id = data.get('clubId')
-    user_id = request.args.get("email")  # Ensure this matches the query string
+    user_id = data.get('userId')  # Ensure this matches the query string
 
     print(f"Received data: {data}")
     print(f"Query parameters: user_id={user_id}")
@@ -1555,7 +1555,7 @@ def manage_subscription():
             subscription = cur.execute(
                 """
                 SELECT * FROM user_subscription
-                WHERE user_id = %s AND club_id = %s
+                WHERE email = %s AND club_id = %s
                 """,
                 (user_id, club_id),
             ) 
@@ -1565,7 +1565,7 @@ def manage_subscription():
                     """
                     UPDATE user_subscription
                     SET is_active = 1
-                    WHERE user_id = %s AND club_id = %s
+                    WHERE email = %s AND club_id = %s
                     """,
                     (user_id, club_id),
                 )
@@ -1573,7 +1573,7 @@ def manage_subscription():
                 # Insert new subscription
                 cur.execute(
                     """
-                    INSERT INTO user_subscription (user_id, club_id, is_active)
+                    INSERT INTO user_subscription (email, club_id, is_active)
                     VALUES (%s, %s, 1)
                     """,
                     (user_id, club_id),
@@ -1584,7 +1584,7 @@ def manage_subscription():
                 """
                 UPDATE user_subscription
                 SET is_active = 0
-                WHERE user_id = %s AND club_id = %s
+                WHERE email = %s AND club_id = %s
                 """,
                 (user_id, club_id),
             )

@@ -34,7 +34,7 @@ const clubAction: ActionFunction = async ({ request }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action, clubId }),
+        body: JSON.stringify({ action, clubId, userId }),
       });
 
       if (!response.ok) {
