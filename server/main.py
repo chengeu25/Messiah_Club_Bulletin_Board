@@ -1532,6 +1532,35 @@ def checkRSVP(event_id):
     finally:
         cur.close()
         
+
+#check subscription
+@app.route('/api/check_subscription', methods=['POST'])
+def check_subscription():
+    data = request.json
+    user_id = data.get('userId')
+    club_id = data.get('clubId')
+
+    if not user_id or not club_id:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        # Query the database to check subscription
+        cur.execute("""
+            SELECT is_active FROM user_subscription
+            WHERE email = %s AND club_id = %s
+        """, (user_id, club_id))
+        result = cur.fetchone()
+
+        if result and result[0] == 1:
+            return jsonify({"isSubscribed": True}), 200
+        else:
+            return jsonify({"isSubscribed": False}), 200
+
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Database operation failed"}), 500
+
 # Handle subscribe and unsubscribe actions
 @app.route('/api/subscribe', methods=['POST'])
 def manage_subscription():
