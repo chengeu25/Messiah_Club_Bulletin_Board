@@ -1,9 +1,14 @@
 import React from 'react';
 import SidebarButton from './SidebarButton.component';
-import { FaCalendar, FaHome, FaUsers } from 'react-icons/fa';
+import { FaCalendar, FaUsers } from 'react-icons/fa';
+import { RiCompassDiscoverFill } from 'react-icons/ri';
 
 const buttonList = [
-  { text: 'Home', icon: <FaHome />, route: '/dashboard/home' },
+  {
+    text: 'Discover',
+    icon: <RiCompassDiscoverFill />,
+    route: '/dashboard/home'
+  },
   { text: 'Calendar', icon: <FaCalendar />, route: '/dashboard/calendar' },
   { text: 'Clubs', icon: <FaUsers />, route: '/dashboard/clubs' }
 ];
