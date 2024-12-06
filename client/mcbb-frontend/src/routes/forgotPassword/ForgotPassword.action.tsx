@@ -15,17 +15,11 @@ const forgotPasswordAction: ActionFunction = async ({ request }) => {
   });
 
   if (loginRequest.ok) {
-    return redirect('/forgotPasswordMessage')
+    return redirect('/forgotPasswordMessage');
   } else {
     const json = await loginRequest.json();
-    return redirect('/forgot?error=' + json.error)
+    return redirect('/forgot?error=' + json.error);
   }
-
-
-  // delete the next three lines once finally finished
-  // console.log(email, action);
-  // alert('Temporary password sent to ' + email);
-  // return redirect('/login');
 };
 
 export default forgotPasswordAction;

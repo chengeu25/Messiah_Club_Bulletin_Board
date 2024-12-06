@@ -6,7 +6,6 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
   const action = formData.get('action');
   const email = formData.get('email');
   const password = formData.get('password');
-  console.log(code, action, email, password);
 
   if (action === 'verifyEmail') {
     const request = await fetch('http://localhost:3000/api/verify-email', {
@@ -17,16 +16,14 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
       credentials: 'include',
       body: JSON.stringify({ code }) //removed 'email' from the body
     });
-    
+
     if (request.ok) {
       return redirect('/dashboard');
-    }
-    else {
+    } else {
       const json = await request.json();
-  
+
       return redirect('/verifyEmail?error=' + json.error);
     }
-
   }
 
   if (action === 'resendCode') {
@@ -41,10 +38,9 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
 
     if (request.ok) {
       return redirect('/verifyEmail?message=Code%20resend%20succesfully');
-    }
-    else {
+    } else {
       const json = await request.json();
-  
+
       return redirect('/verifyEmail?error=' + json.error);
     }
   }

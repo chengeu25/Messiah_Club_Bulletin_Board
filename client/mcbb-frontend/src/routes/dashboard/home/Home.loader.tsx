@@ -31,6 +31,7 @@ const homeLoader: LoaderFunction = async () => {
 
   const eventsJson = await response.json();
   const events = eventsJson?.events;
+  console.log(events);
   return json({ user, events }, { status: 200 });
 };
 
