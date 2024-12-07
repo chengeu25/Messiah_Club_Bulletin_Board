@@ -1,3 +1,4 @@
+import { getDayName } from '../../helper/dateUtils';
 import { EventType } from '../../types/databaseTypes';
 import Card from '../ui/Card';
 import Event from './Event.component';
@@ -19,7 +20,9 @@ const Day = ({
 }: DayProps) => {
   return (
     <>
-      <div className='text-xl font-bold'>{date.toLocaleDateString()}</div>
+      <div className='text-xl font-bold flex flex-col'>
+        {getDayName(date)}, {date.toLocaleDateString()}
+      </div>
       {events?.length === 0 ? (
         <div className='font-italic text-gray-500'>
           No events on this day yet.

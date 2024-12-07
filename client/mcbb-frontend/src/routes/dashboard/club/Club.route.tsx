@@ -26,17 +26,20 @@ const Club = () => {
   useEffect(() => {
     const checkSubscription = async () => {
       try {
-        const response = await fetch('http://localhost:3000/api/check_subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            userId: user.email,
-            clubId: club.id.toString(),
-          }),
-        });
+        const response = await fetch(
+          'http://localhost:3000/api/check_subscription',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              userId: user.email,
+              clubId: club.id.toString()
+            })
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -51,8 +54,6 @@ const Club = () => {
 
     if (user?.email && club?.id) checkSubscription();
   }, [user?.email, club?.id]);
-
-  console.log('User:', user.email);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

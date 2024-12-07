@@ -66,7 +66,11 @@ const Event = ({
             </div>
           </div>
         </div>
-        <div className='flex flex-row justify-center items-center gap-2 relative'>
+        <div
+          className={`flex ${
+            small ? 'flex-col' : 'flex-row'
+          } justify-center items-center gap-2 relative`}
+        >
           <Button
             color='blue'
             text='Details'
