@@ -106,7 +106,7 @@ const Calendar = () => {
   }, []);
 
   return (
-    <div className='relative w-full flex flex-col'>
+    <div className='relative w-full flex flex-col h-full'>
       <div className='flex justify-center items-center p-2 w-full'>
         <div className='flex flex-row justify-center items-center gap-2'>
           <Button
@@ -143,13 +143,13 @@ const Calendar = () => {
           />
         </div>
       </div>
-      <div className='flex flex-row justify-center flex-1 items-center p-4'>
+      <div className='flex flex-row justify-center flex-1 items-center p-4 h-full'>
         {eventsOnDaysDisplayed.map((day, index) => (
           <div
             key={index}
             className={`flex flex-col flex-1 ${
               index !== 0 && 'border-l-[1px]'
-            } p-4 border-blue-900 h-full justify-start gap-y-2`}
+            } p-4 border-blue-900 h-full justify-start gap-y-4 overflow-y-auto relative`}
           >
             <Day {...day} small={true} />
           </div>
