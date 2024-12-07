@@ -1,6 +1,5 @@
 import { getDayName } from '../../helper/dateUtils';
 import { EventType } from '../../types/databaseTypes';
-import Card from '../ui/Card';
 import Event from './Event.component';
 
 export interface DayProps {
