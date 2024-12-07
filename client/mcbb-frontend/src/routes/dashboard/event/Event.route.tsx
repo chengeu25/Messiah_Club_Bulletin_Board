@@ -17,7 +17,7 @@ const Event = () => {
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
       <Card
-        color='slate-300'
+        color='gray-300'
         padding={4}
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
@@ -35,7 +35,7 @@ const Event = () => {
         </Form>
       </Card>
       <div className='flex flex-col w-full gap-4 m-2'>
-        <Card color='slate-300' padding={4} className='flex-col gap-2'>
+        <Card color='gray-300' padding={4} className='flex-col gap-2'>
           <p className='flex flex-row gap-2 items-center flex-wrap'>
             <IoMdTime size={24} /> <strong>Time:</strong>{' '}
             {format(new Date(event?.startTime), 'MM/dd/yyyy HH:mm')} -{' '}
@@ -63,7 +63,7 @@ const Event = () => {
           </p>
         </Card>
       </div>
-      <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
+      <Card color='gray-300' padding={4} className='w-full flex-col gap-2'>
         <p>{event?.description}</p>
       </Card>
       {(event?.tags?.length ?? 0) > 0 && (
@@ -71,7 +71,7 @@ const Event = () => {
           {event?.tags?.map((tag: string, index: number) => (
             <Card
               key={index}
-              color='slate-300'
+              color='gray-300'
               padding={4}
               className='w-min text-nowrap'
             >

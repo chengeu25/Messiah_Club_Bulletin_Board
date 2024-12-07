@@ -81,7 +81,7 @@ const Club = () => {
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
       <Card
-        color='slate-300'
+        color='gray-300'
         padding={4}
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
@@ -108,7 +108,7 @@ const Club = () => {
           />
         </Form>
       </Card>
-      <Card color='slate-300' padding={4} className='w-full flex-col gap-2'>
+      <Card color='gray-300' padding={4} className='w-full flex-col gap-2'>
         <p>{club?.description}</p>
       </Card>
       {(club?.images?.length ?? 0) > 0 && (
@@ -128,7 +128,7 @@ const Club = () => {
           {club?.tags?.map((tag: OptionType, index: number) => (
             <Card
               key={index}
-              color='slate-300'
+              color='gray-300'
               padding={4}
               className='w-min text-nowrap'
             >
@@ -139,7 +139,7 @@ const Club = () => {
       )}
       <div className='flex flex-col gap-4 lg:flex-row w-full h-1/2'>
         <Card
-          color='slate-300'
+          color='gray-300'
           padding={4}
           className='w-full h-full flex-col gap-2'
         >
@@ -151,7 +151,7 @@ const Club = () => {
           </div>
         </Card>
         <Card
-          color='slate-300'
+          color='gray-300'
           padding={4}
           className='w-full h-full flex-col gap-2'
         >

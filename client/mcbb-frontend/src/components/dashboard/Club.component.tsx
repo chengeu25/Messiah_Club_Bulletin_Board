@@ -31,8 +31,8 @@ const Club = ({
 }: ClubProps) => {
   return (
     <Card
-      color='slate-200'
-      className='flex flex-col xl:flex-row gap-4 border-2 border-blue-900 w-full items-center'
+      color='gray-200'
+      className='flex flex-col xl:flex-row gap-4 w-full items-center'
     >
       <img
         src={image}
