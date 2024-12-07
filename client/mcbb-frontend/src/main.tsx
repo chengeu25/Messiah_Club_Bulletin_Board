@@ -54,6 +54,9 @@ import ClubEventForm from './routes/dashboard/createEvent/ClubEventForm.route.ts
 import ErrorPage from './routes/error/ErrorPage.tsx';
 import homeAction from './routes/dashboard/home/Home.action.tsx';
 import eventAction from './routes/dashboard/event/Event.action.tsx';
+import AssignFaculty from './routes/assignFaculty/assignFaculty.route.tsx';
+import assignFacultyAction from './routes/assignFaculty/assignFaculty.action.tsx';
+import assignFacultyLoader from './routes/assignFaculty/assignFaculty.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -99,6 +102,12 @@ const router = createBrowserRouter(
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
         action={forgotPasswordTokenAction}
+      />
+      <Route
+        path='assignFaculty'
+        element={<AssignFaculty />}
+        loader={assignFacultyLoader}
+        action={assignFacultyAction}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route

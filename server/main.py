@@ -1612,7 +1612,6 @@ def checkRSVP(event_id):
                 return jsonify({"error": "Invalid RSVP type"}), 500
 
     except Exception as e:
-
         return jsonify({"error": str(e)}), 500
 
     finally:
@@ -1623,182 +1622,158 @@ def checkRSVP(event_id):
 @app.route('/api/check_subscription', methods=['POST'])
 
 def check_subscription():
-
     data = request.json
-
     user_id = data.get('userId')
-
     club_id = data.get('clubId')
 
  
 
     if not user_id or not club_id:
-
         return jsonify({"error": "Missing required fields"}), 400
 
  
 
     try:
-
         cur = mysql.connection.cursor()
-
         # Query the database to check subscription
-
         cur.execute("""
-
             SELECT is_active FROM user_subscription
-
             WHERE email = %s AND club_id = %s
-
-        """, (user_id, club_id))
-
+        """, (user_id, club_id)
+        )
         result = cur.fetchone()
 
- 
-
         if result and result[0] == 1:
-
             return jsonify({"isSubscribed": True}), 200
-
         else:
-
             return jsonify({"isSubscribed": False}), 200
 
  
 
     except Exception as e:
-
         print(f"Error: {str(e)}")
-
         return jsonify({"error": "Database operation failed"}), 500
 
  
 
 # Handle subscribe and unsubscribe actions
-
 @app.route('/api/subscribe', methods=['POST'])
-
 def manage_subscription():
-
     data = request.json
 
     action = data.get('action')
-
     club_id = data.get('clubId')
-
     user_id = data.get('userId')  # Ensure this matches the query string
 
- 
-
     print(f"Received data: {data}")
-
     print(f"Query parameters: user_id={user_id}")
 
- 
-
     # Validate input
-
     if not user_id or not club_id or not action:
-
         print("Error: Missing required fields")
-
         return jsonify({"error": "Missing required fields"}), 400
 
  
 
     try:
-
         cur = mysql.connection.cursor()
-
         if action == 'subscribe':
-
             # Check if subscription exists
-
             subscription = cur.execute(
-
                 """
-
                 SELECT * FROM user_subscription
-
                 WHERE email = %s AND club_id = %s
-
                 """,
-
                 (user_id, club_id),
-
             )
 
             if subscription:
-
                 # Update existing subscription
-
                 cur.execute(
-
                     """
-
                     UPDATE user_subscription
-
                     SET is_active = 1
-
                     WHERE email = %s AND club_id = %s
-
                     """,
-
                     (user_id, club_id),
-
                 )
-
             else:
-
                 # Insert new subscription
-
                 cur.execute(
-
                     """
-
                     INSERT INTO user_subscription (email, club_id, is_active)
-
                     VALUES (%s, %s, 1)
-
                     """,
-
                     (user_id, club_id),
-
                 )
-
         elif action == 'unsubscribe':
-
             # Deactivate subscription
-
             cur.execute(
-
                 """
-
                 UPDATE user_subscription
-
                 SET is_active = 0
-
                 WHERE email = %s AND club_id = %s
-
                 """,
-
                 (user_id, club_id),
-
             )
 
- 
-
         mysql.connection.commit()
-
         return jsonify({"success": True}), 200
 
- 
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        return jsonify({"error": "Database operation failed"}), 500
+
+@app.route("/api/assignFaculty", methods=["POST"])
+def assignFaculty():
+    data = request.get_json()
+
+    # Validate input
+    email = data.get("email")
+    remember = data.get("remember")
+    if not email or not isinstance(remember, bool):
+        return jsonify({"error": "Invalid input"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+
+        # Check if user exists and email is verified
+        cur.execute(
+            """SELECT email_verified
+               FROM users
+               WHERE email = %s
+                 AND is_active = 1""",
+            (email,),
+        )
+        result = cur.fetchone()
+
+        # If no matching email is found, return an error
+        if result is None:
+            return jsonify({"error": "Invalid email"}), 404
+
+        # Check if email is verified
+        is_email_verified = result[0]
+        if not is_email_verified:
+            return jsonify({"error": "Email not verified"}), 403
+
+        # Update faculty status
+        cur.execute(
+            """UPDATE users
+               SET is_faculty = 1,
+                   can_delete_faculty = %s
+               WHERE email = %s""",
+            (remember, email),
+        )
+        mysql.connection.commit()
+        return jsonify({"message": "Faculty assigned successfully"}), 200
 
     except Exception as e:
+        # Log the error and return an internal server error
+        print(f"Error assigning faculty: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
 
-        print(f"Error: {str(e)}")
-
-        return jsonify({"error": "Database operation failed"}), 500
+    finally:
+        cur.close()
 
 
 if __name__ == "__main__":

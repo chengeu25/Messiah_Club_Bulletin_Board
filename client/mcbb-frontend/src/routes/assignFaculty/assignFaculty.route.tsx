@@ -23,7 +23,7 @@ const AssignFaculty = () => {
         // Fetch data from the API
         const fetchData = async () => {
             try {
-                const response = await fetch("http://localhost:5173/api/assignFaculty");
+                const response = await fetch("http://localhost:3000/api/assignFaculty");
                 const data = await response.json();
                 setTableData(data); // Update state with fetched data
             } catch (error) {
@@ -54,7 +54,7 @@ const AssignFaculty = () => {
             setError('Please enter an email');
         } else {
             formData.append('action', action);
-            submit(formData, { method: 'post' });
+            submit(formData, { method: 'POST' });
         }
     };
 
@@ -80,7 +80,7 @@ const AssignFaculty = () => {
                         label='Can delete other faculty accounts'
                         name='cdf'
                         type='checkbox'
-                        value='true'
+                        value='false'
                         checked={remember}
                         onChange={() => setRemember(!remember)}
                     />
