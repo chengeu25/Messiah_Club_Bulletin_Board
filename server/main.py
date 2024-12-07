@@ -346,11 +346,73 @@ def get_event(event_id):
     return jsonify({"event": final_result}), 200
 
 
+@app.route("/api/club_events/<club_id>", methods=["GET"])
+def get_club_events(club_id):
+    start_date = request.args.get("start_date")
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
+            INNER JOIN event_host eh
+                ON eh.event_id = e.event_id
+            WHERE eh.club_id = %s
+                AND e.is_active = 1
+                AND e.is_approved = 1
+                AND e.start_time >= %s
+            LIMIT 10""",
+        (club_id, start_date),
+    )
+    result = cur.fetchall()
+    cur.execute(
+        """SELECT r.event_id, r.type FROM rsvp r
+                INNER JOIN event e 
+                    ON e.event_id = r.event_id
+                INNER JOIN event_host eh
+                    ON eh.event_id = e.event_id
+                WHERE r.user_id = %s
+                    AND e.is_active = 1
+                    AND e.is_approved = 1
+                    AND r.is_active = 1
+                    AND eh.club_id = %s""",
+        (session["user_id"], club_id),
+    )
+    result_2 = cur.fetchall()
+    result_2 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_2))
+    final_result = list(
+        map(
+            lambda x: {
+                "id": x[0],
+                "startTime": (
+                    x[1].replace(tzinfo=pytz.UTC)
+                    if x[1].tzinfo is None
+                    else x[1].astimezone(pytz.UTC).isoformat()
+                ),
+                "endTime": (
+                    x[2].replace(tzinfo=pytz.UTC)
+                    if x[2].tzinfo is None
+                    else x[2].astimezone(pytz.UTC).isoformat()
+                ),
+                "title": x[3],
+                "rsvp": next(
+                    (
+                        ("block" if item["type"] == 0 else "rsvp")
+                        for item in result_2
+                        if item["event"] == x[0]
+                    ),
+                    None,
+                ),
+            },
+            result,
+        )
+    )
+    print(result)
+    cur.close()
+    return jsonify({"events": final_result}), 200
+
+
 @app.route("/api/events", methods=["GET"])
 def get_events():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    print(start_date, end_date)
     if start_date is not None and end_date is not None:
         try:
             start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")

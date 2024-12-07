@@ -26,8 +26,25 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   }
 
   const club = await clubResp.json();
+
+  const eventsResp = await fetch(
+    `http://localhost:3000/api/club_events/${params.id}?start_date=${new Date(
+      new Date().setHours(0, 0, 0, 0)
+    ).toISOString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  const eventsJson = await eventsResp.json();
+  const events = eventsResp.ok ? eventsJson?.events : [];
+
   return json(
-    { user, club },
+    { user, club, events },
     {
       status: 200
     }

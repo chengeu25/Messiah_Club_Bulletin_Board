@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
+import Event from '../../../components/dashboard/Event.component';
 import { useLoaderData } from 'react-router';
 import {
   ClubAdminType,
   ClubDetailType,
+  EventType,
   ImageType,
   UserType
 } from '../../../types/databaseTypes';
@@ -14,9 +16,10 @@ import { Form, useSubmit } from 'react-router-dom';
 
 const Club = () => {
   const submit = useSubmit();
-  const { user, club } = useLoaderData() as {
+  const { user, club, events } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
+    events: EventType[];
   };
 
   // Check if the user is already subscribed
@@ -153,7 +156,31 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'></div>
+          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
+            {events.map((event: EventType, index: number) => (
+              <Event
+                key={index}
+                event={{
+                  ...event,
+                  startTime: new Date(event.startTime),
+                  endTime: new Date(event.endTime)
+                }}
+                small={true}
+                handleDetailsClick={() =>
+                  submit(
+                    { id: event.id, action: 'details' },
+                    { method: 'post' }
+                  )
+                }
+                handleRSVPClick={(type) =>
+                  submit(
+                    { id: event.id, type: type, action: 'rsvp' },
+                    { method: 'post' }
+                  )
+                }
+              />
+            ))}
+          </div>
         </Card>
       </div>
     </div>

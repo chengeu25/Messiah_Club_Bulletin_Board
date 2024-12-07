@@ -109,6 +109,7 @@ const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
       value={selectedRSVP}
       styles={selectStyles}
       onChange={(e) => (e !== null ? onRSVP(e.value) : null)}
+      menuPortalTarget={document.body}
     />
   );
 };

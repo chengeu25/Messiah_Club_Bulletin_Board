@@ -94,7 +94,7 @@ const Calendar = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setNumOfDaysDisplayed(Math.floor(window.innerWidth / 400));
+      setNumOfDaysDisplayed(Math.max(Math.floor(window.innerWidth / 400), 1));
     };
 
     handleResize();
