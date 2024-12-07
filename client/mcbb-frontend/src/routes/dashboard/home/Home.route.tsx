@@ -49,6 +49,7 @@ const Home = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
+      <h1 className='text-3xl font-bold'>This Week at Messiah</h1>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays.length > 0 ? (
           eventsOnDays
