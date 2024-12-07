@@ -3,11 +3,11 @@ import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 
-const data = [
+/*const data = [
     { name: "Anom", age: 19, gender: "Male" },
     { name: "Megha", age: 19, gender: "Female" },
     { name: "Subham", age: 25, gender: "Male" },
-]
+]*/
 
 const AssignFaculty = () => {
     const submit = useSubmit();
@@ -17,16 +17,20 @@ const AssignFaculty = () => {
     const [remember, setRemember] = useState<boolean>(false);
     // check use of 'remember'. If it can be a different word, use canDelete
 
-    const [tableData, setTableData] = useState([]);
+    const [tableData, setTableData] = useState < { name: string; email: String; canDelete: boolean }[]>([]);
 
     useEffect(() => {
         // Fetch data from the API
         const fetchData = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/assignFaculty");
+                const response = await fetch("http://localhost:3000/api/getFacultyData");
+                if (!response.ok) {
+                    throw new Error("failed to fetch data");
+                }
                 const data = await response.json();
                 setTableData(data); // Update state with fetched data
             } catch (error) {
+                setError("Error fetching data from the server");
                 console.error("Error fetching data:", error);
             }
         };
@@ -101,15 +105,21 @@ const AssignFaculty = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {data.map((val, key) => {
-                                return (
-                                    <tr key={key}>
-                                        <td>{val.name}</td>
-                                        <td>{val.age}</td>
-                                        <td>{val.gender}</td>
+                            {tableData.length > 0 ? (
+                                tableData.map((item, index) => (
+                                    <tr key={index}>
+                                        <td>{item.name}</td>
+                                        <td>{item.email}</td>
+                                        <td>{item.canDelete ? 'Yes' : 'No'}</td>
                                     </tr>
-                                )
-                            })}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={3} style={{ textAlign: 'center' }}>
+                                        No data available
+                                    </td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </Form>

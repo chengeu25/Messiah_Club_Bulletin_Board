@@ -1727,6 +1727,7 @@ def manage_subscription():
 @app.route("/api/assignFaculty", methods=["POST"])
 def assignFaculty():
     data = request.get_json()
+    print("data: ", data)
 
     # Validate input
     email = data.get("email")
@@ -1775,6 +1776,37 @@ def assignFaculty():
     finally:
         cur.close()
 
+@app.route('/api/getFacultyData', methods=['GET'])
+def get_faculty_data():
+    print("get faculty data")
+    try:
+        # Connect to the database
+        cur = mysql.connection.cursor()
+
+        # Query to fetch faculty data
+        cur.execute("""
+            SELECT name, email, can_delete_faculty 
+            FROM users
+            WHERE is_faculty = 1
+        """)
+        result = cur.fetchall()
+
+        # Convert result into a list of dictionaries
+        faculty_list = [
+            {"name": row[0], "email": row[1], "can_delete_faculty": bool(row[2])}
+            for row in result
+        ]
+
+        # Return the data as JSON
+        return jsonify(faculty_list), 200
+
+    except Exception as e:
+        app.logger.error(f"Error fetching faculty data: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+    finally:
+        if 'cur' in locals() and cur:
+            cur.close()
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)
