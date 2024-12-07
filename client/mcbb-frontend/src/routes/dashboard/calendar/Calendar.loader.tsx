@@ -16,7 +16,8 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   }
 
   const startingDate =
-    searchParams.get('startingDate') ?? new Date().toLocaleDateString();
+    searchParams.get('startingDate') ??
+    new Date(new Date().setHours(0, 0, 0, 0)).toLocaleDateString();
   const numDays = searchParams.get('numDays') ?? 1;
 
   const response = await fetch(

@@ -19,7 +19,9 @@ const Calendar = () => {
     const startingDate = searchParams.get('startingDate');
     const numDays = searchParams.get('numDays');
     return {
-      startingDate: startingDate ? new Date(startingDate) : new Date(),
+      startingDate: startingDate
+        ? new Date(startingDate)
+        : new Date(new Date().setHours(0, 0, 0, 0)),
       numOfDaysDisplayed: numDays ? parseInt(numDays) : 1
     };
   }, [searchParams]);
@@ -90,7 +92,9 @@ const Calendar = () => {
           <Button
             color='blue'
             icon={<BiHome />}
-            onClick={() => setStartingDate(new Date())}
+            onClick={() =>
+              setStartingDate(new Date(new Date().setHours(0, 0, 0, 0)))
+            }
           />
           <Button
             color='blue'
@@ -102,7 +106,11 @@ const Calendar = () => {
           <DatePicker
             selected={startingDate}
             onChange={(value) => {
-              setStartingDate(value !== null ? new Date(value) : new Date());
+              setStartingDate(
+                value !== null
+                  ? new Date(value)
+                  : new Date(new Date().setHours(0, 0, 0, 0))
+              );
             }}
             className='bg-blue-950 border-none rounded-lg p-1 text-white'
           />
