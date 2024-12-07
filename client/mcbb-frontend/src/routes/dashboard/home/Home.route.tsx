@@ -1,16 +1,68 @@
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
-import { EventType } from '../../../types/databaseTypes';
+import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
-import { Form, useSubmit, useLoaderData } from 'react-router-dom';
+import {
+  Form,
+  useSubmit,
+  useLoaderData,
+  useSearchParams
+} from 'react-router-dom';
 
 const Home = () => {
-  const { events } = useLoaderData() as { events: EventType[] };
+  const { user, events } = useLoaderData() as {
+    events: EventType[];
+    user: UserType;
+  };
   const submit = useSubmit();
+  const [params] = useSearchParams();
 
+  /**
+   * Checks if the event passes the search query
+   * Passes if the name includes the search query or if any of the words in the search query
+   * include a tag of the event
+   * @param event The event to check
+   * @returns True if the club passes the search query
+   */
+  const passesSearch = (event: EventType) =>
+    event.title
+      .toLowerCase()
+      .includes(params.get('search')?.toLowerCase() ?? '') ||
+    params
+      .get('search')
+      ?.toLowerCase()
+      .split(' ')
+      .some((tag) =>
+        event.tags?.some((eventTag) => tag.includes(eventTag.toLowerCase()))
+      );
+
+  /**
+   * Checks if the event passes the filter
+   * Passes if the event is suggested
+   * @param event The event to check
+   * @returns True if the event passes the filter
+   */
+  const passesFilter = (event: EventType) =>
+    params.get('filter') === 'Suggested'
+      ? event.tags.some((tag) => user.tags.includes(tag))
+      : params.get('filter') === 'Attending'
+      ? event.rsvp === 'rsvp'
+      : true;
+
+  /**
+   * Returns the filtered events by search and filter
+   */
+  const filteredEvents = useMemo(
+    () => events.filter((event) => passesSearch(event) && passesFilter(event)),
+    [events, params]
+  );
+
+  /**
+   * Returns the (filtered) events on each day
+   */
   const eventsOnDays = useMemo(
     () =>
       Object.entries(
-        events.reduce((acc, event) => {
+        filteredEvents.reduce((acc, event) => {
           const localDate = new Date(event.startTime);
           const dateKey = localDate.toLocaleDateString('en-CA'); // ISO format yyyy-MM-dd
 
@@ -37,7 +89,7 @@ const Home = () => {
           return acc;
         }, {} as Record<string, DayProps>)
       ).map(([, value]) => value),
-    [events]
+    [filteredEvents]
   );
 
   return (
@@ -50,7 +102,9 @@ const Home = () => {
               <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
             ))
         ) : (
-          <div className='text-2xl font-bold'>No events this week yet.</div>
+          <div className='text-2xl font-bold'>
+            No events this week that match the specified filters.
+          </div>
         )}
       </Form>
     </div>

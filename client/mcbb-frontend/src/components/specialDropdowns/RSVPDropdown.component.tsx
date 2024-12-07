@@ -44,6 +44,9 @@ interface RSVPDropdownProps {
   initialValue?: string;
 }
 
+/**
+ * Renders a dropdown for the user to RSVP to an event
+ */
 const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
   const [options, setOptions] = useState([
     { value: 'cancel', label: 'RSVP' },
@@ -55,6 +58,15 @@ const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
     options.find((option) => option.value === initialValue) ?? options[0]
   );
 
+  const [prevSelectedRSVP, setPrevSelectedRSVP] = useState<OptionType>(
+    options.find((option) => option.value === initialValue) ?? options[0]
+  );
+
+  /**
+   * Handles the RSVP dropdown change event.Checks to confirm, sets the state accordingly
+   * if confirmed, and passes to the handleRSVPClick function
+   * @param {OptionType | null} selected - The selected option.
+   */
   const onRSVP = (type: string) => {
     const message = type === 'rsvp' ? 'yes' : type === 'block' ? 'no' : '';
     const shouldContinue = confirm(
@@ -75,9 +87,11 @@ const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
     setSelectedRSVP(
       options.find((option) => option.value === initialValue) ?? options[0]
     );
-  }, [initialValue]);
+  }, [initialValue, options]);
 
   useEffect(() => {
+    if (selectedRSVP.value === prevSelectedRSVP.value) return;
+    setPrevSelectedRSVP(selectedRSVP);
     setOptions([
       {
         value: 'cancel',
