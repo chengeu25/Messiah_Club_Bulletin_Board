@@ -14,7 +14,7 @@ import jwt
 from email.mime.text import MIMEText
 import base64
 import json
-import io
+import pytz
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -319,10 +319,20 @@ def get_event(event_id):
             cur.fetchall(),
         )
     )
+    print(result[1])
+    print(type(result[1]))
     final_result = {
         "id": result[0],
-        "startTime": result[1],
-        "endTime": result[2],
+        "startTime": (
+            result[1].replace(tzinfo=pytz.UTC)
+            if result[1].tzinfo is None
+            else result[1].astimezone(pytz.UTC).isoformat()
+        ),
+        "endTime": (
+            result[2].replace(tzinfo=pytz.UTC)
+            if result[2].tzinfo is None
+            else result[2].astimezone(pytz.UTC).isoformat()
+        ),
         "location": result[3],
         "description": result[4],
         "cost": result[5],
@@ -389,8 +399,16 @@ def get_events():
                 map(
                     lambda x: {
                         "id": x[0],
-                        "startTime": x[1],
-                        "endTime": x[2],
+                        "startTime": (
+                            x[1].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[1].tzinfo is None
+                            else x[1].astimezone(pytz.UTC).isoformat()
+                        ),
+                        "endTime": (
+                            x[2].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[2].tzinfo is None
+                            else x[2].astimezone(pytz.UTC).isoformat()
+                        ),
                         "location": x[3],
                         "description": x[4],
                         "cost": x[5],
@@ -1618,25 +1636,22 @@ def checkRSVP(event_id):
     finally:
         cur.close()
 
-#check subscription
 
-@app.route('/api/check_subscription', methods=['POST'])
+# check subscription
 
+
+@app.route("/api/check_subscription", methods=["POST"])
 def check_subscription():
 
     data = request.json
 
-    user_id = data.get('userId')
+    user_id = data.get("userId")
 
-    club_id = data.get('clubId')
-
- 
+    club_id = data.get("clubId")
 
     if not user_id or not club_id:
 
         return jsonify({"error": "Missing required fields"}), 400
-
- 
 
     try:
 
@@ -1644,17 +1659,18 @@ def check_subscription():
 
         # Query the database to check subscription
 
-        cur.execute("""
+        cur.execute(
+            """
 
             SELECT is_active FROM user_subscription
 
             WHERE email = %s AND club_id = %s
 
-        """, (user_id, club_id))
+        """,
+            (user_id, club_id),
+        )
 
         result = cur.fetchone()
-
- 
 
         if result and result[0] == 1:
 
@@ -1664,37 +1680,30 @@ def check_subscription():
 
             return jsonify({"isSubscribed": False}), 200
 
- 
-
     except Exception as e:
 
         print(f"Error: {str(e)}")
 
         return jsonify({"error": "Database operation failed"}), 500
 
- 
 
 # Handle subscribe and unsubscribe actions
 
-@app.route('/api/subscribe', methods=['POST'])
 
+@app.route("/api/subscribe", methods=["POST"])
 def manage_subscription():
 
     data = request.json
 
-    action = data.get('action')
+    action = data.get("action")
 
-    club_id = data.get('clubId')
+    club_id = data.get("clubId")
 
-    user_id = data.get('userId')  # Ensure this matches the query string
-
- 
+    user_id = data.get("userId")  # Ensure this matches the query string
 
     print(f"Received data: {data}")
 
     print(f"Query parameters: user_id={user_id}")
-
- 
 
     # Validate input
 
@@ -1704,18 +1713,15 @@ def manage_subscription():
 
         return jsonify({"error": "Missing required fields"}), 400
 
- 
-
     try:
 
         cur = mysql.connection.cursor()
 
-        if action == 'subscribe':
+        if action == "subscribe":
 
             # Check if subscription exists
 
             subscription = cur.execute(
-
                 """
 
                 SELECT * FROM user_subscription
@@ -1723,9 +1729,7 @@ def manage_subscription():
                 WHERE email = %s AND club_id = %s
 
                 """,
-
                 (user_id, club_id),
-
             )
 
             if subscription:
@@ -1733,7 +1737,6 @@ def manage_subscription():
                 # Update existing subscription
 
                 cur.execute(
-
                     """
 
                     UPDATE user_subscription
@@ -1743,9 +1746,7 @@ def manage_subscription():
                     WHERE email = %s AND club_id = %s
 
                     """,
-
                     (user_id, club_id),
-
                 )
 
             else:
@@ -1753,7 +1754,6 @@ def manage_subscription():
                 # Insert new subscription
 
                 cur.execute(
-
                     """
 
                     INSERT INTO user_subscription (email, club_id, is_active)
@@ -1761,17 +1761,14 @@ def manage_subscription():
                     VALUES (%s, %s, 1)
 
                     """,
-
                     (user_id, club_id),
-
                 )
 
-        elif action == 'unsubscribe':
+        elif action == "unsubscribe":
 
             # Deactivate subscription
 
             cur.execute(
-
                 """
 
                 UPDATE user_subscription
@@ -1781,18 +1778,12 @@ def manage_subscription():
                 WHERE email = %s AND club_id = %s
 
                 """,
-
                 (user_id, club_id),
-
             )
-
- 
 
         mysql.connection.commit()
 
         return jsonify({"success": True}), 200
-
- 
 
     except Exception as e:
 

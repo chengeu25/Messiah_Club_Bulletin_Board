@@ -15,17 +15,15 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
     return redirect('/verifyEmail');
   }
 
-  const startingDate = searchParams.get('startingDate');
-  const numDays = searchParams.get('numDays');
+  const startingDate =
+    searchParams.get('startingDate') ?? new Date().toLocaleDateString();
+  const numDays = searchParams.get('numDays') ?? 1;
 
   const response = await fetch(
     `http://localhost:3000/api/events?start_date=${encodeURIComponent(
-      startingDate ?? new Date().toISOString()
+      new Date(startingDate).toISOString()
     )}&end_date=${encodeURIComponent(
-      subtractDays(
-        new Date(startingDate ?? new Date().toISOString()),
-        -(numDays ?? 1)
-      ).toISOString()
+      subtractDays(new Date(startingDate), -numDays).toISOString()
     )}`,
     {
       method: 'GET',
