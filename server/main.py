@@ -1727,7 +1727,6 @@ def manage_subscription():
 @app.route("/api/assignFaculty", methods=["POST"])
 def assignFaculty():
     data = request.get_json()
-    print("data: ", data)
 
     # Validate input
     email = data.get("email")

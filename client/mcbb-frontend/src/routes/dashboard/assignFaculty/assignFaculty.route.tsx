@@ -98,7 +98,7 @@ const AssignFaculty = () => {
                         label='Can delete other faculty accounts'
                         name='cdf'
                         type='checkbox'
-                        //value='false'
+                        value='false'
                         checked={canDelete}
                         onChange={() => setCanDelete(!canDelete)}
                     />
@@ -128,7 +128,10 @@ const AssignFaculty = () => {
                                         <td style={tableStyles}>{item.can_delete_faculty ? 'Yes' : 'No'}</td>
                                         <td style={tableStyles}>
                                             <button
-                                                onClick={() => deleteFaculty(item)}
+                                                onClick={(event) => {
+                                                    event.preventDefault(); // Prevent the form submission
+                                                    deleteFaculty(item); // Call the deleteFaculty function
+                                                }}
                                                 aria-label={`Remove ${item.name} from faculty`}
                                                 style={{
                                                     padding: "5px 10px",
