@@ -39,8 +39,9 @@ const AssignFaculty = () => {
         }
     }, [params]);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    /*const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         setError(null);
+        setMessage(null);
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const action = (
@@ -53,7 +54,59 @@ const AssignFaculty = () => {
             formData.append("canDelete", canDelete ? "true" : "false");
             submit(formData, { method: "POST" });
         }
+    };*/
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault(); // Prevent page reload.
+        setError(null); // Reset error messages.
+        setMessage(null); // Reset success messages.
+
+        const formData = new FormData(event.currentTarget);
+        const email = formData.get('userEmail')?.toString() || '';
+        const action = (
+            (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
+        ).name;
+
+        if (!email) {
+            setError('Please enter an email');
+            return;
+        }
+
+        try {
+            // Prepare payload
+            const payload = {
+                email,
+                can_delete_faculty: canDelete,
+                action,
+            };
+
+            // Submit the data
+            const response = await fetch("http://localhost:3000/api/assignFaculty", {
+                method: "POST",
+                body: JSON.stringify(payload),
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to assign faculty');
+            }
+
+            const result = await response.json();
+
+            // Update the table with the new faculty entry dynamically
+            setTableData((prev) => [
+                ...prev,
+                { name: result.name, email: result.email, can_delete_faculty: result.can_delete_faculty },
+            ]);
+
+            // Show success message
+            setMessage('Faculty member successfully assigned!');
+            (event.target as HTMLFormElement).reset(); // Clear the form fields.
+        } catch (error) {
+            console.error('Error during submission:', error);
+            setError('Failed to assign faculty. Please try again.');
+        }
     };
+
 
     const deleteFaculty = async (item: { name: string; email: string; can_delete_faculty: boolean }) => {
         try {
@@ -116,7 +169,6 @@ const AssignFaculty = () => {
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Can Delete Faculty</th>
-                                <th>Remove Admin Abilities</th>
                             </tr>
                         </thead>
                         <tbody>

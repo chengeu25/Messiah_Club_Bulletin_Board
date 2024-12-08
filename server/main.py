@@ -1727,10 +1727,15 @@ def manage_subscription():
 @app.route("/api/assignFaculty", methods=["POST"])
 def assignFaculty():
     data = request.get_json()
+    print(data)
 
     # Validate input
     email = data.get("email")
-    remember = data.get("remember")
+    remember = data.get("can_delete_faculty")
+
+    print("email: ", email)
+    print("remember: ", remember)
+
     if not email or not isinstance(remember, bool):
         return jsonify({"error": "Invalid input"}), 400
 
@@ -1739,7 +1744,7 @@ def assignFaculty():
 
         # Check if user exists and email is verified
         cur.execute(
-            """SELECT email_verified
+            """SELECT name, email_verified
                FROM users
                WHERE email = %s
                  AND is_active = 1""",
@@ -1752,7 +1757,7 @@ def assignFaculty():
             return jsonify({"error": "Invalid email"}), 404
 
         # Check if email is verified
-        is_email_verified = result[0]
+        is_email_verified = result[1]
         if not is_email_verified:
             return jsonify({"error": "Email not verified"}), 403
 
@@ -1765,7 +1770,8 @@ def assignFaculty():
             (remember, email),
         )
         mysql.connection.commit()
-        return jsonify({"message": "Faculty assigned successfully"}), 200
+        return jsonify({"name": result[0], "email": email, "can_delete_faculty": remember}), 200
+        # return jsonify({"message": "Faculty assigned successfully"}), 200
 
     except Exception as e:
         # Log the error and return an internal server error
