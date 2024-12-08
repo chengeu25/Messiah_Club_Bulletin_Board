@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams } from 'react-router-dom';
+import { Form, useSearchParams } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 
 const AssignFaculty = () => {
-    const submit = useSubmit();
     const [params] = useSearchParams();
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
     const [canDelete, setCanDelete] = useState<boolean>(false);
-    const [tableData, setTableData] = useState < { name: string; email: string; can_delete_faculty: boolean }[]>([]);
+    const [tableData, setTableData] = useState<{ name: string; email: string; can_delete_faculty: boolean }[]>([]);
+    const [emailList, setEmailList] = useState<string[]>([]);
 
     useEffect(() => {
+        setError(null);
+        setMessage(null);
         // Fetch data from the API
         const fetchData = async () => {
             try {
@@ -20,7 +22,10 @@ const AssignFaculty = () => {
                     throw new Error("failed to fetch data");
                 }
                 const data = await response.json();
+                const emails = data.map((faculty: { email: string }) => faculty.email);
+                setEmailList(emails);
                 setTableData(data); // Update state with fetched data
+                console.log(emailList);
             } catch (error) {
                 setError("Error fetching data from the server");
                 console.error("Error fetching data:", error);
@@ -39,22 +44,6 @@ const AssignFaculty = () => {
         }
     }, [params]);
 
-    /*const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        setError(null);
-        setMessage(null);
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        const action = (
-            (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
-        ).name;
-        if (formData.get('userEmail') === '') {
-            setError('Please enter an email');
-        } else {
-            formData.append('action', action);
-            formData.append("canDelete", canDelete ? "true" : "false");
-            submit(formData, { method: "POST" });
-        }
-    };*/
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault(); // Prevent page reload.
         setError(null); // Reset error messages.
@@ -66,8 +55,15 @@ const AssignFaculty = () => {
             (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
         ).name;
 
+        // Check if an email was entered
         if (!email) {
             setError('Please enter an email');
+            return;
+        }
+
+        // Check if the email already exists in the emailList
+        if (emailList.includes(email)) {
+            setError('This email is already assigned as faculty.');
             return;
         }
 
@@ -98,6 +94,11 @@ const AssignFaculty = () => {
                 { name: result.name, email: result.email, can_delete_faculty: result.can_delete_faculty },
             ]);
 
+            setEmailList((prev) => [
+                ...prev,
+                payload.email
+            ]);
+
             // Show success message
             setMessage('Faculty member successfully assigned!');
             (event.target as HTMLFormElement).reset(); // Clear the form fields.
@@ -118,7 +119,10 @@ const AssignFaculty = () => {
 
             if (!response.ok) throw new Error("Failed to remove admin");
 
+            // Remove the entry from the table
             setTableData((prev) => prev.filter((row) => row.email !== item.email));
+            // Remove the email from emailList
+            setEmailList((prev) => prev.filter((email) => email !== item.email));
         } catch (error) {
             console.error(error);
             setError("Failed to remove admin. Please try again.");
