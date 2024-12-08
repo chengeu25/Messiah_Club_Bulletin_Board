@@ -1,6 +1,6 @@
 import { json, LoaderFunction, redirect } from 'react-router';
-import checkUser from '../../helper/checkUser';
-import { UserType as User } from '../../types/databaseTypes';
+import checkUser from '../../../helper/checkUser';
+import { UserType as User } from '../../../types/databaseTypes';
 
 const assignFacultyLoader: LoaderFunction = async () => {
     const user = await checkUser();

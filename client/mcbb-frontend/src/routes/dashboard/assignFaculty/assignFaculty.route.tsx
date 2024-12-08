@@ -1,23 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Form, useSubmit, useSearchParams } from 'react-router-dom';
-import Input from '../../components/formElements/Input.component';
-import Button from '../../components/formElements/Button.component';
-
-/*const data = [
-    { name: "Anom", age: 19, gender: "Male" },
-    { name: "Megha", age: 19, gender: "Female" },
-    { name: "Subham", age: 25, gender: "Male" },
-]*/
+import Input from '../../../components/formElements/Input.component';
+import Button from '../../../components/formElements/Button.component';
 
 const AssignFaculty = () => {
     const submit = useSubmit();
     const [params] = useSearchParams();
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
-    const [remember, setRemember] = useState<boolean>(false);
-    // check use of 'remember'. If it can be a different word, use canDelete
-
-    const [tableData, setTableData] = useState < { name: string; email: String; canDelete: boolean }[]>([]);
+    const [canDelete, setCanDelete] = useState<boolean>(false);
+    const [tableData, setTableData] = useState < { name: string; email: string; can_delete_faculty: boolean }[]>([]);
 
     useEffect(() => {
         // Fetch data from the API
@@ -58,8 +50,30 @@ const AssignFaculty = () => {
             setError('Please enter an email');
         } else {
             formData.append('action', action);
-            submit(formData, { method: 'POST' });
+            formData.append("canDelete", canDelete ? "true" : "false");
+            submit(formData, { method: "POST" });
         }
+    };
+
+    const deleteFaculty = async (item: { name: string; email: string; can_delete_faculty: boolean }) => {
+        try {
+            const response = await fetch("http://localhost:3000/api/removeFaculty", {
+                method: "POST",
+                body: JSON.stringify({ email: item.email }),
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) throw new Error("Failed to remove admin");
+
+            setTableData((prev) => prev.filter((row) => row.email !== item.email));
+        } catch (error) {
+            console.error(error);
+            setError("Failed to remove admin. Please try again.");
+        }
+    };
+
+    const tableStyles: React.CSSProperties = {
+        textAlign: "center",
     };
 
     return (
@@ -84,9 +98,9 @@ const AssignFaculty = () => {
                         label='Can delete other faculty accounts'
                         name='cdf'
                         type='checkbox'
-                        value='false'
-                        checked={remember}
-                        onChange={() => setRemember(!remember)}
+                        //value='false'
+                        checked={canDelete}
+                        onChange={() => setCanDelete(!canDelete)}
                     />
                     <div className='flex flex-row gap-2'>
                         <Button
@@ -96,26 +110,43 @@ const AssignFaculty = () => {
                             color='blue'
                         />
                     </div>
-                    <table border={1} style={{ borderCollapse: "collapse", width: "100%" }}>
+                    <table className="custom-table">
                         <thead>
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Can Delete Faculty</th>
+                                <th>Remove Admin Abilities</th>
                             </tr>
                         </thead>
                         <tbody>
                             {tableData.length > 0 ? (
                                 tableData.map((item, index) => (
                                     <tr key={index}>
-                                        <td>{item.name}</td>
-                                        <td>{item.email}</td>
-                                        <td>{item.canDelete ? 'Yes' : 'No'}</td>
+                                        <td style={tableStyles}>{item.name}</td>
+                                        <td style={tableStyles}>{item.email}</td>
+                                        <td style={tableStyles}>{item.can_delete_faculty ? 'Yes' : 'No'}</td>
+                                        <td style={tableStyles}>
+                                            <button
+                                                onClick={() => deleteFaculty(item)}
+                                                aria-label={`Remove ${item.name} from faculty`}
+                                                style={{
+                                                    padding: "5px 10px",
+                                                    backgroundColor: "blue",
+                                                    color: "white",
+                                                    border: "none",
+                                                    borderRadius: "5px",
+                                                    cursor: "pointer",
+                                                }}
+                                            >
+                                                Remove
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={3} style={{ textAlign: 'center' }}>
+                                    <td colSpan={4} className="no-data">
                                         No data available
                                     </td>
                                 </tr>

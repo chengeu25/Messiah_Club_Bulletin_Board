@@ -1778,7 +1778,6 @@ def assignFaculty():
 
 @app.route('/api/getFacultyData', methods=['GET'])
 def get_faculty_data():
-    print("get faculty data")
     try:
         # Connect to the database
         cur = mysql.connection.cursor()
@@ -1807,6 +1806,32 @@ def get_faculty_data():
     finally:
         if 'cur' in locals() and cur:
             cur.close()
+
+@app.route('/api/removeFaculty', methods=['POST'])
+def remove_faculty():
+    data = request.get_json()
+    try:
+        # connect to the database
+        cur = mysql.connection.cursor()
+
+        # Query to remove faculty privileges
+        cur.execute("""
+            UPDATE users
+            SET is_faculty = 0,
+                can_delete_faculty = 0
+            WHERE email = %s""",
+            (data["email"],),
+        )
+        mysql.connection.commit()
+        return jsonify({"message": "Faculty privileges removed"}), 200
+    
+    except Exception as e:
+        # Log the error and return an internal server error
+        print(f"Error removing faculty: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    
+    finally:
+        cur.close()
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)

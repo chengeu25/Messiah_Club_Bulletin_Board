@@ -1,5 +1,5 @@
 import { ActionFunction, redirect } from 'react-router';
-import checkUser from '../../helper/checkUser';
+import checkUser from '../../../helper/checkUser';
 
 const assignFacultyAction: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
@@ -19,15 +19,16 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
         });
 
         if (loginRequest.ok) {
-            return redirect('/assignFaculty?message=' + 'assigned%20faculty');
+            return redirect('/dashboard/assignFaculty?message=' + 'assigned%20faculty');
         } else {
             const json = await loginRequest.json();
-            return redirect('/assignFaculty?error=' + json.error);
+            return redirect('/dashboard/assignFaculty?error=' + json.error);
         }
     } else {
         return redirect('/login?error' + 'Not%20logged%20in');
     }
 
 }
+
 
 export default assignFacultyAction;

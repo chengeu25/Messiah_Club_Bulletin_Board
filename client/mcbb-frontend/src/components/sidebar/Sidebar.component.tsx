@@ -21,7 +21,7 @@ if ((user as User).isFaculty === true) {
   buttonList.push({
     text: 'Faculty Admin',
     icon: <FaChalkboardTeacher />,
-    route: '/assignFaculty'
+    route: '/dashboard/assignFaculty'
   });
 }
 

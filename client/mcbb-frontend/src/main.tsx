@@ -54,9 +54,9 @@ import ClubEventForm from './routes/dashboard/createEvent/ClubEventForm.route.ts
 import ErrorPage from './routes/error/ErrorPage.tsx';
 import homeAction from './routes/dashboard/home/Home.action.tsx';
 import eventAction from './routes/dashboard/event/Event.action.tsx';
-import AssignFaculty from './routes/assignFaculty/assignFaculty.route.tsx';
-import assignFacultyAction from './routes/assignFaculty/assignFaculty.action.tsx';
-import assignFacultyLoader from './routes/assignFaculty/assignFaculty.loader.tsx';
+import AssignFaculty from './routes/dashboard/assignFaculty/assignFaculty.route.tsx';
+import assignFacultyAction from './routes/dashboard/assignFaculty/assignFaculty.action.tsx';
+import assignFacultyLoader from './routes/dashboard/assignFaculty/assignFaculty.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -103,18 +103,18 @@ const router = createBrowserRouter(
         element={<ForgotPasswordToken />}
         action={forgotPasswordTokenAction}
       />
-      <Route
-        path='assignFaculty'
-        element={<AssignFaculty />}
-        loader={assignFacultyLoader}
-        action={assignFacultyAction}
-      />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route
           path='home'
           element={<Home />}
           loader={homeLoader}
           action={homeAction}
+        />
+        <Route
+          path='assignFaculty'
+          element={<AssignFaculty />}
+          loader={assignFacultyLoader}
+          action={assignFacultyAction}
         />
         <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
         <Route
