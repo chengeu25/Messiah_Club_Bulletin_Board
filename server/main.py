@@ -1793,6 +1793,7 @@ def manage_subscription():
                 """,
                 (user_id, club_id),
             )
+            subscription = cur.fetchone()
 
             if subscription:
 
@@ -1803,7 +1804,7 @@ def manage_subscription():
 
                     UPDATE user_subscription
 
-                    SET is_active = 1
+                    SET is_active = 1, type = 1
 
                     WHERE email = %s AND club_id = %s
 
@@ -1818,9 +1819,9 @@ def manage_subscription():
                 cur.execute(
                     """
 
-                    INSERT INTO user_subscription (email, club_id, is_active)
+                    INSERT INTO user_subscription (email, club_id, is_active, type)
 
-                    VALUES (%s, %s, 1)
+                    VALUES (%s, %s, 1, 1)
 
                     """,
                     (user_id, club_id),
