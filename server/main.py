@@ -1838,5 +1838,31 @@ def remove_faculty():
     finally:
         cur.close()
 
+@app.route('/api/assignDelete', methods=["POST"])
+def assign_delete():
+    data = request.get_json()
+
+    try:
+        # Connect to the database
+        cur = mysql.connection.cursor()
+
+        # Query to change deletion abilities
+        cur.execute(
+            """UPDATE users
+                SET can_delete_faculty = %s
+                WHERE email = %s""",
+                (data["cdf"], data["email"],),
+        )
+        mysql.connection.commit()
+        return jsonify({"message": "Deletion ablilities removed"}), 200
+    
+    except Exception as e:
+        # Log the error and return an internal server error
+        print(f"Error removing faculty: {e}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    
+    finally:
+        cur.close()
+
 if __name__ == "__main__":
     app.run(debug=True, port=3000)

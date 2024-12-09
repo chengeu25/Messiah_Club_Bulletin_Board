@@ -25,7 +25,6 @@ const AssignFaculty = () => {
                 const emails = data.map((faculty: { email: string }) => faculty.email);
                 setEmailList(emails);
                 setTableData(data); // Update state with fetched data
-                console.log(emailList);
             } catch (error) {
                 setError("Error fetching data from the server");
                 console.error("Error fetching data:", error);
@@ -94,6 +93,7 @@ const AssignFaculty = () => {
                 { name: result.name, email: result.email, can_delete_faculty: result.can_delete_faculty },
             ]);
 
+            // Update the email list dynamically
             setEmailList((prev) => [
                 ...prev,
                 payload.email
@@ -108,6 +108,28 @@ const AssignFaculty = () => {
         }
     };
 
+    const assignDelete = async (item: { name: string; email: string; can_delete_faculty: boolean; }) => {
+        try {
+            const response = await fetch("http://localhost:3000/api/assignDelete", {
+                method: "POST",
+                body: JSON.stringify({ cdf: !item.can_delete_faculty, email: item.email }),
+                headers: { "Content-Type": "application/json" },
+            });
+
+            if (!response.ok) throw new Error("Failed to assign deletion abilities");
+
+            // Update the tableData state with the modified "isActive" value
+            setTableData((prev) =>
+                prev.map((row) =>
+                    row.email === item.email ? { ...row, can_delete_faculty: !row.can_delete_faculty } : row
+                )
+            );
+            
+        } catch (error) {
+            console.error(error);
+            setError("Failed to assign deletion abilities. Please try again.");
+        }
+    }
 
     const deleteFaculty = async (item: { name: string; email: string; can_delete_faculty: boolean }) => {
         try {
@@ -181,7 +203,18 @@ const AssignFaculty = () => {
                                     <tr key={index}>
                                         <td style={tableStyles}>{item.name}</td>
                                         <td style={tableStyles}>{item.email}</td>
-                                        <td style={tableStyles}>{item.can_delete_faculty ? 'Yes' : 'No'}</td>
+
+                                        <td style={tableStyles}>
+                                            <input
+                                                type="checkbox"
+                                                checked={item.can_delete_faculty || false} // Replace with your field
+                                                onChange={(e) => {
+                                                    e.preventDefault();
+                                                    assignDelete(item); // Handle the toggle
+                                                }}
+                                                aria-label={`Set ${item.name} as active`}
+                                            />
+                                        </td>
                                         <td style={tableStyles}>
                                             <button
                                                 onClick={(event) => {
@@ -205,7 +238,7 @@ const AssignFaculty = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="no-data">
+                                    <td colSpan={5} className="no-data">
                                         No data available
                                     </td>
                                 </tr>
