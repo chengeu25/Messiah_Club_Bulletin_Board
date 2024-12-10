@@ -1,5 +1,7 @@
 import { ActionFunction, redirect } from 'react-router-dom';
 
+// NOTE: This action is ALSO used on the calendar page!
+
 const homeAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');

@@ -16,6 +16,7 @@ mysqlclient==2.2.4
 pycparser==2.22
 PyJWT==2.9.0
 python-dotenv==1.0.1
+pytz==2024.2
 requests==2.32.3
 urllib3==2.2.3
 Werkzeug==3.0.4

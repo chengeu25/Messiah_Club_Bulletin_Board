@@ -1,47 +1,55 @@
-import Day, { DayProps } from '../../../components/dashboard/Day.component';
-import { EventType } from '../../../types/databaseTypes';
+import Day from '../../../components/dashboard/Day.component';
+import {
+  passesFilter,
+  passesSearch,
+  sortEventsByDay
+} from '../../../helper/eventHelpers';
+import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
-import { Form, useSubmit, useLoaderData } from 'react-router-dom';
+import {
+  Form,
+  useSubmit,
+  useLoaderData,
+  useSearchParams
+} from 'react-router-dom';
 
 const Home = () => {
-  const { events } = useLoaderData() as { events: EventType[] };
+  const { user, events } = useLoaderData() as {
+    events: EventType[];
+    user: UserType;
+  };
   const submit = useSubmit();
+  const [params] = useSearchParams();
 
-  const eventsOnDays = useMemo(
+  /**
+   * Returns the filtered events by search and filter
+   */
+  const filteredEvents = useMemo(
     () =>
-      Object.entries(
-        events.reduce((acc, event) => {
-          const localDate = new Date(event.startTime);
-          const dateKey = localDate.toLocaleDateString('en-CA'); // ISO format yyyy-MM-dd
+      events.filter(
+        (event) =>
+          passesSearch(event, params.get('search') ?? '') &&
+          passesFilter(event, user, params.get('filter') ?? '')
+      ),
+    [events, params]
+  );
 
-          if (!acc[dateKey]) {
-            acc[dateKey] = {
-              date: localDate,
-              events: [],
-              handleDetailsClick: (id) =>
-                submit({ id: id, action: 'details' }, { method: 'post' }),
-              handleRSVPClick: (id, type) =>
-                submit(
-                  { id: id, type: type, action: 'rsvp' },
-                  { method: 'post' }
-                )
-            };
-          }
-
-          acc[dateKey].events.push({
-            ...event,
-            startTime: localDate,
-            endTime: new Date(event.endTime)
-          });
-
-          return acc;
-        }, {} as Record<string, DayProps>)
-      ).map(([, value]) => value),
-    [events]
+  /**
+   * Returns the (filtered) events on each day
+   */
+  const eventsOnDays = useMemo(
+    sortEventsByDay(
+      filteredEvents,
+      (id) => submit({ id: id, action: 'details' }, { method: 'post' }),
+      (id, type) =>
+        submit({ id: id, type: type, action: 'rsvp' }, { method: 'post' })
+    ),
+    [filteredEvents]
   );
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
+      <h1 className='text-3xl font-bold'>This Week at Messiah</h1>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays.length > 0 ? (
           eventsOnDays
@@ -50,7 +58,9 @@ const Home = () => {
               <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
             ))
         ) : (
-          <div className='text-2xl font-bold'>No events this week yet.</div>
+          <div className='text-2xl font-bold'>
+            No events this week that match the specified filters.
+          </div>
         )}
       </Form>
     </div>

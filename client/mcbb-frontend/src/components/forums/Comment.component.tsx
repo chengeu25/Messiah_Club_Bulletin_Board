@@ -20,9 +20,9 @@ const Comment = ({
       style={{ marginLeft: 20 * indentLevel }}
     >
       <div className='flex items-center gap-4'>
-        <div className='text-sm text-slate-500'>{creator}</div>
-        <div className='text-sm text-slate-500'>{lastModified.toString()}</div>
-        <div className='text-sm text-slate-500 underline'>Report this</div>
+        <div className='text-sm text-gray-500'>{creator}</div>
+        <div className='text-sm text-gray-500'>{lastModified.toString()}</div>
+        <div className='text-sm text-gray-500 underline'>Report this</div>
       </div>
       <div className='text-sm text-black'>{content}</div>
       <div className='flex flex-row w-full gap-2 items-center'>

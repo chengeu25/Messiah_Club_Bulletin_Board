@@ -84,7 +84,10 @@ const SearchAndFilter = ({
             location.pathname.includes('/clubs')
               ? 'Subscribed'
               : 'Hosted by Subscribed Clubs',
-            ...(location.pathname.includes('/calendar') ? ['Attending'] : [])
+            ...(location.pathname.includes('/calendar') ||
+            location.pathname.includes('/home')
+              ? ['Attending']
+              : [])
           ].map((item) => ({ label: item, value: item }))}
           styles={selectStyles}
           value={{ value: selectedFilter, label: selectedFilter }}

@@ -10,7 +10,7 @@ const Dashboard = () => {
       </aside>
 
       {/* Content flow */}
-      <div className='flex-grow flex'>
+      <div className='flex-grow flex relative overflow-y-scroll h-full'>
         <Outlet />
       </div>
 

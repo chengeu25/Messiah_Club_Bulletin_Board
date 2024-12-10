@@ -2,7 +2,7 @@ import { EventType } from '../../types/databaseTypes';
 import Button from '../formElements/Button.component';
 import Card from '../ui/Card';
 import RSVPDropdown from '../specialDropdowns/RSVPDropdown.component';
-import { useEffect } from 'react';
+import { CgDetailsMore } from 'react-icons/cg';
 
 export interface EventProps {
   event: EventType;
@@ -17,13 +17,14 @@ const Event = ({
   handleDetailsClick,
   handleRSVPClick
 }: EventProps) => {
-  const { title, startTime, endTime, description, host, image, rsvp } = event;
+  const { title, startTime, endTime, description, host, image, rsvp, tags } =
+    event;
 
   return (
     <div>
       <Card
-        color='slate-200'
-        className='flex flex-col lg:flex-row gap-4 border-2 border-blue-900 w-full items-center'
+        color='gray-200'
+        className='flex flex-col lg:flex-row gap-4 w-full items-center'
       >
         {!small && (
           <img
@@ -49,15 +50,32 @@ const Event = ({
                 })}
               </p>
               {!small && <p>{description}</p>}
-              <p className='font-bold'>Hosted by {host.join(', ')}</p>
+              {host && <p className='font-bold'>Hosted by {host.join(', ')}</p>}
+              {!small && tags?.length > 0 && (
+                <div className='inline-flex justify-center xl:justify-start gap-2'>
+                  {tags?.map((tag, index) => (
+                    <div
+                      key={index}
+                      className='text-center bg-blue-200 p-2 rounded-lg'
+                    >
+                      {tag}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
-        <div className='flex flex-row justify-center items-center gap-2 relative'>
+        <div
+          className={`flex ${
+            small ? 'flex-col' : 'flex-row'
+          } justify-center items-center gap-2 relative`}
+        >
           <Button
             color='blue'
-            text='View Details'
-            className='w-50 text-nowrap'
+            text='Details'
+            icon={<CgDetailsMore size={20} />}
+            className='w-50 text-nowrap flex flex-row items-center gap-2'
             onClick={handleDetailsClick}
           />
           <RSVPDropdown handleRSVPClick={handleRSVPClick} initialValue={rsvp} />

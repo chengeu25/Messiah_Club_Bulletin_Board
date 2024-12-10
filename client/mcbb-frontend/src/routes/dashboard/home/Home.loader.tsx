@@ -14,7 +14,10 @@ const homeLoader: LoaderFunction = async () => {
     `http://localhost:3000/api/events?start_date=${encodeURIComponent(
       new Date().toISOString()
     )}&end_date=${encodeURIComponent(
-      new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      new Date(
+        new Date(new Date().setHours(0, 0, 0, 0)).getTime() +
+          7 * 24 * 60 * 60 * 1000
+      ).toISOString()
     )}`,
     {
       method: 'GET',

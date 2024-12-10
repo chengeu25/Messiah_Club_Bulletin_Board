@@ -14,7 +14,7 @@ import jwt
 from email.mime.text import MIMEText
 import base64
 import json
-import io
+import pytz
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -297,26 +297,122 @@ def get_event(event_id):
     result_3 = cur.fetchone()
     if result_3 is not None:
         result_3 = result_3[0]
+    cur.execute(
+        """SELECT t.tag_name FROM tag t
+                INNER JOIN event_tags et
+                    ON t.tag_id = et.tag_id
+                WHERE et.event_id = %s""",
+        (event_id,),
+    )
+    result_4 = cur.fetchall()
+    result_4 = list(map(lambda x: x[0], result_4))
+    cur.execute(
+        """SELECT image, event_photo_id, image_prefix FROM event_photo WHERE event_id = %s""",
+        (event_id,),
+    )
+    result_5 = list(
+        map(
+            lambda x: {
+                "image": f"{x[2]},{base64.b64encode(x[0]).decode('utf-8')}",
+                "id": x[1],
+            },
+            cur.fetchall(),
+        )
+    )
+    print(result[1])
+    print(type(result[1]))
     final_result = {
         "id": result[0],
-        "startTime": result[1],
-        "endTime": result[2],
+        "startTime": (
+            result[1].replace(tzinfo=pytz.UTC)
+            if result[1].tzinfo is None
+            else result[1].astimezone(pytz.UTC).isoformat()
+        ),
+        "endTime": (
+            result[2].replace(tzinfo=pytz.UTC)
+            if result[2].tzinfo is None
+            else result[2].astimezone(pytz.UTC).isoformat()
+        ),
         "location": result[3],
         "description": result[4],
         "cost": result[5],
         "title": result[6],
         "host": result_2,
         "rsvp": "block" if result_3 == 0 else ("rsvp" if result_3 == 1 else None),
+        "tags": result_4,
+        "images": result_5,
     }
     cur.close()
     return jsonify({"event": final_result}), 200
+
+
+@app.route("/api/club_events/<club_id>", methods=["GET"])
+def get_club_events(club_id):
+    start_date = request.args.get("start_date")
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
+            INNER JOIN event_host eh
+                ON eh.event_id = e.event_id
+            WHERE eh.club_id = %s
+                AND e.is_active = 1
+                AND e.is_approved = 1
+                AND e.start_time >= %s
+            LIMIT 10""",
+        (club_id, start_date),
+    )
+    result = cur.fetchall()
+    cur.execute(
+        """SELECT r.event_id, r.type FROM rsvp r
+                INNER JOIN event e 
+                    ON e.event_id = r.event_id
+                INNER JOIN event_host eh
+                    ON eh.event_id = e.event_id
+                WHERE r.user_id = %s
+                    AND e.is_active = 1
+                    AND e.is_approved = 1
+                    AND r.is_active = 1
+                    AND eh.club_id = %s""",
+        (session["user_id"], club_id),
+    )
+    result_2 = cur.fetchall()
+    result_2 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_2))
+    final_result = list(
+        map(
+            lambda x: {
+                "id": x[0],
+                "startTime": (
+                    x[1].replace(tzinfo=pytz.UTC)
+                    if x[1].tzinfo is None
+                    else x[1].astimezone(pytz.UTC).isoformat()
+                ),
+                "endTime": (
+                    x[2].replace(tzinfo=pytz.UTC)
+                    if x[2].tzinfo is None
+                    else x[2].astimezone(pytz.UTC).isoformat()
+                ),
+                "title": x[3],
+                "rsvp": next(
+                    (
+                        ("block" if item["type"] == 0 else "rsvp")
+                        for item in result_2
+                        if item["event"] == x[0]
+                    ),
+                    None,
+                ),
+            },
+            result,
+        )
+    )
+    print(result)
+    cur.close()
+    return jsonify({"events": final_result}), 200
 
 
 @app.route("/api/events", methods=["GET"])
 def get_events():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    print(start_date, end_date)
     if start_date is not None and end_date is not None:
         try:
             start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
@@ -349,12 +445,32 @@ def get_events():
             )
             result_3 = cur.fetchall()
             result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
+            cur.execute(
+                """SELECT et.event_id, t.tag_name FROM tag t
+                        INNER JOIN event_tags et
+                            ON t.tag_id = et.tag_id"""
+            )
+            result_4 = cur.fetchall()
+            result_4 = list(
+                map(
+                    lambda x: {"event": x[0], "tag": x[1]},
+                    result_4,
+                )
+            )
             final_result = list(
                 map(
                     lambda x: {
                         "id": x[0],
-                        "startTime": x[1],
-                        "endTime": x[2],
+                        "startTime": (
+                            x[1].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[1].tzinfo is None
+                            else x[1].astimezone(pytz.UTC).isoformat()
+                        ),
+                        "endTime": (
+                            x[2].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[2].tzinfo is None
+                            else x[2].astimezone(pytz.UTC).isoformat()
+                        ),
                         "location": x[3],
                         "description": x[4],
                         "cost": x[5],
@@ -377,6 +493,17 @@ def get_events():
                                 if item["event"] == x[0]
                             ),
                             None,
+                        ),
+                        "tags": list(
+                            map(
+                                lambda y: y["tag"],
+                                list(
+                                    filter(
+                                        lambda y: y["event"] == x[0],
+                                        result_4,
+                                    )
+                                ),
+                            )
                         ),
                     },
                     result,
@@ -1570,6 +1697,162 @@ def checkRSVP(event_id):
 
     finally:
         cur.close()
+
+
+# check subscription
+
+
+@app.route("/api/check_subscription", methods=["POST"])
+def check_subscription():
+
+    data = request.json
+
+    user_id = data.get("userId")
+
+    club_id = data.get("clubId")
+
+    if not user_id or not club_id:
+
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+
+        cur = mysql.connection.cursor()
+
+        # Query the database to check subscription
+
+        cur.execute(
+            """
+
+            SELECT is_active FROM user_subscription
+
+            WHERE email = %s AND club_id = %s
+
+        """,
+            (user_id, club_id),
+        )
+
+        result = cur.fetchone()
+
+        if result and result[0] == 1:
+
+            return jsonify({"isSubscribed": True}), 200
+
+        else:
+
+            return jsonify({"isSubscribed": False}), 200
+
+    except Exception as e:
+
+        print(f"Error: {str(e)}")
+
+        return jsonify({"error": "Database operation failed"}), 500
+
+
+# Handle subscribe and unsubscribe actions
+
+
+@app.route("/api/subscribe", methods=["POST"])
+def manage_subscription():
+
+    data = request.json
+
+    action = data.get("action")
+
+    club_id = data.get("clubId")
+
+    user_id = data.get("userId")  # Ensure this matches the query string
+
+    print(f"Received data: {data}")
+
+    print(f"Query parameters: user_id={user_id}")
+
+    # Validate input
+
+    if not user_id or not club_id or not action:
+
+        print("Error: Missing required fields")
+
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+
+        cur = mysql.connection.cursor()
+
+        if action == "subscribe":
+
+            # Check if subscription exists
+
+            subscription = cur.execute(
+                """
+
+                SELECT * FROM user_subscription
+
+                WHERE email = %s AND club_id = %s
+
+                """,
+                (user_id, club_id),
+            )
+            subscription = cur.fetchone()
+
+            if subscription:
+
+                # Update existing subscription
+
+                cur.execute(
+                    """
+
+                    UPDATE user_subscription
+
+                    SET is_active = 1, type = 1
+
+                    WHERE email = %s AND club_id = %s
+
+                    """,
+                    (user_id, club_id),
+                )
+
+            else:
+
+                # Insert new subscription
+
+                cur.execute(
+                    """
+
+                    INSERT INTO user_subscription (email, club_id, is_active, type)
+
+                    VALUES (%s, %s, 1, 1)
+
+                    """,
+                    (user_id, club_id),
+                )
+
+        elif action == "unsubscribe":
+
+            # Deactivate subscription
+
+            cur.execute(
+                """
+
+                UPDATE user_subscription
+
+                SET is_active = 0
+
+                WHERE email = %s AND club_id = %s
+
+                """,
+                (user_id, club_id),
+            )
+
+        mysql.connection.commit()
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+
+        print(f"Error: {str(e)}")
+
+        return jsonify({"error": "Database operation failed"}), 500
 
 
 if __name__ == "__main__":
