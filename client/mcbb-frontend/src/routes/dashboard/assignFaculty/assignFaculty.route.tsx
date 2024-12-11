@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Form, useSearchParams } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
+import checkUser from '../../../helper/checkUser';
+import { UserType as User } from '../../../types/databaseTypes';
 
 const AssignFaculty = () => {
     const [params] = useSearchParams();
@@ -42,6 +44,21 @@ const AssignFaculty = () => {
             setMessage(decodeURIComponent(params.get('message') ?? ''));
         }
     }, [params]);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const user = await checkUser();
+                if ((user as User).canDeleteFaculty) {
+                    setCanDelete(true);
+                }
+            } catch (error) {
+                console.error("Error checking user:", error)
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault(); // Prevent page reload.
@@ -213,6 +230,7 @@ const AssignFaculty = () => {
                                                     assignDelete(item); // Handle the toggle
                                                 }}
                                                 aria-label={`Set ${item.name} as active`}
+                                                disabled={!canDelete}
                                             />
                                         </td>
                                         <td style={tableStyles}>
@@ -224,12 +242,13 @@ const AssignFaculty = () => {
                                                 aria-label={`Remove ${item.name} from faculty`}
                                                 style={{
                                                     padding: "5px 10px",
-                                                    backgroundColor: "blue",
+                                                    backgroundColor: canDelete ? "blue": "gray",
                                                     color: "white",
                                                     border: "none",
                                                     borderRadius: "5px",
-                                                    cursor: "pointer",
+                                                    cursor: canDelete ? "pointer": "not-allowed",
                                                 }}
+                                                disabled={!canDelete}
                                             >
                                                 Remove
                                             </button>
