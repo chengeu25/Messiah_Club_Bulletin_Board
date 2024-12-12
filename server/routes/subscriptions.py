@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
 from extensions import mysql
 
 subscriptions_bp = Blueprint("subscriptions", __name__)

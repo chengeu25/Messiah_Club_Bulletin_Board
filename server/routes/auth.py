@@ -8,6 +8,7 @@ from helper.send_email import send_email
 import requests
 from config import Config
 import jwt
+from helper.check_user import get_user_session_info
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -235,167 +236,22 @@ def check_user_cookie():
 @auth_bp.route("/check-user", methods=["GET"])
 def check_user():
     """
-    Validate and retrieve the current user's session information.
+    Validate and retrieve the current user's session information via API endpoint.
 
-    This endpoint checks the user's session status, verifies active session,
-    and retrieves comprehensive user details from the database.
+    This route wraps the get_user_session_info() helper function to provide
+    a RESTful API for checking user session status.
 
     Returns:
-        JSON response:
-        - If user has an active session (within 15 minutes):
-            {
-                "user_id": str,
-                "name": str,
-                "emailVerified": bool,
-                "isFaculty": bool,
-                "canDeleteFaculty": bool,
-                "clubAdmins": [int],
-                "tags": [str]
-            }, 200 status
-        - If no active session or session expired:
-            {
-                "user_id": None,
-                "name": None,
-                "emailVerified": None,
-                "isFaculty": None,
-                "canDeleteFaculty": None,
-                "clubAdmins": None,
-                "tags": None
-            }, 401 status
-        - On database connection error:
-            Same as session expired response, 401 status
-
-    Behavior:
-    - Checks session last activity timestamp
-    - Verifies user is still active in the database
-    - Retrieves user details, club administrations, and tags
-    - Updates session last activity timestamp
-    - Handles potential database connection errors
+        JSON response with user session information and appropriate status code
+        - Successful active session: User details, 200 status
+        - No active session: Null user details, 401 status
     """
-    last_activity = session.get("last_activity")
-    try:
-        if (
-            session.get("user_id") is not None
-            and last_activity is not None
-            and datetime.now(timezone.utc) - last_activity < timedelta(minutes=15)
-        ):
-            if not mysql.connection:
-                return (
-                    jsonify(
-                        {
-                            "user_id": None,
-                            "name": None,
-                            "emailVerified": None,
-                            "isFaculty": None,
-                            "canDeleteFaculty": None,
-                            "clubAdmins": None,
-                            "tags": None,
-                        }
-                    ),
-                    401,
-                )
-            cur = mysql.connection.cursor()
-            cur.execute(
-                """SELECT email, email_verified, name, is_faculty, can_delete_faculty
-                    FROM users 
-                    WHERE email = %s
-                        AND is_active = 1
-                """,
-                (session["user_id"],),
-            )
-            result = cur.fetchone()
-            cur.execute(
-                """SELECT a.club_id 
-                            FROM club_admin a
-                            INNER JOIN users u ON u.email = a.user_id
-                            WHERE a.user_id = %s
-                                AND u.is_active = 1
-                                AND a.is_active = 1
-                        """,
-                (session["user_id"],),
-            )
-            result_2 = None
-            try:
-                result_2 = cur.fetchall()
-                result_2 = list(map(lambda x: x[0], result_2))
-            except TypeError:
-                result_2 = None
-            cur.execute(
-                """SELECT tag_name 
-                        FROM tag t 
-                        INNER JOIN user_tags ut 
-                            ON t.tag_id = ut.tag_id 
-                        WHERE ut.user_id = %s""",
-                (session["user_id"],),
-            )
-            result_3 = None
-            try:
-                result_3 = cur.fetchall()
-                result_3 = list(map(lambda x: x[0], result_3))
-            except TypeError:
-                result_3 = None
-            cur.close()
-            if result is None:
-                return (
-                    jsonify(
-                        {
-                            "user_id": None,
-                            "name": None,
-                            "emailVerified": None,
-                            "isFaculty": None,
-                            "canDeleteFaculty": None,
-                            "clubAdmins": None,
-                            "tags": None,
-                        }
-                    ),
-                    401,
-                )
-            session["last_activity"] = datetime.now(timezone.utc)
-            return (
-                jsonify(
-                    {
-                        "user_id": session["user_id"],
-                        "name": result[2],
-                        "emailVerified": result[1],
-                        "isFaculty": result[3],
-                        "canDeleteFaculty": result[4],
-                        "clubAdmins": result_2,
-                        "tags": result_3,
-                    }
-                ),
-                200,
-            )
-        else:
-            return (
-                jsonify(
-                    {
-                        "user_id": None,
-                        "name": None,
-                        "emailVerified": None,
-                        "isFaculty": None,
-                        "canDeleteFaculty": None,
-                        "clubAdmins": None,
-                        "tags": None,
-                    }
-                ),
-                401,
-            )
-    except Exception as e:
-        print(e)
-        return (
-            jsonify(
-                {
-                    "user_id": None,
-                    "name": None,
-                    "emailVerified": None,
-                    "isFaculty": None,
-                    "canDeleteFaculty": None,
-                    "clubAdmins": None,
-                    "tags": None,
-                }
-            ),
-            401,
-        )
+    user_info = get_user_session_info()
+    
+    # Determine status code based on user_id presence
+    status_code = 200 if user_info["user_id"] is not None else 401
+    
+    return jsonify(user_info), status_code
 
 
 @auth_bp.route("/login", methods=["POST"])
