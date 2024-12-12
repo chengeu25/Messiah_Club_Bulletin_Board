@@ -23,8 +23,8 @@ const Event = ({
   return (
     <div>
       <Card
-        color='slate-200'
-        className='flex flex-col lg:flex-row gap-4 border-2 border-blue-900 w-full items-center'
+        color='gray-200'
+        className='flex flex-col lg:flex-row gap-4 w-full items-center'
       >
         {!small && (
           <img
@@ -50,7 +50,11 @@ const Event = ({
                 })}
               </p>
               {!small && <p>{description}</p>}
-              <p className='font-bold'>Hosted by {host.join(', ')}</p>
+              {host && (
+                <p className='font-bold'>
+                  Hosted by {host.map((host) => host.name).join(', ')}
+                </p>
+              )}
               {!small && tags?.length > 0 && (
                 <div className='inline-flex justify-center xl:justify-start gap-2'>
                   {tags?.map((tag, index) => (
@@ -66,7 +70,11 @@ const Event = ({
             </div>
           </div>
         </div>
-        <div className='flex flex-row justify-center items-center gap-2 relative'>
+        <div
+          className={`flex ${
+            small ? 'flex-col' : 'flex-row'
+          } justify-center items-center gap-2 relative`}
+        >
           <Button
             color='blue'
             text='Details'

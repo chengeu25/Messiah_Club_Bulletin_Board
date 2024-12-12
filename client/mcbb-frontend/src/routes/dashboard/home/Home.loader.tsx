@@ -14,7 +14,10 @@ const homeLoader: LoaderFunction = async () => {
     `http://localhost:3000/api/events?start_date=${encodeURIComponent(
       new Date().toISOString()
     )}&end_date=${encodeURIComponent(
-      new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
+      new Date(
+        new Date(new Date().setHours(0, 0, 0, 0)).getTime() +
+          7 * 24 * 60 * 60 * 1000
+      ).toISOString()
     )}`,
     {
       method: 'GET',
@@ -31,7 +34,6 @@ const homeLoader: LoaderFunction = async () => {
 
   const eventsJson = await response.json();
   const events = eventsJson?.events;
-  console.log(events);
   return json({ user, events }, { status: 200 });
 };
 

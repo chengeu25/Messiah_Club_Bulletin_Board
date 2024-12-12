@@ -14,7 +14,7 @@ import jwt
 from email.mime.text import MIMEText
 import base64
 import json
-import io
+import pytz
 
 app = Flask(__name__)
 # Load the secret keys from environment variables
@@ -288,7 +288,7 @@ def get_event(event_id):
     except TypeError:
         result_2 = None
     cur.execute(
-        """SELECT type FROM rsvp
+        """SELECT is_yes FROM rsvp
                 WHERE event_id = %s
                     AND user_id = %s
                     AND is_active = 1""",
@@ -319,10 +319,20 @@ def get_event(event_id):
             cur.fetchall(),
         )
     )
+    print(result[1])
+    print(type(result[1]))
     final_result = {
         "id": result[0],
-        "startTime": result[1],
-        "endTime": result[2],
+        "startTime": (
+            result[1].replace(tzinfo=pytz.UTC)
+            if result[1].tzinfo is None
+            else result[1].astimezone(pytz.UTC).isoformat()
+        ),
+        "endTime": (
+            result[2].replace(tzinfo=pytz.UTC)
+            if result[2].tzinfo is None
+            else result[2].astimezone(pytz.UTC).isoformat()
+        ),
         "location": result[3],
         "description": result[4],
         "cost": result[5],
@@ -336,11 +346,73 @@ def get_event(event_id):
     return jsonify({"event": final_result}), 200
 
 
+@app.route("/api/club_events/<club_id>", methods=["GET"])
+def get_club_events(club_id):
+    start_date = request.args.get("start_date")
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
+            INNER JOIN event_host eh
+                ON eh.event_id = e.event_id
+            WHERE eh.club_id = %s
+                AND e.is_active = 1
+                AND e.is_approved = 1
+                AND e.start_time >= %s
+            LIMIT 10""",
+        (club_id, start_date),
+    )
+    result = cur.fetchall()
+    cur.execute(
+        """SELECT r.event_id, r.is_yes FROM rsvp r
+                INNER JOIN event e 
+                    ON e.event_id = r.event_id
+                INNER JOIN event_host eh
+                    ON eh.event_id = e.event_id
+                WHERE r.user_id = %s
+                    AND e.is_active = 1
+                    AND e.is_approved = 1
+                    AND r.is_active = 1
+                    AND eh.club_id = %s""",
+        (session["user_id"], club_id),
+    )
+    result_2 = cur.fetchall()
+    result_2 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_2))
+    final_result = list(
+        map(
+            lambda x: {
+                "id": x[0],
+                "startTime": (
+                    x[1].replace(tzinfo=pytz.UTC)
+                    if x[1].tzinfo is None
+                    else x[1].astimezone(pytz.UTC).isoformat()
+                ),
+                "endTime": (
+                    x[2].replace(tzinfo=pytz.UTC)
+                    if x[2].tzinfo is None
+                    else x[2].astimezone(pytz.UTC).isoformat()
+                ),
+                "title": x[3],
+                "rsvp": next(
+                    (
+                        ("block" if item["type"] == 0 else "rsvp")
+                        for item in result_2
+                        if item["event"] == x[0]
+                    ),
+                    None,
+                ),
+            },
+            result,
+        )
+    )
+    print(result)
+    cur.close()
+    return jsonify({"events": final_result}), 200
+
+
 @app.route("/api/events", methods=["GET"])
 def get_events():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    print(start_date, end_date)
     if start_date is not None and end_date is not None:
         try:
             start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
@@ -355,14 +427,16 @@ def get_events():
             )
             result = cur.fetchall()
             cur.execute(
-                """SELECT c.club_name, eh.event_id FROM event_host eh
+                """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
                         INNER JOIN club c ON c.club_id = eh.club_id
                         WHERE c.is_active = 1""",
             )
             result_2 = cur.fetchall()
-            result_2 = list(map(lambda x: {"club": x[0], "event": x[1]}, result_2))
+            result_2 = list(
+                map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
+            )
             cur.execute(
-                """SELECT r.event_id, r.type FROM rsvp r
+                """SELECT r.event_id, r.is_yes FROM rsvp r
                         INNER JOIN event e 
                             ON e.event_id = r.event_id
                         WHERE r.user_id = %s
@@ -389,15 +463,23 @@ def get_events():
                 map(
                     lambda x: {
                         "id": x[0],
-                        "startTime": x[1],
-                        "endTime": x[2],
+                        "startTime": (
+                            x[1].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[1].tzinfo is None
+                            else x[1].astimezone(pytz.UTC).isoformat()
+                        ),
+                        "endTime": (
+                            x[2].replace(tzinfo=pytz.UTC).isoformat()
+                            if x[2].tzinfo is None
+                            else x[2].astimezone(pytz.UTC).isoformat()
+                        ),
                         "location": x[3],
                         "description": x[4],
                         "cost": x[5],
                         "title": x[6],
                         "host": list(
                             map(
-                                lambda y: y["club"],
+                                lambda y: {"name": y["club"], "id": y["club_id"]},
                                 list(
                                     filter(
                                         lambda y: y["event"] == x[0],
@@ -1539,11 +1621,11 @@ def RSVP():
             return jsonify({"error": "Invalid user_id"}), 400
 
         if typeofRSVP == "block":
-            # Insert or update the RSVP to set type to False
+            # Insert or update the RSVP to set is_yes to False
             cur.execute(
-                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                """INSERT INTO rsvp (event_id, user_id, is_yes, is_active)
                      VALUES (%s, %s, FALSE, TRUE)
-                     ON DUPLICATE KEY UPDATE type = FALSE, is_active = TRUE
+                     ON DUPLICATE KEY UPDATE is_yes = FALSE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1551,11 +1633,11 @@ def RSVP():
             return jsonify({"message": "RSVP set to 'block'"}), 200
 
         elif typeofRSVP == "rsvp":
-            # Insert or update the RSVP to set type to True
+            # Insert or update the RSVP to set is_yes to True
             cur.execute(
-                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                """INSERT INTO rsvp (event_id, user_id, is_yes, is_active)
                     VALUES (%s, %s, TRUE, TRUE)
-                    ON DUPLICATE KEY UPDATE type = TRUE, is_active = TRUE
+                    ON DUPLICATE KEY UPDATE is_yes = TRUE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1595,7 +1677,7 @@ def checkRSVP(event_id):
         cur = mysql.connection.cursor()
 
         cur.execute(
-            "SELECT type FROM rsvp WHERE event_id = %s AND user_id = %s",
+            "SELECT is_yes FROM rsvp WHERE event_id = %s AND user_id = %s",
             (event_id, user_id),
         )
         result = cur.fetchone()
@@ -1617,30 +1699,35 @@ def checkRSVP(event_id):
     finally:
         cur.close()
 
-#check subscription
 
-@app.route('/api/check_subscription', methods=['POST'])
+# check subscription
 
+
+@app.route("/api/check_subscription", methods=["POST"])
 def check_subscription():
     data = request.json
-    user_id = data.get('userId')
-    club_id = data.get('clubId')
 
- 
+    user_id = data.get("userId")
+
+    club_id = data.get("clubId")
 
     if not user_id or not club_id:
         return jsonify({"error": "Missing required fields"}), 400
 
- 
-
     try:
         cur = mysql.connection.cursor()
         # Query the database to check subscription
-        cur.execute("""
+
+        cur.execute(
+            """
+
             SELECT is_active FROM user_subscription
             WHERE email = %s AND club_id = %s
-        """, (user_id, club_id)
+
+        """,
+            (user_id, club_id),
         )
+
         result = cur.fetchone()
 
         if result and result[0] == 1:
@@ -1648,22 +1735,23 @@ def check_subscription():
         else:
             return jsonify({"isSubscribed": False}), 200
 
- 
-
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": "Database operation failed"}), 500
 
- 
 
 # Handle subscribe and unsubscribe actions
-@app.route('/api/subscribe', methods=['POST'])
+
+
+@app.route("/api/subscribe", methods=["POST"])
 def manage_subscription():
     data = request.json
 
-    action = data.get('action')
-    club_id = data.get('clubId')
-    user_id = data.get('userId')  # Ensure this matches the query string
+    action = data.get("action")
+
+    club_id = data.get("clubId")
+
+    user_id = data.get("userId")  # Ensure this matches the query string
 
     print(f"Received data: {data}")
     print(f"Query parameters: user_id={user_id}")
@@ -1673,11 +1761,11 @@ def manage_subscription():
         print("Error: Missing required fields")
         return jsonify({"error": "Missing required fields"}), 400
 
- 
-
     try:
         cur = mysql.connection.cursor()
-        if action == 'subscribe':
+
+        if action == "subscribe":
+
             # Check if subscription exists
             subscription = cur.execute(
                 """
@@ -1686,13 +1774,16 @@ def manage_subscription():
                 """,
                 (user_id, club_id),
             )
+            subscription = cur.fetchone()
 
             if subscription:
                 # Update existing subscription
                 cur.execute(
                     """
                     UPDATE user_subscription
-                    SET is_active = 1
+
+                    SET is_active = 1, subscribed_or_blocked = 1
+
                     WHERE email = %s AND club_id = %s
                     """,
                     (user_id, club_id),
@@ -1701,12 +1792,17 @@ def manage_subscription():
                 # Insert new subscription
                 cur.execute(
                     """
-                    INSERT INTO user_subscription (email, club_id, is_active)
-                    VALUES (%s, %s, 1)
+
+                    INSERT INTO user_subscription (email, club_id, is_active, subscribed_or_blocked)
+
+                    VALUES (%s, %s, 1, 1)
+
                     """,
                     (user_id, club_id),
                 )
-        elif action == 'unsubscribe':
+
+        elif action == "unsubscribe":
+
             # Deactivate subscription
             cur.execute(
                 """
@@ -1723,6 +1819,7 @@ def manage_subscription():
     except Exception as e:
         print(f"Error: {str(e)}")
         return jsonify({"error": "Database operation failed"}), 500
+
 
 @app.route("/api/assignFaculty", methods=["POST"])
 def assignFaculty():
@@ -1766,7 +1863,12 @@ def assignFaculty():
             (can_delete, email),
         )
         mysql.connection.commit()
-        return jsonify({"name": result[0], "email": email, "can_delete_faculty": can_delete}), 200
+        return (
+            jsonify(
+                {"name": result[0], "email": email, "can_delete_faculty": can_delete}
+            ),
+            200,
+        )
         # return jsonify({"message": "Faculty assigned successfully"}), 200
 
     except Exception as e:
@@ -1777,18 +1879,21 @@ def assignFaculty():
     finally:
         cur.close()
 
-@app.route('/api/getFacultyData', methods=['GET'])
+
+@app.route("/api/getFacultyData", methods=["GET"])
 def get_faculty_data():
     try:
         # Connect to the database
         cur = mysql.connection.cursor()
 
         # Query to fetch faculty data
-        cur.execute("""
+        cur.execute(
+            """
             SELECT name, email, can_delete_faculty 
             FROM users
             WHERE is_faculty = 1
-        """)
+        """
+        )
         result = cur.fetchall()
 
         # Convert result into a list of dictionaries
@@ -1805,10 +1910,11 @@ def get_faculty_data():
         return jsonify({"error": "An unexpected error occurred"}), 500
 
     finally:
-        if 'cur' in locals() and cur:
+        if "cur" in locals() and cur:
             cur.close()
 
-@app.route('/api/removeFaculty', methods=['POST'])
+
+@app.route("/api/removeFaculty", methods=["POST"])
 def remove_faculty():
     data = request.get_json()
     try:
@@ -1816,7 +1922,8 @@ def remove_faculty():
         cur = mysql.connection.cursor()
 
         # Query to remove faculty privileges
-        cur.execute("""
+        cur.execute(
+            """
             UPDATE users
             SET is_faculty = 0,
                 can_delete_faculty = 0
@@ -1825,16 +1932,17 @@ def remove_faculty():
         )
         mysql.connection.commit()
         return jsonify({"message": "Faculty privileges removed"}), 200
-    
+
     except Exception as e:
         # Log the error and return an internal server error
         print(f"Error removing faculty: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
-    
+
     finally:
         cur.close()
 
-@app.route('/api/assignDelete', methods=["POST"])
+
+@app.route("/api/assignDelete", methods=["POST"])
 def assign_delete():
     data = request.get_json()
 
@@ -1847,18 +1955,22 @@ def assign_delete():
             """UPDATE users
                 SET can_delete_faculty = %s
                 WHERE email = %s""",
-                (data["cdf"], data["email"],),
+            (
+                data["cdf"],
+                data["email"],
+            ),
         )
         mysql.connection.commit()
         return jsonify({"message": "Deletion ablilities removed"}), 200
-    
+
     except Exception as e:
         # Log the error and return an internal server error
         print(f"Error removing faculty: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
-    
+
     finally:
         cur.close()
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=3000)

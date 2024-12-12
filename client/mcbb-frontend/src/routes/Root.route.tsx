@@ -11,13 +11,6 @@ import {
   useSearchParams
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
-import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { BiHome } from 'react-icons/bi';
-import {
-  getMonthName,
-  getMostRecentSunday,
-  getNextSaturday
-} from '../helper/dateUtils';
 import { useEffect, useMemo, useState } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/specialDropdowns/UserDropdown.component';
@@ -31,7 +24,7 @@ const Root = () => {
   const navigate = useNavigate();
   const location = useLocation();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_params, setParams] = useSearchParams();
+  const [params, setParams] = useSearchParams();
 
   const [selectedFilter, setSelectedFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,13 +45,10 @@ const Root = () => {
 
   useEffect(() => {
     if (currentPage === 'Events' || currentPage === 'Clubs') {
-      setParams(
-        {
-          search: searchQuery,
-          filter: selectedFilter
-        },
-        { replace: true }
-      );
+      const newParams = new URLSearchParams(params.toString());
+      newParams.set('search', searchQuery);
+      newParams.set('filter', selectedFilter);
+      setParams(newParams, { replace: true });
     }
   }, [searchQuery, selectedFilter, setParams, currentPage]);
 
@@ -87,35 +77,6 @@ const Root = () => {
               setSearchQuery={setSearchQuery}
               selectStyles={selectStyles}
             />
-            {location.pathname.includes('/calendar') && (
-              <div className='flex flex-row gap-2 h-full justify-center items-center'>
-                <Button
-                  icon={<BiHome />}
-                  color='white'
-                  filled={false}
-                  className='p-2 h-full'
-                />
-                <Button
-                  icon={<IoIosArrowBack />}
-                  color='white'
-                  filled={false}
-                  className='p-2 h-full'
-                />
-                <p className='text-nowrap'>{`${getMonthName(
-                  new Date()
-                )} ${getMostRecentSunday(
-                  new Date()
-                ).getDate()} - ${getNextSaturday(
-                  new Date()
-                ).getDate()}, ${new Date().getFullYear()}`}</p>
-                <Button
-                  icon={<IoIosArrowForward />}
-                  color='white'
-                  filled={false}
-                  className='p-2 h-full'
-                />
-              </div>
-            )}
           </div>
         ) : (
           <></>

@@ -116,7 +116,12 @@ const router = createBrowserRouter(
           loader={assignFacultyLoader}
           action={assignFacultyAction}
         />
-        <Route path='calendar' element={<Calendar />} loader={calendarLoader} />
+        <Route
+          path='calendar'
+          element={<Calendar />}
+          loader={calendarLoader}
+          action={homeAction}
+        />
         <Route
           path='clubs'
           element={<Clubs />}
