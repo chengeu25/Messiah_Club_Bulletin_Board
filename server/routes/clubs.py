@@ -8,6 +8,34 @@ clubs_bp = Blueprint("clubs", __name__)
 
 @clubs_bp.route("/clubs", methods=["GET"])
 def get_clubs():
+    """
+    Retrieve a list of all active clubs with their details.
+
+    This endpoint fetches all active clubs from the database, including their
+    ID, name, description, and logo. It also retrieves and attaches tags for each club.
+
+    Returns:
+        JSON response with the following structure:
+        - On success:
+            {
+                "clubs": [
+                    {
+                        "id": int,
+                        "name": str,
+                        "description": str,
+                        "image": str (base64 encoded logo or None),
+                        "tags": [str]
+                    }
+                ]
+            }
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - If no clubs are found:
+            {"error": "No clubs found"}, 404 status
+
+    Raises:
+        TypeError: If there's an issue processing the database results
+    """
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -68,6 +96,34 @@ def get_clubs():
 
 @clubs_bp.route("/inactive-clubs", methods=["GET"])
 def get_inactive_clubs():
+    """
+    Retrieve a list of all inactive clubs with their details.
+
+    This endpoint fetches all inactive clubs from the database, including their
+    ID, name, description, and logo. It also retrieves and attaches tags for each club.
+
+    Returns:
+        JSON response with the following structure:
+        - On success:
+            {
+                "clubs": [
+                    {
+                        "id": int,
+                        "name": str,
+                        "description": str,
+                        "image": str (base64 encoded logo or None),
+                        "tags": [str]
+                    }
+                ]
+            }
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - If no clubs are found:
+            {"error": "No clubs found"}, 404 status
+
+    Raises:
+        TypeError: If there's an issue processing the database results
+    """
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -128,6 +184,50 @@ def get_inactive_clubs():
 
 @clubs_bp.route("/club/<club_id>", methods=["GET"])
 def get_club(club_id):
+    """
+    Retrieve detailed information about a specific club.
+
+    This endpoint fetches comprehensive details for a club by its ID, including:
+    - Basic club information (name, description, logo)
+    - Active club administrators
+    - Club images
+    - Club tags
+
+    Args:
+        club_id (str): The unique identifier of the club to retrieve.
+
+    Returns:
+        JSON response with the following structure:
+        {
+            "id": int,
+            "name": str,
+            "description": str,
+            "image": str (base64 encoded logo or None),
+            "admins": [
+                {
+                    "user": str (email),
+                    "id": int,
+                    "name": str
+                }
+            ],
+            "images": [
+                {
+                    "image": str (base64 encoded image),
+                    "id": int
+                }
+            ],
+            "tags": [
+                {
+                    "label": str,
+                    "value": int
+                }
+            ]
+        }
+
+    Raises:
+        - Returns 404 if the club is not found
+        - Returns 500 if there's a database connection error
+    """
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -189,6 +289,46 @@ def get_club(club_id):
 
 @clubs_bp.route("/update-club", methods=["PUT"])
 def update_club():
+    """
+    Update an existing club's information.
+
+    This endpoint allows updating a club's details, including:
+    - Club name
+    - Description
+    - Logo/Image
+    - Active status
+
+    Expects a JSON payload with the following structure:
+    {
+        "id": int,
+        "name": str,
+        "description": str,
+        "image": str (optional, base64 encoded image)
+        "images": [
+            {
+                "image": str (base64 encoded image),
+                "id": int
+            }
+        ],
+        "tags": [int]
+        "admins": [str (email addresses)]
+    }
+
+    Returns:
+        JSON response:
+        - On successful update: Returns updated club details
+        - On validation error:
+            {"error": "An active club with this name already exists."}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On update failure:
+            {"error": "Failed to update the club"}, 400 status
+
+    Raises:
+        - Validates uniqueness of club name
+        - Handles database transaction (commit/rollback)
+        - Supports optional logo/image update
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data provided"}), 400
@@ -338,6 +478,28 @@ def update_club():
 
 @clubs_bp.route("/delete-club/<club_id>", methods=["DELETE"])
 def delete_club(club_id):
+    """
+    Soft delete a club by setting its active status to inactive.
+
+    This endpoint marks a club as inactive in the database, effectively
+    removing it from active listings without permanently deleting the record.
+
+    Args:
+        club_id (str): The unique identifier of the club to be deleted.
+
+    Returns:
+        JSON response:
+        - On successful deletion:
+            {"message": "Club successfully deleted"}, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On deletion failure:
+            {"error": "Failed to delete the club"}, 400 status
+
+    Raises:
+        - Handles database transaction (commit/rollback)
+        - Ensures database integrity during soft delete process
+    """
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -359,6 +521,51 @@ def delete_club(club_id):
 
 @clubs_bp.route("/new-club", methods=["POST"])
 def new_club():
+    """
+    Create a new club in the database.
+
+    This endpoint handles the creation of a new club, including:
+    - Validating club name uniqueness
+    - Inserting club details
+    - Handling optional logo/image upload
+    - Managing club tags
+    - Assigning initial club administrators
+
+    Expects a JSON payload with the following structure:
+    {
+        "name": str,
+        "description": str,
+        "image": str (optional, base64 encoded image),
+        "tags": [int],
+        "admins": [str (email addresses)],
+        "images": [
+            {
+                "image": str (base64 encoded image),
+                "id": int
+            }
+        ]
+    }
+
+    Returns:
+        JSON response:
+        - On successful creation:
+            {
+                "message": "Club created successfully",
+                "club_id": int
+            }, 201 status
+        - On validation error:
+            {"error": "A club with this name already exists"}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On creation failure:
+            {"error": "Failed to create the club"}, 400 status
+
+    Raises:
+        - Validates uniqueness of club name
+        - Handles database transaction (commit/rollback)
+        - Supports optional logo/image upload
+        - Manages multiple club tags and administrators
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data provided"}), 400

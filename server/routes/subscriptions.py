@@ -6,6 +6,39 @@ subscriptions_bp = Blueprint("subscriptions", __name__)
 
 @subscriptions_bp.route("/check-subscription", methods=["POST"])
 def check_subscription():
+    """
+    Check if a user is subscribed to a specific club.
+
+    This endpoint verifies a user's subscription status for a given club.
+
+    Request JSON Parameters:
+        userId (str): User's email address
+        clubId (int): Unique identifier for the club
+
+    Returns:
+        JSON response:
+        - On successful check:
+            {"isSubscribed": bool}, 200 status
+                - True if user is actively subscribed
+                - False if user is not subscribed or subscription is inactive
+        - On validation failure:
+            {"error": "Missing required fields"}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected database error:
+            {"error": "Database operation failed"}, 500 status
+
+    Behavior:
+    - Validates input parameters
+    - Queries user_subscription table
+    - Checks subscription status based on is_active flag
+    - Returns boolean indicating subscription state
+
+    Security Considerations:
+    - Validates input data
+    - Prevents unauthorized access to subscription information
+    - Handles potential database errors gracefully
+    """
     data = request.json
 
     if data is None:
@@ -46,6 +79,46 @@ def check_subscription():
 
 @subscriptions_bp.route("/subscribe", methods=["POST"])
 def manage_subscription():
+    """
+    Manage user's subscription status for a specific club.
+
+    This endpoint allows users to subscribe or unsubscribe from a club.
+
+    Request JSON Parameters:
+        action (str): Subscription action
+            - 'subscribe': Add or reactivate subscription
+            - 'unsubscribe': Deactivate subscription
+        clubId (int): Unique identifier for the club
+        userId (str): User's email address
+
+    Returns:
+        JSON response:
+        - On successful subscription action:
+            {"success": True}, 200 status
+        - On validation failure:
+            {"error": "Missing required fields"}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected database error:
+            {"error": "Database operation failed"}, 500 status
+
+    Behavior:
+    - Validates input parameters
+    - Supports two subscription actions:
+      1. Subscribe:
+         - Checks for existing subscription
+         - Creates new subscription or reactivates existing
+      2. Unsubscribe:
+         - Deactivates existing subscription
+    - Uses MySQL transactions for data integrity
+    - Commits changes on successful action
+
+    Security Considerations:
+    - Validates input data
+    - Prevents unauthorized subscription modifications
+    - Handles potential database errors gracefully
+    - Supports idempotent subscription management
+    """
     data = request.json
 
     if data is None:
@@ -97,11 +170,8 @@ def manage_subscription():
                 # Insert new subscription
                 cur.execute(
                     """
-
                     INSERT INTO user_subscription (email, club_id, is_active, subscribed_or_blocked)
-
                     VALUES (%s, %s, 1, 1)
-
                     """,
                     (user_id, club_id),
                 )

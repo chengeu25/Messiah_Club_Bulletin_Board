@@ -11,8 +11,36 @@ from werkzeug.utils import secure_filename
 events_bp = Blueprint("events", __name__)
 
 
+# Check if the file is allowed based on its extension
 def allowed_file(filename):
-    """Check if the file is allowed based on its extension"""
+    """
+    Validate if an uploaded file has an allowed image file extension.
+
+    This function checks whether the uploaded file has an extension
+    that is considered safe and acceptable for image uploads.
+
+    Args:
+        filename (str): The name of the file to be validated
+
+    Returns:
+        bool: True if the file extension is allowed, False otherwise
+
+    Allowed File Extensions:
+    - .png (Portable Network Graphics)
+    - .jpg, .jpeg (Joint Photographic Experts Group)
+    - .gif (Graphics Interchange Format)
+    - .webp (Web Picture Format)
+
+    Behavior:
+    - Converts filename to lowercase to ensure case-insensitive matching
+    - Checks file extension against a predefined set of allowed extensions
+    - Returns False for files with no extension or unrecognized extensions
+
+    Security Considerations:
+    - Prevents upload of potentially malicious file types
+    - Limits file uploads to common image formats
+    - Case-insensitive extension checking
+    """
     return (
         "." in filename
         and filename.rsplit(".", 1)[1].lower() in Config.ALLOWED_EXTENSIONS
@@ -20,6 +48,24 @@ def allowed_file(filename):
 
 
 def get_club_id(cur, club_name):
+    """
+    Retrieve the club ID for a given club name.
+
+    Args:
+        cur (mysql.connection.cursor): Active database cursor
+        club_name (str): Name of the club to look up
+
+    Returns:
+        int: The unique identifier for the club
+
+    Raises:
+        ValueError: If no club is found with the given name
+
+    Behavior:
+    - Queries the club table for the matching club name
+    - Returns the first column (club_id) if found
+    - Raises an exception if no matching club exists
+    """
     cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
     result = cur.fetchone()
     if result:
@@ -30,6 +76,49 @@ def get_club_id(cur, club_name):
 
 @events_bp.route("/event/<event_id>", methods=["GET"])
 def get_event(event_id):
+    """
+    Retrieve detailed information for a specific event.
+
+    This endpoint fetches comprehensive event details including:
+    - Basic event information
+    - Hosting clubs
+    - User's RSVP status
+    - Event tags
+    - Event images
+
+    Args:
+        event_id (str): Unique identifier for the event
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "event": {
+                    "id": int,
+                    "startTime": str,
+                    "endTime": str,
+                    "location": str,
+                    "description": str,
+                    "cost": float,
+                    "title": str,
+                    "host": [{"name": str, "id": int}],
+                    "rsvp": str or None,
+                    "tags": [str],
+                    "images": [{"image": str, "id": int}]
+                }
+            }, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On event not found:
+            {"error": "The requested event was not found on the server"}, 404 status
+
+    Behavior:
+    - Requires an active MySQL database connection
+    - Fetches event details from multiple database tables
+    - Converts timestamps to UTC
+    - Retrieves event hosts, RSVP status, tags, and images
+    - Handles cases where optional data might be missing
+    """
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -119,6 +208,43 @@ def get_event(event_id):
 
 @events_bp.route("/club-events/<club_id>", methods=["GET"])
 def get_club_events(club_id):
+    """
+    Retrieve events for a specific club from a given start date.
+
+    This endpoint fetches upcoming events for a club, limited to 10 events,
+    and includes the user's RSVP status for each event.
+
+    Args:
+        club_id (str): Unique identifier for the club
+
+    Query Parameters:
+        start_date (str, optional): ISO format date to start fetching events from
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "events": [
+                    {
+                        "id": int,
+                        "startTime": str,
+                        "endTime": str,
+                        "title": str,
+                        "rsvp": str or None
+                    }
+                ]
+            }, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Requires an active MySQL database connection
+    - Fetches up to 10 upcoming events for the specified club
+    - Converts timestamps to UTC
+    - Retrieves user's RSVP status for each event
+    - Supports filtering events from a specific start date
+    - Limits result set to prevent overwhelming response
+    """
     start_date = request.args.get("start_date")
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
@@ -183,6 +309,44 @@ def get_club_events(club_id):
 
 @events_bp.route("/events", methods=["GET"])
 def get_events():
+    """
+    Retrieve events within a specified date range.
+
+    This endpoint fetches events occurring between a start and end date,
+    providing a comprehensive view of events within a given time period.
+
+    Query Parameters:
+        start_date (str): ISO format start date for event range
+        end_date (str): ISO format end date for event range
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "events": [
+                    {
+                        "id": int,
+                        "startTime": str,
+                        "endTime": str,
+                        "location": str,
+                        "description": str,
+                        "cost": float,
+                        "title": str
+                    }
+                ]
+            }, 200 status
+        - On missing date parameters:
+            Implicit 400 status (no response returned)
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Requires both start_date and end_date query parameters
+    - Converts input dates to standard format
+    - Fetches active and approved events within the specified date range
+    - Supports retrieving events across multiple days
+    - Filters out inactive or unapproved events
+    """
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
     if start_date is not None and end_date is not None:
@@ -298,6 +462,59 @@ def get_events():
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
+    """
+    Create a new event for a specific club.
+
+    This endpoint allows authenticated users to create a new event with
+    comprehensive details, including optional photos and tags.
+
+    Authentication:
+    - Requires user to be logged in
+    - User must have appropriate permissions to create an event
+
+    Request Form Parameters:
+        clubName (str): Name of the hosting club
+        eventName (str): Title of the event
+        description (str): Detailed description of the event
+        startDate (str): ISO 8601 formatted start date and time (UTC)
+        endDate (str): ISO 8601 formatted end date and time (UTC)
+        location (str): Physical or virtual location of the event
+        eventCost (float, optional): Cost to attend the event
+        tags (str, optional): JSON array of tag IDs associated with the event
+        eventPhotos (file[], optional): List of image files to attach to the event
+
+    Returns:
+        JSON response:
+        - On successful event creation:
+            {
+                "message": "Event created successfully",
+                "event_id": int
+            }, 201 status
+        - On authentication failure:
+            {"error": "User not logged in"}, 401 status
+        - On validation failure:
+            {"error": "Missing required fields"}, 400 status
+            {"error": "Invalid event cost value"}, 400 status
+            {"error": "Invalid tags format, should be a JSON array"}, 400 status
+        - On database or server error:
+            {"error": "Failed to create event"}, 500 status
+
+    Behavior:
+    - Validates all input parameters
+    - Converts event cost to float or None
+    - Handles multiple file uploads for event photos
+    - Supports optional tags and event cost
+    - Converts dates to UTC timezone
+    - Generates a new event record in the database
+    - Associates event with hosting club
+    - Attaches tags and photos to the event
+    - Logs event creation for audit purposes
+
+    Security Considerations:
+    - Checks user authentication before event creation
+    - Validates file types for uploaded photos
+    - Sanitizes input data to prevent injection
+    """
     # Check if the user is logged in
     user_id = session.get("user_id")
     if not user_id:
@@ -426,7 +643,10 @@ def create_event():
         cur.close()
 
         # Return a success response
-        return jsonify({"message": "Event created successfully"}), 200
+        return (
+            jsonify({"message": "Event created successfully", "event_id": event_id}),
+            201,
+        )
 
     except Exception as e:
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500

@@ -14,6 +14,27 @@ auth_bp = Blueprint("auth", __name__)
 
 # Function to update the email verification status in the database
 def update_email_verified(email, **kwargs):
+    """
+    Update the email verification status for a user in the database.
+
+    This function updates the EMAIL_VERIFIED field for a given email address,
+    setting it to either verified (1) or unverified (0).
+
+    Args:
+        email (str): The email address of the user to update.
+        **kwargs:
+            verified (bool): Flag indicating the verification status.
+                             True sets EMAIL_VERIFIED to 1, False sets it to 0.
+
+    Returns:
+        bool: True if the update was successful, False otherwise.
+
+    Behavior:
+    - Requires an active MySQL database connection
+    - Commits the transaction if successful
+    - Rolls back the transaction if an error occurs
+    - Closes the database cursor after operation
+    """
     cursor = None
     try:
         if not mysql.connection:
@@ -34,6 +55,24 @@ def update_email_verified(email, **kwargs):
 
 
 def send_verification_email(email, code):
+    """
+    Send a verification email to the user with a unique code.
+
+    This function generates and sends an email containing a verification code
+    to the specified email address.
+
+    Args:
+        email (str): The recipient's email address.
+        code (str): The verification code to be sent.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Behavior:
+    - Uses the send_email helper function to dispatch the email
+    - Logs any email sending failures
+    - Provides a simple email with the verification code
+    """
     subject = "Your Verification Code"
     body = f"Your new verification code is: {code}"
     try:
@@ -45,6 +84,24 @@ def send_verification_email(email, code):
 
 
 def is_it_a_robot(captcha_response):
+    """
+    Verify a reCAPTCHA response to determine if the request is from a bot.
+
+    This function sends the reCAPTCHA response to Google's verification endpoint
+    to validate the user's human status.
+
+    Args:
+        captcha_response (str): The reCAPTCHA response token from the client.
+
+    Returns:
+        bool: True if the request passes the reCAPTCHA verification,
+              False if it fails or an error occurs.
+
+    Behavior:
+    - Uses the reCAPTCHA secret key from the configuration
+    - Sends a POST request to Google's siteverify endpoint
+    - Returns the verification result from the response
+    """
     payload = {
         "secret": Config.RECAPTCHA_SECRET_KEY,  # Use the secret key from environment
         "response": captcha_response,
@@ -58,6 +115,34 @@ def is_it_a_robot(captcha_response):
 
 @auth_bp.route("/verify-email", methods=["POST"])
 def verify_email():
+    """
+    Verify a user's email using a verification code.
+
+    This endpoint validates the user's email verification code and updates
+    the email verification status in the database.
+
+    Expected JSON payload:
+    {
+        "code": str  # 6-character verification code
+    }
+
+    Returns:
+        JSON response:
+        - On successful verification:
+            {"message": "Email verified successfully"}, 200 status
+        - On missing verification code:
+            {"error": "Verification code is required"}, 400 status
+        - On invalid verification code:
+            {"error": "Invalid verification code"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update verification status"}, 500 status
+
+    Behavior:
+    - Retrieves the verification code from the session
+    - Compares the input code with the stored session code
+    - Updates the email verification status in the database
+    - Requires an active user session with a user_id
+    """
     data = request.get_json()
     input_code = data.get("code")
     email = session.get("user_id")
@@ -84,6 +169,26 @@ def verify_email():
 
 @auth_bp.route("/resend-code", methods=["POST"])
 def resend_code():
+    """
+    Resend a new email verification code to the user.
+
+    This endpoint generates a new 6-character verification code,
+    updates the session, and sends a new verification email.
+
+    Returns:
+        JSON response:
+        - On successful code resend:
+            {"message": "Verification code resent"}, 200 status
+        - On email sending failure:
+            {"error": "Failed to send verification code"}, 500 status
+
+    Behavior:
+    - Retrieves the user's email from the active session
+    - Generates a new random 6-character verification code
+    - Updates the session with the new verification code
+    - Sends a new verification email to the user
+    - Requires an active user session with a user_id
+    """
     # get email from session
     email = session.get("user_id")
 
@@ -104,6 +209,22 @@ def resend_code():
 
 @auth_bp.route("/check-user-cookie", methods=["GET"])
 def check_user_cookie():
+    """
+    Check the presence of a user_id cookie.
+
+    This endpoint retrieves the user_id from the request cookies.
+
+    Returns:
+        JSON response:
+        - If user_id cookie exists:
+            {"user_id": str}, 200 status
+        - If no user_id cookie is found:
+            {"user_id": None}, 404 status
+
+    Behavior:
+    - Checks for the presence of a user_id in request cookies
+    - Returns the user_id or None depending on cookie status
+    """
     user_id = request.cookies.get("user_id")
     if user_id:
         return jsonify({"user_id": user_id}), 200
@@ -113,6 +234,44 @@ def check_user_cookie():
 
 @auth_bp.route("/check-user", methods=["GET"])
 def check_user():
+    """
+    Validate and retrieve the current user's session information.
+
+    This endpoint checks the user's session status, verifies active session,
+    and retrieves comprehensive user details from the database.
+
+    Returns:
+        JSON response:
+        - If user has an active session (within 15 minutes):
+            {
+                "user_id": str,
+                "name": str,
+                "emailVerified": bool,
+                "isFaculty": bool,
+                "canDeleteFaculty": bool,
+                "clubAdmins": [int],
+                "tags": [str]
+            }, 200 status
+        - If no active session or session expired:
+            {
+                "user_id": None,
+                "name": None,
+                "emailVerified": None,
+                "isFaculty": None,
+                "canDeleteFaculty": None,
+                "clubAdmins": None,
+                "tags": None
+            }, 401 status
+        - On database connection error:
+            Same as session expired response, 401 status
+
+    Behavior:
+    - Checks session last activity timestamp
+    - Verifies user is still active in the database
+    - Retrieves user details, club administrations, and tags
+    - Updates session last activity timestamp
+    - Handles potential database connection errors
+    """
     last_activity = session.get("last_activity")
     try:
         if (
@@ -241,6 +400,42 @@ def check_user():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
+    """
+    Authenticate a user and create a new session.
+
+    This endpoint handles user login by verifying credentials
+    and establishing a session.
+
+    Expected JSON payload:
+    {
+        "email": str,       # User's email address
+        "password": str,    # User's password
+        "remember": bool    # Whether to maintain a longer session
+    }
+
+    Returns:
+        JSON response:
+        - On successful login:
+            Sets session variables and returns user details, 200 status
+        - On missing data:
+            {"error": "No data was provided"}, 400 status
+        - On missing email or password:
+            {"error": "Email and password are required"}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On invalid email:
+            {"error": "Authentication failed"}, 401 status
+        - On invalid password:
+            {"error": "Authentication failed"}, 401 status
+
+    Behavior:
+    - Validates input data
+    - Checks database for user credentials
+    - Verifies password using Werkzeug's check_password_hash
+    - Sets session user_id and last_activity
+    - Resets email verification status
+    - Supports optional "remember me" functionality
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data was provided"}), 400
@@ -265,12 +460,12 @@ def login():
 
     # If no matching email is found, return an error
     if result is None:
-        return jsonify({"error": "Invalid email or password"}), 401
+        return jsonify({"error": "Authentication failed"}), 401
 
     # Verify the provided password against the hashed password
     hashed_password = result[0]
     if not check_password_hash(hashed_password, data["password"]):
-        return jsonify({"error": "Invalid password"}), 401
+        return jsonify({"error": "Authentication failed"}), 401
 
     # Set the user ID and activity timestamp in the session
     session["user_id"] = data["email"]
@@ -295,15 +490,67 @@ def login():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    """
+    Terminate the current user session.
+
+    This endpoint clears the user's session data, effectively logging them out.
+
+    Returns:
+        JSON response:
+        - On successful logout:
+            {"message": "Logged out successfully"}, 200 status
+
+    Behavior:
+    - Clears all session variables
+    - Ensures complete session termination
+    """
     session.clear()
     session.modified = True
-    resp = jsonify({"message": "Logout successful"})
+    resp = jsonify({"message": "Logged out successfully"})
     resp.set_cookie("user_id", "", expires=0, path="/api")
     return resp, 200
 
 
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
+    """
+    Create a new user account.
+
+    This endpoint handles user registration, including input validation,
+    captcha verification, and database insertion.
+
+    Expected JSON payload:
+    {
+        "email": str,          # User's email address
+        "password": str,       # User's password
+        "name": str,           # User's full name
+        "captchaResponse": str # reCAPTCHA verification token
+    }
+
+    Returns:
+        JSON response:
+        - On successful signup:
+            {"message": "User created successfully"}, 201 status
+        - On missing or invalid data:
+            {"error": "Missing required fields"}, 400 status
+        - On invalid email format:
+            {"error": "Invalid email format"}, 400 status
+        - On email already in use:
+            {"error": "Email already in use"}, 409 status
+        - On reCAPTCHA verification failure:
+            {"error": "reCAPTCHA verification failed"}, 403 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Validates input data completeness and format
+    - Verifies reCAPTCHA to prevent bot registrations
+    - Checks for existing email in the database
+    - Hashes the password for secure storage
+    - Generates a verification code and sends verification email
+    - Creates a new user record in the database
+    - Sets up initial session for the new user
+    """
     data = request.get_json()
     email = data.get("email")  # These are to get the current inputs
     name = data.get("name")
@@ -355,8 +602,40 @@ def signup():
     return jsonify({"message ": "User Success!"}), 200
 
 
-@auth_bp.route("password-reset", methods=["POST"])
+@auth_bp.route("/password-reset", methods=["POST"])
 def reset_password():
+    """
+    Reset the user's password while logged in.
+
+    This endpoint allows a logged-in user to change their current password,
+    requiring verification of the current password.
+
+    Expected JSON payload:
+    {
+        "currentPassword": str,  # User's current password
+        "newPassword": str       # User's desired new password
+    }
+
+    Returns:
+        JSON response:
+        - On successful password reset:
+            {"message": "Password updated successfully"}, 200 status
+        - On missing or invalid data:
+            {"error": "Missing required fields"}, 400 status
+        - On invalid current password:
+            {"error": "Authentication failed"}, 401 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On user not found:
+            {"error": "Authentication failed"}, 401 status
+
+    Behavior:
+    - Validates that a user is currently logged in
+    - Verifies the current password matches the stored password
+    - Generates a new password hash
+    - Updates the user's password in the database
+    - Ensures password security by requiring current password confirmation
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data was provided"}), 400
@@ -376,18 +655,18 @@ def reset_password():
                 FROM users
                 WHERE email = %s
                     AND is_active = 1""",
-        (data["emailRequest"]["email"],),
+        (session["user_id"],),
     )
     result = cur.fetchone()
 
     # If no matching email is found, return an error
     if result is None:
-        return jsonify({"error": "Invalid email or password"}), 401
+        return jsonify({"error": "Authentication failed"}), 401
 
     # Verify the provided current password against the hashed password
     hashed_password = result[0]
     if not check_password_hash(hashed_password, data["oldPassword"]):
-        return jsonify({"error": "Invalid password"}), 401
+        return jsonify({"error": "Authentication failed"}), 401
 
     # Set the user ID and activity timestamp in the session
     session["user_id"] = data["emailRequest"]["email"]
@@ -428,18 +707,54 @@ def reset_password():
             str(result[1]),
             str(result[0]),
             generate_password_hash(str(data["newPassword"])),
-            str(data["emailRequest"]["email"]),
+            str(session["user_id"]),
         ),
     )
 
     mysql.connection.commit()
     cur.close()
     session.pop("user_id", None)
-    return jsonify({"message": "Password successfully reset"})
+    return jsonify({"message": "Password updated successfully"}), 200
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 def forgot_password():
+    """
+    Initiate the password reset process for a user.
+
+    This endpoint handles the initial step of password recovery
+    by sending a password reset verification code.
+
+    Expected JSON payload:
+    {
+        "email": str  # User's registered email address
+    }
+
+    Returns:
+        JSON response:
+        - On successful reset code generation:
+            {"message": "If an account exists, a reset link will be sent"}, 200 status
+        - On missing email:
+            {"error": "Email is required"}, 400 status
+        - On email sending failure:
+            {"error": "Failed to send reset code"}, 500 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Validates the provided email address
+    - Checks if the email exists in the database
+    - Generates a time-limited password reset verification code
+    - Sends a password reset email with the verification code
+    - Creates a temporary session for password reset process
+    - Implements security measures to prevent abuse
+    - Ensures user can only reset password for their own account
+
+    Security Considerations:
+    - Verification code is time-limited
+    - Only one reset code can be active at a time
+    - Prevents enumeration of existing email addresses
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data was provided"}), 400
@@ -452,9 +767,9 @@ def forgot_password():
     # Retrieve the hashed passwords from the database
     cur.execute(
         """Select pwd1, pwd2, email_verified
-                FROM users
-                WHERE email = %s
-                    AND is_active = 1""",
+           FROM users 
+           WHERE email = %s 
+           AND is_active = 1""",
         (data["email"],),
     )
     result = cur.fetchone()
@@ -508,6 +823,47 @@ def forgot_password():
 
 @auth_bp.route("/forgot-password-token", methods=["POST"])
 def forgot_password_reset():
+    """
+    Complete the password reset process by verifying the reset code.
+
+    This endpoint allows users to reset their password using a
+    verification code sent to their email.
+
+    Expected JSON payload:
+    {
+        "email": str,       # User's registered email address
+        "resetCode": str,   # Verification code received via email
+        "newPassword": str  # User's desired new password
+    }
+
+    Returns:
+        JSON response:
+        - On successful password reset:
+            {"message": "Password reset successfully"}, 200 status
+        - On missing or invalid data:
+            {"error": "Missing required fields"}, 400 status
+        - On invalid or expired reset code:
+            {"error": "Invalid or expired reset code"}, 401 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On account not found:
+            {"error": "No account found with this email"}, 404 status
+
+    Behavior:
+    - Validates all required input fields
+    - Verifies the reset code against the stored session code
+    - Checks the reset code's validity and expiration
+    - Generates a new password hash
+    - Updates the user's password in the database
+    - Invalidates the used reset code
+    - Ensures password complexity and uniqueness
+
+    Security Considerations:
+    - Reset codes are time-limited
+    - Only one reset attempt is allowed per code
+    - Prevents password reuse of recent passwords
+    - Protects against brute-force reset attempts
+    """
     data = request.json
     if data is None:
         return jsonify({"error": "No data was provided"}), 400

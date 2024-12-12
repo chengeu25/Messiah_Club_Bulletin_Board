@@ -4,6 +4,28 @@ from config import Config
 
 
 def send_email(to_email, subject, body):
+    """
+    Send an email using the configured Gmail SMTP server.
+
+    This function sends an email from the predefined sender email to the specified recipient.
+    It uses the SMTP protocol with TLS encryption to send emails via Gmail's SMTP server.
+
+    Args:
+        to_email (str): The email address of the recipient.
+        subject (str): The subject line of the email.
+        body (str): The plain text content of the email.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If the email fails to send, with details about the failure.
+
+    Note:
+        - Requires SENDER_EMAIL and SENDER_PASSWORD to be set in the Config.
+        - Uses Gmail's SMTP server (smtp.gmail.com) on port 587.
+        - Requires a valid Gmail account with less secure app access or an app password.
+    """
     sender_email = Config.SENDER_EMAIL
     sender_password = Config.SENDER_PASSWORD
 

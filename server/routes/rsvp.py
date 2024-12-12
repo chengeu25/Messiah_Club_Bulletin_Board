@@ -6,6 +6,53 @@ rsvp_bp = Blueprint("rsvp", __name__)
 
 @rsvp_bp.route("/rsvp", methods=["POST"])
 def RSVP():
+    """
+    Manage user's RSVP status for a specific event.
+
+    This endpoint allows users to set, update, or cancel their RSVP for an event.
+
+    Query Parameters:
+        event_id (str): Unique identifier for the event
+        type (str): RSVP action type
+            - 'block': Mark event as blocked/not attending
+            - 'rsvp': Mark event as attending
+            - 'cancel': Cancel existing RSVP
+
+    Authentication:
+    - Requires user to be logged in via session
+
+    Returns:
+        JSON response:
+        - On successful RSVP action:
+            {"message": "RSVP set to 'block'"}, 200 status
+            {"message": "RSVP set to 'rsvp'"}, 200 status
+            {"message": "RSVP deleted"}, 200 status
+        - On validation failure:
+            {"error": "Missing event_id, user_id, or type parameter"}, 400 status
+            {"error": "Invalid user_id"}, 400 status
+            {"error": "Invalid type parameter"}, 400 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected error:
+            {"error": str}, 500 status
+
+    Behavior:
+    - Validates user authentication and input parameters
+    - Checks user existence in the database
+    - Supports three RSVP actions:
+      1. Block: Set is_yes to False
+      2. RSVP: Set is_yes to True
+      3. Cancel: Set is_active to False
+    - Uses MySQL's ON DUPLICATE KEY UPDATE for efficient handling
+    - Commits transaction on successful action
+    - Rolls back transaction on error
+
+    Security Considerations:
+    - Validates user session and user existence
+    - Prevents unauthorized RSVP modifications
+    - Handles database errors gracefully
+    - Sanitizes and validates input parameters
+    """
     event_id = request.args.get("event_id")  # Event ID
     print(event_id)
     user_id = session.get("user_id")

@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
 from extensions import mysql
 
 admintools_bp = Blueprint("admintools", __name__)
@@ -6,6 +6,42 @@ admintools_bp = Blueprint("admintools", __name__)
 
 @admintools_bp.route("/assign-faculty", methods=["POST"])
 def assign_faculty():
+    """
+    Assign faculty privileges to a verified user.
+
+    This endpoint allows assigning faculty status to an active, verified user.
+    It validates the user's existence, email verification, and sets faculty privileges.
+
+    Expected JSON payload:
+    {
+        "email": str,
+        "can_delete_faculty": bool
+    }
+
+    Returns:
+        JSON response:
+        - On successful assignment:
+            {
+                "name": str,
+                "email": str,
+                "can_delete_faculty": bool
+            }, 200 status
+        - On invalid input:
+            {"error": "Invalid input"}, 400 status
+        - On non-existent email:
+            {"error": "Invalid email"}, 404 status
+        - On unverified email:
+            {"error": "Email not verified"}, 403 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected error:
+            {"error": "An unexpected error occurred"}, 500 status
+
+    Validation steps:
+    - Checks if email exists in active users
+    - Verifies email is verified
+    - Sets faculty status and optional deletion privileges
+    """
     data = request.get_json()
 
     # Validate input
@@ -71,6 +107,33 @@ def assign_faculty():
 
 @admintools_bp.route("/get-faculty-data", methods=["GET"])
 def get_faculty_data():
+    """
+    Retrieve a list of all faculty members and their privileges.
+
+    This endpoint fetches comprehensive data about users with faculty status,
+    including their names, email addresses, and deletion privileges.
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            [
+                {
+                    "name": str,
+                    "email": str,
+                    "can_delete_faculty": bool
+                },
+                ...
+            ], 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected error:
+            {"error": "An unexpected error occurred"}, 500 status
+
+    Data retrieval details:
+    - Queries users table for faculty members
+    - Returns a list of faculty with their current privileges
+    - Handles potential database connection and query errors
+    """
     cur = None
 
     try:
@@ -110,6 +173,31 @@ def get_faculty_data():
 
 @admintools_bp.route("/remove-faculty", methods=["POST"])
 def remove_faculty():
+    """
+    Remove faculty privileges from a user.
+
+    This endpoint revokes faculty status and related deletion privileges
+    for a specified user by their email address.
+
+    Expected JSON payload:
+    {
+        "email": str
+    }
+
+    Returns:
+        JSON response:
+        - On successful removal:
+            {"message": "Faculty privileges removed"}, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected error:
+            {"error": "An unexpected error occurred"}, 500 status
+
+    Privilege removal details:
+    - Sets is_faculty flag to 0
+    - Sets can_delete_faculty flag to 0
+    - Handles database transaction and potential errors
+    """
     data = request.get_json()
     cur = None
 
@@ -144,6 +232,32 @@ def remove_faculty():
 
 @admintools_bp.route("/assign-delete", methods=["POST"])
 def assign_delete():
+    """
+    Modify a user's faculty deletion privileges.
+
+    This endpoint allows changing a faculty member's ability to delete
+    other faculty members by updating the can_delete_faculty flag.
+
+    Expected JSON payload:
+    {
+        "email": str,
+        "cdf": bool  # can_delete_faculty
+    }
+
+    Returns:
+        JSON response:
+        - On successful modification:
+            {"message": "Deletion abilities removed"}, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+        - On unexpected error:
+            {"error": "An unexpected error occurred"}, 500 status
+
+    Privilege modification details:
+    - Updates can_delete_faculty flag for a specific user
+    - Handles database transaction and potential errors
+    - Allows granular control of faculty deletion privileges
+    """
     data = request.get_json()
 
     if not mysql.connection:
@@ -166,7 +280,7 @@ def assign_delete():
             ),
         )
         mysql.connection.commit()
-        return jsonify({"message": "Deletion ablilities removed"}), 200
+        return jsonify({"message": "Deletion abilities removed"}), 200
 
     except Exception as e:
         # Log the error and return an internal server error

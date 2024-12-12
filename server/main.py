@@ -11,6 +11,19 @@ from routes.admintools import admintools_bp
 
 
 def create_app(config_class=Config):
+    """
+    Create and configure the Flask application.
+
+    This function initializes the Flask application with the specified configuration,
+    sets up database and CORS extensions, and registers all API blueprints.
+
+    Args:
+        config_class (Config, optional): Configuration class for the application. 
+                                         Defaults to the Config class.
+
+    Returns:
+        Flask: A configured Flask application instance.
+    """
     app = Flask(__name__)
     app.config.from_object(config_class)
 
