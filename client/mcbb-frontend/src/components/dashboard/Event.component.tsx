@@ -50,7 +50,11 @@ const Event = ({
                 })}
               </p>
               {!small && <p>{description}</p>}
-              {host && <p className='font-bold'>Hosted by {host.join(', ')}</p>}
+              {host && (
+                <p className='font-bold'>
+                  Hosted by {host.map((host) => host.name).join(', ')}
+                </p>
+              )}
               {!small && tags?.length > 0 && (
                 <div className='inline-flex justify-center xl:justify-start gap-2'>
                   {tags?.map((tag, index) => (

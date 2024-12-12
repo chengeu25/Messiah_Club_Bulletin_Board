@@ -288,7 +288,7 @@ def get_event(event_id):
     except TypeError:
         result_2 = None
     cur.execute(
-        """SELECT type FROM rsvp
+        """SELECT is_yes FROM rsvp
                 WHERE event_id = %s
                     AND user_id = %s
                     AND is_active = 1""",
@@ -363,7 +363,7 @@ def get_club_events(club_id):
     )
     result = cur.fetchall()
     cur.execute(
-        """SELECT r.event_id, r.type FROM rsvp r
+        """SELECT r.event_id, r.is_yes FROM rsvp r
                 INNER JOIN event e 
                     ON e.event_id = r.event_id
                 INNER JOIN event_host eh
@@ -427,14 +427,16 @@ def get_events():
             )
             result = cur.fetchall()
             cur.execute(
-                """SELECT c.club_name, eh.event_id FROM event_host eh
+                """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
                         INNER JOIN club c ON c.club_id = eh.club_id
                         WHERE c.is_active = 1""",
             )
             result_2 = cur.fetchall()
-            result_2 = list(map(lambda x: {"club": x[0], "event": x[1]}, result_2))
+            result_2 = list(
+                map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
+            )
             cur.execute(
-                """SELECT r.event_id, r.type FROM rsvp r
+                """SELECT r.event_id, r.is_yes FROM rsvp r
                         INNER JOIN event e 
                             ON e.event_id = r.event_id
                         WHERE r.user_id = %s
@@ -477,7 +479,7 @@ def get_events():
                         "title": x[6],
                         "host": list(
                             map(
-                                lambda y: y["club"],
+                                lambda y: {"name": y["club"], "id": y["club_id"]},
                                 list(
                                     filter(
                                         lambda y: y["event"] == x[0],
@@ -1619,11 +1621,11 @@ def RSVP():
             return jsonify({"error": "Invalid user_id"}), 400
 
         if typeofRSVP == "block":
-            # Insert or update the RSVP to set type to False
+            # Insert or update the RSVP to set is_yes to False
             cur.execute(
-                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                """INSERT INTO rsvp (event_id, user_id, is_yes, is_active)
                      VALUES (%s, %s, FALSE, TRUE)
-                     ON DUPLICATE KEY UPDATE type = FALSE, is_active = TRUE
+                     ON DUPLICATE KEY UPDATE is_yes = FALSE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1631,11 +1633,11 @@ def RSVP():
             return jsonify({"message": "RSVP set to 'block'"}), 200
 
         elif typeofRSVP == "rsvp":
-            # Insert or update the RSVP to set type to True
+            # Insert or update the RSVP to set is_yes to True
             cur.execute(
-                """INSERT INTO rsvp (event_id, user_id, type, is_active)
+                """INSERT INTO rsvp (event_id, user_id, is_yes, is_active)
                     VALUES (%s, %s, TRUE, TRUE)
-                    ON DUPLICATE KEY UPDATE type = TRUE, is_active = TRUE
+                    ON DUPLICATE KEY UPDATE is_yes = TRUE, is_active = TRUE
                 """,
                 (event_id, user_id),
             )
@@ -1675,7 +1677,7 @@ def checkRSVP(event_id):
         cur = mysql.connection.cursor()
 
         cur.execute(
-            "SELECT type FROM rsvp WHERE event_id = %s AND user_id = %s",
+            "SELECT is_yes FROM rsvp WHERE event_id = %s AND user_id = %s",
             (event_id, user_id),
         )
         result = cur.fetchone()
@@ -1804,7 +1806,7 @@ def manage_subscription():
 
                     UPDATE user_subscription
 
-                    SET is_active = 1, type = 1
+                    SET is_active = 1, subscribed_or_blocked = 1
 
                     WHERE email = %s AND club_id = %s
 
@@ -1819,7 +1821,7 @@ def manage_subscription():
                 cur.execute(
                     """
 
-                    INSERT INTO user_subscription (email, club_id, is_active, type)
+                    INSERT INTO user_subscription (email, club_id, is_active, subscribed_or_blocked)
 
                     VALUES (%s, %s, 1, 1)
 
