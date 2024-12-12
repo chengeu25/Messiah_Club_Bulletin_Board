@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, session
 from extensions import mysql
+from helper.check_user import get_user_session_info
 
 rsvp_bp = Blueprint("rsvp", __name__)
 
@@ -53,6 +54,11 @@ def RSVP():
     - Handles database errors gracefully
     - Sanitizes and validates input parameters
     """
+    # Check user authentication
+    user_info = get_user_session_info()
+    if not user_info["user_id"]:
+        return jsonify({"error": "Authentication required"}), 401
+
     event_id = request.args.get("event_id")  # Event ID
     print(event_id)
     user_id = session.get("user_id")

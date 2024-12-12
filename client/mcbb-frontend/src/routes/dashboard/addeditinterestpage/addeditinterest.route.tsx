@@ -22,12 +22,15 @@ const AddedInterest = () => {
 
     try {
       const response = await fetch(
-        'http://127.0.0.1:3000/api/interests/add-tag',
+        'http://localhost:3000/api/interests/add-tag',
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
+          credentials: 'include',
+          mode: 'cors',
           body: JSON.stringify({ tag_name: interestName })
         }
       );
@@ -57,12 +60,15 @@ const AddedInterest = () => {
 
     try {
       const response = await fetch(
-        'http://127.0.0.1:3000/api/interests/remove-tag',
+        'http://localhost:3000/api/interests/remove-tag',
         {
           method: 'DELETE',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           },
+          credentials: 'include',
+          mode: 'cors',
           body: JSON.stringify({ tag_name: interestName })
         }
       );

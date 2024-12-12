@@ -6,6 +6,7 @@ from extensions import mysql
 from config import Config
 import json
 from werkzeug.utils import secure_filename
+from helper.check_user import get_user_session_info
 
 
 events_bp = Blueprint("events", __name__)
@@ -85,6 +86,7 @@ def get_event(event_id):
     - User's RSVP status
     - Event tags
     - Event images
+    Authentication is required to access this endpoint.
 
     Args:
         event_id (str): Unique identifier for the event
@@ -104,13 +106,20 @@ def get_event(event_id):
                     "host": [{"name": str, "id": int}],
                     "rsvp": str or None,
                     "tags": [str],
-                    "images": [{"image": str, "id": int}]
+                    "images": [
+                        {
+                            "id": int,
+                            "image": str (base64 encoded)
+                        }
+                    ]
                 }
             }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On event not found:
-            {"error": "The requested event was not found on the server"}, 404 status
+            {"error": "Event not found"}, 404 status
 
     Behavior:
     - Requires an active MySQL database connection
@@ -119,9 +128,15 @@ def get_event(event_id):
     - Retrieves event hosts, RSVP status, tags, and images
     - Handles cases where optional data might be missing
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
+
     cur.execute(
         """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
             WHERE event_id = %s
@@ -131,10 +146,8 @@ def get_event(event_id):
     )
     result = cur.fetchone()
     if result is None:
-        return (
-            jsonify({"error": "The requested event was not found on the server"}),
-            404,
-        )
+        return jsonify({"error": "Event not found"}), 404
+
     cur.execute(
         """SELECT c.club_name, c.club_id FROM event_host eh
                 INNER JOIN club c 
@@ -143,12 +156,9 @@ def get_event(event_id):
                     AND c.is_active = 1""",
         (event_id,),
     )
-    result_2 = None
-    try:
-        result_2 = cur.fetchall()
-        result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, result_2))
-    except TypeError:
-        result_2 = None
+    result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
+
+    # Get RSVP status
     cur.execute(
         """SELECT is_yes FROM rsvp
                 WHERE event_id = %s
@@ -213,6 +223,7 @@ def get_club_events(club_id):
 
     This endpoint fetches upcoming events for a club, limited to 10 events,
     and includes the user's RSVP status for each event.
+    Authentication is required to access this endpoint.
 
     Args:
         club_id (str): Unique identifier for the club
@@ -234,6 +245,8 @@ def get_club_events(club_id):
                     }
                 ]
             }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
 
@@ -245,9 +258,17 @@ def get_club_events(club_id):
     - Supports filtering events from a specific start date
     - Limits result set to prevent overwhelming response
     """
-    start_date = request.args.get("start_date")
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
+    # Get start date from query parameters
+    start_date = request.args.get("start_date", datetime.now(pytz.utc).isoformat())
+
     cur = mysql.connection.cursor()
     cur.execute(
         """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
@@ -314,6 +335,7 @@ def get_events():
 
     This endpoint fetches events occurring between a start and end date,
     providing a comprehensive view of events within a given time period.
+    Authentication is required to access this endpoint.
 
     Query Parameters:
         start_date (str): ISO format start date for event range
@@ -335,129 +357,129 @@ def get_events():
                     }
                 ]
             }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On missing date parameters:
-            Implicit 400 status (no response returned)
+            {"error": "Missing required date parameters"}, 400 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
-
-    Behavior:
-    - Requires both start_date and end_date query parameters
-    - Converts input dates to standard format
-    - Fetches active and approved events within the specified date range
-    - Supports retrieving events across multiple days
-    - Filters out inactive or unapproved events
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
-    if start_date is not None and end_date is not None:
-        try:
-            start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
-            end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
-            if not mysql.connection:
-                return jsonify({"error": "Database connection error"}), 500
-            cur = mysql.connection.cursor()
-            cur.execute(
-                """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-                    WHERE start_time BETWEEN %s AND %s
-                        AND is_active = 1
-                        AND is_approved = 1""",
-                (start_date, end_date),
+    if not start_date or not end_date:
+        return jsonify({"error": "Missing required date parameters"}), 400
+
+    try:
+        start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
+        end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
+                WHERE start_time BETWEEN %s AND %s
+                    AND is_active = 1
+                    AND is_approved = 1""",
+            (start_date, end_date),
+        )
+        result = cur.fetchall()
+        cur.execute(
+            """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
+                    INNER JOIN club c ON c.club_id = eh.club_id
+                    WHERE c.is_active = 1""",
+        )
+        result_2 = cur.fetchall()
+        result_2 = list(
+            map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
+        )
+        cur.execute(
+            """SELECT r.event_id, r.is_yes FROM rsvp r
+                    INNER JOIN event e 
+                        ON e.event_id = r.event_id
+                    WHERE r.user_id = %s
+                        AND e.is_active = 1
+                        AND e.is_approved = 1
+                        AND r.is_active = 1""",
+            (session["user_id"],),
+        )
+        result_3 = cur.fetchall()
+        result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
+        cur.execute(
+            """SELECT et.event_id, t.tag_name FROM tag t
+                    INNER JOIN event_tags et
+                        ON t.tag_id = et.tag_id"""
+        )
+        result_4 = cur.fetchall()
+        result_4 = list(
+            map(
+                lambda x: {"event": x[0], "tag": x[1]},
+                result_4,
             )
-            result = cur.fetchall()
-            cur.execute(
-                """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
-                        INNER JOIN club c ON c.club_id = eh.club_id
-                        WHERE c.is_active = 1""",
-            )
-            result_2 = cur.fetchall()
-            result_2 = list(
-                map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
-            )
-            cur.execute(
-                """SELECT r.event_id, r.is_yes FROM rsvp r
-                        INNER JOIN event e 
-                            ON e.event_id = r.event_id
-                        WHERE r.user_id = %s
-                            AND e.is_active = 1
-                            AND e.is_approved = 1
-                            AND r.is_active = 1""",
-                (session["user_id"],),
-            )
-            result_3 = cur.fetchall()
-            result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
-            cur.execute(
-                """SELECT et.event_id, t.tag_name FROM tag t
-                        INNER JOIN event_tags et
-                            ON t.tag_id = et.tag_id"""
-            )
-            result_4 = cur.fetchall()
-            result_4 = list(
-                map(
-                    lambda x: {"event": x[0], "tag": x[1]},
-                    result_4,
-                )
-            )
-            final_result = list(
-                map(
-                    lambda x: {
-                        "id": x[0],
-                        "startTime": (
-                            x[1].replace(tzinfo=pytz.UTC).isoformat()
-                            if x[1].tzinfo is None
-                            else x[1].astimezone(pytz.UTC).isoformat()
-                        ),
-                        "endTime": (
-                            x[2].replace(tzinfo=pytz.UTC).isoformat()
-                            if x[2].tzinfo is None
-                            else x[2].astimezone(pytz.UTC).isoformat()
-                        ),
-                        "location": x[3],
-                        "description": x[4],
-                        "cost": x[5],
-                        "title": x[6],
-                        "host": list(
-                            map(
-                                lambda y: {"name": y["club"], "id": y["club_id"]},
-                                list(
-                                    filter(
-                                        lambda y: y["event"] == x[0],
-                                        result_2,
-                                    )
-                                ),
-                            )
-                        ),
-                        "rsvp": next(
-                            (
-                                ("block" if item["type"] == 0 else "rsvp")
-                                for item in result_3
-                                if item["event"] == x[0]
+        )
+        final_result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "startTime": (
+                        x[1].replace(tzinfo=pytz.UTC).isoformat()
+                        if x[1].tzinfo is None
+                        else x[1].astimezone(pytz.UTC).isoformat()
+                    ),
+                    "endTime": (
+                        x[2].replace(tzinfo=pytz.UTC).isoformat()
+                        if x[2].tzinfo is None
+                        else x[2].astimezone(pytz.UTC).isoformat()
+                    ),
+                    "location": x[3],
+                    "description": x[4],
+                    "cost": x[5],
+                    "title": x[6],
+                    "host": list(
+                        map(
+                            lambda y: {"name": y["club"], "id": y["club_id"]},
+                            list(
+                                filter(
+                                    lambda y: y["event"] == x[0],
+                                    result_2,
+                                )
                             ),
-                            None,
+                        )
+                    ),
+                    "rsvp": next(
+                        (
+                            ("block" if item["type"] == 0 else "rsvp")
+                            for item in result_3
+                            if item["event"] == x[0]
                         ),
-                        "tags": list(
-                            map(
-                                lambda y: y["tag"],
-                                list(
-                                    filter(
-                                        lambda y: y["event"] == x[0],
-                                        result_4,
-                                    )
-                                ),
-                            )
-                        ),
-                    },
-                    result,
-                )
+                        None,
+                    ),
+                    "tags": list(
+                        map(
+                            lambda y: y["tag"],
+                            list(
+                                filter(
+                                    lambda y: y["event"] == x[0],
+                                    result_4,
+                                )
+                            ),
+                        )
+                    ),
+                },
+                result,
             )
-            cur.close()
-            return jsonify({"events": final_result}), 200
-        except ValueError:
-            return jsonify({"error": "Invalid date format"}), 400
-        except Exception as e:
-            print(e)
-            return jsonify({"error": f"Failed to get events"}), 500
-    else:
-        return jsonify({"error": "Missing start_date or end_date"}), 400
+        )
+        cur.close()
+        return jsonify({"events": final_result}), 200
+    except ValueError:
+        return jsonify({"error": "Invalid date format"}), 400
+    except Exception as e:
+        print(e)
+        return jsonify({"error": f"Failed to get events"}), 500
 
 
 @events_bp.route("/new-event", methods=["POST"])

@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request, session
 from extensions import mysql
+from helper.check_user import get_user_session_info
 
 
 interests_bp = Blueprint("interests", __name__)
@@ -11,6 +12,7 @@ def get_avaliable_tags():
     Retrieve all available tags from the database.
 
     This endpoint fetches a list of all tags with their unique identifiers.
+    Authentication is required to access this endpoint.
 
     Returns:
         JSON response:
@@ -23,18 +25,22 @@ def get_avaliable_tags():
                     }
                 ]
             }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
 
     Behavior:
+    - Requires user authentication
     - Queries the tag table to retrieve all tag names and IDs
     - Transforms database results into a list of tag dictionaries
     - Supports dynamic tag management
-
-    Security Considerations:
-    - No authentication required to view available tags
-    - Returns only tag information, no sensitive data exposed
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -49,39 +55,35 @@ def get_avaliable_tags():
 def getinterests():
     """
     Fetch the current user's selected interests from the database.
-
-    This endpoint retrieves all tags associated with the authenticated user.
-
-    Authentication:
-    - Requires user to be logged in
+    Authentication is required to access this endpoint.
 
     Returns:
         JSON response:
         - On successful retrieval:
             {
-                "interests": [str]  # List of tag names for the user
+                "interests": [
+                    {
+                        "tag": str,      # Tag name
+                        "tag_id": int    # Tag identifier
+                    }
+                ]
             }, 200 status
-        - On authentication failure:
-            {"error": "User not logged in"}, 401 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On retrieval failure:
             {"error": "Failed to fetch interests"}, 500 status
 
     Behavior:
-    - Validates user authentication via session
-    - Queries user_tags and tag tables to fetch user's interests
-    - Extracts tag names associated with the user
-    - Handles potential database query errors
-
-    Security Considerations:
-    - Checks user authentication before accessing interests
-    - Prevents unauthorized access to user-specific data
-    - Logs and handles potential database errors
+    - Requires user authentication
+    - Retrieves all tags associated with the current user
+    - Returns tags with their IDs in a structured format
     """
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "User not logged in"}), 401
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
@@ -93,7 +95,7 @@ def getinterests():
                     INNER JOIN user_tags ut ON t.tag_id = ut.tag_id
                     WHERE ut.user_id = %s
             """,
-            (user_id,),
+            (current_user["user_id"],),
         )
         result = cur.fetchall()
         interests = [row[0] for row in result]
@@ -109,8 +111,7 @@ def getinterests():
 def getallinterests():
     """
     Fetch all available interest names from the database.
-
-    This endpoint retrieves a comprehensive list of all existing tags.
+    Authentication is required to access this endpoint.
 
     Returns:
         JSON response:
@@ -118,21 +119,23 @@ def getallinterests():
             {
                 "interests": [str]  # List of all tag names
             }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On retrieval failure:
             {"error": "Failed to fetch all interests"}, 500 status
 
     Behavior:
+    - Requires user authentication
     - Queries the tag table to retrieve all tag names
-    - Extracts tag names into a list
-    - Supports discovery of all available interests
-
-    Security Considerations:
-    - No authentication required to view interest names
-    - Returns only public tag information
-    - Prevents exposure of sensitive data
+    - Returns a simple list of all available interest names
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -152,11 +155,7 @@ def getallinterests():
 def editinterestpage():
     """
     Update the current user's interests.
-
-    This endpoint allows authenticated users to modify their personal interests.
-
-    Authentication:
-    - Requires user to be logged in
+    Authentication is required to access this endpoint.
 
     Request JSON Parameters:
         interests (list): A list of interest names to be associated with the user
@@ -165,8 +164,8 @@ def editinterestpage():
         JSON response:
         - On successful update:
             {"message": "Interests updated successfully"}, 200 status
-        - On authentication failure:
-            {"error": "User not logged in"}, 401 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On invalid input:
             {"error": "Invalid data provided"}, 400 status
         - On database connection error:
@@ -175,67 +174,67 @@ def editinterestpage():
             {"error": str}, 500 status
 
     Behavior:
-    - Validates user authentication via session
-    - Clears existing user interests
-    - Inserts new interests based on provided tag names
-    - Handles potential database query errors
-    - Supports full replacement of user interests
-
-    Security Considerations:
-    - Checks user authentication before modifying interests
-    - Prevents unauthorized modification of user data
+    - Requires user authentication
     - Validates input data structure
-    - Uses database transactions to ensure data integrity
-    - Rolls back changes if any error occurs during update
+    - Replaces all existing user interests with the new list
+    - Uses database transactions for data integrity
     """
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "User not logged in"}), 401
-
-    data = request.json
-    if not data or not isinstance(data.get("interests"), list):
-        return jsonify({"error": "Invalid data provided"}), 400
-
-    interests = data["interests"]
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
+    if not request.is_json:
+        return jsonify({"error": "Invalid data provided"}), 400
+
+    data = request.get_json()
+    if not data or "interests" not in data:
+        return jsonify({"error": "Invalid data provided"}), 400
+
+    interests = data["interests"]
+    if not isinstance(interests, list):
+        return jsonify({"error": "Invalid data provided"}), 400
+
     cur = mysql.connection.cursor()
     try:
-        # Step 1: Clear existing user interests
-        cur.execute("DELETE FROM user_tags WHERE user_id = %s", (user_id,))
-        mysql.connection.commit()
+        # Start transaction
+        cur.execute("START TRANSACTION")
 
-        # Step 2: Insert new interests
+        # Remove existing interests
+        cur.execute(
+            "DELETE FROM user_tags WHERE user_id = %s",
+            (current_user["user_id"],),
+        )
+
+        # Insert new interests
         for interest in interests:
-            cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (interest,))
-            tag_result = cur.fetchone()
+            cur.execute(
+                """INSERT INTO user_tags (user_id, tag_id)
+                    SELECT %s, tag_id FROM tag WHERE tag_name = %s""",
+                (current_user["user_id"], interest),
+            )
 
-            if tag_result:
-                tag_id = tag_result[0]
-                cur.execute(
-                    "INSERT INTO user_tags (user_id, tag_id) VALUES (%s, %s)",
-                    (user_id, tag_id),
-                )
-            else:
-                print(f"Tag not found for interest: {interest}")
-
+        # Commit transaction
         mysql.connection.commit()
-        return jsonify({"message": "Interests updated successfully"}), 200
-    except Exception as e:
-        print(f"Error updating interests: {e}")
-        mysql.connection.rollback()
-        return jsonify({"error": str(e)}), 500
-    finally:
         cur.close()
+        return jsonify({"message": "Interests updated successfully"}), 200
+
+    except Exception as e:
+        # Rollback on error
+        mysql.connection.rollback()
+        cur.close()
+        print(f"Error updating interests: {e}")
+        return jsonify({"error": "Failed to update interests"}), 500
 
 
 @interests_bp.route("/add-tag", methods=["POST"])
 def add_tag():
     """
     Add a new tag (interest) to the system.
-
-    This endpoint allows adding a new tag to the available interests.
+    Faculty authentication is required to access this endpoint.
 
     Request JSON Parameters:
         tag_name (str): Name of the new tag to be added
@@ -244,6 +243,10 @@ def add_tag():
         JSON response:
         - On successful tag creation:
             {"message": f"Interest '{tag_name}' added successfully!"}, 201 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
+        - On insufficient privileges:
+            {"error": "Faculty privileges required"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On invalid input:
@@ -253,52 +256,58 @@ def add_tag():
             {"error": f"Interest '{tag_name}' already exists."}, 400 status
 
     Behavior:
+    - Requires faculty authentication
     - Validates input data
-    - Checks for existing tags to prevent duplicates
-    - Inserts new tag into the database
-    - Supports dynamic tag management
-
-    Security Considerations:
-    - Validates and sanitizes input tag name
     - Prevents duplicate tag creation
-    - Handles potential database integrity errors
-    - No authentication required for tag creation
+    - Adds new tag to the database
     """
+
+    # Check if user is authenticated and has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Faculty privileges required"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
 
-    # Parse the JSON request data
-    data = request.json
-    if data is None:
+    if not request.is_json:
         return jsonify({"error": "No data provided"}), 400
 
-    tag_name = data.get("tag_name")
+    data = request.get_json()
+    if not data or "tag_name" not in data:
+        return jsonify({"error": "Tag name is required"}), 400
+
+    tag_name = data["tag_name"].strip()
     if not tag_name:
         return jsonify({"error": "Tag name is required"}), 400
 
+    cur = mysql.connection.cursor()
     try:
-        # Insert tag into the database
-        cursor = mysql.connection.cursor()
-        query = "INSERT INTO tag (tag_name) VALUES (%s)"
-        cursor.execute(query, (tag_name,))
-        mysql.connection.commit()
-        cursor.close()
+        # Check if tag already exists
+        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (tag_name,))
+        if cur.fetchone():
+            cur.close()
+            return jsonify({"error": f"Interest '{tag_name}' already exists."}), 400
 
+        # Add new tag
+        cur.execute("INSERT INTO tag (tag_name) VALUES (%s)", (tag_name,))
+        mysql.connection.commit()
+        cur.close()
         return jsonify({"message": f"Interest '{tag_name}' added successfully!"}), 201
 
-    except mysql.connection.IntegrityError:
-        return jsonify({"error": f"Interest '{tag_name}' already exists."}), 400
-
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to add interest"}), 500
 
 
 @interests_bp.route("/remove-tag", methods=["DELETE"])
 def remove_tag():
     """
     Remove an existing tag (interest) from the system.
-
-    This endpoint allows deletion of a tag from available interests.
+    Faculty authentication is required to access this endpoint.
 
     Request JSON Parameters:
         tag_name (str): Name of the tag to be removed
@@ -307,52 +316,61 @@ def remove_tag():
         JSON response:
         - On successful tag deletion:
             {"message": f"Interest '{tag_name}' removed successfully!"}, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
+        - On insufficient privileges:
+            {"error": "Faculty privileges required"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On invalid input:
-            {"error": "No data was provided"}, 400 status
-            {"error": "Interest name is required"}, 400 status
+            {"error": "No data provided"}, 400 status
+            {"error": "Tag name is required"}, 400 status
         - On non-existent tag:
             {"error": f"Interest '{tag_name}' does not exist."}, 404 status
 
     Behavior:
+    - Requires faculty authentication
     - Validates input data
-    - Attempts to delete the specified tag from the database
-    - Checks for tag existence before deletion
-    - Supports dynamic tag management
-
-    Security Considerations:
-    - Validates and sanitizes input tag name
-    - Handles potential database deletion errors
-    - Provides clear feedback on deletion attempts
-    - No authentication required for tag removal
+    - Verifies tag existence before deletion
+    - Removes tag from the database
     """
+
+    # Check if user is authenticated and has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Faculty privileges required"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
+    if not request.is_json:
+        return jsonify({"error": "No data provided"}), 400
+
+    data = request.get_json()
+    if not data or "tag_name" not in data:
+        return jsonify({"error": "Tag name is required"}), 400
+
+    tag_name = data["tag_name"].strip()
+    if not tag_name:
+        return jsonify({"error": "Tag name is required"}), 400
+
+    cur = mysql.connection.cursor()
     try:
-        # Parse the JSON request data
-        data = request.json
-
-        if data is None:
-            return jsonify({"error": "No data was provided"}), 400
-
-        tag_name = data.get("tag_name")
-
-        if not tag_name:
-            return jsonify({"error": "Interest name is required"}), 400
-
-        # Delete tag from the database
-        cursor = mysql.connection.cursor()
-        query = "DELETE FROM tag WHERE tag_name = %s"
-        cursor.execute(query, (tag_name,))
-        mysql.connection.commit()
-
-        if cursor.rowcount == 0:
+        # Check if tag exists
+        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (tag_name,))
+        if not cur.fetchone():
+            cur.close()
             return jsonify({"error": f"Interest '{tag_name}' does not exist."}), 404
 
-        cursor.close()
-
+        # Remove tag
+        cur.execute("DELETE FROM tag WHERE tag_name = %s", (tag_name,))
+        mysql.connection.commit()
+        cur.close()
         return jsonify({"message": f"Interest '{tag_name}' removed successfully!"}), 200
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        mysql.connection.rollback()
+        cur.close()
+        return jsonify({"error": "Failed to remove interest"}), 500

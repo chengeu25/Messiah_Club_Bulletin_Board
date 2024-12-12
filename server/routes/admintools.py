@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from extensions import mysql
+from helper.check_user import get_user_session_info
 
 admintools_bp = Blueprint("admintools", __name__)
 
@@ -11,6 +12,7 @@ def assign_faculty():
 
     This endpoint allows assigning faculty status to an active, verified user.
     It validates the user's existence, email verification, and sets faculty privileges.
+    Only existing faculty members can assign faculty privileges.
 
     Expected JSON payload:
     {
@@ -32,16 +34,24 @@ def assign_faculty():
             {"error": "Invalid email"}, 404 status
         - On unverified email:
             {"error": "Email not verified"}, 403 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On unexpected error:
             {"error": "An unexpected error occurred"}, 500 status
 
     Validation steps:
+    - Checks if current user has faculty privileges
     - Checks if email exists in active users
     - Verifies email is verified
     - Sets faculty status and optional deletion privileges
     """
+    # Check if current user has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     data = request.get_json()
 
     # Validate input
@@ -112,6 +122,7 @@ def get_faculty_data():
 
     This endpoint fetches comprehensive data about users with faculty status,
     including their names, email addresses, and deletion privileges.
+    Only faculty members can access this endpoint.
 
     Returns:
         JSON response:
@@ -124,16 +135,25 @@ def get_faculty_data():
                 },
                 ...
             ], 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On unexpected error:
             {"error": "An unexpected error occurred"}, 500 status
 
     Data retrieval details:
+    - Verifies current user has faculty privileges
     - Queries users table for faculty members
     - Returns a list of faculty with their current privileges
     - Handles potential database connection and query errors
     """
+    # Check if current user has faculty privileges
+    current_user = get_user_session_info()
+    print(current_user)
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     cur = None
 
     try:
@@ -177,7 +197,8 @@ def remove_faculty():
     Remove faculty privileges from a user.
 
     This endpoint revokes faculty status and related deletion privileges
-    for a specified user by their email address.
+    for a specified user by their email address. Only faculty members with
+    deletion privileges (can_delete_faculty = true) can access this endpoint.
 
     Expected JSON payload:
     {
@@ -188,16 +209,28 @@ def remove_faculty():
         JSON response:
         - On successful removal:
             {"message": "Faculty privileges removed"}, 200 status
+        - On unauthorized access (not faculty):
+            {"error": "Unauthorized"}, 403 status
+        - On insufficient privileges (can't delete faculty):
+            {"error": "Insufficient privileges"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On unexpected error:
             {"error": "An unexpected error occurred"}, 500 status
 
-    Privilege removal details:
-    - Sets is_faculty flag to 0
-    - Sets can_delete_faculty flag to 0
+    Validation steps:
+    - Verifies current user has faculty privileges
+    - Verifies current user has faculty deletion privileges
+    - Removes faculty status and related privileges from target user
     - Handles database transaction and potential errors
     """
+    # Check if current user has faculty privileges and can delete faculty
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    if not current_user["canDeleteFaculty"]:
+        return jsonify({"error": "Insufficient privileges"}), 403
+
     data = request.get_json()
     cur = None
 
@@ -237,6 +270,8 @@ def assign_delete():
 
     This endpoint allows changing a faculty member's ability to delete
     other faculty members by updating the can_delete_faculty flag.
+    Only faculty members with deletion privileges (can_delete_faculty = true)
+    can access this endpoint.
 
     Expected JSON payload:
     {
@@ -247,23 +282,34 @@ def assign_delete():
     Returns:
         JSON response:
         - On successful modification:
-            {"message": "Deletion abilities removed"}, 200 status
+            {"message": "Deletion abilities updated"}, 200 status
+        - On unauthorized access (not faculty):
+            {"error": "Unauthorized"}, 403 status
+        - On insufficient privileges (can't delete faculty):
+            {"error": "Insufficient privileges"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On unexpected error:
             {"error": "An unexpected error occurred"}, 500 status
 
-    Privilege modification details:
-    - Updates can_delete_faculty flag for a specific user
+    Validation steps:
+    - Verifies current user has faculty privileges
+    - Verifies current user has faculty deletion privileges
+    - Updates can_delete_faculty flag for target user
     - Handles database transaction and potential errors
-    - Allows granular control of faculty deletion privileges
     """
+    # Check if current user has faculty privileges and can delete faculty
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    if not current_user["canDeleteFaculty"]:
+        return jsonify({"error": "Insufficient privileges"}), 403
+
     data = request.get_json()
+    cur = None
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
-
-    cur = None
 
     try:
         # Connect to the database
@@ -280,11 +326,11 @@ def assign_delete():
             ),
         )
         mysql.connection.commit()
-        return jsonify({"message": "Deletion abilities removed"}), 200
+        return jsonify({"message": "Deletion abilities updated"}), 200
 
     except Exception as e:
         # Log the error and return an internal server error
-        print(f"Error removing faculty: {e}")
+        print(f"Error changing faculty deletion abilities: {e}")
         return jsonify({"error": "An unexpected error occurred"}), 500
 
     finally:

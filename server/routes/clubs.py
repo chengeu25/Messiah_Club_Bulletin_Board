@@ -1,6 +1,7 @@
 import base64
 from flask import Blueprint, jsonify, request
 from extensions import mysql
+from helper.check_user import get_user_session_info
 
 
 clubs_bp = Blueprint("clubs", __name__)
@@ -13,6 +14,7 @@ def get_clubs():
 
     This endpoint fetches all active clubs from the database, including their
     ID, name, description, and logo. It also retrieves and attaches tags for each club.
+    Authentication is required to access this endpoint.
 
     Returns:
         JSON response with the following structure:
@@ -28,6 +30,8 @@ def get_clubs():
                     }
                 ]
             }
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - If no clubs are found:
@@ -36,6 +40,11 @@ def get_clubs():
     Raises:
         TypeError: If there's an issue processing the database results
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -101,6 +110,7 @@ def get_inactive_clubs():
 
     This endpoint fetches all inactive clubs from the database, including their
     ID, name, description, and logo. It also retrieves and attaches tags for each club.
+    Only faculty members can access this endpoint.
 
     Returns:
         JSON response with the following structure:
@@ -116,6 +126,8 @@ def get_inactive_clubs():
                     }
                 ]
             }
+        - On unauthorized access (not faculty):
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - If no clubs are found:
@@ -124,6 +136,11 @@ def get_inactive_clubs():
     Raises:
         TypeError: If there's an issue processing the database results
     """
+    # Check if current user has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -192,6 +209,7 @@ def get_club(club_id):
     - Active club administrators
     - Club images
     - Club tags
+    Authentication is required to access this endpoint.
 
     Args:
         club_id (str): The unique identifier of the club to retrieve.
@@ -225,9 +243,15 @@ def get_club(club_id):
         }
 
     Raises:
+        - Returns 403 if user is not authenticated
         - Returns 404 if the club is not found
         - Returns 500 if there's a database connection error
     """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -287,7 +311,7 @@ def get_club(club_id):
     return jsonify(result), 200
 
 
-@clubs_bp.route("/update-club", methods=["PUT"])
+@clubs_bp.route("/update-club", methods=["POST"])
 def update_club():
     """
     Update an existing club's information.
@@ -297,6 +321,7 @@ def update_club():
     - Description
     - Logo/Image
     - Active status
+    Only club administrators can update their respective clubs.
 
     Expects a JSON payload with the following structure:
     {
@@ -317,6 +342,8 @@ def update_club():
     Returns:
         JSON response:
         - On successful update: Returns updated club details
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
         - On validation error:
             {"error": "An active club with this name already exists."}, 400 status
         - On database connection error:
@@ -325,13 +352,26 @@ def update_club():
             {"error": "Failed to update the club"}, 400 status
 
     Raises:
+        - Validates user is club administrator
         - Validates uniqueness of club name
         - Handles database transaction (commit/rollback)
         - Supports optional logo/image update
     """
-    data = request.json
-    if data is None:
-        return jsonify({"error": "No data provided"}), 400
+    data = request.get_json()
+    club_id = data.get("id")
+
+    # Check if user is a club admin
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # Check if user is admin of this specific club
+    if (
+        not current_user["clubAdmins"]
+        or int(club_id) not in (int(club) for club in current_user["clubAdmins"])
+    ) and not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -483,6 +523,7 @@ def delete_club(club_id):
 
     This endpoint marks a club as inactive in the database, effectively
     removing it from active listings without permanently deleting the record.
+    Only faculty members can delete clubs.
 
     Args:
         club_id (str): The unique identifier of the club to be deleted.
@@ -491,15 +532,23 @@ def delete_club(club_id):
         JSON response:
         - On successful deletion:
             {"message": "Club successfully deleted"}, 200 status
+        - On unauthorized access (not faculty):
+            {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
         - On deletion failure:
             {"error": "Failed to delete the club"}, 400 status
 
     Raises:
+        - Validates user has faculty privileges
         - Handles database transaction (commit/rollback)
         - Ensures database integrity during soft delete process
     """
+    # Check if current user has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
@@ -530,6 +579,7 @@ def new_club():
     - Handling optional logo/image upload
     - Managing club tags
     - Assigning initial club administrators
+    Only faculty members can create new clubs.
 
     Expects a JSON payload with the following structure:
     {
@@ -553,6 +603,8 @@ def new_club():
                 "message": "Club created successfully",
                 "club_id": int
             }, 201 status
+        - On unauthorized access (not faculty):
+            {"error": "Unauthorized"}, 403 status
         - On validation error:
             {"error": "A club with this name already exists"}, 400 status
         - On database connection error:
@@ -561,11 +613,17 @@ def new_club():
             {"error": "Failed to create the club"}, 400 status
 
     Raises:
+        - Validates user has faculty privileges
         - Validates uniqueness of club name
         - Handles database transaction (commit/rollback)
         - Supports optional logo/image upload
         - Manages multiple club tags and administrators
     """
+    # Check if current user has faculty privileges
+    current_user = get_user_session_info()
+    if not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
     data = request.json
     if data is None:
         return jsonify({"error": "No data provided"}), 400

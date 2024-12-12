@@ -18,7 +18,7 @@ def create_app(config_class=Config):
     sets up database and CORS extensions, and registers all API blueprints.
 
     Args:
-        config_class (Config, optional): Configuration class for the application. 
+        config_class (Config, optional): Configuration class for the application.
                                          Defaults to the Config class.
 
     Returns:
@@ -36,6 +36,15 @@ def create_app(config_class=Config):
             r"/api/*": {
                 "origins": "http://localhost:5173",
                 "supports_credentials": True,
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "Access-Control-Allow-Headers",
+                    "Access-Control-Allow-Origin",
+                ],
+                "expose_headers": ["Set-Cookie"],
+                "max_age": 600,
             }
         },
     )

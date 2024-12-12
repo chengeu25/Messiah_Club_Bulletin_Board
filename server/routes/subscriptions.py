@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from extensions import mysql
+from helper.check_user import get_user_session_info
 
 subscriptions_bp = Blueprint("subscriptions", __name__)
 
@@ -39,6 +40,11 @@ def check_subscription():
     - Prevents unauthorized access to subscription information
     - Handles potential database errors gracefully
     """
+    # Check user authentication
+    user_info = get_user_session_info()
+    if not user_info["user_id"]:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
 
     if data is None:
@@ -46,6 +52,10 @@ def check_subscription():
 
     user_id = data.get("userId")
     club_id = data.get("clubId")
+
+    # Ensure the authenticated user matches the requested user
+    if user_id != user_info["user_id"]:
+        return jsonify({"error": "Unauthorized access"}), 403
 
     if not user_id or not club_id:
         return jsonify({"error": "Missing required fields"}), 400
@@ -119,21 +129,25 @@ def manage_subscription():
     - Handles potential database errors gracefully
     - Supports idempotent subscription management
     """
+    # Check user authentication
+    user_info = get_user_session_info()
+    if not user_info["user_id"]:
+        return jsonify({"error": "Authentication required"}), 401
+
     data = request.json
 
     if data is None:
         return jsonify({"error": "Missing required fields"}), 400
 
-    action = data.get("action")
+    user_id = data.get("userId")
     club_id = data.get("clubId")
-    user_id = data.get("userId")  # Ensure this matches the query string
+    action = data.get("action")
 
-    print(f"Received data: {data}")
-    print(f"Query parameters: user_id={user_id}")
+    # Ensure the authenticated user matches the requested user
+    if user_id != user_info["user_id"]:
+        return jsonify({"error": "Unauthorized access"}), 403
 
-    # Validate input
-    if not user_id or not club_id or not action:
-        print("Error: Missing required fields")
+    if not all([user_id, club_id, action]):
         return jsonify({"error": "Missing required fields"}), 400
 
     if not mysql.connection:

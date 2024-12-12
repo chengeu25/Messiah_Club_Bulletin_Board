@@ -17,10 +17,10 @@ const addInterestAction: ActionFunction = async ({ request }) => {
 
     // Determine the action type and set endpoint/method
     if (actionType === 'add') {
-      endpoint = 'http://127.0.0.1:3000/api/interests/add-tag';
+      endpoint = 'http://localhost:3000/api/interests/add-tag';
       method = 'POST';
     } else if (actionType === 'remove') {
-      endpoint = 'http://127.0.0.1:3000/api/interests/remove-tag';
+      endpoint = 'http://localhost:3000/api/interests/remove-tag';
       method = 'DELETE';
     } else {
       return { error: 'Invalid action type' };
@@ -30,8 +30,11 @@ const addInterestAction: ActionFunction = async ({ request }) => {
     const response = await fetch(endpoint, {
       method,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
+      credentials: 'include',
+      mode: 'cors',
       body: JSON.stringify({ tag_name: tagName })
     });
 

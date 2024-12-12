@@ -22,7 +22,11 @@ const AssignFaculty = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          'http://localhost:3000/api/admintools/get-faculty-data'
+          'http://localhost:3000/api/admintools/get-faculty-data',
+          {
+            method: 'GET',
+            credentials: 'include'
+          }
         );
         if (!response.ok) {
           throw new Error('failed to fetch data');
@@ -101,7 +105,8 @@ const AssignFaculty = () => {
         {
           method: 'POST',
           body: JSON.stringify(payload),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         }
       );
 
@@ -147,7 +152,8 @@ const AssignFaculty = () => {
             cdf: !item.can_delete_faculty,
             email: item.email
           }),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         }
       );
 
@@ -178,7 +184,8 @@ const AssignFaculty = () => {
         {
           method: 'POST',
           body: JSON.stringify({ email: item.email }),
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         }
       );
 
@@ -199,7 +206,7 @@ const AssignFaculty = () => {
   };
 
   return (
-    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
+    <div className='w-full h-full flex justify-center items-center'>
       <div className='flex w-full h-full sm:w-3/4 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Assign Faculty Users</h1>

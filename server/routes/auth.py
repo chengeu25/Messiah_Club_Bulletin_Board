@@ -247,10 +247,10 @@ def check_user():
         - No active session: Null user details, 401 status
     """
     user_info = get_user_session_info()
-    
+
     # Determine status code based on user_id presence
     status_code = 200 if user_info["user_id"] is not None else 401
-    
+
     return jsonify(user_info), status_code
 
 

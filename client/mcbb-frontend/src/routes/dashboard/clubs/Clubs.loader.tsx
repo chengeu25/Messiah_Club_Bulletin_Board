@@ -33,12 +33,10 @@ const clubsLoader: LoaderFunction = async () => {
     }
   );
 
-  if (!inactiveClubsResponse.ok) {
-    throw new Error('Failed to fetch inactive clubs');
-  }
-
   const clubs = await clubsResponse.json();
-  const inactiveClubs = await inactiveClubsResponse.json();
+  const inactiveClubs = inactiveClubsResponse.ok
+    ? await inactiveClubsResponse.json()
+    : [];
   return json({ user, clubs, inactiveClubs }, { status: 200 });
 };
 

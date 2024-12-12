@@ -32,7 +32,7 @@ const clubFormAction: ActionFunction = async ({ request }) => {
     const url = new URL(request.url);
     const pathname = url.pathname;
     const resp = await fetch('http://localhost:3000/api/clubs/update-club', {
-      method: 'PUT',
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
