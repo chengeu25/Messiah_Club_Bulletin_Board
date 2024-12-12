@@ -427,12 +427,14 @@ def get_events():
             )
             result = cur.fetchall()
             cur.execute(
-                """SELECT c.club_name, eh.event_id FROM event_host eh
+                """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
                         INNER JOIN club c ON c.club_id = eh.club_id
                         WHERE c.is_active = 1""",
             )
             result_2 = cur.fetchall()
-            result_2 = list(map(lambda x: {"club": x[0], "event": x[1]}, result_2))
+            result_2 = list(
+                map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
+            )
             cur.execute(
                 """SELECT r.event_id, r.is_yes FROM rsvp r
                         INNER JOIN event e 
@@ -477,7 +479,7 @@ def get_events():
                         "title": x[6],
                         "host": list(
                             map(
-                                lambda y: y["club"],
+                                lambda y: {"name": y["club"], "id": y["club_id"]},
                                 list(
                                     filter(
                                         lambda y: y["event"] == x[0],

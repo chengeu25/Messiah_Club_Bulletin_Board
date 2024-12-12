@@ -47,7 +47,7 @@ export interface EventType {
   startTime: Date;
   endTime: Date;
   location: string;
-  host: string[];
+  host: EventHostType[];
   tags: string[];
   images: ImageType[];
   rsvp: string;
