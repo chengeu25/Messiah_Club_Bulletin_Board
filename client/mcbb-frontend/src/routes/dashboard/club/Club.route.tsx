@@ -13,6 +13,7 @@ import {
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
+import checkSubscription from '../../../helper/checkSubscription';
 
 const Club = () => {
   const submit = useSubmit();
@@ -27,35 +28,11 @@ const Club = () => {
 
   // Fetch subscription status when the component mounts
   useEffect(() => {
-    const checkSubscription = async () => {
-      try {
-        const response = await fetch(
-          'http://localhost:3000/api/check_subscription',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              userId: user.email,
-              clubId: club.id.toString()
-            })
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setIsSubscribed(data.isSubscribed);
-        } else {
-          console.error('Failed to fetch subscription status');
-        }
-      } catch (error) {
-        console.error('Error fetching subscription status:', error);
-      }
+    const getSubscriptionStatus = async () => {
+      setIsSubscribed(await checkSubscription(user.email, club.id));
     };
 
-    if (user?.email && club?.id) checkSubscription();
+    if (user?.email && club?.id) getSubscriptionStatus();
   }, [user?.email, club?.id]);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
