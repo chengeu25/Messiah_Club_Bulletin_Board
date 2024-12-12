@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 
-function useAsyncMemo(asyncCallback, dependencies) {
-  const [value, setValue] = useState();
+const useAsyncMemo = <T>(
+  asyncCallback: () => Promise<T>,
+  dependencies: any[]
+) => {
+  const [value, setValue] = useState<T | undefined>();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
@@ -31,6 +34,6 @@ function useAsyncMemo(asyncCallback, dependencies) {
   }, dependencies); // Re-run the effect when dependencies change
 
   return { value, loading, error };
-}
+};
 
 export default useAsyncMemo;

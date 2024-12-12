@@ -1,9 +1,11 @@
 import Day from '../../../components/dashboard/Day.component';
+import { filterAsync } from '../../../helper/asyncWrappers';
 import {
   passesFilter,
   passesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
+import useAsyncMemo from '../../../hooks/useAsyncMemo';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
 import {
@@ -24,22 +26,22 @@ const Home = () => {
   /**
    * Returns the filtered events by search and filter
    */
-  const filteredEvents = useMemo(
-    () =>
-      events.filter(
-        (event) =>
-          passesSearch(event, params.get('search') ?? '') &&
-          passesFilter(event, user, params.get('filter') ?? '')
-      ),
-    [events, params]
-  );
+  const filteredEvents = useAsyncMemo(async () => {
+    const filtered = await filterAsync(
+      events,
+      async (event: EventType) =>
+        passesSearch(event, params.get('search') ?? '') &&
+        (await passesFilter(event, user, params.get('filter') ?? ''))
+    );
+    return filtered;
+  }, [events, params]);
 
   /**
    * Returns the (filtered) events on each day
    */
   const eventsOnDays = useMemo(
     sortEventsByDay(
-      filteredEvents,
+      filteredEvents?.value ?? [],
       (id) => submit({ id: id, action: 'details' }, { method: 'post' }),
       (id, type) =>
         submit({ id: id, type: type, action: 'rsvp' }, { method: 'post' })

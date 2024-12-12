@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import { useEffect, useMemo } from 'react';
 import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
+import { filterAsync } from '../../../helper/asyncWrappers';
 import {
   passesFilter,
   passesSearch,
@@ -12,6 +13,7 @@ import {
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
+import useAsyncMemo from '../../../hooks/useAsyncMemo';
 
 const Calendar = () => {
   const submit = useSubmit();
@@ -56,19 +58,19 @@ const Calendar = () => {
   /**
    * Returns the filtered events by search and filter
    */
-  const filteredEvents = useMemo(
-    () =>
-      events.filter(
-        (event) =>
-          passesSearch(event, searchParams.get('search') ?? '') &&
-          passesFilter(event, user, searchParams.get('filter') ?? '')
-      ),
-    [events, searchParams]
-  );
+  const filteredEvents = useAsyncMemo(async () => {
+    const filtered = await filterAsync(
+      events,
+      async (event) =>
+        passesSearch(event, searchParams.get('search') ?? '') &&
+        (await passesFilter(event, user, searchParams.get('filter') ?? ''))
+    );
+    return filtered;
+  }, [events, searchParams]);
 
   const eventsOnDays = useMemo(
     sortEventsByDay(
-      filteredEvents,
+      filteredEvents?.value ?? [],
       (id) => submit({ id: id, action: 'details' }, { method: 'post' }),
       (id, type) =>
         submit({ id: id, type: type, action: 'rsvp' }, { method: 'post' })
