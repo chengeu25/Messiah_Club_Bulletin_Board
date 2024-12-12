@@ -200,7 +200,7 @@ const AssignFaculty = () => {
                     />
                     <div className='flex flex-row gap-2'>
                         <Button
-                            text='Apply user abilities'
+                            text='Assign Faculty'
                             type='submit'
                             name='assignFaculty'
                             color='blue'

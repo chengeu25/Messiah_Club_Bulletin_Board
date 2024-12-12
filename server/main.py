@@ -1727,16 +1727,12 @@ def manage_subscription():
 @app.route("/api/assignFaculty", methods=["POST"])
 def assignFaculty():
     data = request.get_json()
-    print(data)
 
     # Validate input
     email = data.get("email")
-    remember = data.get("can_delete_faculty")
+    can_delete = data.get("can_delete_faculty")
 
-    print("email: ", email)
-    print("remember: ", remember)
-
-    if not email or not isinstance(remember, bool):
+    if not email or not isinstance(can_delete, bool):
         return jsonify({"error": "Invalid input"}), 400
 
     try:
@@ -1767,10 +1763,10 @@ def assignFaculty():
                SET is_faculty = 1,
                    can_delete_faculty = %s
                WHERE email = %s""",
-            (remember, email),
+            (can_delete, email),
         )
         mysql.connection.commit()
-        return jsonify({"name": result[0], "email": email, "can_delete_faculty": remember}), 200
+        return jsonify({"name": result[0], "email": email, "can_delete_faculty": can_delete}), 200
         # return jsonify({"message": "Faculty assigned successfully"}), 200
 
     except Exception as e:

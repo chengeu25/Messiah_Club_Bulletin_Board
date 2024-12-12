@@ -38,7 +38,7 @@ const Sidebar = () => {
       setButtonList((prevList) => [
         ...prevList,
         {
-          text: 'Faculty Admin',
+          text: 'Faculty',
           icon: <FaChalkboardTeacher />,
           route: '/dashboard/assignFaculty',
         },

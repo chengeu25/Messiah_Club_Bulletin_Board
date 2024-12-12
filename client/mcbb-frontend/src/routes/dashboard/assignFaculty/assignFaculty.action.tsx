@@ -4,7 +4,7 @@ import checkUser from '../../../helper/checkUser';
 const assignFacultyAction: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
     const email = formData.get('userEmail');
-    const remember = formData.get('cdf') ? true : false;
+    const canDelete = formData.get('cdf') ? true : false;
     const action = formData.get('action');
 
     const emailRequest = await checkUser();
@@ -15,7 +15,7 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
                 'Content-Type': 'application/json'
             },
             credentials: 'include',
-            body: JSON.stringify({ email, remember, action })
+            body: JSON.stringify({ email, canDelete, action })
         });
 
         if (loginRequest.ok) {
