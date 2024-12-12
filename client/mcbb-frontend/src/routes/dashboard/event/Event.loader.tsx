@@ -11,7 +11,7 @@ const eventLoader: LoaderFunction = async ({ params }) => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  const response = await fetch(`http://localhost:3000/api/event/${id}`, {
+  const response = await fetch(`http://localhost:3000/api/events/event/${id}`, {
     method: 'GET',
     credentials: 'include',
     headers: {

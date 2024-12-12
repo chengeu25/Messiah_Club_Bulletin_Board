@@ -5,16 +5,15 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
   const code = formData.get('code');
   const action = formData.get('action');
   const email = formData.get('email');
-  const password = formData.get('password');
 
   if (action === 'verifyEmail') {
-    const request = await fetch('http://localhost:3000/api/verify-email', {
+    const request = await fetch('http://localhost:3000/api/auth/verify-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       credentials: 'include',
-      body: JSON.stringify({ code }) //removed 'email' from the body
+      body: JSON.stringify({ code })
     });
 
     if (request.ok) {
@@ -27,7 +26,7 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
   }
 
   if (action === 'resendCode') {
-    const request = await fetch('http://localhost:3000/api/resend-code', {
+    const request = await fetch('http://localhost:3000/api/auth/resend-code', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

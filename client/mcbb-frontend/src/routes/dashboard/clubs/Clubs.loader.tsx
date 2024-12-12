@@ -10,7 +10,7 @@ const clubsLoader: LoaderFunction = async () => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  const clubsResponse = await fetch('http://localhost:3000/api/clubs', {
+  const clubsResponse = await fetch('http://localhost:3000/api/clubs/clubs', {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -23,7 +23,7 @@ const clubsLoader: LoaderFunction = async () => {
   }
 
   const inactiveClubsResponse = await fetch(
-    'http://localhost:3000/api/inactiveClubs',
+    'http://localhost:3000/api/clubs/inactive-clubs',
     {
       method: 'GET',
       credentials: 'include',

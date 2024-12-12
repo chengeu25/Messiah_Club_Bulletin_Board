@@ -9,18 +9,21 @@ const EditInterestsAction: ActionFunction = async ({ request }) => {
 
   // Prepare the data to be sent to the backend
   const data = {
-    interests: parsedInterests,
+    interests: parsedInterests
   };
 
   try {
-    const response = await fetch('http://localhost:3000/api/editinterestpage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-      credentials: 'include',
-    });
+    const response = await fetch(
+      'http://localhost:3000/api/interests/edit-interests',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      }
+    );
 
     const result = await response.json();
 
@@ -38,5 +41,3 @@ const EditInterestsAction: ActionFunction = async ({ request }) => {
 };
 
 export default EditInterestsAction;
-
-

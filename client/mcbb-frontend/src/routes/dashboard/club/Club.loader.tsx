@@ -13,13 +13,16 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   if (params.id === undefined) {
     return redirect('/dashboard/clubs/new');
   }
-  const clubResp = await fetch(`http://localhost:3000/api/club/${params.id}`, {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
+  const clubResp = await fetch(
+    `http://localhost:3000/api/clubs/club/${params.id}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
-  });
+  );
 
   if (!clubResp.ok) {
     return null;
@@ -28,9 +31,9 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   const club = await clubResp.json();
 
   const eventsResp = await fetch(
-    `http://localhost:3000/api/club_events/${params.id}?start_date=${new Date(
-      new Date().setHours(0, 0, 0, 0)
-    ).toISOString()}`,
+    `http://localhost:3000/api/events/club-events/${
+      params.id
+    }?start_date=${new Date(new Date().setHours(0, 0, 0, 0)).toISOString()}`,
     {
       method: 'GET',
       credentials: 'include',

@@ -1,7 +1,7 @@
 import { json, LoaderFunction } from 'react-router-dom';
 
 const loginLoader: LoaderFunction = async () => {
-  const resp = await fetch('http://localhost:3000/api/checkUserCookie', {
+  const resp = await fetch('http://localhost:3000/api/auth/check-user-cookie', {
     method: 'GET',
     credentials: 'include',
     headers: {

@@ -10,13 +10,16 @@ const EditInterestLoader: LoaderFunction = async () => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  const response = await fetch('http://localhost:3000/api/getinterests', {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
+  const response = await fetch(
+    'http://localhost:3000/api/interests/get-current-user-interests',
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
-  });
+  );
   if (!response.ok) {
     throw new Error('Failed to fetch the interest');
   }

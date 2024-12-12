@@ -17,10 +17,10 @@ const addInterestAction: ActionFunction = async ({ request }) => {
 
     // Determine the action type and set endpoint/method
     if (actionType === 'add') {
-      endpoint = 'http://127.0.0.1:3000/api/add_tag';
+      endpoint = 'http://127.0.0.1:3000/api/interests/add-tag';
       method = 'POST';
     } else if (actionType === 'remove') {
-      endpoint = 'http://127.0.0.1:3000/api/remove_tag';
+      endpoint = 'http://127.0.0.1:3000/api/interests/remove-tag';
       method = 'DELETE';
     } else {
       return { error: 'Invalid action type' };
@@ -30,9 +30,9 @@ const addInterestAction: ActionFunction = async ({ request }) => {
     const response = await fetch(endpoint, {
       method,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ tag_name: tagName }),
+      body: JSON.stringify({ tag_name: tagName })
     });
 
     // Parse the response
@@ -46,9 +46,10 @@ const addInterestAction: ActionFunction = async ({ request }) => {
     }
   } catch (err) {
     console.error('Error in addInterestAction:', err);
-    return { error: 'Failed to connect to the server. Please try again later.' };
+    return {
+      error: 'Failed to connect to the server. Please try again later.'
+    };
   }
 };
 
 export default addInterestAction;
-

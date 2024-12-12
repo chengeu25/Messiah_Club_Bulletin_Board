@@ -6,7 +6,7 @@ import { UserType } from '../types/databaseTypes';
  */
 const checkUser = async (): Promise<boolean | UserType> => {
   try {
-    const response = await fetch('http://localhost:3000/api/checkUser', {
+    const response = await fetch('http://localhost:3000/api/auth/check-user', {
       method: 'GET',
       credentials: 'include',
       headers: {

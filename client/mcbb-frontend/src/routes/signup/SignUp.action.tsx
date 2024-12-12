@@ -19,7 +19,7 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Send data to the backend signup endpoint
-  const response = await fetch('http://localhost:3000/api/signup', {
+  const response = await fetch('http://localhost:3000/api/auth/signup', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

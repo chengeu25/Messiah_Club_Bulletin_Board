@@ -14,7 +14,7 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     }
 
     const loginRequest = await fetch(
-      `http://localhost:3000/api/forgotPasswordToken`,
+      `http://localhost:3000/api/auth/forgot-password-token`,
       {
         method: 'POST',
         headers: {

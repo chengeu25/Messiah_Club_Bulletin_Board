@@ -6,7 +6,7 @@ const clubFormAction: ActionFunction = async ({ request }) => {
   if (action === 'cancel') {
     return redirect('/dashboard/clubs');
   } else if (action === 'create') {
-    const resp = await fetch('http://localhost:3000/api/new-club', {
+    const resp = await fetch('http://localhost:3000/api/clubs/new-club', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -31,7 +31,7 @@ const clubFormAction: ActionFunction = async ({ request }) => {
   } else if (action === 'update') {
     const url = new URL(request.url);
     const pathname = url.pathname;
-    const resp = await fetch('http://localhost:3000/api/update-club', {
+    const resp = await fetch('http://localhost:3000/api/clubs/update-club', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'

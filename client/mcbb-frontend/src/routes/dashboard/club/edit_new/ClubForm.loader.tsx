@@ -11,7 +11,7 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     return redirect('/verifyEmail');
   }
   const tagsResponse = await fetch(
-    'http://localhost:3000/api/getAvailableTags',
+    'http://localhost:3000/api/interests/get-available-tags',
     {
       method: 'GET',
       credentials: 'include',
@@ -37,13 +37,16 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
       !(user as User).clubAdmins.includes(parseInt(id))
     )
       return redirect('/dashboard/clubs');
-    const clubResponse = await fetch(`http://localhost:3000/api/club/${id}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
+    const clubResponse = await fetch(
+      `http://localhost:3000/api/clubs/club/${id}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     if (!clubResponse.ok) {
       throw new Error('Failed to fetch club');
     }

@@ -5,14 +5,17 @@ const forgotPasswordAction: ActionFunction = async ({ request }) => {
   const email = formData.get('email');
   // const action = formData.get('action');
 
-  const loginRequest = await fetch('http://localhost:3000/api/forgotPassword', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include',
-    body: JSON.stringify({ email })
-  });
+  const loginRequest = await fetch(
+    'http://localhost:3000/api/auth/forgot-password',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      body: JSON.stringify({ email })
+    }
+  );
 
   if (loginRequest.ok) {
     return redirect('/forgotPasswordMessage');

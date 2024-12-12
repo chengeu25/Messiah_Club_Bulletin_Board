@@ -15,7 +15,7 @@ const loginAction: ActionFunction = async ({ request }) => {
 
   // Handle login on server
   if (action === 'login') {
-    const loginResponse = await fetch('http://localhost:3000/api/login', {
+    const loginResponse = await fetch('http://localhost:3000/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

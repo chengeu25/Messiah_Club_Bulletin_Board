@@ -1,7 +1,7 @@
 const checkSubscription = async (email: string, clubId: number) => {
   try {
     const response = await fetch(
-      'http://localhost:3000/api/check_subscription',
+      'http://localhost:3000/api/subscriptions/check-subscription',
       {
         method: 'POST',
         headers: {
