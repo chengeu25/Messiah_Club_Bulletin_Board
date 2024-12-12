@@ -1,5 +1,6 @@
 import { DayProps } from '../components/dashboard/Day.component';
 import { EventType, UserType } from '../types/databaseTypes';
+import checkSubscription, { someAsync } from './checkSubscription';
 
 /**
  * Sorts the events by day
@@ -64,13 +65,16 @@ export const passesSearch = (event: EventType, search: string) =>
  * @param filter The filter to check
  * @returns True if the event passes the filter
  */
-export const passesFilter = (
+export const passesFilter = async (
   event: EventType,
   user: UserType,
   filter: string
-) =>
-  filter === 'Suggested'
+) => {
+  console.log(someAsync(event.host, async (host) => await checkSubscription(user.email, host.id)))
+  return filter === 'Suggested'
     ? event.tags.some((tag) => user.tags.includes(tag))
     : filter === 'Attending'
     ? event.rsvp === 'rsvp'
-    : true;
+    : filter === 'Hosted by Subscribed Clubs'
+    ? someAsync(event.host, async (host) => await checkSubscription(user.email, host.id))
+    : true}
