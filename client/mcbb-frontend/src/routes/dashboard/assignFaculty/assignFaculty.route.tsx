@@ -174,7 +174,7 @@ const AssignFaculty = () => {
 
     return (
         <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-            <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
+            <div className='flex w-full h-full sm:w-3/4 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
                 <Form
                     onSubmit={handleSubmit}
                     className='flex flex-col gap-2 w-full'
