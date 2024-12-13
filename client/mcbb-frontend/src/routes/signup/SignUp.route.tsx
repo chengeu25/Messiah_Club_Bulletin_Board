@@ -9,18 +9,18 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 /**
  * SignUp component for user registration.
- * 
+ *
  * @component SignUp
  * @description Provides a comprehensive user registration form with validation
- * 
+ *
  * @returns {JSX.Element} Rendered signup form
- * 
+ *
  * @workflow
  * 1. Render signup form with input fields
  * 2. Validate user inputs (password strength, matching, email domain)
  * 3. Implement CAPTCHA verification
  * 4. Submit registration request
- * 
+ *
  * @features
  * - Client-side input validation
  * - Password strength checking
@@ -47,7 +47,7 @@ const SignUp = () => {
 
   /**
    * Side effect to handle URL parameters for error and success messages
-   * 
+   *
    * @effect
    * @description Parses and sets error or success messages from URL parameters
    */
@@ -62,7 +62,7 @@ const SignUp = () => {
 
   /**
    * Handles form submission with comprehensive validation
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @description Validates form inputs, checks CAPTCHA, and submits registration
@@ -70,7 +70,7 @@ const SignUp = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    
+
     // Add CAPTCHA response to form data
     if (captchaResponse) {
       formData.append('captchaResponse', captchaResponse);
@@ -123,7 +123,7 @@ const SignUp = () => {
 
   /**
    * Handles password input and validates password strength
-   * 
+   *
    * @function handlePasswordChange
    * @param {React.ChangeEvent<HTMLInputElement>} event - Password input event
    * @description Checks and updates password strength
@@ -136,7 +136,7 @@ const SignUp = () => {
 
   /**
    * Handles confirm password input and validates password matching
-   * 
+   *
    * @function handleConfirmPasswordChange
    * @param {React.ChangeEvent<HTMLInputElement>} event - Confirm password input event
    * @description Checks and updates password matching
@@ -151,7 +151,7 @@ const SignUp = () => {
 
   /**
    * Handles CAPTCHA verification response
-   * 
+   *
    * @function handleCaptchaChange
    * @param {string | null} value - CAPTCHA response value
    * @description Updates CAPTCHA response state
@@ -250,7 +250,7 @@ const SignUp = () => {
       {/* CAPTCHA */}
       <div className='w-full'>
         <ReCAPTCHA
-          sitekey='6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L'
+          sitekey={import.meta.env.VITE_RECAPTCHA_PUBLIC_KEY}
           onChange={handleCaptchaChange}
         />
       </div>
