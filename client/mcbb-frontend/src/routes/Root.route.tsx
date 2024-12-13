@@ -53,7 +53,7 @@ const Root = () => {
   }, [searchQuery, selectedFilter, setParams, currentPage]);
 
   useEffect(() => {
-    setSelectedFilter(`All ${currentPage}`);
+    setSelectedFilter('Suggested');
     setSearchQuery('');
   }, [currentPage]);
 
