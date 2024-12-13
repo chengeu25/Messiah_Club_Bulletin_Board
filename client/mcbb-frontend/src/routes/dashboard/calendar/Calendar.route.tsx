@@ -1,8 +1,8 @@
+import { useEffect, useMemo } from 'react';
 import { BiHome } from 'react-icons/bi';
 import Button from '../../../components/formElements/Button.component';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import DatePicker from 'react-datepicker';
-import { useEffect, useMemo } from 'react';
 import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import { filterAsync } from '../../../helper/asyncWrappers';
@@ -96,19 +96,32 @@ const Calendar = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      setNumOfDaysDisplayed(Math.max(Math.floor(window.innerWidth / 400), 1));
+      const containerWidth =
+        document.getElementById('calendar-container')?.clientWidth ||
+        window.innerWidth;
+      const daysToDisplay = Math.max(Math.floor(containerWidth / 400), 1);
+      setNumOfDaysDisplayed(daysToDisplay);
     };
 
-    handleResize();
+    const resizeObserver = new ResizeObserver(handleResize);
 
-    window.addEventListener('resize', handleResize);
+    const timeoutId = setTimeout(() => {
+      handleResize();
+
+      resizeObserver.observe(window.document.body);
+    }, 100);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
     };
   }, []);
 
   return (
-    <div className='relative w-full flex flex-col h-full'>
+    <div
+      id='calendar-container'
+      className='relative w-full flex flex-col h-full'
+    >
       <div className='flex justify-center items-center p-2 w-full'>
         <div className='flex flex-row justify-center items-center gap-2'>
           <Button
