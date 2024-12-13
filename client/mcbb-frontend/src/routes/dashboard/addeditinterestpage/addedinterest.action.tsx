@@ -17,10 +17,12 @@ const addInterestAction: ActionFunction = async ({ request }) => {
 
     // Determine the action type and set endpoint/method
     if (actionType === 'add') {
-      endpoint = 'http://localhost:3000/api/interests/add-tag';
+      endpoint = `${import.meta.env.VITE_API_BASE_URL}/api/interests/add-tag`;
       method = 'POST';
     } else if (actionType === 'remove') {
-      endpoint = 'http://localhost:3000/api/interests/remove-tag';
+      endpoint = `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/interests/remove-tag`;
       method = 'DELETE';
     } else {
       return { error: 'Invalid action type' };

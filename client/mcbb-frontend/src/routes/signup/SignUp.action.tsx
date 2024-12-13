@@ -19,14 +19,17 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   }
 
   // Send data to the backend signup endpoint
-  const response = await fetch('http://localhost:3000/api/auth/signup', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ email, password, gender, name, captchaResponse }),
-    credentials: 'include'
-  });
+  const response = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password, gender, name, captchaResponse }),
+      credentials: 'include'
+    }
+  );
 
   // Check if the response is OK (HTTP 200)
   if (response.ok) {

@@ -10,7 +10,7 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
   const emailRequest = await checkUser();
   if (emailRequest) {
     const loginRequest = await fetch(
-      'http://localhost:3000/api/admintools/assign-faculty',
+      `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-faculty`,
       {
         method: 'POST',
         headers: {

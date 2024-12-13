@@ -14,7 +14,7 @@ const clubLoader: LoaderFunction = async ({ params }) => {
     return redirect('/dashboard/clubs/new');
   }
   const clubResp = await fetch(
-    `http://localhost:3000/api/clubs/club/${params.id}`,
+    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/club/${params.id}`,
     {
       method: 'GET',
       credentials: 'include',
@@ -31,7 +31,7 @@ const clubLoader: LoaderFunction = async ({ params }) => {
   const club = await clubResp.json();
 
   const eventsResp = await fetch(
-    `http://localhost:3000/api/events/club-events/${
+    `${import.meta.env.VITE_API_BASE_URL}/api/events/club-events/${
       params.id
     }?start_date=${new Date(new Date().setHours(0, 0, 0, 0)).toISOString()}`,
     {

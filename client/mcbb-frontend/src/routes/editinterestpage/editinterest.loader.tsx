@@ -11,7 +11,9 @@ const EditInterestLoader: LoaderFunction = async () => {
     return redirect('/verifyEmail');
   }
   const response = await fetch(
-    'http://localhost:3000/api/interests/get-current-user-interests',
+    `${
+      import.meta.env.VITE_API_BASE_URL
+    }/api/interests/get-current-user-interests`,
     {
       method: 'GET',
       credentials: 'include',

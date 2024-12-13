@@ -11,7 +11,7 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     return redirect('/verifyEmail');
   }
   const tagsResponse = await fetch(
-    'http://localhost:3000/api/interests/get-available-tags',
+    `${import.meta.env.VITE_API_BASE_URL}/api/interests/get-available-tags`,
     {
       method: 'GET',
       credentials: 'include',
@@ -38,7 +38,7 @@ const clubFormLoader: LoaderFunction = async ({ params }) => {
     )
       return redirect('/dashboard/clubs');
     const clubResponse = await fetch(
-      `http://localhost:3000/api/clubs/club/${id}`,
+      `${import.meta.env.VITE_API_BASE_URL}/api/clubs/club/${id}`,
       {
         method: 'GET',
         credentials: 'include',

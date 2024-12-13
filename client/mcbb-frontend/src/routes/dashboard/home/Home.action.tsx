@@ -10,7 +10,7 @@ const homeAction: ActionFunction = async ({ request }) => {
   else if (action === 'rsvp') {
     const type = formData.get('type');
     const response = await fetch(
-      `http://localhost:3000/api/rsvp/rsvp?event_id=${id}&type=${type}`,
+      `${import.meta.env.VITE_API_BASE_URL}/api/rsvp/rsvp?event_id=${id}&type=${type}`,
       {
         method: 'POST',
         headers: {

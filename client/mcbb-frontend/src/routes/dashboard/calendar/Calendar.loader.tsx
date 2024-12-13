@@ -21,7 +21,7 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   const numDays = searchParams.get('numDays') ?? 1;
 
   const response = await fetch(
-    `http://localhost:3000/api/events/events?start_date=${encodeURIComponent(
+    `${import.meta.env.VITE_API_BASE_URL}/api/events/events?start_date=${encodeURIComponent(
       new Date(startingDate).toISOString()
     )}&end_date=${encodeURIComponent(
       subtractDays(new Date(startingDate), -numDays).toISOString()

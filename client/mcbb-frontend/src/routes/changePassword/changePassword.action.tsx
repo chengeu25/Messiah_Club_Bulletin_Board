@@ -9,7 +9,7 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
   const emailRequest = await checkUser();
   if (emailRequest) {
     const loginRequest = await fetch(
-      'http://localhost:3000/api/auth/password-reset',
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset`,
       {
         method: 'POST',
         headers: {

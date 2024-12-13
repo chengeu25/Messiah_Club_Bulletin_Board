@@ -22,7 +22,7 @@ const AddedInterest = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:3000/api/interests/add-tag',
+        `${import.meta.env.VITE_API_BASE_URL}/api/interests/add-tag`,
         {
           method: 'POST',
           headers: {
@@ -60,7 +60,7 @@ const AddedInterest = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:3000/api/interests/remove-tag',
+        `${import.meta.env.VITE_API_BASE_URL}/api/interests/remove-tag`,
         {
           method: 'DELETE',
           headers: {

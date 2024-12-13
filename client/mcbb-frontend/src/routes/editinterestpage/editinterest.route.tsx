@@ -7,9 +7,14 @@ const EditInterests: React.FC = () => {
 
   useEffect(() => {
     // Fetch all available interests
-    fetch('http://localhost:3000/api/interests/get-available-interest-names', {
-      credentials: 'include'
-    })
+    fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/interests/get-available-interest-names`,
+      {
+        credentials: 'include'
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         if (data.interests) {
@@ -19,9 +24,14 @@ const EditInterests: React.FC = () => {
       .catch((error) => console.error('Error fetching all interests:', error));
 
     // Fetch the user's current selected interests
-    fetch('http://localhost:3000/api/interests/get-current-user-interests', {
-      credentials: 'include'
-    })
+    fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/interests/get-current-user-interests`,
+      {
+        credentials: 'include'
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         if (data.interests) {
@@ -47,7 +57,7 @@ const EditInterests: React.FC = () => {
 
     try {
       const response = await fetch(
-        'http://localhost:3000/api/interests/edit-interests',
+        `${import.meta.env.VITE_API_BASE_URL}/api/interests/edit-interests`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

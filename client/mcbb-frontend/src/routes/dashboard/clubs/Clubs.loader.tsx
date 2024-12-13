@@ -10,20 +10,23 @@ const clubsLoader: LoaderFunction = async () => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  const clubsResponse = await fetch('http://localhost:3000/api/clubs/clubs', {
-    method: 'GET',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json'
+  const clubsResponse = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/clubs`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     }
-  });
+  );
 
   if (!clubsResponse.ok) {
     throw new Error('Failed to fetch clubs');
   }
 
   const inactiveClubsResponse = await fetch(
-    'http://localhost:3000/api/clubs/inactive-clubs',
+    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/inactive-clubs`,
     {
       method: 'GET',
       credentials: 'include',

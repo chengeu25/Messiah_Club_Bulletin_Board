@@ -7,14 +7,17 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
   const email = formData.get('email');
 
   if (action === 'verifyEmail') {
-    const request = await fetch('http://localhost:3000/api/auth/verify-email', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ code })
-    });
+    const request = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/verify-email`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ code })
+      }
+    );
 
     if (request.ok) {
       return redirect('/dashboard');
@@ -26,14 +29,17 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
   }
 
   if (action === 'resendCode') {
-    const request = await fetch('http://localhost:3000/api/auth/resend-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email }) //(no need to send email in the body)
-    });
+    const request = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/resend-code`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email }) //(no need to send email in the body)
+      }
+    );
 
     if (request.ok) {
       return redirect('/verifyEmail?message=Code%20resend%20succesfully');

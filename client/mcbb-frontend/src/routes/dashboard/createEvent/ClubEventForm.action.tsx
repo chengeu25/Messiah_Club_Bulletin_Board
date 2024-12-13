@@ -31,11 +31,14 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('tags', JSON.stringify(tags));
     eventPhotos.forEach((photo) => formData.append('eventPhotos[]', photo));
 
-    const response = await fetch('http://localhost:3000/api/events/new-event', {
-      method: 'POST',
-      credentials: 'include',
-      body: data
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/new-event`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        body: data
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();

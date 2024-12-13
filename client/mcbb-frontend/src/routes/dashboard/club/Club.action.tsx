@@ -27,7 +27,7 @@ const clubAction: ActionFunction = async ({ request }) => {
       return json({ error: 'Missing type' }, { status: 400 });
     }
     const response = await fetch(
-      `http://localhost:3000/api/rsvp/rsvp?event_id=${eventId}&type=${type}`,
+      `${import.meta.env.VITE_API_BASE_URL}/api/rsvp/rsvp?event_id=${eventId}&type=${type}`,
       {
         method: 'POST',
         headers: {
@@ -74,7 +74,7 @@ const clubAction: ActionFunction = async ({ request }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/subscriptions/subscribe?user_id=${userId}`,
+        `${import.meta.env.VITE_API_BASE_URL}/api/subscriptions/subscribe?user_id=${userId}`,
         {
           method: 'POST',
           credentials: 'include',

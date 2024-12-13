@@ -18,7 +18,7 @@ const deleteClubLoader: LoaderFunction = async ({ params }) => {
     return redirect('/dashboard/clubs');
   }
   const response = await fetch(
-    `http://localhost:3000/api/clubs/delete-club/${params.id}`,
+    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/delete-club/${params.id}`,
     {
       method: 'DELETE',
       credentials: 'include',

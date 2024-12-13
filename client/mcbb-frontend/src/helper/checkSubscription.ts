@@ -1,7 +1,9 @@
 const checkSubscription = async (email: string, clubId: number) => {
   try {
     const response = await fetch(
-      'http://localhost:3000/api/subscriptions/check-subscription',
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/subscriptions/check-subscription`,
       {
         method: 'POST',
         headers: {

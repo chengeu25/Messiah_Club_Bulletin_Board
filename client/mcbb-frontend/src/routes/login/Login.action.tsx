@@ -15,14 +15,17 @@ const loginAction: ActionFunction = async ({ request }) => {
 
   // Handle login on server
   if (action === 'login') {
-    const loginResponse = await fetch('http://localhost:3000/api/auth/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email, password, remember })
-    });
+    const loginResponse = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, remember })
+      }
+    );
 
     // Go to the dashboard if login worked
     if (loginResponse.ok) {

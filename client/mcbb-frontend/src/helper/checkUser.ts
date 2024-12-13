@@ -6,13 +6,16 @@ import { UserType } from '../types/databaseTypes';
  */
 const checkUser = async (): Promise<boolean | UserType> => {
   try {
-    const response = await fetch('http://localhost:3000/api/auth/check-user', {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/check-user`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
-    });
+    );
     if (response.ok) {
       const json = await response.json();
       return {

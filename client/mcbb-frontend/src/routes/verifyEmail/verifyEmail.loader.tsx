@@ -23,14 +23,17 @@ const verifyEmailLoader: LoaderFunction = async ({
   }
 
   if (user !== true) {
-    const resp = await fetch('http://localhost:3000/api/auth/resend-code', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include',
-      body: JSON.stringify({ email: user.email }) // Assuming checkUser returns user email
-    });
+    const resp = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/auth/resend-code`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email: user.email }) // Assuming checkUser returns user email
+      }
+    );
 
     const json = await resp.json();
 

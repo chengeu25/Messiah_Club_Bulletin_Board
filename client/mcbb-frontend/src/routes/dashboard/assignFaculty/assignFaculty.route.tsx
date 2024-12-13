@@ -22,7 +22,9 @@ const AssignFaculty = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          'http://localhost:3000/api/admintools/get-faculty-data',
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/api/admintools/get-faculty-data`,
           {
             method: 'GET',
             credentials: 'include'
@@ -101,7 +103,7 @@ const AssignFaculty = () => {
 
       // Submit the data
       const response = await fetch(
-        'http://localhost:3000/api/admintools/assign-faculty',
+        `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-faculty`,
         {
           method: 'POST',
           body: JSON.stringify(payload),
@@ -145,7 +147,7 @@ const AssignFaculty = () => {
   }) => {
     try {
       const response = await fetch(
-        'http://localhost:3000/api/admintools/assign-delete',
+        `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-delete`,
         {
           method: 'POST',
           body: JSON.stringify({
@@ -180,7 +182,7 @@ const AssignFaculty = () => {
   }) => {
     try {
       const response = await fetch(
-        'http://localhost:3000/api/admintools/remove-faculty',
+        `${import.meta.env.VITE_API_BASE_URL}/api/admintools/remove-faculty`,
         {
           method: 'POST',
           body: JSON.stringify({ email: item.email }),

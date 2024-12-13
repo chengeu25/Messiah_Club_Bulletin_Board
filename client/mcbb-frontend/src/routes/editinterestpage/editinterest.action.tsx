@@ -14,7 +14,7 @@ const EditInterestsAction: ActionFunction = async ({ request }) => {
 
   try {
     const response = await fetch(
-      'http://localhost:3000/api/interests/edit-interests',
+      `${import.meta.env.VITE_API_BASE_URL}/api/interests/edit-interests`,
       {
         method: 'POST',
         headers: {

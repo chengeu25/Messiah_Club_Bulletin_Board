@@ -6,7 +6,7 @@ const forgotPasswordAction: ActionFunction = async ({ request }) => {
   // const action = formData.get('action');
 
   const loginRequest = await fetch(
-    'http://localhost:3000/api/auth/forgot-password',
+    `${import.meta.env.VITE_API_BASE_URL}/api/auth/forgot-password`,
     {
       method: 'POST',
       headers: {
