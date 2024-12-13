@@ -1,3 +1,26 @@
+/**
+ * Generates dynamic Tailwind CSS classes for form elements based on color, fill state, and disabled status
+ * 
+ * @function generateStyleClasses
+ * @param {string} color - The base color for the style (e.g., 'blue', 'red', 'green')
+ * @param {boolean} filled - Determines whether the element should have a filled or outlined style
+ * @param {boolean} [disabled] - Optional flag to apply disabled state styling
+ * @returns {string} A string of Tailwind CSS classes for styling the form element
+ * 
+ * @example
+ * // Filled blue button
+ * const blueFilledClasses = generateStyleClasses('blue', true);
+ * 
+ * @example
+ * // Outlined red button in disabled state
+ * const redOutlinedDisabledClasses = generateStyleClasses('red', false, true);
+ * 
+ * @remarks
+ * - Uses Tailwind's color scale for consistent styling
+ * - Provides hover and active state variations
+ * - Adjusts text and background colors based on fill and disabled states
+ * - Supports a wide range of color options
+ */
 const generateStyleClasses = (
   color: string,
   filled: boolean,

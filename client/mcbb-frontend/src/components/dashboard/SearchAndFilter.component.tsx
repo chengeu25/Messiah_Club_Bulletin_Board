@@ -1,10 +1,22 @@
 import { useState } from 'react';
-import Input from '../../components/formElements/Input.component'; // Assuming Input is your custom input component
-import CSelect, { GroupBase, StylesConfig } from 'react-select'; // Assuming CSelect is your react-select component
+import Input from '../../components/formElements/Input.component';
+import CSelect, { GroupBase, StylesConfig } from 'react-select';
 import { Location } from 'react-router';
 import { OptionType } from '../formElements/Select.styles';
 import { CiFilter, CiSearch } from 'react-icons/ci';
 
+/**
+ * Represents the properties for the SearchAndFilter component
+ *
+ * @interface SearchAndFilterProps
+ * @property {string} currentPage - The name of the current page being searched/filtered
+ * @property {string} selectedFilter - The currently selected filter option
+ * @property {(filter: string) => void} setSelectedFilter - Callback to update the selected filter
+ * @property {string} searchQuery - The current search query string
+ * @property {(query: string) => void} setSearchQuery - Callback to update the search query
+ * @property {StylesConfig<OptionType, false, GroupBase<OptionType>>} selectStyles - Custom styles for the select component
+ * @property {Location} location - The current router location object
+ */
 interface SearchAndFilterProps {
   currentPage: string;
   selectedFilter: string;
@@ -16,16 +28,22 @@ interface SearchAndFilterProps {
 }
 
 /**
- * A component that renders a search bar and a filter dropdown.
- * @param {Object} props - The component props
- * @param {string} props.currentPage - The current page name
- * @param {string} props.selectedFilter - The currently selected filter
- * @param {Function} props.setSelectedFilter - Function to update the selected filter
- * @param {string} props.searchQuery - The current search query
- * @param {Function} props.setSearchQuery - Function to update the search query
- * @param {StylesConfig<OptionType, false, GroupBase<OptionType>>} props.selectStyles - Styles for the select component
- * @param {Location} props.location - The current location object
- * @returns {JSX.Element} The rendered SearchAndFilter component
+ * A component that renders a search bar and a filter dropdown with responsive design
+ *
+ * @component
+ * @param {SearchAndFilterProps} props - The component properties
+ * @returns {JSX.Element} A search and filter component with mobile and desktop views
+ *
+ * @example
+ * <SearchAndFilter
+ *   currentPage="Events"
+ *   selectedFilter="All Events"
+ *   setSelectedFilter={handleFilterChange}
+ *   searchQuery=""
+ *   setSearchQuery={handleSearchChange}
+ *   selectStyles={customSelectStyles}
+ *   location={location}
+ * />
  */
 const SearchAndFilter = ({
   currentPage,
@@ -39,13 +57,17 @@ const SearchAndFilter = ({
   const [isSearchVisible, setSearchVisible] = useState(false);
   const [isSelectVisible, setSelectVisible] = useState(false);
 
-  /** Toggles the visibility of the search component */
+  /**
+   * Toggles the visibility of the search component and hides the select component
+   */
   const toggleSearch = () => {
     setSearchVisible(!isSearchVisible);
     setSelectVisible(false);
   };
 
-  /** Toggles the visibility of the select component */
+  /**
+   * Toggles the visibility of the select component and hides the search component
+   */
   const toggleSelect = () => {
     setSelectVisible(!isSelectVisible);
     setSearchVisible(false);

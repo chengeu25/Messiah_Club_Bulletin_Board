@@ -1,8 +1,20 @@
 import ResponsiveForm from '../formElements/ResponsiveForm';
 
 /**
- * Loading indicator
- * @returns A loading component
+ * Renders a full-page loading indicator
+ * 
+ * @component
+ * @returns {JSX.Element} A centered loading message within a responsive form
+ * 
+ * @example
+ * // Used when waiting for data to load or an async operation to complete
+ * {isLoading ? <Loading /> : <MainContent />}
+ * 
+ * @remarks
+ * - Utilizes ResponsiveForm for consistent layout
+ * - Centered text with large, bold styling
+ * - Provides visual feedback during async operations
+ * - Minimal, clean design
  */
 const Loading = () => {
   return (
