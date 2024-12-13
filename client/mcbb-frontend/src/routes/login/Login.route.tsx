@@ -1,5 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSubmit, useSearchParams, useLoaderData } from 'react-router-dom';
+import {
+  useSubmit,
+  useSearchParams,
+  useLoaderData,
+  useNavigation
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -11,6 +16,7 @@ import Loading from '../../components/ui/Loading';
  */
 const Login = () => {
   const submit = useSubmit();
+  const navigation = useNavigation();
   const [params] = useSearchParams();
   const { userId } = useLoaderData() as { userId: string };
   const [error, setError] = useState<string | null>(null);
@@ -26,11 +32,20 @@ const Login = () => {
   useEffect(() => {
     if (params.get('error')) {
       setError(decodeURIComponent(params.get('error') ?? ''));
+      setIsLoading(false); // Reset loading state when error is present
     }
     if (params.get('message')) {
       setMessage(decodeURIComponent(params.get('message') ?? ''));
+      setIsLoading(false); // Reset loading state when message is present
     }
   }, [params]);
+
+  // Reset loading state when navigation state changes
+  useEffect(() => {
+    if (navigation.state === 'idle') {
+      setIsLoading(false);
+    }
+  }, [navigation.state]);
 
   useEffect(() => {
     if (userId) {
@@ -47,25 +62,37 @@ const Login = () => {
     event.preventDefault();
     setIsLoading(true);
     setMessage(null);
+    setError(null); // Reset error state at the start of submission
     const formData = new FormData(event.currentTarget);
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-    if (action === 'signup') {
-      formData.append('action', action);
-      submit(formData, { method: 'post' });
-    } else if (action === 'forgot') {
-      formData.append('action', action);
-      submit(formData, { method: 'post' });
-    } else {
-      if (formData.get('email') === '') {
-        setError('Please enter an email address.');
-      } else if (formData.get('password') === '') {
-        setError('Please enter a password.');
-      } else {
+
+    try {
+      if (action === 'signup') {
         formData.append('action', action);
         submit(formData, { method: 'post' });
+      } else if (action === 'forgot') {
+        formData.append('action', action);
+        submit(formData, { method: 'post' });
+      } else {
+        if (formData.get('email') === '') {
+          setError('Please enter an email address.');
+          setIsLoading(false); // Reset loading state for validation error
+          return;
+        } else if (formData.get('password') === '') {
+          setError('Please enter a password.');
+          setIsLoading(false); // Reset loading state for validation error
+          return;
+        } else {
+          formData.append('action', action);
+          submit(formData, { method: 'post' });
+        }
       }
+    } catch (error) {
+      console.error('Login submission error:', error);
+      setError('An unexpected error occurred.');
+      setIsLoading(false); // Reset loading state for unexpected errors
     }
   };
 
