@@ -70,15 +70,10 @@ export const passesFilter = async (
   event: EventType,
   user: UserType,
   filter: string
-) => {
-  console.log(
-    someAsync(
-      event.host,
-      async (host) => await checkSubscription(user.email, host.id)
-    )
-  );
-  return filter === 'Suggested'
-    ? event.tags.some((tag) => user.tags.includes(tag))
+) =>
+  filter === 'Suggested'
+    ? event.tags.some((tag) => user.tags.includes(tag)) &&
+      event.rsvp !== 'block'
     : filter === 'Attending'
     ? event.rsvp === 'rsvp'
     : filter === 'Hosted by Subscribed Clubs'
@@ -87,4 +82,3 @@ export const passesFilter = async (
         async (host) => await checkSubscription(user.email, host.id)
       )
     : true;
-};
