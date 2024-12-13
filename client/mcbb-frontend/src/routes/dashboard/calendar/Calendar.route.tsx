@@ -5,7 +5,6 @@ import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import DatePicker from 'react-datepicker';
 import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
-import { filterAsync } from '../../../helper/asyncWrappers';
 import {
   passesFilter,
   passesSearch,

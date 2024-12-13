@@ -1,7 +1,5 @@
 import { DayProps } from '../components/dashboard/Day.component';
 import { EventType, UserType } from '../types/databaseTypes';
-import checkSubscription from './checkSubscription';
-import { someAsync } from './asyncWrappers';
 
 /**
  * Sorts the events by day
