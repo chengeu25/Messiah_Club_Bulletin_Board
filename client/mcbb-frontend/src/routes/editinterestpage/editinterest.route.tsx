@@ -1,10 +1,37 @@
 import React, { useEffect, useState } from 'react';
 
+/**
+ * EditInterests component for managing user interests.
+ * 
+ * @component EditInterests
+ * @description Allows users to view, select, and update their interests
+ * 
+ * @returns {JSX.Element} Fully rendered interests editing form
+ * 
+ * @workflow
+ * 1. Fetch all available interests
+ * 2. Fetch user's current interests
+ * 3. Render checkboxes for interest selection
+ * 4. Handle interest selection and submission
+ * 
+ * @features
+ * - Dynamic interest list fetching
+ * - Checkbox-based interest selection
+ * - Error handling for interest updates
+ * - Redirect to add interest page
+ */
 const EditInterests: React.FC = () => {
+  // State for managing interests
   const [allInterests, setAllInterests] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetch available and user's current interests on component mount.
+   * 
+   * @function useEffect
+   * @description Retrieves all interests and user's selected interests
+   */
   useEffect(() => {
     // Fetch all available interests
     fetch(
@@ -43,6 +70,13 @@ const EditInterests: React.FC = () => {
       );
   }, []);
 
+  /**
+   * Toggles interest selection in the selectedInterests state.
+   * 
+   * @function handleCheckboxChange
+   * @param {string} interest - The interest to toggle
+   * @description Adds or removes an interest from the selected list
+   */
   const handleCheckboxChange = (interest: string) => {
     setSelectedInterests(
       (prev) =>
@@ -52,6 +86,13 @@ const EditInterests: React.FC = () => {
     );
   };
 
+  /**
+   * Submits updated interests to the backend.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent} event - Form submission event
+   * @description Sends selected interests to backend and handles response
+   */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -79,6 +120,12 @@ const EditInterests: React.FC = () => {
     }
   };
 
+  /**
+   * Redirects to the Add Interest page.
+   * 
+   * @function handleRedirect
+   * @description Navigates user to the page for adding new interests
+   */
   const handleRedirect = () => {
     window.location.href = '/dashboard/addeditinterestpage';
   };

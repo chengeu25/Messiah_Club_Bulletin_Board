@@ -3,11 +3,40 @@ import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 
+/**
+ * AddedInterest component for managing user interests.
+ * 
+ * @component
+ * @description Provides functionality to:
+ * - Add new interests/tags
+ * - Remove existing interests/tags
+ * - Display success and error messages
+ * 
+ * @returns {React.ReactElement} Rendered interest management form
+ */
 const AddedInterest = () => {
+  /** State to track the current interest name */
   const [interestName, setInterestName] = useState('');
+  
+  /** State to manage error messages */
   const [error, setError] = useState<string[]>([]);
+  
+  /** State to manage success messages */
   const [successMessage, setSuccessMessage] = useState('');
 
+  /**
+   * Handles adding a new interest/tag.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
+   * 
+   * @description Validates and submits a new interest to the server
+   * - Validates interest name
+   * - Sends POST request to add tag
+   * - Manages success and error states
+   * 
+   * @throws {Error} Handles network and server errors
+   */
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -49,6 +78,18 @@ const AddedInterest = () => {
     }
   };
 
+  /**
+   * Handles removing an existing interest/tag.
+   * 
+   * @function handleRemove
+   * 
+   * @description Validates and submits a request to remove a tag
+   * - Validates interest name
+   * - Sends DELETE request to remove tag
+   * - Manages success and error states
+   * 
+   * @throws {Error} Handles network and server errors
+   */
   const handleRemove = async (): Promise<void> => {
     setError([]);
     setSuccessMessage('');

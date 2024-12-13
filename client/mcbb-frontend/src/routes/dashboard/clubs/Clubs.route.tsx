@@ -8,20 +8,47 @@ import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 
+/**
+ * Interface defining the structure of data loaded for the Clubs page.
+ * 
+ * @interface LoaderData
+ * @description Provides clubs data, including active and inactive clubs, and user information
+ */
 interface LoaderData {
+  /** List of active clubs */
   clubs: ClubType[];
+  /** List of inactive clubs */
   inactiveClubs: ClubType[];
+  /** Current user's information */
   user: UserType;
 }
 
+/**
+ * Clubs dashboard component for displaying and managing clubs.
+ * 
+ * @component
+ * @description Renders a list of clubs with:
+ * - Filtering and searching capabilities
+ * - Create new club button for faculty
+ * - Separate sections for active and inactive clubs
+ * 
+ * @returns {React.ReactElement} Rendered clubs dashboard
+ */
 const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
   const [params] = useSearchParams();
 
   /**
-   * Handles the form submission
-   * @param event The form event
+   * Handles form submission for club-related actions.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
+   * @param {number} [id] - Optional club ID for specific actions
+   * 
+   * @description Processes form submissions for:
+   * - Creating new clubs
+   * - Performing actions on existing clubs
    */
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -40,11 +67,16 @@ const Clubs = () => {
   };
 
   /**
-   * Checks if the club passes the search query
-   * Passes if the name includes the search query or if any of the words in the search query
-   * include a tag of the club
-   * @param club The club to check
-   * @returns True if the club passes the search query
+   * Checks if a club matches the current search query.
+   * 
+   * @function passesSearch
+   * @param {ClubType} club - The club to check against the search query
+   * 
+   * @description Determines if a club matches the search criteria by:
+   * - Checking if club name contains the search term
+   * - Checking if any club tags match search terms
+   * 
+   * @returns {boolean} True if the club passes the search filter, false otherwise
    */
   const passesSearch = (club: ClubType) =>
     club.name
@@ -58,6 +90,18 @@ const Clubs = () => {
         club.tags?.some((clubTag) => tag.includes(clubTag.toLowerCase()))
       );
 
+  /**
+   * Filters clubs based on user-selected filter.
+   * 
+   * @function passesFilter
+   * @param {ClubType} club - The club to check against the filter
+   * 
+   * @description Applies filtering based on selected criteria:
+   * - 'Suggested': Clubs with tags matching user's interests
+   * - 'Subscribed': Clubs the user is subscribed to
+   * 
+   * @returns {boolean} True if the club passes the filter, false otherwise
+   */
   const passesFilter = (club: ClubType) =>
     params.get('filter') === 'Suggested'
       ? club.tags.some((tag) => data.user.tags.includes(tag))

@@ -5,16 +5,47 @@ import Button from '../../../components/formElements/Button.component';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
 
+/**
+ * Represents a faculty member's data structure.
+ * 
+ * @typedef {Object} FacultyData
+ * @property {string} name - Name of the faculty member
+ * @property {string} email - Email address of the faculty member
+ * @property {boolean} can_delete_faculty - Permission to delete faculty
+ */
+type FacultyData = {
+  name: string;
+  email: string;
+  can_delete_faculty: boolean;
+};
+
+/**
+ * AssignFaculty dashboard component for managing faculty assignments.
+ * 
+ * @component
+ * @description Provides functionality to:
+ * - Assign new faculty members
+ * - Manage faculty deletion permissions
+ * - Remove faculty members
+ * 
+ * @returns {React.ReactElement} Rendered faculty assignment dashboard
+ */
 const AssignFaculty = () => {
   const [params] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState<boolean>(false);
-  const [tableData, setTableData] = useState<
-    { name: string; email: string; can_delete_faculty: boolean }[]
-  >([]);
+  const [tableData, setTableData] = useState<FacultyData[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
 
+  /**
+   * Fetches faculty data from the server on component mount.
+   * 
+   * @function
+   * @description Retrieves faculty information and populates table and email list
+   * 
+   * @throws {Error} Throws an error if data fetching fails
+   */
   useEffect(() => {
     setError(null);
     setMessage(null);
@@ -46,6 +77,12 @@ const AssignFaculty = () => {
     fetchData();
   }, []); // Empty dependency array ensures it runs only once when the component mounts
 
+  /**
+   * Handles URL-based error and success messages.
+   * 
+   * @function
+   * @description Updates error and success messages from URL parameters
+   */
   useEffect(() => {
     if (params.get('error')) {
       setError(decodeURIComponent(params.get('error') ?? ''));
@@ -55,6 +92,12 @@ const AssignFaculty = () => {
     }
   }, [params]);
 
+  /**
+   * Checks user's permission to delete faculty.
+   * 
+   * @function
+   * @description Verifies if the current user can delete faculty members
+   */
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -70,6 +113,19 @@ const AssignFaculty = () => {
     fetchUserData();
   }, []);
 
+  /**
+   * Handles faculty assignment form submission.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
+   * 
+   * @description Validates and submits new faculty member assignment
+   * - Validates email uniqueness
+   * - Sends assignment request to server
+   * - Updates table and email list dynamically
+   * 
+   * @throws {Error} Throws an error if assignment fails
+   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // Prevent page reload.
     setError(null); // Reset error messages.
@@ -140,11 +196,19 @@ const AssignFaculty = () => {
     }
   };
 
-  const assignDelete = async (item: {
-    name: string;
-    email: string;
-    can_delete_faculty: boolean;
-  }) => {
+  /**
+   * Toggles faculty member's ability to delete other faculty.
+   * 
+   * @function assignDelete
+   * @param {FacultyData} item - Faculty member to modify
+   * 
+   * @description Sends request to update faculty deletion permissions
+   * - Toggles can_delete_faculty status
+   * - Updates table data dynamically
+   * 
+   * @throws {Error} Throws an error if permission update fails
+   */
+  const assignDelete = async (item: FacultyData) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-delete`,
@@ -175,11 +239,19 @@ const AssignFaculty = () => {
     }
   };
 
-  const deleteFaculty = async (item: {
-    name: string;
-    email: string;
-    can_delete_faculty: boolean;
-  }) => {
+  /**
+   * Removes a faculty member from the system.
+   * 
+   * @function deleteFaculty
+   * @param {FacultyData} item - Faculty member to remove
+   * 
+   * @description Sends request to remove a faculty member
+   * - Deletes faculty from the system
+   * - Updates table and email list dynamically
+   * 
+   * @throws {Error} Throws an error if faculty removal fails
+   */
+  const deleteFaculty = async (item: FacultyData) => {
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/api/admintools/remove-faculty`,
@@ -199,12 +271,8 @@ const AssignFaculty = () => {
       setEmailList((prev) => prev.filter((email) => email !== item.email));
     } catch (error) {
       console.error(error);
-      setError('Failed to remove admin. Please try again.');
+      setError('Failed to remove faculty. Please try again.');
     }
-  };
-
-  const tableStyles: React.CSSProperties = {
-    textAlign: 'center'
   };
 
   return (
@@ -250,10 +318,10 @@ const AssignFaculty = () => {
               {tableData.length > 0 ? (
                 tableData.map((item, index) => (
                   <tr key={index}>
-                    <td style={tableStyles}>{item.name}</td>
-                    <td style={tableStyles}>{item.email}</td>
+                    <td style={{ textAlign: 'center' }}>{item.name}</td>
+                    <td style={{ textAlign: 'center' }}>{item.email}</td>
 
-                    <td style={tableStyles}>
+                    <td style={{ textAlign: 'center' }}>
                       <input
                         type='checkbox'
                         checked={item.can_delete_faculty || false} // Replace with your field
@@ -265,7 +333,7 @@ const AssignFaculty = () => {
                         disabled={!canDelete}
                       />
                     </td>
-                    <td style={tableStyles}>
+                    <td style={{ textAlign: 'center' }}>
                       <button
                         onClick={(event) => {
                           event.preventDefault(); // Prevent the form submission

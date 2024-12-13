@@ -1,5 +1,28 @@
 import { ActionFunction } from 'react-router-dom';
 
+/**
+ * Action handler for adding or removing user interests.
+ * 
+ * @function addInterestAction
+ * @param {Object} args - Action function arguments from React Router
+ * @param {Request} args.request - The form submission request
+ * 
+ * @returns {Promise<{message?: string, error?: string}>} 
+ * Response with success message or error details
+ * 
+ * @description Handles interest management actions:
+ * 1. Validates input data
+ * 2. Determines action type (add or remove)
+ * 3. Sends request to backend API
+ * 4. Processes and returns server response
+ * 
+ * @workflow
+ * 1. Extract action type and tag name from form data
+ * 2. Validate input
+ * 3. Select appropriate API endpoint
+ * 4. Send request to server
+ * 5. Return success or error message
+ */
 const addInterestAction: ActionFunction = async ({ request }) => {
   try {
     // Parse form data from the request
@@ -49,11 +72,9 @@ const addInterestAction: ActionFunction = async ({ request }) => {
     } else {
       return { error: result.error || 'An unexpected error occurred.' };
     }
-  } catch (err) {
-    console.error('Error in addInterestAction:', err);
-    return {
-      error: 'Failed to connect to the server. Please try again later.'
-    };
+  } catch (error) {
+    console.error('Error in addInterestAction:', error);
+    return { error: 'An unexpected error occurred during the request.' };
   }
 };
 

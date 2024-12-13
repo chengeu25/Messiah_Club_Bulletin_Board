@@ -11,11 +11,36 @@ import { EventDetailType, ImageType } from '../../../types/databaseTypes';
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
 
+/**
+ * Event details page component.
+ * 
+ * @component Event
+ * @description Renders a comprehensive view of an event's details
+ * 
+ * @returns {JSX.Element} Fully rendered event details page
+ * 
+ * @workflow
+ * 1. Retrieve event details from loader data
+ * 2. Display event information in structured cards
+ * 3. Show event metadata (time, location, organizers, cost)
+ * 4. Render event description and tags
+ * 5. Display event images
+ * 6. Provide comment section with placeholder comments
+ * 
+ * @features
+ * - RSVP dropdown for event interaction
+ * - Dynamic event information rendering
+ * - Responsive design with card-based layout
+ * - Placeholder comment section
+ */
 const Event = () => {
+  // Retrieve event details from loader
   const { event } = useLoaderData() as { event: EventDetailType };
   const submit = useSubmit();
+
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
+      {/* Event title and RSVP section */}
       <Card
         color='gray-300'
         padding={4}
@@ -34,6 +59,8 @@ const Event = () => {
           />
         </Form>
       </Card>
+
+      {/* Event metadata section */}
       <div className='flex flex-col w-full gap-4 m-2'>
         <Card color='gray-300' padding={4} className='flex-col gap-2'>
           <p className='flex flex-row gap-2 items-center flex-wrap'>
@@ -63,9 +90,13 @@ const Event = () => {
           </p>
         </Card>
       </div>
+
+      {/* Event description */}
       <Card color='gray-300' padding={4} className='w-full flex-col gap-2'>
         <p>{event?.description}</p>
       </Card>
+
+      {/* Event tags */}
       {(event?.tags?.length ?? 0) > 0 && (
         <div className='inline-flex flex-row w-full gap-2 items-center flex-wrap'>
           {event?.tags?.map((tag: string, index: number) => (
@@ -80,6 +111,8 @@ const Event = () => {
           ))}
         </div>
       )}
+
+      {/* Event images */}
       <div className='flex flex-row w-full gap-4 overflow-x-scroll min-h-48 mt-2'>
         {event?.images?.map((image: ImageType, index: number) => (
           <img
@@ -91,6 +124,8 @@ const Event = () => {
           />
         ))}
       </div>
+
+      {/* Comment section */}
       <hr className='border-2 border-black w-full mt-2' />
       <h1 className='text-3xl font-bold text-left w-full'>Discuss</h1>
       <div className='flex flex-row w-full gap-2 items-center'>
@@ -112,6 +147,8 @@ const Event = () => {
           />
         </div>
       </div>
+
+      {/* Placeholder comments */}
       <div className='w-full flex flex-col align-left gap-2'>
         <Comment
           creator='User'

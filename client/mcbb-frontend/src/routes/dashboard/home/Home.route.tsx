@@ -13,6 +13,17 @@ import {
   useSearchParams
 } from 'react-router-dom';
 
+/**
+ * Home dashboard component displaying events for the current week.
+ * 
+ * @component
+ * @description Renders a list of events filtered by search and user preferences:
+ * - Displays events grouped by day
+ * - Supports filtering and searching events
+ * - Shows a message when no events match the current filters
+ * 
+ * @returns {React.ReactElement} Rendered home dashboard with events
+ */
 const Home = () => {
   const { user, events } = useLoaderData() as {
     events: EventType[];
@@ -22,7 +33,16 @@ const Home = () => {
   const [params] = useSearchParams();
 
   /**
-   * Returns the filtered events by search and filter
+   * Memoized function to filter events based on search query and user filters.
+   * 
+   * @function filteredEvents
+   * @type {EventType[]}
+   * 
+   * @description Filters events by:
+   * - Matching search query in event title or tags
+   * - Applying user-specific filters (e.g., suggested events)
+   * 
+   * @returns {EventType[]} Array of events that pass the search and filter criteria
    */
   const filteredEvents = useMemo(
     () =>
@@ -35,7 +55,16 @@ const Home = () => {
   );
 
   /**
-   * Returns the (filtered) events on each day
+   * Memoized function to organize filtered events by day.
+   * 
+   * @function eventsOnDays
+   * @type {DayProps[]}
+   * 
+   * @description Transforms filtered events into a day-based structure with:
+   * - Events sorted by date
+   * - Handlers for event details and RSVP actions
+   * 
+   * @returns {DayProps[]} Array of day objects containing events
    */
   const eventsOnDays = useMemo(
     sortEventsByDay(

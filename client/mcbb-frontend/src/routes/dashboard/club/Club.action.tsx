@@ -1,12 +1,36 @@
 import { ActionFunction, json, redirect } from 'react-router';
 
+/**
+ * Action handler for club-related interactions.
+ * 
+ * @function clubAction
+ * @param {Object} context - Action function context
+ * @param {Request} context.request - The form submission request
+ * 
+ * @returns {Promise<Response>} Redirect or JSON response based on action type
+ * 
+ * @description Handles various club and event-related actions:
+ * 1. Creating new events
+ * 2. Managing event RSVP
+ * 3. Viewing event details
+ * 4. Managing club subscriptions
+ * 
+ * @workflow
+ * 1. Extract action type and related data from form submission
+ * 2. Validate required parameters
+ * 3. Execute appropriate backend request
+ * 4. Return response or redirect
+ * 
+ * @throws {Error} Returns JSON error response for invalid or failed actions
+ */
 const clubAction: ActionFunction = async ({ request }) => {
+  // Parse form data
   const formData = await request.formData();
   const action = formData.get('action');
   const clubId = formData.get('clubId');
   const userId = formData.get('userId'); // If user_id comes from formData
 
-  // Redirect to new event if action is 'newEvent'
+  // Redirect to new event creation page
   if (action === 'newEvent') {
     if (!clubId) {
       console.error("Missing clubId for 'newEvent' action");
@@ -15,6 +39,7 @@ const clubAction: ActionFunction = async ({ request }) => {
     return redirect(`/dashboard/club/${clubId}/newEvent`);
   }
 
+  // Handle event RSVP actions
   if (action === 'rsvp') {
     const eventId = formData.get('id');
     if (!eventId) {
@@ -47,6 +72,7 @@ const clubAction: ActionFunction = async ({ request }) => {
     return json({ success: true });
   }
 
+  // Redirect to event details page
   if (action === 'details') {
     const eventId = formData.get('id');
     if (!eventId) {
@@ -56,7 +82,7 @@ const clubAction: ActionFunction = async ({ request }) => {
     return redirect(`/dashboard/event/${eventId}`);
   }
 
-  // Handle subscription actions
+  // Handle club subscription actions
   if (action === 'subscribe' || action === 'unsubscribe') {
     console.log('Action:', action);
     console.log('Club ID:', clubId);

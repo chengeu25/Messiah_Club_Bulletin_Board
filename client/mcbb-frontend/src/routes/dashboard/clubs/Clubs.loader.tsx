@@ -2,6 +2,27 @@ import { json, LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
 
+/**
+ * Loader function for the clubs dashboard route.
+ * 
+ * @function clubsLoader
+ * @returns {Promise<Response>} JSON response with user, active and inactive clubs data, or redirect
+ * 
+ * @description Prepares data for the clubs dashboard by:
+ * - Checking user authentication
+ * - Verifying email verification status
+ * - Fetching active and inactive clubs
+ * 
+ * @throws {Error} Throws an error if clubs cannot be fetched
+ * 
+ * @workflow
+ * 1. Check if user is logged in
+ * 2. Redirect to login if not authenticated
+ * 3. Redirect to email verification if email is not verified
+ * 4. Fetch active clubs
+ * 5. Fetch inactive clubs (optional)
+ * 6. Return user and clubs data
+ */
 const clubsLoader: LoaderFunction = async () => {
   const user = await checkUser();
   if (user === false) {
