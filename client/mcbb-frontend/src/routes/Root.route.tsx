@@ -53,9 +53,13 @@ const Root = () => {
   }, [searchQuery, selectedFilter, setParams, currentPage]);
 
   useEffect(() => {
-    setSelectedFilter('Suggested');
+    if (location.pathname.includes('calendar')) {
+      setSelectedFilter('Attending');
+    } else {
+      setSelectedFilter('Suggested');
+    }
     setSearchQuery('');
-  }, [currentPage]);
+  }, [currentPage, location.pathname]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
