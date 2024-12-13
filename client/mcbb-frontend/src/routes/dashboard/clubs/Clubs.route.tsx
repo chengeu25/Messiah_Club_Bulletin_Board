@@ -61,6 +61,8 @@ const Clubs = () => {
   const passesFilter = (club: ClubType) =>
     params.get('filter') === 'Suggested'
       ? club.tags.some((tag) => data.user.tags.includes(tag))
+      : params.get('filter') === 'Subscribed'
+      ? club.subscribed
       : true;
 
   return (

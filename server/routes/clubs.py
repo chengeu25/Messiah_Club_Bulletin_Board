@@ -49,7 +49,14 @@ def get_clubs():
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 1"
+        """SELECT c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked 
+            FROM club c
+            LEFT JOIN user_subscription us
+                ON c.club_id = us.club_id
+                AND us.email = %s
+                AND us.is_active = 1
+            WHERE c.is_active = 1""",
+        (current_user["user_id"],),
     )
     result = None
     try:
@@ -65,6 +72,7 @@ def get_clubs():
                         if x[3]
                         else None
                     ),
+                    "subscribed": True if (x[5] == 1 or x[5] == True) else False,
                 },
                 result,
             )

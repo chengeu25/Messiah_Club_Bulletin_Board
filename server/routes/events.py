@@ -353,7 +353,8 @@ def get_events():
                         "location": str,
                         "description": str,
                         "cost": float,
-                        "title": str
+                        "title": str,
+                        "subscribed": bool,
                     }
                 ]
             }, 200 status
@@ -421,6 +422,30 @@ def get_events():
                 result_4,
             )
         )
+        cur.execute(
+            """SELECT eh.event_id, ( 
+                SELECT COUNT(*) FROM user_subscription us 
+                    INNER JOIN event_host eh2 
+                        ON us.club_id = eh2.club_id
+                    WHERE us.email = %s
+                        AND eh2.event_id = eh.event_id
+                        AND us.is_active = 1
+                        AND us.subscribed_or_blocked = 1
+                ) > 0 AS is_subscribed 
+                FROM event_host eh
+                INNER JOIN event e 
+                    ON e.event_id = eh.event_id
+                WHERE e.is_active = 1
+                AND e.is_approved = 1""",
+            (session["user_id"],),
+        )
+        result_5 = cur.fetchall()
+        result_5 = list(
+            map(
+                lambda x: {"event": x[0], "subscribed": x[1]},
+                result_5,
+            )
+        )
         final_result = list(
             map(
                 lambda x: {
@@ -468,6 +493,14 @@ def get_events():
                                 )
                             ),
                         )
+                    ),
+                    "subscribed": next(
+                        (
+                            item["subscribed"]
+                            for item in result_5
+                            if item["event"] == x[0]
+                        ),
+                        False,
                     ),
                 },
                 result,

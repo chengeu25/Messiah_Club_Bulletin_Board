@@ -16,6 +16,7 @@ export interface ClubType {
   id: number;
   image: string;
   tags: string[];
+  subscribed: boolean;
 }
 
 export interface ClubAdminType {
@@ -51,6 +52,7 @@ export interface EventType {
   tags: string[];
   images: ImageType[];
   rsvp: string;
+  subscribed: boolean;
 }
 
 export interface EventHostType {

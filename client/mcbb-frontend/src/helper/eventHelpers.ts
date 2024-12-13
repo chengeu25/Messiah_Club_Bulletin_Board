@@ -66,7 +66,7 @@ export const passesSearch = (event: EventType, search: string) =>
  * @param filter The filter to check
  * @returns True if the event passes the filter
  */
-export const passesFilter = async (
+export const passesFilter = (
   event: EventType,
   user: UserType,
   filter: string
@@ -77,8 +77,5 @@ export const passesFilter = async (
     : filter === 'Attending'
     ? event.rsvp === 'rsvp'
     : filter === 'Hosted by Subscribed Clubs'
-    ? someAsync(
-        event.host,
-        async (host) => await checkSubscription(user.email, host.id)
-      )
+    ? event.subscribed
     : true;
