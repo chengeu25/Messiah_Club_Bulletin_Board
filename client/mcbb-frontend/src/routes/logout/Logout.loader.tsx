@@ -31,8 +31,8 @@ const logoutLoader = async () => {
     }
   });
 
-  // Redirect to login page
-  return redirect('/login');
+  // Redirect to login page with a cache-busting parameter
+  return redirect('/login?_reload=' + Date.now());
 };
 
 export default logoutLoader;

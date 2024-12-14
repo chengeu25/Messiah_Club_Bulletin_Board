@@ -8,10 +8,11 @@ import {
   useNavigate,
   Link,
   useLocation,
-  useSearchParams
+  useSearchParams,
+  useNavigation
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/specialDropdowns/UserDropdown.component';
 import { UserType as User } from '../types/databaseTypes';
@@ -51,10 +52,12 @@ const Root = () => {
   const location = useLocation();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [params, setParams] = useSearchParams();
+  const navigation = useNavigation();
 
   // State management for search and filtering
   const [selectedFilter, setSelectedFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [shouldReloadLoader, setShouldReloadLoader] = useState(false);
 
   /**
    * Derives the current page name from the location pathname.
@@ -102,6 +105,60 @@ const Root = () => {
     }
     setSearchQuery('');
   }, [currentPage, location.pathname]);
+
+  /**
+   * Trigger a loader reload via custom event
+   */
+  const triggerLoaderReload = useCallback(() => {
+    setShouldReloadLoader(true);
+  }, []);
+
+  /**
+   * Side effect to handle loader reload after logout
+   */
+  useEffect(() => {
+    if (shouldReloadLoader) {
+      // Reset the reload flag
+      setShouldReloadLoader(false);
+
+      // Force a reload by clearing the loader data
+      window.dispatchEvent(new Event('reload-root-loader'));
+    }
+  }, [shouldReloadLoader]);
+
+  /**
+   * Side effect to handle logout state
+   *
+   * @effect
+   * @description Resets navigation when a logout occurs
+   * Clears logout parameter after processing to prevent repeated resets
+   */
+  useEffect(() => {
+    if (params.get('logout') === 'true') {
+      // Clear the logout parameter to prevent repeated triggers
+      const newParams = new URLSearchParams(params.toString());
+      newParams.delete('logout');
+      setParams(newParams, { replace: true });
+
+      // Trigger loader reload
+      triggerLoaderReload();
+    }
+  }, [params, setParams, triggerLoaderReload]);
+
+  /**
+   * Side effect to handle reload parameter
+   *
+   * @effect
+   * @description Clears reload parameter after processing to prevent repeated triggers
+   */
+  useEffect(() => {
+    if (params.get('_reload')) {
+      // Clear the reload parameter to prevent repeated triggers
+      const newParams = new URLSearchParams(params.toString());
+      newParams.delete('_reload');
+      setParams(newParams, { replace: true });
+    }
+  }, [params, setParams]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
