@@ -70,7 +70,7 @@ export const passesFilter = (
   filter: string
 ) =>
   filter === 'Suggested'
-    ? event.tags.some((tag) => user.tags.includes(tag)) &&
+    ? event.tags?.some((tag) => user.tags?.includes(tag)) &&
       event.rsvp !== 'block'
     : filter === 'Attending'
     ? event.rsvp === 'rsvp'
