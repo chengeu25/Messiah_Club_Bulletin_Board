@@ -10,7 +10,7 @@ import Button from '../../../components/formElements/Button.component';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
- * 
+ *
  * @interface LoaderData
  * @description Provides clubs data, including active and inactive clubs, and user information
  */
@@ -25,13 +25,13 @@ interface LoaderData {
 
 /**
  * Clubs dashboard component for displaying and managing clubs.
- * 
+ *
  * @component
  * @description Renders a list of clubs with:
  * - Filtering and searching capabilities
  * - Create new club button for faculty
  * - Separate sections for active and inactive clubs
- * 
+ *
  * @returns {React.ReactElement} Rendered clubs dashboard
  */
 const Clubs = () => {
@@ -41,11 +41,11 @@ const Clubs = () => {
 
   /**
    * Handles form submission for club-related actions.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @param {number} [id] - Optional club ID for specific actions
-   * 
+   *
    * @description Processes form submissions for:
    * - Creating new clubs
    * - Performing actions on existing clubs
@@ -68,14 +68,14 @@ const Clubs = () => {
 
   /**
    * Checks if a club matches the current search query.
-   * 
+   *
    * @function passesSearch
    * @param {ClubType} club - The club to check against the search query
-   * 
+   *
    * @description Determines if a club matches the search criteria by:
    * - Checking if club name contains the search term
    * - Checking if any club tags match search terms
-   * 
+   *
    * @returns {boolean} True if the club passes the search filter, false otherwise
    */
   const passesSearch = (club: ClubType) =>
@@ -92,19 +92,19 @@ const Clubs = () => {
 
   /**
    * Filters clubs based on user-selected filter.
-   * 
+   *
    * @function passesFilter
    * @param {ClubType} club - The club to check against the filter
-   * 
+   *
    * @description Applies filtering based on selected criteria:
    * - 'Suggested': Clubs with tags matching user's interests
    * - 'Subscribed': Clubs the user is subscribed to
-   * 
+   *
    * @returns {boolean} True if the club passes the filter, false otherwise
    */
   const passesFilter = (club: ClubType) =>
     params.get('filter') === 'Suggested'
-      ? club.tags.some((tag) => data.user.tags.includes(tag))
+      ? club.tags.some((tag) => data.user?.tags?.includes(tag) ?? false)
       : params.get('filter') === 'Subscribed'
       ? club.subscribed
       : true;
