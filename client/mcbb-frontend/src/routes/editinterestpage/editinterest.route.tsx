@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 /**
  * EditInterests component for managing user interests.
- * 
+ *
  * @component EditInterests
  * @description Allows users to view, select, and update their interests
- * 
+ *
  * @returns {JSX.Element} Fully rendered interests editing form
- * 
+ *
  * @workflow
  * 1. Fetch all available interests
  * 2. Fetch user's current interests
  * 3. Render checkboxes for interest selection
  * 4. Handle interest selection and submission
- * 
+ *
  * @features
  * - Dynamic interest list fetching
  * - Checkbox-based interest selection
@@ -25,10 +26,12 @@ const EditInterests: React.FC = () => {
   const [allInterests, setAllInterests] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const [message, setMessage] = useState<string | null>(null);
 
   /**
    * Fetch available and user's current interests on component mount.
-   * 
+   *
    * @function useEffect
    * @description Retrieves all interests and user's selected interests
    */
@@ -70,9 +73,13 @@ const EditInterests: React.FC = () => {
       );
   }, []);
 
+  useEffect(() => {
+    setMessage(searchParams.get('message'));
+  }, [searchParams]);
+
   /**
    * Toggles interest selection in the selectedInterests state.
-   * 
+   *
    * @function handleCheckboxChange
    * @param {string} interest - The interest to toggle
    * @description Adds or removes an interest from the selected list
@@ -88,7 +95,7 @@ const EditInterests: React.FC = () => {
 
   /**
    * Submits updated interests to the backend.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent} event - Form submission event
    * @description Sends selected interests to backend and handles response
@@ -122,7 +129,7 @@ const EditInterests: React.FC = () => {
 
   /**
    * Redirects to the Add Interest page.
-   * 
+   *
    * @function handleRedirect
    * @description Navigates user to the page for adding new interests
    */
@@ -138,6 +145,7 @@ const EditInterests: React.FC = () => {
           className='flex flex-col gap-2 w-full h-full'
         >
           <h1 className='text-3xl font-bold'>Edit Interests</h1>
+          {message && <p>{message}</p>}
           {error && <p className='text-red-500'>{error}</p>}
           <div
             className='flex flex-col gap-2 overflow-y-auto'
