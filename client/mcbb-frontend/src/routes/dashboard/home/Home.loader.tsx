@@ -31,7 +31,6 @@ const homeLoader: LoaderFunction = async () => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  console.log((user as User)?.tags?.length);
   if (((user as User)?.tags?.length ?? 0) === 0) {
     const message =
       "Please let us know what you're interested in so we can get you connected with the right clubs and events!";
