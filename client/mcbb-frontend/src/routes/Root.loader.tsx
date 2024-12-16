@@ -21,6 +21,17 @@ import checkUser from '../helper/checkUser';
 const rootLoader = async () => {
   // Check user authentication status
   const user = await checkUser();
+  const school = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/school/1`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  ).then((res) => res.json());
+  console.log(school);
 
   // Return user status as JSON response
   return json(user, { status: 200 });
