@@ -1,11 +1,10 @@
+import { useEffect, useMemo } from 'react';
 import { BiHome } from 'react-icons/bi';
 import Button from '../../../components/formElements/Button.component';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import DatePicker from 'react-datepicker';
-import { useEffect, useMemo } from 'react';
 import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
-import { filterAsync } from '../../../helper/asyncWrappers';
 import {
   passesFilter,
   passesSearch,
@@ -13,8 +12,19 @@ import {
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
-import useAsyncMemo from '../../../hooks/useAsyncMemo';
 
+/**
+ * Calendar dashboard component for displaying and navigating events.
+ * 
+ * @component
+ * @description Provides functionality to:
+ * - Display events across multiple days
+ * - Navigate between dates
+ * - Filter and search events
+ * - Dynamically adjust displayed days based on screen size
+ * 
+ * @returns {React.ReactElement} Rendered calendar dashboard
+ */
 const Calendar = () => {
   const submit = useSubmit();
 
@@ -24,6 +34,16 @@ const Calendar = () => {
     user: UserType;
   };
 
+  /**
+   * Calculates the starting date and number of days to display.
+   * 
+   * @function
+   * @returns {Object} Starting date and number of days
+   * 
+   * @description Retrieves date parameters from URL search params
+   * - Uses current date if no starting date is specified
+   * - Defaults to 1 day if no number of days is specified
+   */
   const { startingDate, numOfDaysDisplayed } = useMemo(() => {
     const startingDate = searchParams.get('startingDate');
     const numDays = searchParams.get('numDays');
@@ -35,18 +55,44 @@ const Calendar = () => {
     };
   }, [searchParams]);
 
+  /**
+   * Updates the starting date in URL search parameters.
+   * 
+   * @function setStartingDate
+   * @param {Date} startingDate - New starting date to set
+   * 
+   * @description Modifies URL search parameters to reflect the new starting date
+   */
   const setStartingDate = (startingDate: Date) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('startingDate', startingDate.toISOString());
     setSearchParams(newSearchParams);
   };
 
+  /**
+   * Updates the number of days displayed in URL search parameters.
+   * 
+   * @function setNumOfDaysDisplayed
+   * @param {number} numDays - Number of days to display
+   * 
+   * @description Modifies URL search parameters to reflect the new number of days
+   */
   const setNumOfDaysDisplayed = (numDays: number) => {
     const newSearchParams = new URLSearchParams(searchParams.toString());
     newSearchParams.set('numDays', numDays.toString());
     setSearchParams(newSearchParams);
   };
 
+  /**
+   * Generates an array of dates to be displayed.
+   * 
+   * @function
+   * @returns {Date[]} Array of dates to display
+   * 
+   * @description Creates an array of consecutive dates based on:
+   * - Starting date
+   * - Number of days to display
+   */
   const datesDisplayed = useMemo(() => {
     const dates: Date[] = [];
     for (let i = 0; i < numOfDaysDisplayed; i++) {
@@ -56,21 +102,38 @@ const Calendar = () => {
   }, [startingDate, numOfDaysDisplayed]);
 
   /**
-   * Returns the filtered events by search and filter
+   * Filters events based on search query and user filters.
+   * 
+   * @function
+   * @returns {EventType[]} Filtered events
+   * 
+   * @description Applies search and filter criteria to events:
+   * - Matches search query in event details
+   * - Applies user-specific filters
    */
-  const filteredEvents = useAsyncMemo(async () => {
-    const filtered = await filterAsync(
-      events,
-      async (event) =>
-        passesSearch(event, searchParams.get('search') ?? '') &&
-        (await passesFilter(event, user, searchParams.get('filter') ?? ''))
-    );
-    return filtered;
-  }, [events, searchParams]);
+  const filteredEvents = useMemo(
+    () =>
+      events.filter(
+        (event) =>
+          passesSearch(event, searchParams.get('search') ?? '') &&
+          passesFilter(event, user, searchParams.get('filter') ?? '')
+      ),
+    [events, searchParams]
+  );
 
+  /**
+   * Organizes filtered events by day with interaction handlers.
+   * 
+   * @function
+   * @returns {DayProps[]} Events sorted and organized by day
+   * 
+   * @description Transforms filtered events into a day-based structure:
+   * - Sorts events by day
+   * - Adds handlers for event details and RSVP actions
+   */
   const eventsOnDays = useMemo(
     sortEventsByDay(
-      filteredEvents?.value ?? [],
+      filteredEvents ?? [],
       (id) => submit({ id: id, action: 'details' }, { method: 'post' }),
       (id, type) =>
         submit({ id: id, type: type, action: 'rsvp' }, { method: 'post' })
@@ -78,6 +141,16 @@ const Calendar = () => {
     [events]
   );
 
+  /**
+   * Prepares events for each displayed date.
+   * 
+   * @function
+   * @returns {DayProps[]} Events for each displayed date
+   * 
+   * @description Maps events to their corresponding dates:
+   * - Creates a day object for each date
+   * - Fills with events if available, otherwise creates an empty day
+   */
   const eventsOnDaysDisplayed: DayProps[] = useMemo(
     () =>
       datesDisplayed.map(
@@ -94,21 +167,43 @@ const Calendar = () => {
     [eventsOnDays, datesDisplayed]
   );
 
+  /**
+   * Dynamically adjusts the number of displayed days based on screen width.
+   * 
+   * @function
+   * @description Uses ResizeObserver to:
+   * - Calculate optimal number of days to display
+   * - Update URL search parameters
+   * - Handles initial and responsive layout
+   */
   useEffect(() => {
     const handleResize = () => {
-      setNumOfDaysDisplayed(Math.max(Math.floor(window.innerWidth / 400), 1));
+      const containerWidth =
+        document.getElementById('calendar-container')?.clientWidth ||
+        window.innerWidth;
+      const daysToDisplay = Math.max(Math.floor(containerWidth / 400), 1);
+      setNumOfDaysDisplayed(daysToDisplay);
     };
 
-    handleResize();
+    const resizeObserver = new ResizeObserver(handleResize);
 
-    window.addEventListener('resize', handleResize);
+    const timeoutId = setTimeout(() => {
+      handleResize();
+
+      resizeObserver.observe(window.document.body);
+    }, 100);
+
     return () => {
-      window.removeEventListener('resize', handleResize);
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
     };
   }, []);
 
   return (
-    <div className='relative w-full flex flex-col h-full'>
+    <div
+      id='calendar-container'
+      className='relative w-full flex flex-col h-full'
+    >
       <div className='flex justify-center items-center p-2 w-full'>
         <div className='flex flex-row justify-center items-center gap-2'>
           <Button

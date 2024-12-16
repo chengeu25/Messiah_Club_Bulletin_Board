@@ -1,6 +1,15 @@
 import Button from '../formElements/Button.component';
 import Input from '../formElements/Input.component';
 
+/**
+ * Represents the properties for the Comment component
+ * 
+ * @interface CommentProps
+ * @property {string} creator - The name or identifier of the comment creator
+ * @property {string} content - The text content of the comment
+ * @property {Date} lastModified - The timestamp of when the comment was last modified
+ * @property {number} [indentLevel=0] - Optional indentation level for nested comments
+ */
 interface CommentProps {
   creator: string;
   content: string;
@@ -8,6 +17,26 @@ interface CommentProps {
   indentLevel?: number;
 }
 
+/**
+ * Renders a comment with creator details, content, and a reply input
+ * 
+ * @component
+ * @param {CommentProps} props - The properties for the Comment component
+ * @returns {JSX.Element} A styled comment card with creator info, content, and reply functionality
+ * 
+ * @example
+ * <Comment 
+ *   creator="John Doe"
+ *   content="This is a sample comment"
+ *   lastModified={new Date()}
+ *   indentLevel={1}
+ * />
+ * 
+ * @remarks
+ * - Supports nested comments through the indentLevel prop
+ * - Includes a built-in reply input and button
+ * - Displays creator name, timestamp, and a report option
+ */
 const Comment = ({
   creator,
   content,

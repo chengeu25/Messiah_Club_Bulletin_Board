@@ -1,11 +1,9 @@
 import Day from '../../../components/dashboard/Day.component';
-import { filterAsync } from '../../../helper/asyncWrappers';
 import {
   passesFilter,
   passesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
-import useAsyncMemo from '../../../hooks/useAsyncMemo';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
 import {
@@ -15,6 +13,17 @@ import {
   useSearchParams
 } from 'react-router-dom';
 
+/**
+ * Home dashboard component displaying events for the current week.
+ * 
+ * @component
+ * @description Renders a list of events filtered by search and user preferences:
+ * - Displays events grouped by day
+ * - Supports filtering and searching events
+ * - Shows a message when no events match the current filters
+ * 
+ * @returns {React.ReactElement} Rendered home dashboard with events
+ */
 const Home = () => {
   const { user, events } = useLoaderData() as {
     events: EventType[];
@@ -24,29 +33,47 @@ const Home = () => {
   const [params] = useSearchParams();
 
   /**
-   * Returns the filtered events by search and filter
+   * Memoized function to filter events based on search query and user filters.
+   * 
+   * @function filteredEvents
+   * @type {EventType[]}
+   * 
+   * @description Filters events by:
+   * - Matching search query in event title or tags
+   * - Applying user-specific filters (e.g., suggested events)
+   * 
+   * @returns {EventType[]} Array of events that pass the search and filter criteria
    */
-  const filteredEvents = useAsyncMemo(async () => {
-    const filtered = await filterAsync(
-      events,
-      async (event: EventType) =>
-        passesSearch(event, params.get('search') ?? '') &&
-        (await passesFilter(event, user, params.get('filter') ?? ''))
-    );
-    return filtered;
-  }, [events, params]);
+  const filteredEvents = useMemo(
+    () =>
+      events.filter(
+        (event: EventType) =>
+          passesSearch(event, params.get('search') ?? '') &&
+          passesFilter(event, user, params.get('filter') ?? '')
+      ),
+    [events, params]
+  );
 
   /**
-   * Returns the (filtered) events on each day
+   * Memoized function to organize filtered events by day.
+   * 
+   * @function eventsOnDays
+   * @type {DayProps[]}
+   * 
+   * @description Transforms filtered events into a day-based structure with:
+   * - Events sorted by date
+   * - Handlers for event details and RSVP actions
+   * 
+   * @returns {DayProps[]} Array of day objects containing events
    */
   const eventsOnDays = useMemo(
     sortEventsByDay(
-      filteredEvents?.value ?? [],
+      filteredEvents,
       (id) => submit({ id: id, action: 'details' }, { method: 'post' }),
       (id, type) =>
         submit({ id: id, type: type, action: 'rsvp' }, { method: 'post' })
     ),
-    [filteredEvents]
+    [filteredEvents, submit]
   );
 
   return (

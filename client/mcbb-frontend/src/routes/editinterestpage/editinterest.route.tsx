@@ -1,13 +1,47 @@
 import React, { useEffect, useState } from 'react';
 
+/**
+ * EditInterests component for managing user interests.
+ * 
+ * @component EditInterests
+ * @description Allows users to view, select, and update their interests
+ * 
+ * @returns {JSX.Element} Fully rendered interests editing form
+ * 
+ * @workflow
+ * 1. Fetch all available interests
+ * 2. Fetch user's current interests
+ * 3. Render checkboxes for interest selection
+ * 4. Handle interest selection and submission
+ * 
+ * @features
+ * - Dynamic interest list fetching
+ * - Checkbox-based interest selection
+ * - Error handling for interest updates
+ * - Redirect to add interest page
+ */
 const EditInterests: React.FC = () => {
+  // State for managing interests
   const [allInterests, setAllInterests] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Fetch available and user's current interests on component mount.
+   * 
+   * @function useEffect
+   * @description Retrieves all interests and user's selected interests
+   */
   useEffect(() => {
     // Fetch all available interests
-    fetch('http://localhost:3000/api/getallinterests', { credentials: 'include' })
+    fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/interests/get-available-interest-names`,
+      {
+        credentials: 'include'
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         if (data.interests) {
@@ -17,34 +51,61 @@ const EditInterests: React.FC = () => {
       .catch((error) => console.error('Error fetching all interests:', error));
 
     // Fetch the user's current selected interests
-    fetch('http://localhost:3000/api/getinterests', { credentials: 'include' })
+    fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/interests/get-current-user-interests`,
+      {
+        credentials: 'include'
+      }
+    )
       .then((response) => response.json())
       .then((data) => {
         if (data.interests) {
           setSelectedInterests(data.interests);
         }
       })
-      .catch((error) => console.error('Error fetching selected interests:', error));
+      .catch((error) =>
+        console.error('Error fetching selected interests:', error)
+      );
   }, []);
 
+  /**
+   * Toggles interest selection in the selectedInterests state.
+   * 
+   * @function handleCheckboxChange
+   * @param {string} interest - The interest to toggle
+   * @description Adds or removes an interest from the selected list
+   */
   const handleCheckboxChange = (interest: string) => {
-    setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest) // Remove interest
-        : [...prev, interest] // Add interest
+    setSelectedInterests(
+      (prev) =>
+        prev.includes(interest)
+          ? prev.filter((i) => i !== interest) // Remove interest
+          : [...prev, interest] // Add interest
     );
   };
 
+  /**
+   * Submits updated interests to the backend.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent} event - Form submission event
+   * @description Sends selected interests to backend and handles response
+   */
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:3000/api/editinterestpage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ interests: selectedInterests }),
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/interests/edit-interests`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ interests: selectedInterests })
+        }
+      );
 
       const result = await response.json();
 
@@ -59,41 +120,53 @@ const EditInterests: React.FC = () => {
     }
   };
 
+  /**
+   * Redirects to the Add Interest page.
+   * 
+   * @function handleRedirect
+   * @description Navigates user to the page for adding new interests
+   */
   const handleRedirect = () => {
     window.location.href = '/dashboard/addeditinterestpage';
   };
 
   return (
-    <div className="w-full h-full flex justify-center items-center bg-gray-100">
-      <div className="flex w-full h-full sm:w-3/4 sm:h-3/4 justify-center items-center shadow-md rounded-lg p-5 bg-white">
-        <form onSubmit={handleSubmit} className="flex flex-col gap-2 w-full h-full">
-          <h1 className="text-3xl font-bold">Edit Interests</h1>
-          {error && <p className="text-red-500">{error}</p>}
+    <div className='w-full h-full flex justify-center items-center bg-gray-100'>
+      <div className='flex w-full h-full sm:w-3/4 sm:h-3/4 justify-center items-center shadow-md rounded-lg p-5 bg-white'>
+        <form
+          onSubmit={handleSubmit}
+          className='flex flex-col gap-2 w-full h-full'
+        >
+          <h1 className='text-3xl font-bold'>Edit Interests</h1>
+          {error && <p className='text-red-500'>{error}</p>}
           <div
-            className="flex flex-col gap-2 overflow-y-auto"
+            className='flex flex-col gap-2 overflow-y-auto'
             style={{ maxHeight: '200px' }}
           >
             {allInterests.map((interest) => (
-              <label key={interest} style={{ display: 'block', margin: '10px 0' }}>
+              <label
+                key={interest}
+                style={{ display: 'block', margin: '10px 0' }}
+              >
                 <input
-                  type="checkbox"
+                  type='checkbox'
                   checked={selectedInterests.includes(interest)}
                   onChange={() => handleCheckboxChange(interest)}
-                  className="mr-2"
+                  className='mr-2'
                 />
                 {interest}
               </label>
             ))}
           </div>
           <button
-            className="bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900"
-            type="submit"
+            className='bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900'
+            type='submit'
           >
             Save Changes
           </button>
           <button
-            className="bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900"
-            type="button"
+            className='bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900'
+            type='button'
             onClick={handleRedirect}
           >
             Go to Add Interest Page
@@ -105,7 +178,3 @@ const EditInterests: React.FC = () => {
 };
 
 export default EditInterests;
-
-
-
-

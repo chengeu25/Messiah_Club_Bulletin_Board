@@ -4,22 +4,59 @@ import { useEffect, useState } from 'react';
 import { UserType as User } from '../../types/databaseTypes';
 import { useNavigate } from 'react-router-dom';
 
+/**
+ * Defines the properties for the UserDropdown component
+ *
+ * @interface UserDropdownProps
+ * @property {User | null | Record<string, never>} user - The current user object
+ */
 interface UserDropdownProps {
   user: User | null | Record<string, never>;
 }
 
 /**
- * UserDropdown component. Renders a dropdown menu for the user.
- * @param {User} user - The user object.
- * @returns {JSX.Element} The rendered UserDropdown component.
+ * Renders an interactive dropdown menu for user-related actions
+ *
+ * @component
+ * @param {UserDropdownProps} props - The properties for the UserDropdown
+ * @returns {JSX.Element} A styled dropdown with user-specific navigation options
+ *
+ * @example
+ * <UserDropdown user={currentUser} />
+ *
+ * @remarks
+ * - Dynamically generates options based on user object
+ * - Provides navigation to Dashboard, Edit Interests, Change Password, and Logout
+ * - Responsive design with mobile-friendly option labels
+ * - Intelligent menu positioning based on screen width
  */
 const UserDropdown = ({ user }: UserDropdownProps) => {
+  /**
+   * Navigation hook from React Router for programmatic routing
+   * @type {Function}
+   */
   const navigate = useNavigate();
 
+  /**
+   * State to manage dropdown options
+   * @type {OptionType[]}
+   */
   const [options, setOptions] = useState<OptionType[]>([]);
+
+  /**
+   * State to track the currently selected dropdown option
+   * @type {OptionType | null}
+   */
   const [selectedOption, setSelectedOption] = useState<OptionType | null>(
     options[0]
   );
+
+  /**
+   * State to manage dropdown menu positioning
+   * @type {Object}
+   * @property {string | number} left - Left positioning value
+   * @property {string | number} right - Right positioning value
+   */
   const [menuPosition, setMenuPosition] = useState<{
     left: string | number;
     right: string | number;
@@ -29,12 +66,10 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
   });
 
   /**
-   * Handles the user dropdown change event. If the selected option is
-   * 'Log Out', navigates to the logout route. If the selected option is
-   * 'Edit Interests', navigates to the edit interest route. If the selected
-   * option is 'Change Password', navigates to the change password route. If the
-   * selected option is 'Dashboard', navigates to the dashboard route.
-   * @param {OptionType | null} selected - The selected option.
+   * Handles user dropdown selection and navigation
+   *
+   * @param {OptionType | null} selected - The selected dropdown option
+   * @description Navigates to different routes based on selected option
    */
   const handleUserDropdownChanged = (selected: OptionType | null) => {
     if (selected?.value === 'Log Out') {
@@ -50,8 +85,9 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
   };
 
   /**
-   * Handles the user dropdown open event. Adjusts the position of the menu
-   * depending on the right edge of the button and the window width.
+   * Adjusts dropdown menu positioning based on screen width
+   *
+   * @description Ensures the dropdown menu is fully visible on different screen sizes
    */
   const handleMenuOpen = () => {
     const menuWidth = 200; // Set this to your minWidth
@@ -70,6 +106,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     }
   };
 
+  /**
+   * Creates dropdown options based on user object and screen width
+   *
+   * @description Dynamically generates user-specific dropdown options
+   */
   const createOptionList = () => {
     if (user) {
       setOptions([
@@ -100,10 +141,21 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     }
   };
 
+  /**
+   * Attaches resize event listener to update option list
+   */
   window.onresize = createOptionList;
 
+  /**
+   * Generates option list when user changes
+   * @effect
+   */
   useEffect(createOptionList, [user]);
 
+  /**
+   * Resets selected option when options change
+   * @effect
+   */
   useEffect(() => {
     if (options.length > 0) {
       setSelectedOption(options[0]);

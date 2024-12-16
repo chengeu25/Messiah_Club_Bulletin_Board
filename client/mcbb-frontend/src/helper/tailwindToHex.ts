@@ -103,6 +103,22 @@ const tailwindColors: TailwindColors = {
   }
 };
 
+/**
+ * Converts a Tailwind CSS color name and optional shade to its corresponding hex color code.
+ * 
+ * @param {string} color - A Tailwind color string, e.g., 'blue-500', 'red', 'white'
+ * @returns {string | null} The hex color code if found, null otherwise
+ * 
+ * @description Converts Tailwind color names to their hex equivalents.
+ * Supports:
+ * - Basic colors without shades (e.g., 'transparent', 'black', 'white')
+ * - Shaded colors with specific shade numbers (e.g., 'blue-500', 'gray-200')
+ * 
+ * @example
+ * tailwindColorToHex('blue-500')  // Returns '#3B82F6'
+ * tailwindColorToHex('white')     // Returns '#ffffff'
+ * tailwindColorToHex('invalid')   // Returns null
+ */
 const tailwindColorToHex = (color: string): string | null => {
   const [colorName, shade] = color.split('-');
 

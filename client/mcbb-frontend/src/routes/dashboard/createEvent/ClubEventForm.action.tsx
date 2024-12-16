@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from 'react-router';
 
-  const clubEventFormAction: ActionFunction = async ({ request, params }) => {
+const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get('action');
   const clubName = formData.get('clubName') as string;
@@ -10,7 +10,9 @@ import { ActionFunction, redirect } from 'react-router';
   const endDate = formData.get('endDate') as string;
   const location = formData.get('location') as string;
   const eventCost = formData.get('eventCost') as string;
-  const tags = formData.get('tags') ? JSON.parse(formData.get('tags') as string) : [];
+  const tags = formData.get('tags')
+    ? JSON.parse(formData.get('tags') as string)
+    : [];
   const eventPhotos = formData.getAll('eventPhotos[]');
 
   if (action === 'cancel') {
@@ -27,19 +29,25 @@ import { ActionFunction, redirect } from 'react-router';
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
-    eventPhotos.forEach(photo => formData.append('eventPhotos[]', photo));
+    eventPhotos.forEach((photo) => formData.append('eventPhotos[]', photo));
 
-    const response = await fetch('http://localhost:3000/api/club/events', {
-      method: 'POST',
-      credentials: 'include',
-      body: data,
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/new-event`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        body: data
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
       const { clubId } = params; // Retrieve clubId from params
-      return redirect(`/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(errorData.error)}`);
-
+      return redirect(
+        `/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(
+          errorData.error
+        )}`
+      );
     }
 
     return redirect('/dashboard/clubs');

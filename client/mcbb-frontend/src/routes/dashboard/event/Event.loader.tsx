@@ -2,8 +2,34 @@ import { json, LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
 
+/**
+ * Loader function for the Event details page.
+ * 
+ * @function eventLoader
+ * @param {Object} context - Loader function context
+ * @param {Object} context.params - Route parameters
+ * @param {string} context.params.id - Event ID to fetch details for
+ * 
+ * @returns {Promise<Response>} JSON response with user and event details
+ * 
+ * @description Prepares data for the Event details page:
+ * 1. Checks user authentication and authorization
+ * 2. Fetches event details from backend
+ * 3. Handles potential errors and redirects
+ * 
+ * @workflow
+ * 1. Validate user authentication
+ * 2. Fetch event details using event ID
+ * 3. Return user and event data
+ * 
+ * @throws {Error} Redirects to login or verification page if unauthorized
+ * @throws {Error} Throws error if fetching event details fails
+ */
 const eventLoader: LoaderFunction = async ({ params }) => {
+  // Extract event ID from route parameters
   const { id } = params;
+
+  // Authenticate and verify user
   const user = await checkUser();
   if (user === false) {
     return redirect('/login');
@@ -11,7 +37,9 @@ const eventLoader: LoaderFunction = async ({ params }) => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
-  const response = await fetch(`http://localhost:3000/api/event/${id}`, {
+
+  // Fetch event details from backend
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/event/${id}`, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -19,6 +47,7 @@ const eventLoader: LoaderFunction = async ({ params }) => {
     }
   });
 
+  // Handle event fetch response
   if (!response.ok) {
     throw new Error('Failed to fetch event');
   }
@@ -26,6 +55,7 @@ const eventLoader: LoaderFunction = async ({ params }) => {
   const eventJson = await response.json();
   const event = eventJson?.event;
 
+  // Return user and event data
   return json({ user, event }, { status: 200 });
 };
 

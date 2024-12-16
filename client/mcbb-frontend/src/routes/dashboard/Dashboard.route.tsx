@@ -1,6 +1,17 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../../components/sidebar/Sidebar.component';
 
+/**
+ * Dashboard layout component that provides a responsive sidebar and content area.
+ *
+ * @component
+ * @description Renders a dashboard with:
+ * - Desktop sidebar (hidden on small screens)
+ * - Dynamic content area using React Router's Outlet
+ * - Mobile bottom navbar (visible on small screens)
+ *
+ * @returns {React.ReactElement} Responsive dashboard layout with sidebar and content
+ */
 const Dashboard = () => {
   return (
     <div className='w-full h-full flex flex-col sm:flex-row'>

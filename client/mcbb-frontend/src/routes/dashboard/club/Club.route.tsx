@@ -15,6 +15,20 @@ import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
 import checkSubscription from '../../../helper/checkSubscription';
 
+/**
+ * Club details page component for displaying comprehensive club information.
+ * 
+ * @component
+ * @description Renders a detailed view of a club, including:
+ * - Club name and description
+ * - Subscription toggle
+ * - Club images
+ * - Club tags
+ * - Club officers
+ * - Upcoming events
+ * 
+ * @returns {React.ReactElement} Detailed club information page
+ */
 const Club = () => {
   const submit = useSubmit();
   const { user, club, events } = useLoaderData() as {
@@ -23,10 +37,22 @@ const Club = () => {
     events: EventType[];
   };
 
-  // Check if the user is already subscribed
+  /** 
+   * State to track user's subscription status for the club.
+   * 
+   * @type {[boolean, React.Dispatch<React.SetStateAction<boolean>>]}
+   * @description Manages whether the current user is subscribed to the club
+   */
   const [isSubscribed, setIsSubscribed] = useState(false);
 
-  // Fetch subscription status when the component mounts
+  /**
+   * Fetches and updates the user's subscription status when component mounts.
+   * 
+   * @function
+   * @description Checks if the user is subscribed to the club using their email
+   * - Updates isSubscribed state based on subscription check
+   * - Only runs if both user email and club ID are available
+   */
   useEffect(() => {
     const getSubscriptionStatus = async () => {
       setIsSubscribed(await checkSubscription(user.email, club.id));
@@ -35,6 +61,18 @@ const Club = () => {
     if (user?.email && club?.id) getSubscriptionStatus();
   }, [user?.email, club?.id]);
 
+  /**
+   * Handles form submission for subscription and event creation actions.
+   * 
+   * @function handleSubmit
+   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
+   * 
+   * @description Processes club-related actions:
+   * - Prevents default form submission
+   * - Determines action type (subscribe/unsubscribe/new event)
+   * - Updates local subscription state
+   * - Submits form data to backend
+   */
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);

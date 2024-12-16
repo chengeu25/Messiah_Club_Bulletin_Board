@@ -1,26 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { useSubmit, useSearchParams, Link } from 'react-router-dom';
-import Input from '../../components/formElements/Input.component'; // Import Input component
+import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
-import passwordStrongOrNah from '../../helper/passwordstrength'; // Import password strength validator
-import ReCAPTCHA from 'react-google-recaptcha'; // Import ReCAPTCHA component
+import passwordStrongOrNah from '../../helper/passwordstrength';
+import ReCAPTCHA from 'react-google-recaptcha';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
+/**
+ * SignUp component for user registration.
+ *
+ * @component SignUp
+ * @description Provides a comprehensive user registration form with validation
+ *
+ * @returns {JSX.Element} Rendered signup form
+ *
+ * @workflow
+ * 1. Render signup form with input fields
+ * 2. Validate user inputs (password strength, matching, email domain)
+ * 3. Implement CAPTCHA verification
+ * 4. Submit registration request
+ *
+ * @features
+ * - Client-side input validation
+ * - Password strength checking
+ * - Password matching verification
+ * - Messiah email domain validation
+ * - CAPTCHA protection
+ * - Error and success message handling
+ */
 const SignUp = () => {
+  // Form submission hook
   const submit = useSubmit();
   const [params] = useSearchParams();
+
+  // State management for form validation and feedback
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [captchaResponse, setCaptchaResponse] = useState<string | null>(null); // Store captcha response
+  const [captchaResponse, setCaptchaResponse] = useState<string | null>(null);
 
-  // Local states to manage password input and matching
+  // Password input state management
   const [password, setPassword] = useState<string>('');
   const [confirmPassword, setConfirmPassword] = useState<string>('');
-  const [passwordMatch, setPasswordMatch] = useState<boolean>(true); // To check if passwords match
-  const [isPasswordStrong, setIsPasswordStrong] = useState<boolean>(true); // To check password strength
+  const [passwordMatch, setPasswordMatch] = useState<boolean>(true);
+  const [isPasswordStrong, setIsPasswordStrong] = useState<boolean>(true);
 
-  // Side-effect to handle URL parameters like error or message
+  /**
+   * Side effect to handle URL parameters for error and success messages
+   *
+   * @effect
+   * @description Parses and sets error or success messages from URL parameters
+   */
   useEffect(() => {
     if (params.get('error')) {
       setError(decodeURIComponent(params.get('error') ?? ''));
@@ -30,18 +60,28 @@ const SignUp = () => {
     }
   }, [params]);
 
+  /**
+   * Handles form submission with comprehensive validation
+   *
+   * @function handleSubmit
+   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
+   * @description Validates form inputs, checks CAPTCHA, and submits registration
+   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
+    // Add CAPTCHA response to form data
     if (captchaResponse) {
-      formData.append('captchaResponse', captchaResponse); // Add captcha response
+      formData.append('captchaResponse', captchaResponse);
     }
 
+    // Determine form submission action
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
 
-    // Check password strength and matching before submission
+    // Validate password strength and matching
     if (!isPasswordStrong) {
       return;
     }
@@ -49,16 +89,20 @@ const SignUp = () => {
     if (password !== confirmPassword) {
       return;
     }
+
+    // Validate required fields and CAPTCHA
     if (
       password === '' ||
       confirmPassword === '' ||
       formData.get('name') === '' ||
       formData.get('email') === '' ||
-      !captchaResponse // Check if CAPTCHA is filled
+      !captchaResponse
     ) {
       setError('Please fill out all required');
       return;
     }
+
+    // Validate Messiah email domain
     if (formData.get('email') === null) {
       setError('Please use your Messiah email');
       return;
@@ -67,7 +111,7 @@ const SignUp = () => {
       return;
     }
 
-    // Proceed with form submission if no errors
+    // Submit form based on action
     if (action === 'signup') {
       formData.append('action', action);
       submit(formData, { method: 'post' });
@@ -77,22 +121,41 @@ const SignUp = () => {
     }
   };
 
-  // Handle password change and validate strength
+  /**
+   * Handles password input and validates password strength
+   *
+   * @function handlePasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Password input event
+   * @description Checks and updates password strength
+   */
   const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPassword = event.target.value;
     setPassword(newPassword);
-    setIsPasswordStrong(passwordStrongOrNah(newPassword)); // Check if password is strong
+    setIsPasswordStrong(passwordStrongOrNah(newPassword));
   };
 
-  // Handle confirm password change and validate matching
+  /**
+   * Handles confirm password input and validates password matching
+   *
+   * @function handleConfirmPasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Confirm password input event
+   * @description Checks and updates password matching
+   */
   const handleConfirmPasswordChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const newConfirmPassword = event.target.value;
     setConfirmPassword(newConfirmPassword);
-    setPasswordMatch(newConfirmPassword === password); // Check if passwords match
+    setPasswordMatch(newConfirmPassword === password);
   };
 
+  /**
+   * Handles CAPTCHA verification response
+   *
+   * @function handleCaptchaChange
+   * @param {string | null} value - CAPTCHA response value
+   * @description Updates CAPTCHA response state
+   */
   const handleCaptchaChange = (value: string | null) => {
     setCaptchaResponse(value);
   };
@@ -140,11 +203,11 @@ const SignUp = () => {
           placeholder='Password'
           color='blue'
           filled={false}
-          value={password} // Set value directly from state
-          onInput={handlePasswordChange} // Handle changes to password
+          value={password}
+          onInput={handlePasswordChange}
           required
         />
-        {/* Show password strength error if the password is not strong */}
+        {/* Password strength error */}
         {!isPasswordStrong && (
           <p className='text-red-500 text-sm'>
             Password must be at least 8 characters, contain an uppercase letter,
@@ -162,11 +225,11 @@ const SignUp = () => {
           placeholder='Confirm Password'
           color='blue'
           filled={false}
-          value={confirmPassword} // Set value directly from state
-          onInput={handleConfirmPasswordChange} // Handle changes to confirm password
+          value={confirmPassword}
+          onInput={handleConfirmPasswordChange}
           required
         />
-        {/* Show error if passwords do not match */}
+        {/* Password matching error */}
         {!passwordMatch && (
           <p className='text-red-500 text-sm'>Passwords do not match.</p>
         )}
@@ -187,7 +250,7 @@ const SignUp = () => {
       {/* CAPTCHA */}
       <div className='w-full'>
         <ReCAPTCHA
-          sitekey='6LcF6HsqAAAAAKg7-vbvDf-XRsJ9UYGQpfpzFs7L' // Use your reCAPTCHA site key
+          sitekey={import.meta.env.VITE_RECAPTCHA_PUBLIC_KEY}
           onChange={handleCaptchaChange}
         />
       </div>

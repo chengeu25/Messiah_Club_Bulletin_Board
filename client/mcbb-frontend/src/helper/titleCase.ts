@@ -1,3 +1,17 @@
+/**
+ * Converts a string to title case (first letter of each word capitalized).
+ * 
+ * @param {string} str - The input string to convert
+ * @returns {string} The input string converted to title case
+ * 
+ * @description Transforms a string by:
+ * - Converting the entire string to lowercase
+ * - Capitalizing the first letter of each word
+ * 
+ * @example
+ * toTitleCase('hello world')     // Returns 'Hello World'
+ * toTitleCase('JAVASCRIPT IS AWESOME')  // Returns 'Javascript Is Awesome'
+ */
 const toTitleCase = (str: string) =>
   str
     .toLowerCase() // Convert the entire string to lowercase

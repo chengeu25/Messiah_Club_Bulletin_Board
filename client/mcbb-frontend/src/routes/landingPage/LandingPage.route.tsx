@@ -9,39 +9,66 @@ import Button from "../../components/formElements/Button.component";
 import Card from "../../components/ui/Card";
 import styles from "./landingPage.module.css";
 
+/**
+ * LandingPage component for introducing SHARC and its features.
+ * 
+ * @component LandingPage
+ * @description Provides an engaging landing page that showcases the application's core features
+ * 
+ * @returns {JSX.Element} Rendered landing page with introduction, features, and footer
+ * 
+ * @workflow
+ * 1. Display main headline and subtext
+ * 2. Render sign-up button
+ * 3. Showcase application features through image and text cards
+ * 4. Display footer with creator information and links
+ * 
+ * @features
+ * - Responsive design
+ * - Visually appealing card layout
+ * - Clear value proposition
+ * - Easy sign-up access
+ * - Creator and related links
+ */
 const LandingPage = () => {
+  // Navigation hook for programmatic routing
   const navigate = useNavigate();
+
   return (
     <div className="bg-blue-900">
       <div className="flex flex-col gap-4 w-full p-4 sm:px-[15%]"> 
+        {/* Hero section with headline and call-to-action */}
         <div className={`relative flex flex-col gap-5 ${styles.bgStaggered} p-4 bg-blue-900`}>
-            <h1
-              className="text-3xl sm:text-4xl lg:text-6xl text-white"
-            >
-              Welcome to <strong>SHARC</strong>, the place to find out about{" "}
-              <strong>student happenings</strong> and get{" "}
-              <strong>recommendations for clubs</strong> to get involved in.
-            </h1>
-            <p className="font-italic text-gray-300 text-xl">
-              You've come to the perfect place to get connected with clubs,
-              organizations, and events on campus that pique your interest.
-            </p>
+          <h1 className="text-3xl sm:text-4xl lg:text-6xl text-white">
+            Welcome to <strong>SHARC</strong>, the place to find out about{" "}
+            <strong>student happenings</strong> and get{" "}
+            <strong>recommendations for clubs</strong> to get involved in.
+          </h1>
+          <p className="font-italic text-gray-300 text-xl">
+            You've come to the perfect place to get connected with clubs,
+            organizations, and events on campus that pique your interest.
+          </p>
 
-            <Button
-              color="blue"
-              text="Sign Up"
-              className="p-4"
-              onClick={() => {
-                navigate("/signup");
-              }}
-              filled={true}
-            />
-          </div>
+          {/* Sign-up button */}
+          <Button
+            color="blue"
+            text="Sign Up"
+            className="p-4"
+            onClick={() => {
+              navigate("/signup");
+            }}
+            filled={true}
+          />
+        </div>
+
+        {/* Features grid with image and text cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Feature cards showcasing application capabilities */}
           <Card color="blue-700" padding={0}>
             <img
               src={home1}
               className="w-full h-full object-cover rounded-lg"
+              alt="SHARC Feature 1"
             />
           </Card>
           <Card
@@ -62,12 +89,14 @@ const LandingPage = () => {
             <img
               src={home2}
               className="w-full h-full object-cover rounded-lg"
+              alt="SHARC Feature 2"
             />
           </Card>
           <Card color="blue-300" padding={0}>
             <img
               src={home3}
               className="w-full h-full object-cover rounded-lg"
+              alt="SHARC Feature 3"
             />
           </Card>
           <Card
@@ -89,10 +118,13 @@ const LandingPage = () => {
             <img
               src={home4}
               className="w-full h-full object-cover rounded-lg"
+              alt="SHARC Feature 4"
             />
           </Card>
         </div>
       </div>
+
+      {/* Footer with creator information and external links */}
       <footer className="w-full bg-blue-950 text-white p-3 flex flex-col gap-2">
         SHARC is created by Caleb Rice, Matthew Merlo, Garret Van Dyke, and
         Cheng Eu Sun.
