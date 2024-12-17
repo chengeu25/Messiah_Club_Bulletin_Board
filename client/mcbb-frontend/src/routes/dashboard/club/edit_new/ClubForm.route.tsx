@@ -322,7 +322,6 @@ const ClubForm = () => {
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setName(e.target.value)
         }
-        color='blue'
         filled={false}
         placeholder='Enter the name of the club'
         required
@@ -335,7 +334,6 @@ const ClubForm = () => {
         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
           setDescription(e.target.value)
         }
-        color='blue'
         filled={false}
         placeholder='Tell us a little bit about this club...'
         multiline
@@ -384,7 +382,6 @@ const ClubForm = () => {
                       type='text'
                       name={`admin-${user.id}`}
                       label=''
-                      color='blue'
                       filled={false}
                       placeholder='officeremail@domain.edu'
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -394,7 +391,6 @@ const ClubForm = () => {
                   </span>
                   <Button
                     text='Remove'
-                    color='blue'
                     filled={false}
                     className='inline-flex flex-row items-center justify-center gap-2 h-12'
                     icon={<CiTrash size={20} />}
@@ -415,7 +411,6 @@ const ClubForm = () => {
                     type='text'
                     name='admins-new'
                     label=''
-                    color='blue'
                     filled={false}
                     placeholder='officeremail@domain.edu'
                     value={newAdmin}
@@ -436,7 +431,6 @@ const ClubForm = () => {
                 </span>
                 <Button
                   text='Add'
-                  color='blue'
                   filled={false}
                   className='inline-flex flex-row items-center justify-center gap-2'
                   icon={<CiCirclePlus size={20} />}
@@ -460,7 +454,6 @@ const ClubForm = () => {
         />
         <Button
           text='Set Logo'
-          color='blue'
           filled={false}
           className='inline-flex flex-row items-center justify-center gap-2 h-12'
           grow={false}
@@ -490,7 +483,6 @@ const ClubForm = () => {
             </span>
             <Button
               text='Remove'
-              color='blue'
               filled={false}
               className='inline-flex flex-row items-center justify-center gap-2 h-12'
               icon={<CiTrash size={20} />}
@@ -506,7 +498,6 @@ const ClubForm = () => {
           </span>
           <Button
             text='Add'
-            color='blue'
             filled={false}
             className='inline-flex flex-row items-center justify-center gap-2'
             icon={<CiCirclePlus size={20} />}
@@ -519,18 +510,11 @@ const ClubForm = () => {
       <div className='flex flex-row gap-2'>
         <Button
           text={club ? 'Update' : 'Create'}
-          color='blue'
           type='submit'
           name={club ? 'update' : 'create'}
           filled
         />
-        <Button
-          text='Cancel'
-          color='blue'
-          filled={false}
-          type='submit'
-          name='cancel'
-        />
+        <Button text='Cancel' filled={false} type='submit' name='cancel' />
       </div>
     </ResponsiveForm>
   );

@@ -9,7 +9,7 @@ import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import Loading from '../../components/ui/Loading';
-import { SchoolListType } from '../../types/databaseTypes';
+import { SchoolType } from '../../types/databaseTypes';
 import Select from '../../components/formElements/Select.component';
 import { useSchool } from '../../contexts/SchoolContext';
 
@@ -42,7 +42,7 @@ const Login = () => {
   const [params] = useSearchParams();
   const { userId, schools } = useLoaderData() as {
     userId: string;
-    schools: SchoolListType[];
+    schools: SchoolType[];
   };
 
   // State management for form and authentication
@@ -196,7 +196,6 @@ const Login = () => {
       {/* School dropdown */}
       <Select
         filled={false}
-        color={'blue'}
         label={'School:'}
         options={schools?.map((s) => s.name)}
         value={currentSchool?.name}
@@ -210,7 +209,6 @@ const Login = () => {
         name='email'
         type='text'
         placeholder={`${currentSchool?.name} Email`}
-        color='blue'
         filled={false}
         onInput={validateEmail}
         value={email}
@@ -223,7 +221,6 @@ const Login = () => {
         name='password'
         type='password'
         placeholder='Password'
-        color='blue'
         filled={false}
         required
       />
@@ -239,11 +236,10 @@ const Login = () => {
       />
 
       {/* Login button */}
-      <Button color='blue' text='Sign In' type='submit' name='login' />
+      <Button text='Sign In' type='submit' name='login' />
 
       {/* Signup button */}
       <Button
-        color='blue'
         text={"Don't have an account? Sign Up"}
         type='submit'
         name='signup'
@@ -252,7 +248,6 @@ const Login = () => {
 
       {/* Forgot password button */}
       <Button
-        color='blue'
         text='Forgot Password?'
         type='submit'
         name='forgot'

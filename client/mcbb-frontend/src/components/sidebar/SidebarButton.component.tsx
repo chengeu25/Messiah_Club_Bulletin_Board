@@ -3,7 +3,7 @@ import { IconContext } from 'react-icons';
 
 /**
  * Defines the properties for the SidebarButton component
- * 
+ *
  * @interface SidebarButtonProps
  * @property {string} text - The display text for the sidebar button
  * @property {JSX.Element} icon - The icon component to be displayed
@@ -17,23 +17,22 @@ interface SidebarButtonProps {
 
 /**
  * Renders a clickable sidebar navigation button with an icon and text
- * 
+ *
  * @component
  * @param {SidebarButtonProps} props - The properties for the SidebarButton
  * @returns {JSX.Element} A styled button with an icon and text that navigates to a specified route
- * 
+ *
  * @example
- * <SidebarButton 
- *   text="Dashboard" 
- *   icon={<FaHome />} 
- *   route="/dashboard/home" 
+ * <SidebarButton
+ *   text="Dashboard"
+ *   icon={<FaHome />}
+ *   route="/dashboard/home"
  * />
- * 
+ *
  * @remarks
  * - Uses React Router's useNavigate hook for client-side navigation
  * - Applies consistent styling to icons using IconContext
  * - Centered layout with vertical icon and text arrangement
- * - Uses Tailwind CSS for styling with blue-950 color theme
  */
 const SidebarButton = ({ text, icon, route }: SidebarButtonProps) => {
   /**
@@ -47,10 +46,12 @@ const SidebarButton = ({ text, icon, route }: SidebarButtonProps) => {
       onClick={() => navigate(route)}
       className='flex justify-center items-center flex-col'
     >
-      <IconContext.Provider value={{ className: 'w-8 h-8 text-blue-950' }}>
+      <IconContext.Provider
+        value={{ className: 'w-8 h-8 foreground-outlined' }}
+      >
         {icon}
       </IconContext.Provider>
-      <span className='text-blue-950'>{text}</span>
+      <span className='foreground-outlined'>{text}</span>
     </button>
   );
 };

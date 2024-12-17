@@ -6,18 +6,18 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 /**
  * ForgotPasswordToken component for password reset token validation and password reset.
- * 
+ *
  * @component ForgotPassswordToken
  * @description Provides a secure interface for users to reset their password using a token
- * 
+ *
  * @returns {JSX.Element} Rendered password reset form with token validation
- * 
+ *
  * @workflow
  * 1. Validate password reset token from URL
  * 2. Render password reset form
  * 3. Validate new password inputs
  * 4. Submit password reset request
- * 
+ *
  * @features
  * - Token-based password reset
  * - Client-side password validation
@@ -39,7 +39,7 @@ const ForgotPassswordToken = () => {
 
   /**
    * Handles token validation and error/message display.
-   * 
+   *
    * @function useEffect
    * @description Validates password reset token and manages error/message states
    */
@@ -57,7 +57,7 @@ const ForgotPassswordToken = () => {
 
   /**
    * Handles password reset form submission.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @description Validates password inputs and submits password reset request
@@ -94,41 +94,34 @@ const ForgotPassswordToken = () => {
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Reset Password</h1>
-      
+
       {/* Error message display */}
       {error && <div className='text-red-500'>{error}</div>}
-      
+
       {/* Success message display */}
       {message && <div className='text-green-500'>{message}</div>}
-      
+
       {/* New password input */}
       <Input
         label='New password:'
         name='newPassword'
         type='password'
         placeholder='Password'
-        color='blue'
         filled={false}
       />
-      
+
       {/* Confirm password input */}
       <Input
         label='Confirm password:'
         name='confirmPassword'
         type='password'
         placeholder='Password'
-        color='blue'
         filled={false}
       />
-      
+
       {/* Submit button */}
       <div className='flex flex-row gap-2'>
-        <Button
-          text='Submit'
-          type='submit'
-          name='submitResetPassword'
-          color='blue'
-        />
+        <Button text='Submit' type='submit' name='submitResetPassword' />
       </div>
     </ResponsiveForm>
   );

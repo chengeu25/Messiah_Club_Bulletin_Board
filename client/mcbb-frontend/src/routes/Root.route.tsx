@@ -18,6 +18,7 @@ import { SchoolType, UserType as User, UserType } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import logo from '../../assets/logo.png';
+import setCSSVars from '../helper/setCSSVars';
 
 /**
  * Root component for the application's main layout and navigation.
@@ -92,6 +93,20 @@ const Root = () => {
   }, [searchQuery, selectedFilter, setParams, currentPage]);
 
   /**
+   * Side effect to update colors based on whether or not you are on the homepage
+   *
+   * @effect
+   * @description Changes background color based on whether or not you are on the homepage
+   */
+  useEffect(() => {
+    if (location.pathname === '/') {
+      setCSSVars('172554');
+    } else {
+      setCSSVars(school?.color ?? '');
+    }
+  }, [location.pathname, school?.color]);
+
+  /**
    * Side effect to reset search and filter settings on page change
    *
    * @effect
@@ -163,7 +178,7 @@ const Root = () => {
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       {/* Top Navigation Bar */}
-      <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
+      <nav className='w-full h-20 sm:min-h-[10%] foreground-filled text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
         {/* Logo */}
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
@@ -198,10 +213,9 @@ const Root = () => {
                 {user ? (
                   <UserDropdown user={user as User} />
                 ) : (
-                  <div className='flex flex-row gap-2 text-nowrap'>
+                  <div className='flex flex-row gap-2 text-nowrap tag rounded-xl p-2'>
                     <Button
                       text='Log In'
-                      color='white'
                       filled={false}
                       onClick={() => {
                         navigate('/login');
@@ -209,7 +223,6 @@ const Root = () => {
                     />
                     <Button
                       text='Sign Up'
-                      color='white'
                       filled={false}
                       onClick={() => {
                         navigate('signup');

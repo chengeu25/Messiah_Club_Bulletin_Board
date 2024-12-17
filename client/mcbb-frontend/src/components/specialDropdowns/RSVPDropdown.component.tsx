@@ -4,19 +4,18 @@ import { useEffect, useState } from 'react';
 
 /**
  * Custom styling configuration for the RSVP dropdown
- * 
+ *
  * @type {StylesConfig<OptionType, false, GroupBase<OptionType>>}
  * @description Defines a dark-themed, centered styling for the RSVP dropdown
- * 
+ *
  * @remarks
- * - Uses Tailwind's blue-950 color palette
  * - Provides consistent styling across different interaction states
  * - Centers text for improved readability
  */
 const selectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
   control: (base) => ({
     ...base,
-    'backgroundColor': 'rgb(23, 37, 84)', // Tailwind's blue-950
+    'backgroundColor': 'var(--foreground-rgb)',
     'border': 'none',
     'borderRadius': '8px',
     'width': '150px',
@@ -35,16 +34,16 @@ const selectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
   }),
   menu: (base) => ({
     ...base,
-    backgroundColor: 'rgb(23, 37, 84)', // Tailwind's blue-950 for dropdown
+    backgroundColor: 'var(--foreground-rgb)',
     color: 'white'
   }),
   option: (base, { isFocused, isSelected }) => ({
     ...base,
     backgroundColor: isFocused
-      ? 'rgb(43, 57, 104)'
+      ? 'var(--hover-rgb)'
       : isSelected
-      ? 'rgb(43, 57, 104)'
-      : 'rgb(23, 37, 84)',
+      ? 'var(--active-rgb)'
+      : 'var(--foreground-rgb)',
     color: 'white',
     textAlign: 'center' // Center the option text
   })
@@ -52,7 +51,7 @@ const selectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
 
 /**
  * Defines the properties for the RSVPDropdown component
- * 
+ *
  * @interface RSVPDropdownProps
  * @property {(type: string) => void} handleRSVPClick - Callback function to handle RSVP selection
  * @property {string} [initialValue] - Optional initial RSVP status
@@ -64,17 +63,17 @@ interface RSVPDropdownProps {
 
 /**
  * Renders an interactive dropdown for event RSVP management
- * 
+ *
  * @component
  * @param {RSVPDropdownProps} props - The properties for the RSVPDropdown
  * @returns {JSX.Element} A styled dropdown for RSVP status selection
- * 
+ *
  * @example
- * <RSVPDropdown 
- *   handleRSVPClick={(type) => handleEventRSVP(type)} 
- *   initialValue="rsvp" 
+ * <RSVPDropdown
+ *   handleRSVPClick={(type) => handleEventRSVP(type)}
+ *   initialValue="rsvp"
  * />
- * 
+ *
  * @remarks
  * - Provides options: RSVP, Going, Not Going
  * - Confirms user's RSVP selection with a confirmation dialog
@@ -110,7 +109,7 @@ const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
 
   /**
    * Handles the RSVP dropdown change event
-   * 
+   *
    * @param {string} type - The selected RSVP type
    * @description Confirms the user's selection, updates state, and triggers callback
    */

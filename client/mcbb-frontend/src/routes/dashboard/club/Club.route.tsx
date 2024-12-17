@@ -108,7 +108,6 @@ const Club = () => {
           {user?.clubAdmins?.includes(club?.id) && (
             <Button
               type='submit'
-              color='blue'
               text='New Event'
               filled={true}
               name='newEvent'
@@ -116,7 +115,6 @@ const Club = () => {
           )}
           <Button
             type='submit'
-            color='blue'
             text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
             name={isSubscribed ? 'unsubscribe' : 'subscribe'}
             filled={true}

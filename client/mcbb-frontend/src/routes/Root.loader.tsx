@@ -1,5 +1,6 @@
 import { json } from 'react-router';
 import checkUser from '../helper/checkUser';
+import setCSSVars from '../helper/setCSSVars';
 
 /**
  * Root loader function for application-wide user authentication.
@@ -33,6 +34,7 @@ const rootLoader = async () => {
   );
 
   const school = schoolResp.ok ? await schoolResp.json() : null;
+  setCSSVars(school?.color ?? '');
 
   // Return user status as JSON response
   return json({ user, school }, { status: 200 });

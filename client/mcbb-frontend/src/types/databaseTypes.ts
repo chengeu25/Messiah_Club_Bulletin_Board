@@ -187,6 +187,8 @@ export interface EventDetailType {
  * @description Represents a school with its email domain, name, logo, and preferred color
  */
 export interface SchoolType {
+  /** Unique identifier for the school */
+  id: number;
   /** Email domain for the school */
   emailDomain: string;
   /** The name of the school */
@@ -195,19 +197,4 @@ export interface SchoolType {
   logo: string;
   /** The preferred color for the school */
   color: string;
-}
-
-/**
- * Provides a simplified list of schools with their ID and name
- *
- * @interface
- * @description Represents a basic school entry for listing purposes
- */
-export interface SchoolListType {
-  /** Unique identifier for the school */
-  id: number;
-  /** The name of the school */
-  name: string;
-  /** Email domain for the school */
-  emailDomain: string;
 }

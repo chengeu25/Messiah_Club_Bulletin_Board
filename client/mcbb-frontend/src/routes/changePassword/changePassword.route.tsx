@@ -6,31 +6,31 @@ import passwordStrongOrNah from '../../helper/passwordstrength';
 
 /**
  * ChangePassword component for updating user account password.
- * 
+ *
  * @component
  * @description Provides a form for users to change their account password with:
  * - Validation for password strength
  * - Confirmation of new password
  * - Error and success message handling
- * 
+ *
  * @returns {React.ReactElement} Rendered change password form
  */
 const ChangePassword = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
 
-  /** 
+  /**
    * State variable to manage and display error messages during password change process.
-   * 
+   *
    * @type {[string | null, React.Dispatch<React.SetStateAction<string | null>>]}
    * @description Stores error messages related to form validation or submission errors.
    * Null when no error is present, string when an error occurs.
    */
   const [error, setError] = useState<string | null>(null);
 
-  /** 
+  /**
    * State variable to manage and display success messages after password change.
-   * 
+   *
    * @type {[string | null, React.Dispatch<React.SetStateAction<string | null>>]}
    * @description Stores success messages after successful password change.
    * Null when no message is present, string when a success message is available.
@@ -39,7 +39,7 @@ const ChangePassword = () => {
 
   /**
    * Handles displaying error or success messages from URL parameters.
-   * 
+   *
    * @function
    * @description Checks URL search parameters for error or success messages
    * and updates the component's state accordingly when the page loads or reloads
@@ -55,10 +55,10 @@ const ChangePassword = () => {
 
   /**
    * Validates and submits the password change form.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   * 
+   *
    * @description Performs client-side validation before submitting:
    * - Checks all fields are filled
    * - Verifies new passwords match
@@ -81,7 +81,9 @@ const ChangePassword = () => {
     } else if (formData.get('npwd') !== formData.get('cnpwd')) {
       setError('Passwords do not match.');
     } else if (!passwordStrongOrNah(formData.get('npwd') as string)) {
-      setError('Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)')
+      setError(
+        'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)'
+      );
     } else {
       formData.append('action', action);
       submit(formData, { method: 'post' });
@@ -91,10 +93,7 @@ const ChangePassword = () => {
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
       <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
-        <Form
-          onSubmit={handleSubmit}
-          className='flex flex-col gap-2 w-full'
-        >
+        <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Change Password</h1>
           {error && <div className='text-red-500'>{error}</div>}
           {message && <p className='text-green-500'>{message}</p>}
@@ -103,7 +102,6 @@ const ChangePassword = () => {
             name='pwd'
             type='password'
             placeholder='Password'
-            color='blue'
             filled={false}
           />
           <Input
@@ -111,7 +109,6 @@ const ChangePassword = () => {
             name='npwd'
             type='password'
             placeholder='Password'
-            color='blue'
             filled={false}
           />
           <Input
@@ -119,7 +116,6 @@ const ChangePassword = () => {
             name='cnpwd'
             type='password'
             placeholder='Password'
-            color='blue'
             filled={false}
           />
           <div className='flex flex-row gap-2'>
@@ -127,7 +123,6 @@ const ChangePassword = () => {
               text='Change Password'
               type='submit'
               name='changePassword'
-              color='blue'
             />
           </div>
         </Form>

@@ -11,7 +11,7 @@ import Select from '../../components/formElements/Select.component';
 import passwordStrongOrNah from '../../helper/passwordstrength';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
-import { SchoolListType } from '../../types/databaseTypes';
+import { SchoolType } from '../../types/databaseTypes';
 import { useSchool } from '../../contexts/SchoolContext';
 
 /**
@@ -43,7 +43,7 @@ const SignUp = () => {
 
   // Get schools from loader
   const { schools } = useLoaderData() as {
-    schools: SchoolListType[];
+    schools: SchoolType[];
   };
 
   // State management for form validation and feedback
@@ -205,7 +205,6 @@ const SignUp = () => {
       {/* School dropdown */}
       <Select
         filled={false}
-        color={'blue'}
         label={'School:'}
         options={schools?.map((s) => s.name)}
         value={currentSchool?.name}
@@ -220,7 +219,6 @@ const SignUp = () => {
           name='name'
           type='text'
           placeholder='First Last'
-          color='blue'
           filled={false}
           required
         />
@@ -233,7 +231,6 @@ const SignUp = () => {
           name='email'
           type='text'
           placeholder={`${currentSchool?.name} Email`}
-          color='blue'
           filled={false}
           required
         />
@@ -246,7 +243,6 @@ const SignUp = () => {
           name='password'
           type='password'
           placeholder='Password'
-          color='blue'
           filled={false}
           value={password}
           onInput={handlePasswordChange}
@@ -268,7 +264,6 @@ const SignUp = () => {
           name='confirm-password'
           type='password'
           placeholder='Confirm Password'
-          color='blue'
           filled={false}
           value={confirmPassword}
           onInput={handleConfirmPasswordChange}
@@ -283,7 +278,6 @@ const SignUp = () => {
       {/* Gender Select */}
       <div className='w-full'>
         <Select
-          color='blue'
           label='Gender:'
           name='gender'
           options={['Male', 'Female', "Don't recommend gender-specific events"]}
@@ -303,7 +297,6 @@ const SignUp = () => {
       {/* Submit Button */}
       <div className='flex flex-row gap-2 mt-4'>
         <Button
-          color='blue'
           text='Sign Up'
           type='submit'
           name='signup'

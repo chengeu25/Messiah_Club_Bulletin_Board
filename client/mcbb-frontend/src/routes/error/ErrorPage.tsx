@@ -3,18 +3,18 @@ import { Link, useRouteError } from 'react-router-dom';
 
 /**
  * ErrorPage component for handling and displaying unexpected application errors.
- * 
+ *
  * @component ErrorPage
  * @description Provides a user-friendly error page with navigation options
- * 
+ *
  * @returns {JSX.Element} Rendered error page with logo, error message, and homepage link
- * 
+ *
  * @workflow
  * 1. Retrieve error details using React Router's useRouteError hook
  * 2. Display application logo
  * 3. Show error message
  * 4. Provide link to return to homepage
- * 
+ *
  * @features
  * - Dynamic error message rendering
  * - Centralized error handling
@@ -26,7 +26,7 @@ const ErrorPage = () => {
   const errorMessage = useRouteError();
 
   return (
-    <div className='h-screen w-screen bg-blue-950 flex flex-col justify-center items-center text-white'>
+    <div className='h-screen w-screen foreground-filled flex flex-col justify-center items-center text-white'>
       {/* Application logo with homepage link */}
       <Link to='/'>
         <img src={logo} className='w-[400px]' alt='logo' />
