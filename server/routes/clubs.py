@@ -59,8 +59,8 @@ def get_clubs():
                 ON c.club_id = us.club_id
                 AND us.email = %s
                 AND us.is_active = 1
-                AND c.school_id = %s
-            WHERE c.is_active = 1""",
+            WHERE c.is_active = 1
+                AND c.school_id = %s""",
         (current_user["user_id"], school),
     )
     result = None
