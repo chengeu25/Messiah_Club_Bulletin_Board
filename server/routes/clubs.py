@@ -1,5 +1,5 @@
 import base64
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from extensions import mysql
 from helper.check_user import get_user_session_info
 
@@ -47,6 +47,10 @@ def get_clubs():
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
+    # Get current school id
+    school = session.get("school")
+
     cur = mysql.connection.cursor()
     cur.execute(
         """SELECT c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked 
@@ -55,8 +59,9 @@ def get_clubs():
                 ON c.club_id = us.club_id
                 AND us.email = %s
                 AND us.is_active = 1
+                AND c.school_id = %s
             WHERE c.is_active = 1""",
-        (current_user["user_id"],),
+        (current_user["user_id"], school),
     )
     result = None
     try:
@@ -153,7 +158,11 @@ def get_inactive_clubs():
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT club_id, club_name, description, club_logo, logo_prefix FROM club WHERE is_active = 0"
+        """SELECT club_id, club_name, description, club_logo, logo_prefix 
+            FROM club 
+            WHERE is_active = 0
+                AND school_id = %s""",
+        (session.get("school"),),
     )
     result = None
     try:
@@ -255,6 +264,9 @@ def get_club(club_id):
         - Returns 404 if the club is not found
         - Returns 500 if there's a database connection error
     """
+
+    school = session.get("school")
+
     # Check if user is authenticated
     current_user = get_user_session_info()
     if not current_user["user_id"]:
@@ -266,8 +278,9 @@ def get_club(club_id):
     cur.execute(
         """SELECT club_id, club_name, description, club_logo, logo_prefix 
             FROM club 
-            WHERE club_id = %s""",
-        (club_id,),
+            WHERE club_id = %s
+                AND school_id = %s""",
+        (club_id, school),
     )
     result = cur.fetchone()
     if result is None:
@@ -287,8 +300,9 @@ def get_club(club_id):
             FROM club_admin a 
             INNER JOIN users u ON u.email = a.user_id
             WHERE club_id = %s
-                AND a.is_active = 1""",
-        (club_id,),
+                AND a.is_active = 1
+                AND u.school_id = %s""",
+        (club_id, school),
     )
     result["admins"] = list(
         map(lambda x: {"user": x[0], "id": x[1], "name": x[2]}, cur.fetchall())
@@ -329,7 +343,7 @@ def update_club():
     - Description
     - Logo/Image
     - Active status
-    Only club administrators can update their respective clubs.
+    Only club administrators and faculty can update their respective clubs.
 
     Expects a JSON payload with the following structure:
     {
@@ -367,6 +381,7 @@ def update_club():
     """
     data = request.get_json()
     club_id = data.get("id")
+    school_id = session.get("school")
 
     # Check if user is a club admin
     current_user = get_user_session_info()
@@ -383,9 +398,18 @@ def update_club():
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
+
+    # Check if the club is in the current school
     cur.execute(
-        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s AND club_id != %s",
-        (data["name"], data["id"]),
+        "SELECT COUNT(*) FROM club WHERE club_id = %s AND school_id = %s",
+        (data["id"], school_id),
+    )
+    if cur.fetchone()[0] == 0:
+        return jsonify({"error": "The requested club was not found on the server"}), 404
+
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE club_name = %s AND club_id != %s AND school_id = %s",
+        (data["name"], data["id"], school_id),
     )
     if not (cur.fetchone()[0] == 0):
         return jsonify({"error": "An active club with this name already exists."}), 400
@@ -552,6 +576,7 @@ def delete_club(club_id):
         - Handles database transaction (commit/rollback)
         - Ensures database integrity during soft delete process
     """
+    school = session.get("school")
     # Check if current user has faculty privileges
     current_user = get_user_session_info()
     if not current_user["isFaculty"]:
@@ -561,6 +586,13 @@ def delete_club(club_id):
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
     mysql.connection.rollback()
+    # Check if the club is in the current school
+    cur.execute(
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_id = %s AND school_id = %s",
+        (int(club_id), school),
+    )
+    if cur.fetchone()[0] == 0:
+        return jsonify({"error": "The requested club was not found on the server"}), 404
     try:
         cur.execute("UPDATE club SET is_active = 0 WHERE club_id = %s", (int(club_id),))
         cur.execute(
@@ -632,6 +664,8 @@ def new_club():
     if not current_user["isFaculty"]:
         return jsonify({"error": "Unauthorized"}), 403
 
+    school_id = session.get("school")
+
     data = request.json
     if data is None:
         return jsonify({"error": "No data provided"}), 400
@@ -641,8 +675,8 @@ def new_club():
 
     # Check if a club with the same name already exists
     cur.execute(
-        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s",
-        (data["name"],),
+        "SELECT COUNT(*) FROM club WHERE is_active = 1 AND club_name = %s AND school_id = %s",
+        (data["name"], school_id),
     )
     if not (cur.fetchone()[0] == 0):
         return jsonify({"error": "An active club with this name already exists."}), 400
@@ -660,8 +694,8 @@ def new_club():
         return jsonify({"error": "Invalid image"}), 400
     try:
         cur.execute(
-            "INSERT INTO club (club_name, is_active, description, last_updated, club_logo, logo_prefix) VALUES (%s, 1, %s, CURRENT_TIMESTAMP(), %s, %s)",
-            (data["name"], data["description"], image_data, prefix),
+            "INSERT INTO club (club_name, is_active, description, last_updated, club_logo, logo_prefix, school_id) VALUES (%s, 1, %s, CURRENT_TIMESTAMP(), %s, %s, %s)",
+            (data["name"], data["description"], image_data, prefix, school_id),
         )
     except Exception as e:
         print(e)

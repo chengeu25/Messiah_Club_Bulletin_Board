@@ -13,6 +13,7 @@ import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
 import Select from 'react-select';
 import { OptionType } from '../../../../components/formElements/Select.styles';
+import { useSchool } from '../../../../contexts/SchoolContext';
 
 interface LoaderData {
   user: UserType;
@@ -28,6 +29,7 @@ const ClubForm = () => {
   const [params] = useSearchParams();
   const data = useLoaderData() as LoaderData | null;
   const { user, club, tagsAvailable } = data || {};
+  const { currentSchool } = useSchool();
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
@@ -59,7 +61,7 @@ const ClubForm = () => {
    * @param newAdmin - The new email for the admin.
    */
   const updateAdmin = (id: number, newAdmin: string) => {
-    if (newAdmin !== '' && !newAdmin.endsWith('@messiah.edu'))
+    if (newAdmin !== '' && !newAdmin.endsWith(currentSchool?.emailDomain ?? ''))
       setAdminErrors((prevErrors) => [...prevErrors, id]);
     else setAdminErrors((prevErrors) => prevErrors.filter((e) => e !== id));
     setAdmins((prevAdmins) =>
@@ -246,7 +248,9 @@ const ClubForm = () => {
     } else if (action === 'add-admin') {
       if (
         formData.get('admins-new') === '' ||
-        !(formData.get('admins-new') as string)?.endsWith('@messiah.edu')
+        !(formData.get('admins-new') as string)?.endsWith(
+          currentSchool?.emailDomain ?? ''
+        )
       ) {
         return;
       }
@@ -370,7 +374,7 @@ const ClubForm = () => {
               <li key={idx} className='flex-col inline-flex gap-2'>
                 {adminErrors.includes(user.id) && (
                   <span className='text-red-500'>
-                    Please enter a valid Messiah email.
+                    Please enter a valid {currentSchool?.name} email.
                   </span>
                 )}
                 <div className='flex flex-row items-center gap-2'>
@@ -417,10 +421,14 @@ const ClubForm = () => {
                     value={newAdmin}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       if (
-                        !e.target.value.endsWith('@messiah.edu') &&
+                        !e.target.value.endsWith(
+                          currentSchool?.emailDomain ?? ''
+                        ) &&
                         e.target.value !== ''
                       )
-                        setNewAdminError('Please enter a valid Messiah email.');
+                        setNewAdminError(
+                          `Please enter a valid ${currentSchool?.name} email.`
+                        );
                       else setNewAdminError('');
                       setNewAdmin(e.target.value);
                     }}
