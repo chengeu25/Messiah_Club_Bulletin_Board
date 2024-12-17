@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, session
 from extensions import mysql
 from helper.check_user import get_user_session_info
 
@@ -68,14 +68,16 @@ def assign_faculty():
 
     try:
         cur = mysql.connection.cursor()
+        school = session.get("school")
 
         # Check if user exists and email is verified
         cur.execute(
             """SELECT name, email_verified
                FROM users
                WHERE email = %s
-                 AND is_active = 1""",
-            (email,),
+                 AND is_active = 1
+                 AND school_id = %s""",
+            (email, school),
         )
         result = cur.fetchone()
 
@@ -93,8 +95,9 @@ def assign_faculty():
             """UPDATE users
                SET is_faculty = 1,
                    can_delete_faculty = %s
-               WHERE email = %s""",
-            (can_delete, email),
+               WHERE email = %s
+                AND school_id = %s""",
+            (can_delete, email, school),
         )
         mysql.connection.commit()
         return (
@@ -165,11 +168,12 @@ def get_faculty_data():
 
         # Query to fetch faculty data
         cur.execute(
-            """
-            SELECT name, email, can_delete_faculty 
-            FROM users
-            WHERE is_faculty = 1
-        """
+            """SELECT name, email, can_delete_faculty 
+                    FROM users
+                    WHERE is_faculty = 1
+                        AND is_active = 1
+                        AND school_id = %s""",
+            (session.get("school"),),
         )
         result = cur.fetchall()
 
@@ -243,12 +247,12 @@ def remove_faculty():
 
         # Query to remove faculty privileges
         cur.execute(
-            """
-            UPDATE users
-            SET is_faculty = 0,
-                can_delete_faculty = 0
-            WHERE email = %s""",
-            (data["email"],),
+            """UPDATE users
+                    SET is_faculty = 0,
+                        can_delete_faculty = 0
+                    WHERE email = %s
+                        AND school_id = %s""",
+            (data["email"], session.get("school")),
         )
         mysql.connection.commit()
         return jsonify({"message": "Faculty privileges removed"}), 200
@@ -319,10 +323,12 @@ def assign_delete():
         cur.execute(
             """UPDATE users
                 SET can_delete_faculty = %s
-                WHERE email = %s""",
+                WHERE email = %s
+                    AND school_id = %s""",
             (
                 data["cdf"],
                 data["email"],
+                session.get("school"),
             ),
         )
         mysql.connection.commit()
