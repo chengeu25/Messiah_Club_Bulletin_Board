@@ -179,3 +179,35 @@ export interface EventDetailType {
   /** RSVP status for the event */
   rsvp: string;
 }
+
+/**
+ * Provides information about a school
+ *
+ * @interface
+ * @description Represents a school with its email domain, name, logo, and preferred color
+ */
+export interface SchoolType {
+  /** Email domain for the school */
+  emailDomain: string;
+  /** The name of the school */
+  name: string;
+  /** URL or path to the school's logo */
+  logo: string;
+  /** The preferred color for the school */
+  color: string;
+}
+
+/**
+ * Provides a simplified list of schools with their ID and name
+ *
+ * @interface
+ * @description Represents a basic school entry for listing purposes
+ */
+export interface SchoolListType {
+  /** Unique identifier for the school */
+  id: number;
+  /** The name of the school */
+  name: string;
+  /** Email domain for the school */
+  emailDomain: string;
+}

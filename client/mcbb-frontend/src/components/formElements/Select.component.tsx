@@ -12,6 +12,7 @@ import generateStyleClasses from './styleGenerator';
  * @property {string} label - The label text for the select input
  * @property {boolean} [required] - Makes the select input required
  * @property {string} [className] - Additional CSS classes to apply to the select
+ * @property {string} [value] - Controlled select value
  */
 interface SelectProps {
   color:
@@ -31,6 +32,7 @@ interface SelectProps {
   label: string;
   required?: boolean;
   className?: string;
+  value?: string;
 }
 
 /**
@@ -57,7 +59,8 @@ const Select = ({
   options,
   label,
   required,
-  className
+  className,
+  value
 }: SelectProps) => (
   <label className='flex flex-col text-nowrap gap-2'>
     {label && (
@@ -73,6 +76,7 @@ const Select = ({
       )} ${className} bg-transparent`}
       onChange={onChange}
       name={name}
+      value={value}
     >
       {options.map((option) => (
         <option key={option} value={option}>

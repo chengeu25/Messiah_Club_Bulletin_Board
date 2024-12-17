@@ -9,22 +9,25 @@ import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import Loading from '../../components/ui/Loading';
+import { SchoolListType } from '../../types/databaseTypes';
+import Select from '../../components/formElements/Select.component';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * Login component for user authentication and account management.
- * 
+ *
  * @component Login
  * @description Provides a comprehensive login interface with multiple authentication options
- * 
+ *
  * @returns {JSX.Element} Rendered login form with email, password, and additional actions
- * 
+ *
  * @workflow
- * 1. Validate Messiah email format
+ * 1. Validate school email format
  * 2. Handle login, signup, and password reset actions
  * 3. Manage form state and validation
  * 4. Display loading state during authentication
  * 5. Show error and success messages
- * 
+ *
  * @features
  * - Email format validation
  * - Remember me functionality
@@ -37,7 +40,10 @@ const Login = () => {
   const submit = useSubmit();
   const navigation = useNavigation();
   const [params] = useSearchParams();
-  const { userId } = useLoaderData() as { userId: string };
+  const { userId, schools } = useLoaderData() as {
+    userId: string;
+    schools: SchoolListType[];
+  };
 
   // State management for form and authentication
   const [error, setError] = useState<string | null>(null);
@@ -45,13 +51,25 @@ const Login = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [remember, setRemember] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { currentSchool, setCurrentSchool } = useSchool();
+
+  // School input state management
+  // Initialize selected school from schools list if not set
+  useEffect(() => {
+    if (!currentSchool && schools.length > 0) {
+      setCurrentSchool(schools[0] ?? null);
+    }
+  }, [schools, currentSchool, setCurrentSchool]);
 
   // Email validation using memoized computation
-  const emailIsValid = useMemo(() => email.endsWith('@messiah.edu'), [email]);
+  const emailIsValid = useMemo(
+    () => email.endsWith(currentSchool?.emailDomain ?? ''),
+    [email, currentSchool?.emailDomain]
+  );
 
   /**
    * Handles URL parameters for error and message display.
-   * 
+   *
    * @function useEffect
    * @description Updates error and message states based on URL parameters
    */
@@ -68,7 +86,7 @@ const Login = () => {
 
   /**
    * Manages loading state based on navigation state.
-   * 
+   *
    * @function useEffect
    * @description Resets loading state when navigation is complete
    */
@@ -80,7 +98,7 @@ const Login = () => {
 
   /**
    * Populates email and remember me state from loader data.
-   * 
+   *
    * @function useEffect
    * @description Sets email and remember me checkbox if user ID is available
    */
@@ -91,9 +109,16 @@ const Login = () => {
     }
   }, [userId]);
 
+  const handleSchoolChange = (e?: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!e) return;
+    const selectedSchoolName = e.target.value;
+    const school = schools.find((s) => s.name === selectedSchoolName) ?? null;
+    setCurrentSchool(school);
+  };
+
   /**
    * Handles form submission with multiple authentication actions.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @description Validates input and submits form for login, signup, or password reset
@@ -126,6 +151,7 @@ const Login = () => {
           return;
         } else {
           formData.append('action', action);
+          formData.append('schoolId', currentSchool?.id.toString() ?? '');
           submit(formData, { method: 'post' });
         }
       }
@@ -138,7 +164,7 @@ const Login = () => {
 
   /**
    * Validates and updates email input.
-   * 
+   *
    * @function validateEmail
    * @param {React.ChangeEvent<HTMLInputElement>} event - Input change event
    * @description Updates email state and checks email format
@@ -153,31 +179,44 @@ const Login = () => {
   ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Login</h1>
-      
+
       {/* Error message display */}
       {error && <p className='text-red-500'>{error}</p>}
-      
+
       {/* Success message display */}
       {message && <p className='text-green-500'>{message}</p>}
-      
+
       {/* Email format validation message */}
       {!emailIsValid && email !== '' && (
-        <p className='text-red-500'>Please enter your full Messiah email.</p>
+        <p className='text-red-500'>
+          Please enter your full {currentSchool?.name} email.
+        </p>
       )}
-      
+
+      {/* School dropdown */}
+      <Select
+        filled={false}
+        color={'blue'}
+        label={'School:'}
+        options={schools?.map((s) => s.name)}
+        value={currentSchool?.name}
+        name='school'
+        onChange={handleSchoolChange}
+      />
+
       {/* Email input */}
       <Input
-        label='Messiah Email:'
+        label={`${currentSchool?.name} Email:`}
         name='email'
         type='text'
-        placeholder='Messiah Email'
+        placeholder={`${currentSchool?.name} Email`}
         color='blue'
         filled={false}
         onInput={validateEmail}
         value={email}
         required
       />
-      
+
       {/* Password input */}
       <Input
         label='Password:'
@@ -188,7 +227,7 @@ const Login = () => {
         filled={false}
         required
       />
-      
+
       {/* Remember me checkbox */}
       <Input
         type='checkbox'
@@ -198,10 +237,10 @@ const Login = () => {
         checked={remember}
         onChange={() => setRemember(!remember)}
       />
-      
+
       {/* Login button */}
       <Button color='blue' text='Sign In' type='submit' name='login' />
-      
+
       {/* Signup button */}
       <Button
         color='blue'
@@ -210,7 +249,7 @@ const Login = () => {
         name='signup'
         filled={false}
       />
-      
+
       {/* Forgot password button */}
       <Button
         color='blue'

@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useSubmit, useSearchParams, Link } from 'react-router-dom';
+import {
+  useSubmit,
+  useSearchParams,
+  Link,
+  useLoaderData
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import Select from '../../components/formElements/Select.component';
 import passwordStrongOrNah from '../../helper/passwordstrength';
 import ReCAPTCHA from 'react-google-recaptcha';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import { SchoolListType } from '../../types/databaseTypes';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * SignUp component for user registration.
@@ -25,7 +32,7 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
  * - Client-side input validation
  * - Password strength checking
  * - Password matching verification
- * - Messiah email domain validation
+ * - School email domain validation
  * - CAPTCHA protection
  * - Error and success message handling
  */
@@ -33,6 +40,11 @@ const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
   const [params] = useSearchParams();
+
+  // Get schools from loader
+  const { schools } = useLoaderData() as {
+    schools: SchoolListType[];
+  };
 
   // State management for form validation and feedback
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +56,16 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [passwordMatch, setPasswordMatch] = useState<boolean>(true);
   const [isPasswordStrong, setIsPasswordStrong] = useState<boolean>(true);
+
+  // School input state management
+  const { currentSchool, setCurrentSchool } = useSchool();
+
+  // Initialize selected school from schools list if not set
+  useEffect(() => {
+    if (!currentSchool && schools.length > 0) {
+      setCurrentSchool(schools[0] ?? null);
+    }
+  }, [schools, currentSchool, setCurrentSchool]);
 
   /**
    * Side effect to handle URL parameters for error and success messages
@@ -102,18 +124,23 @@ const SignUp = () => {
       return;
     }
 
-    // Validate Messiah email domain
+    // Validate school email domain
     if (formData.get('email') === null) {
-      setError('Please use your Messiah email');
+      setError(`Please use your ${currentSchool?.name} email`);
       return;
-    } else if (!(formData.get('email')! as string).endsWith('messiah.edu')) {
-      setError('Please use your Messiah email');
+    } else if (
+      !(formData.get('email')! as string).endsWith(
+        currentSchool?.emailDomain ?? ''
+      )
+    ) {
+      setError(`Please use your ${currentSchool?.name} email`);
       return;
     }
 
     // Submit form based on action
     if (action === 'signup') {
       formData.append('action', action);
+      formData.append('schoolId', currentSchool?.id.toString() ?? '');
       submit(formData, { method: 'post' });
     } else if (action === 'forgot') {
       formData.append('action', action);
@@ -160,6 +187,13 @@ const SignUp = () => {
     setCaptchaResponse(value);
   };
 
+  const handleSchoolChange = (e?: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!e) return;
+    const selectedSchoolName = e.target.value;
+    const school = schools.find((s) => s.name === selectedSchoolName) ?? null;
+    setCurrentSchool(school);
+  };
+
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
@@ -167,6 +201,17 @@ const SignUp = () => {
       {/* Error and success messages */}
       {error && <p className='text-red-500 mb-3'>{error}</p>}
       {message && <p className='text-green-500 mb-3'>{message}</p>}
+
+      {/* School dropdown */}
+      <Select
+        filled={false}
+        color={'blue'}
+        label={'School:'}
+        options={schools?.map((s) => s.name)}
+        value={currentSchool?.name}
+        name='school'
+        onChange={handleSchoolChange}
+      />
 
       {/* Name Input */}
       <div className='w-full'>
@@ -184,10 +229,10 @@ const SignUp = () => {
       {/* Email Input */}
       <div className='w-full'>
         <Input
-          label='Messiah Email:'
+          label={`${currentSchool?.name} Email:`}
           name='email'
           type='text'
-          placeholder='Messiah Email'
+          placeholder={`${currentSchool?.name} Email`}
           color='blue'
           filled={false}
           required

@@ -3,24 +3,24 @@ import { ActionFunction, redirect } from 'react-router';
 
 /**
  * Login action handler for user authentication and routing.
- * 
+ *
  * @function loginAction
  * @param {Object} context - Action function context
  * @param {Request} context.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirect response based on authentication result
- * 
+ *
  * @description Handles multiple authentication-related actions:
  * 1. User login with email and password
  * 2. Routing to signup or forgot password pages
  * 3. Handling login success and failure scenarios
- * 
+ *
  * @workflow
  * 1. Extract form data (email, password, remember me)
  * 2. Send login request to backend
  * 3. Handle login response
  * 4. Redirect based on authentication result
- * 
+ *
  * @features
  * - Secure login with credentials
  * - Remember me functionality
@@ -33,6 +33,7 @@ const loginAction: ActionFunction = async ({ request }) => {
   const email = formData.get('email');
   const password = formData.get('password');
   const remember = formData.get('remember') === 'true' ? true : false;
+  const school = formData.get('schoolId');
   const action = formData.get('action');
 
   // Handle login on server
@@ -46,7 +47,7 @@ const loginAction: ActionFunction = async ({ request }) => {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ email, password, remember })
+        body: JSON.stringify({ email, password, remember, school })
       }
     );
 

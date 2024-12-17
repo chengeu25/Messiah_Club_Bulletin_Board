@@ -8,14 +8,13 @@ import {
   useNavigate,
   Link,
   useLocation,
-  useSearchParams,
-  useNavigation
+  useSearchParams
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/specialDropdowns/UserDropdown.component';
-import { UserType as User } from '../types/databaseTypes';
+import { SchoolType, UserType as User, UserType } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import logo from '../../assets/logo.png';
@@ -47,12 +46,13 @@ import logo from '../../assets/logo.png';
  */
 const Root = () => {
   // Hook for accessing loader data (user authentication)
-  const user = useLoaderData();
+  const { user, school } = useLoaderData() as {
+    user: UserType;
+    school: SchoolType;
+  };
   const navigate = useNavigate();
   const location = useLocation();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [params, setParams] = useSearchParams();
-  const navigation = useNavigation();
 
   // State management for search and filtering
   const [selectedFilter, setSelectedFilter] = useState('');

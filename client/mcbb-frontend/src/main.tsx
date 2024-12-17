@@ -57,12 +57,18 @@ import eventAction from './routes/dashboard/event/Event.action.tsx';
 import AssignFaculty from './routes/dashboard/assignFaculty/assignFaculty.route.tsx';
 import assignFacultyAction from './routes/dashboard/assignFaculty/assignFaculty.action.tsx';
 import assignFacultyLoader from './routes/dashboard/assignFaculty/assignFaculty.loader.tsx';
+import signUpLoader from './routes/signup/SignUp.loader.tsx';
+import { SchoolProvider } from './contexts/SchoolContext';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
       path='/'
-      element={<Root />}
+      element={
+        <SchoolProvider>
+          <Root />
+        </SchoolProvider>
+      }
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
@@ -74,7 +80,12 @@ const router = createBrowserRouter(
         action={loginAction}
       />
       <Route path='logout' loader={logoutLoader} />
-      <Route path='signup' element={<SignUp />} action={signUpAction} />
+      <Route
+        path='signup'
+        element={<SignUp />}
+        action={signUpAction}
+        loader={signUpLoader}
+      />
       <Route
         path='verifyEmail'
         element={<VerifyEmail />}

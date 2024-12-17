@@ -33,8 +33,22 @@ const loginLoader: LoaderFunction = async () => {
 
   // Parse response and return user ID
   const emailJson = await resp.json();
-  if (resp.ok) return json({ userId: emailJson.user_id });
-  else return json({ userId: null });
+  const schoolResp = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/school/all`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  const schoolJson = await schoolResp.json();
+
+  return json({
+    userId: emailJson?.user_id ?? null,
+    schools: schoolJson ?? null
+  });
 };
 
 export default loginLoader;
