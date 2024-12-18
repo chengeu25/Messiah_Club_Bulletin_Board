@@ -19,6 +19,7 @@ import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import logo from '../../assets/logo.png';
 import setCSSVars from '../helper/setCSSVars';
+import { useSchool } from '../contexts/SchoolContext';
 
 /**
  * Root component for the application's main layout and navigation.
@@ -51,6 +52,7 @@ const Root = () => {
     user: UserType;
     school: SchoolType;
   };
+  const { setCurrentSchool } = useSchool();
   const navigate = useNavigate();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
@@ -174,6 +176,13 @@ const Root = () => {
       setParams(newParams, { replace: true });
     }
   }, [params, setParams]);
+
+  // Initialize school context from loader data
+  useEffect(() => {
+    if (school) {
+      setCurrentSchool(school);
+    }
+  }, [school, setCurrentSchool]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
