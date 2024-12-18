@@ -3,7 +3,8 @@ import {
   useSubmit,
   useSearchParams,
   Link,
-  useLoaderData
+  useLoaderData,
+  useParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -40,6 +41,7 @@ const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
   const [params] = useSearchParams();
+  const { schoolId } = useParams();
 
   // Get schools from loader
   const { schools } = useLoaderData() as {
@@ -62,10 +64,10 @@ const SignUp = () => {
 
   // Initialize selected school from schools list if not set
   useEffect(() => {
-    if (!currentSchool && schools.length > 0) {
-      setCurrentSchool(schools[0] ?? null);
+    if (schools.length > 0) {
+      setCurrentSchool(schools.find((s) => s.id === Number(schoolId)) ?? null);
     }
-  }, [schools, currentSchool, setCurrentSchool]);
+  }, [schools, schoolId, setCurrentSchool]);
 
   /**
    * Side effect to handle URL parameters for error and success messages
@@ -187,13 +189,6 @@ const SignUp = () => {
     setCaptchaResponse(value);
   };
 
-  const handleSchoolChange = (e?: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!e) return;
-    const selectedSchoolName = e.target.value;
-    const school = schools.find((s) => s.name === selectedSchoolName) ?? null;
-    setCurrentSchool(school);
-  };
-
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
@@ -201,16 +196,6 @@ const SignUp = () => {
       {/* Error and success messages */}
       {error && <p className='text-red-500 mb-3'>{error}</p>}
       {message && <p className='text-green-500 mb-3'>{message}</p>}
-
-      {/* School dropdown */}
-      <Select
-        filled={false}
-        label={'School:'}
-        options={schools?.map((s) => s.name)}
-        value={currentSchool?.name}
-        name='school'
-        onChange={handleSchoolChange}
-      />
 
       {/* Name Input */}
       <div className='w-full'>

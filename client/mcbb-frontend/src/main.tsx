@@ -74,14 +74,14 @@ const router = createBrowserRouter(
     >
       <Route path='/' element={<LandingPage />} />
       <Route
-        path='login'
+        path='login/:schoolId'
         element={<Login />}
         loader={loginLoader}
         action={loginAction}
       />
       <Route path='logout' loader={logoutLoader} />
       <Route
-        path='signup'
+        path='signup/:schoolId'
         element={<SignUp />}
         action={signUpAction}
         loader={signUpLoader}

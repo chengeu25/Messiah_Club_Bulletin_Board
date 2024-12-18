@@ -3,14 +3,14 @@ import {
   useSubmit,
   useSearchParams,
   useLoaderData,
-  useNavigation
+  useNavigation,
+  useParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import Loading from '../../components/ui/Loading';
 import { SchoolType } from '../../types/databaseTypes';
-import Select from '../../components/formElements/Select.component';
 import { useSchool } from '../../contexts/SchoolContext';
 
 /**
@@ -39,7 +39,8 @@ const Login = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
   const navigation = useNavigation();
-  const [params] = useSearchParams();
+  const [searchParams] = useSearchParams();
+  const { schoolId } = useParams();
   const { userId, schools } = useLoaderData() as {
     userId: string;
     schools: SchoolType[];
@@ -56,10 +57,10 @@ const Login = () => {
   // School input state management
   // Initialize selected school from schools list if not set
   useEffect(() => {
-    if (!currentSchool && schools.length > 0) {
-      setCurrentSchool(schools[0] ?? null);
+    if (schools.length > 0) {
+      setCurrentSchool(schools.find((s) => s.id === Number(schoolId)) ?? null);
     }
-  }, [schools, currentSchool, setCurrentSchool]);
+  }, [schools, schoolId, setCurrentSchool]);
 
   // Email validation using memoized computation
   const emailIsValid = useMemo(
@@ -74,15 +75,15 @@ const Login = () => {
    * @description Updates error and message states based on URL parameters
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    if (searchParams.get('error')) {
+      setError(decodeURIComponent(searchParams.get('error') ?? ''));
       setIsLoading(false); // Reset loading state when error is present
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    if (searchParams.get('message')) {
+      setMessage(decodeURIComponent(searchParams.get('message') ?? ''));
       setIsLoading(false); // Reset loading state when message is present
     }
-  }, [params]);
+  }, [searchParams]);
 
   /**
    * Manages loading state based on navigation state.
@@ -108,13 +109,6 @@ const Login = () => {
       setRemember(true);
     }
   }, [userId]);
-
-  const handleSchoolChange = (e?: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!e) return;
-    const selectedSchoolName = e.target.value;
-    const school = schools.find((s) => s.name === selectedSchoolName) ?? null;
-    setCurrentSchool(school);
-  };
 
   /**
    * Handles form submission with multiple authentication actions.
@@ -192,16 +186,6 @@ const Login = () => {
           Please enter your full {currentSchool?.name} email.
         </p>
       )}
-
-      {/* School dropdown */}
-      <Select
-        filled={false}
-        label={'School:'}
-        options={schools?.map((s) => s.name)}
-        value={currentSchool?.name}
-        name='school'
-        onChange={handleSchoolChange}
-      />
 
       {/* Email input */}
       <Input
