@@ -40,5 +40,8 @@ export const SchoolProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// Custom hook to use the school context
+/**
+ * Returns the currentSchool, setCurrentSchool, route, and setRoute values from the SchoolContext
+ * @returns The currentSchool, setCurrentSchool, route, and setRoute values from the SchoolContext
+ */
 export const useSchool = () => useContext(SchoolContext);
