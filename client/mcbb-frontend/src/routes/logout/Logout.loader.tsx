@@ -1,4 +1,5 @@
 import { redirect } from 'react-router-dom';
+import { AuthSync } from '../../helper/checkUser';
 
 /**
  * Logout loader for handling user session termination.
@@ -20,30 +21,9 @@ import { redirect } from 'react-router-dom';
  * - Automatic redirection after logout
  */
 const logoutLoader = async () => {
-  try {
-    // Send logout request to backend
-    const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/auth/logout`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    // Ensure logout was successful
-    if (!response.ok) {
-      throw new Error(`Logout failed: ${response.statusText}`);
-    }
-
-    // Direct, clean redirect to login
-    return redirect('/');
-  } catch (error) {
-    console.error('Logout Error:', error);
-    return redirect('/');
-  }
+  const authSync = AuthSync.getInstance();
+  await authSync.performLogout();
+  return redirect('/login');
 };
 
 export default logoutLoader;
