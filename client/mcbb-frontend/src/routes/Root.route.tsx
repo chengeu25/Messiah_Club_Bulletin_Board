@@ -134,7 +134,6 @@ const Root = () => {
   useEffect(() => {
     if (navigation.state === 'loading') {
       // Optional: Add any additional logic when navigation is loading
-      console.log('Navigation is loading');
     }
   }, [navigation.state]);
 

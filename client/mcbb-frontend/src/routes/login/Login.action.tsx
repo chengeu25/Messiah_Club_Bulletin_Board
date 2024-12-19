@@ -63,7 +63,7 @@ const loginAction: ActionFunction = async ({ request }) => {
         return redirect('/verifyEmail');
       }
       // Redirect with error message for other login failures
-      return redirect('/login?error=' + json.error);
+      return redirect(`/login/${school}?error=` + json.error);
     }
   }
 
@@ -72,7 +72,7 @@ const loginAction: ActionFunction = async ({ request }) => {
     ? redirect('/signup')
     : action === 'forgot'
     ? redirect('/forgot')
-    : redirect('/login');
+    : null;
 };
 
 export default loginAction;

@@ -72,7 +72,7 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
     return redirect('/verifyEmail');
   } else {
     const json = await response.json();
-    return redirect('/signup?error=' + json.error);
+    return redirect(`/signup/${school}?error=` + json.error);
   }
 };
 
