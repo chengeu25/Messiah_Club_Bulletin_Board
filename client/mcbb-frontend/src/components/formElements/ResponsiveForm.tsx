@@ -23,7 +23,7 @@ interface FormProps {
  * <ResponsiveForm onSubmit={handleSubmit}>
  *   <Input label="Name" name="name" type="text" />
  *   <Input label="Email" name="email" type="email" />
- *   <Button type="submit" text="Submit" color="blue" />
+ *   <Button type="submit" text="Submit" />
  * </ResponsiveForm>
  */
 const ResponsiveForm = ({ children, onSubmit }: FormProps) => (

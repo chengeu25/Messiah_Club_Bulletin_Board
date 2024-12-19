@@ -6,18 +6,18 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 
 /**
  * ResetPassword component for changing user password.
- * 
+ *
  * @component ResetPassword
  * @description Provides a secure interface for users to reset their password
- * 
+ *
  * @returns {JSX.Element} Rendered password reset form
- * 
+ *
  * @workflow
  * 1. Render password reset form
  * 2. Validate new password inputs
  * 3. Submit password reset request
  * 4. Handle form submission errors
- * 
+ *
  * @features
  * - Client-side password validation
  * - Error handling
@@ -33,7 +33,7 @@ const ResetPassword = () => {
 
   /**
    * Handles password reset form submission.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @description Validates password inputs and submits password reset request
@@ -68,38 +68,31 @@ const ResetPassword = () => {
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Forgot Password?</h1>
-      
+
       {/* Error message display */}
       {error && <div className='text-red-500'>{error}</div>}
-      
+
       {/* New password input */}
       <Input
         label='New password:'
         name='newPassword'
         type='text'
         placeholder='Password'
-        color='blue'
         filled={false}
       />
-      
+
       {/* Confirm password input */}
       <Input
         label='Confirm password:'
         name='confirmPassword'
         type='text'
         placeholder='Password'
-        color='blue'
         filled={false}
       />
-      
+
       {/* Submit button */}
       <div className='flex flex-row gap-2'>
-        <Button
-          text='Submit'
-          type='submit'
-          name='submitResetPassword'
-          color='blue'
-        />
+        <Button text='Submit' type='submit' name='submitResetPassword' />
       </div>
     </ResponsiveForm>
   );

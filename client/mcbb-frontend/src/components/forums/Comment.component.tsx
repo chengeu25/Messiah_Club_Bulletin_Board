@@ -3,7 +3,7 @@ import Input from '../formElements/Input.component';
 
 /**
  * Represents the properties for the Comment component
- * 
+ *
  * @interface CommentProps
  * @property {string} creator - The name or identifier of the comment creator
  * @property {string} content - The text content of the comment
@@ -19,19 +19,19 @@ interface CommentProps {
 
 /**
  * Renders a comment with creator details, content, and a reply input
- * 
+ *
  * @component
  * @param {CommentProps} props - The properties for the Comment component
  * @returns {JSX.Element} A styled comment card with creator info, content, and reply functionality
- * 
+ *
  * @example
- * <Comment 
+ * <Comment
  *   creator="John Doe"
  *   content="This is a sample comment"
  *   lastModified={new Date()}
  *   indentLevel={1}
  * />
- * 
+ *
  * @remarks
  * - Supports nested comments through the indentLevel prop
  * - Includes a built-in reply input and button
@@ -60,12 +60,11 @@ const Comment = ({
           placeholder='Reply'
           name='comment'
           type='text'
-          color='blue'
           filled={false}
           labelOnSameLine
         />
         <div className='flex-shrink-0'>
-          <Button color='blue' text='Reply' filled={true} className='w-auto' />
+          <Button text='Reply' filled={true} className='w-auto' />
         </div>
       </div>
     </div>

@@ -167,13 +167,13 @@ const EditInterests: React.FC = () => {
             ))}
           </div>
           <button
-            className='bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900'
+            className='foreground-filled-focusable text-white py-2 px-4 rounded'
             type='submit'
           >
             Save Changes
           </button>
           <button
-            className='bg-blue-950 text-white py-2 px-4 rounded hover:bg-blue-900'
+            className='foreground-filled-focusable text-white py-2 px-4 rounded'
             type='button'
             onClick={handleRedirect}
           >

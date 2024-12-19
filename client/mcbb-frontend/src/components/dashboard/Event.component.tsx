@@ -6,7 +6,7 @@ import { CgDetailsMore } from 'react-icons/cg';
 
 /**
  * Represents the properties for the Event component
- * 
+ *
  * @interface EventProps
  * @property {EventType} event - The event details to be displayed
  * @property {boolean} [small=false] - Flag to render the event in a compact view
@@ -22,14 +22,14 @@ export interface EventProps {
 
 /**
  * Renders an event card with detailed information and interaction buttons
- * 
+ *
  * @component
  * @param {EventProps} props - The properties for the Event component
  * @returns {JSX.Element} A card displaying event details with details and RSVP buttons
- * 
+ *
  * @example
- * <Event 
- *   event={eventObject} 
+ * <Event
+ *   event={eventObject}
  *   small={false}
  *   handleDetailsClick={() => showEventDetails()}
  *   handleRSVPClick={(type) => updateRSVP(type)}
@@ -82,10 +82,7 @@ const Event = ({
               {!small && tags?.length > 0 && (
                 <div className='inline-flex justify-center xl:justify-start gap-2'>
                   {tags?.map((tag, index) => (
-                    <div
-                      key={index}
-                      className='text-center bg-blue-200 p-2 rounded-lg'
-                    >
+                    <div key={index} className='text-center tag p-2 rounded-lg'>
                       {tag}
                     </div>
                   ))}
@@ -100,7 +97,6 @@ const Event = ({
           } justify-center items-center gap-2 relative`}
         >
           <Button
-            color='blue'
             text='Details'
             icon={<CgDetailsMore size={20} />}
             className='w-50 text-nowrap flex flex-row items-center gap-2'

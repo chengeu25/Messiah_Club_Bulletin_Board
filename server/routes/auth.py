@@ -266,7 +266,8 @@ def login():
     {
         "email": str,       # User's email address
         "password": str,    # User's password
-        "remember": bool    # Whether to maintain a longer session
+        "remember": bool,   # Whether to maintain a longer session
+        "school": int       # School ID
     }
 
     Returns:
@@ -306,17 +307,18 @@ def login():
         """SELECT pwd1
                 FROM users 
                 WHERE email = %s
-                    AND is_active = 1""",
-        (data["email"],),
+                    AND is_active = 1
+                    AND school_id = %s""",
+        (data["email"], data["school"]),
     )
     result = cur.fetchone()
-
-    # Turn off email verified
-    update_email_verified(data["email"], verified=False)
 
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Authentication failed"}), 401
+
+    # Turn off email verified
+    update_email_verified(data["email"], verified=False)
 
     # Verify the provided password against the hashed password
     hashed_password = result[0]
@@ -325,6 +327,7 @@ def login():
 
     # Set the user ID and activity timestamp in the session
     session["user_id"] = data["email"]
+    session["school"] = data["school"]
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()
@@ -360,10 +363,15 @@ def logout():
     - Clears all session variables
     - Ensures complete session termination
     """
+
+    # Clear all session data
     session.clear()
+
+    # Restore the logout flag
+    session["is_logged_out"] = True
     session.modified = True
+
     resp = jsonify({"message": "Logged out successfully"})
-    resp.set_cookie("user_id", "", expires=0, path="/api")
     return resp, 200
 
 
@@ -381,6 +389,7 @@ def signup():
         "password": str,       # User's password
         "name": str,           # User's full name
         "captchaResponse": str # reCAPTCHA verification token
+        "school": int          # School ID
     }
 
     Returns:
@@ -411,6 +420,7 @@ def signup():
     email = data.get("email")  # These are to get the current inputs
     name = data.get("name")
     password = data.get("password")
+    school = data.get("school")
     if data.get("gender") == "male":
         gender = 1
     elif data.get("gender") == "female":
@@ -446,12 +456,13 @@ def signup():
 
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
-        (email, hashed_password, gender, name),
+        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s)",
+        (email, hashed_password, gender, school, name),
     )
     mysql.connection.commit()
 
     session["user_id"] = email
+    session["school"] = school
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()

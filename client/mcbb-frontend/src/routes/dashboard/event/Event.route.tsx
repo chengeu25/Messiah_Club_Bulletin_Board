@@ -13,12 +13,12 @@ import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.comp
 
 /**
  * Event details page component.
- * 
+ *
  * @component Event
  * @description Renders a comprehensive view of an event's details
- * 
+ *
  * @returns {JSX.Element} Fully rendered event details page
- * 
+ *
  * @workflow
  * 1. Retrieve event details from loader data
  * 2. Display event information in structured cards
@@ -26,7 +26,7 @@ import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.comp
  * 4. Render event description and tags
  * 5. Display event images
  * 6. Provide comment section with placeholder comments
- * 
+ *
  * @features
  * - RSVP dropdown for event interaction
  * - Dynamic event information rendering
@@ -134,17 +134,11 @@ const Event = () => {
           placeholder='Comment'
           name='comment'
           type='text'
-          color='blue'
           filled={false}
           labelOnSameLine
         />
         <div className='flex-shrink-0'>
-          <Button
-            color='blue'
-            text='Comment'
-            filled={true}
-            className='w-auto'
-          />
+          <Button text='Comment' filled={true} className='w-auto' />
         </div>
       </div>
 

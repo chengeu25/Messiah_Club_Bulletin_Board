@@ -1,4 +1,5 @@
 import Day from '../../../components/dashboard/Day.component';
+import { useSchool } from '../../../contexts/SchoolContext';
 import {
   passesFilter,
   passesSearch,
@@ -15,13 +16,13 @@ import {
 
 /**
  * Home dashboard component displaying events for the current week.
- * 
+ *
  * @component
  * @description Renders a list of events filtered by search and user preferences:
  * - Displays events grouped by day
  * - Supports filtering and searching events
  * - Shows a message when no events match the current filters
- * 
+ *
  * @returns {React.ReactElement} Rendered home dashboard with events
  */
 const Home = () => {
@@ -31,17 +32,18 @@ const Home = () => {
   };
   const submit = useSubmit();
   const [params] = useSearchParams();
+  const { currentSchool } = useSchool();
 
   /**
    * Memoized function to filter events based on search query and user filters.
-   * 
+   *
    * @function filteredEvents
    * @type {EventType[]}
-   * 
+   *
    * @description Filters events by:
    * - Matching search query in event title or tags
    * - Applying user-specific filters (e.g., suggested events)
-   * 
+   *
    * @returns {EventType[]} Array of events that pass the search and filter criteria
    */
   const filteredEvents = useMemo(
@@ -56,14 +58,14 @@ const Home = () => {
 
   /**
    * Memoized function to organize filtered events by day.
-   * 
+   *
    * @function eventsOnDays
    * @type {DayProps[]}
-   * 
+   *
    * @description Transforms filtered events into a day-based structure with:
    * - Events sorted by date
    * - Handlers for event details and RSVP actions
-   * 
+   *
    * @returns {DayProps[]} Array of day objects containing events
    */
   const eventsOnDays = useMemo(
@@ -78,7 +80,7 @@ const Home = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
-      <h1 className='text-3xl font-bold'>This Week at Messiah</h1>
+      <h1 className='text-3xl font-bold'>This Week at {currentSchool?.name}</h1>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
         {eventsOnDays.length > 0 ? (
           eventsOnDays

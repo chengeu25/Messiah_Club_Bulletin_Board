@@ -1,5 +1,6 @@
 import { json } from 'react-router';
 import checkUser from '../helper/checkUser';
+import setCSSVars from '../helper/setCSSVars';
 
 /**
  * Root loader function for application-wide user authentication.
@@ -22,28 +23,28 @@ const rootLoader = async () => {
   // Check user authentication status
   const user = await checkUser();
 
-  // Return user status as JSON response
-  return json(user, { status: 200 });
-};
-
-// Add a function to handle loader reloading
-const handleRootLoaderReload = async () => {
-  try {
-    // Re-check user authentication
-    const user = await checkUser();
-
-    // Optionally, you can dispatch a custom event to notify components about the reload
-    window.dispatchEvent(
-      new CustomEvent('root-loader-reloaded', {
-        detail: { user }
-      })
-    );
-  } catch (error) {
-    console.error('Error reloading root loader:', error);
+  // If user is false, return immediately
+  if (!user) {
+    return json({ user: false, school: null }, { status: 200 });
   }
-};
 
-// Add event listener for loader reload
-window.addEventListener('reload-root-loader', handleRootLoaderReload);
+  // Fetch school data
+  const schoolResp = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/school/`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  const school = schoolResp.ok ? await schoolResp.json() : null;
+  setCSSVars(school?.color ?? '');
+
+  // Return user status as JSON response
+  return json({ user, school }, { status: 200 });
+};
 
 export default rootLoader;

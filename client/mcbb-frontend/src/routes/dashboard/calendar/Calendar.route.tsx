@@ -15,14 +15,14 @@ import Day, { DayProps } from '../../../components/dashboard/Day.component';
 
 /**
  * Calendar dashboard component for displaying and navigating events.
- * 
+ *
  * @component
  * @description Provides functionality to:
  * - Display events across multiple days
  * - Navigate between dates
  * - Filter and search events
  * - Dynamically adjust displayed days based on screen size
- * 
+ *
  * @returns {React.ReactElement} Rendered calendar dashboard
  */
 const Calendar = () => {
@@ -36,10 +36,10 @@ const Calendar = () => {
 
   /**
    * Calculates the starting date and number of days to display.
-   * 
+   *
    * @function
    * @returns {Object} Starting date and number of days
-   * 
+   *
    * @description Retrieves date parameters from URL search params
    * - Uses current date if no starting date is specified
    * - Defaults to 1 day if no number of days is specified
@@ -57,10 +57,10 @@ const Calendar = () => {
 
   /**
    * Updates the starting date in URL search parameters.
-   * 
+   *
    * @function setStartingDate
    * @param {Date} startingDate - New starting date to set
-   * 
+   *
    * @description Modifies URL search parameters to reflect the new starting date
    */
   const setStartingDate = (startingDate: Date) => {
@@ -71,10 +71,10 @@ const Calendar = () => {
 
   /**
    * Updates the number of days displayed in URL search parameters.
-   * 
+   *
    * @function setNumOfDaysDisplayed
    * @param {number} numDays - Number of days to display
-   * 
+   *
    * @description Modifies URL search parameters to reflect the new number of days
    */
   const setNumOfDaysDisplayed = (numDays: number) => {
@@ -85,10 +85,10 @@ const Calendar = () => {
 
   /**
    * Generates an array of dates to be displayed.
-   * 
+   *
    * @function
    * @returns {Date[]} Array of dates to display
-   * 
+   *
    * @description Creates an array of consecutive dates based on:
    * - Starting date
    * - Number of days to display
@@ -103,10 +103,10 @@ const Calendar = () => {
 
   /**
    * Filters events based on search query and user filters.
-   * 
+   *
    * @function
    * @returns {EventType[]} Filtered events
-   * 
+   *
    * @description Applies search and filter criteria to events:
    * - Matches search query in event details
    * - Applies user-specific filters
@@ -123,10 +123,10 @@ const Calendar = () => {
 
   /**
    * Organizes filtered events by day with interaction handlers.
-   * 
+   *
    * @function
    * @returns {DayProps[]} Events sorted and organized by day
-   * 
+   *
    * @description Transforms filtered events into a day-based structure:
    * - Sorts events by day
    * - Adds handlers for event details and RSVP actions
@@ -143,10 +143,10 @@ const Calendar = () => {
 
   /**
    * Prepares events for each displayed date.
-   * 
+   *
    * @function
    * @returns {DayProps[]} Events for each displayed date
-   * 
+   *
    * @description Maps events to their corresponding dates:
    * - Creates a day object for each date
    * - Fills with events if available, otherwise creates an empty day
@@ -169,7 +169,7 @@ const Calendar = () => {
 
   /**
    * Dynamically adjusts the number of displayed days based on screen width.
-   * 
+   *
    * @function
    * @description Uses ResizeObserver to:
    * - Calculate optimal number of days to display
@@ -207,14 +207,12 @@ const Calendar = () => {
       <div className='flex justify-center items-center p-2 w-full'>
         <div className='flex flex-row justify-center items-center gap-2'>
           <Button
-            color='blue'
             icon={<BiHome />}
             onClick={() =>
               setStartingDate(new Date(new Date().setHours(0, 0, 0, 0)))
             }
           />
           <Button
-            color='blue'
             icon={<IoChevronBack />}
             onClick={() => {
               setStartingDate(subtractDays(startingDate, numOfDaysDisplayed));
@@ -229,10 +227,9 @@ const Calendar = () => {
                   : new Date(new Date().setHours(0, 0, 0, 0))
               );
             }}
-            className='bg-blue-950 border-none rounded-lg p-1 text-white'
+            className='foreground-filled border-none rounded-lg p-1 text-white'
           />
           <Button
-            color='blue'
             icon={<IoChevronForward />}
             onClick={() =>
               setStartingDate(subtractDays(startingDate, -numOfDaysDisplayed))
@@ -246,7 +243,7 @@ const Calendar = () => {
             key={index}
             className={`flex flex-col flex-1 ${
               index !== 0 && 'border-l-[1px]'
-            } p-4 border-blue-900 h-full justify-start gap-y-4 overflow-y-auto relative`}
+            } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
           >
             <Day {...day} small={true} />
           </div>

@@ -12,13 +12,15 @@ import {
   useNavigation
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toTitleCase from '../helper/titleCase';
 import UserDropdown from '../components/specialDropdowns/UserDropdown.component';
-import { UserType as User } from '../types/databaseTypes';
+import { SchoolType, UserType as User, UserType } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import logo from '../../assets/logo.png';
+import setCSSVars from '../helper/setCSSVars';
+import { useSchool } from '../contexts/SchoolContext';
 
 /**
  * Root component for the application's main layout and navigation.
@@ -47,17 +49,19 @@ import logo from '../../assets/logo.png';
  */
 const Root = () => {
   // Hook for accessing loader data (user authentication)
-  const user = useLoaderData();
+  const { user, school } = useLoaderData() as {
+    user: UserType;
+    school: SchoolType;
+  };
+  const { currentSchool, setCurrentSchool } = useSchool();
   const navigate = useNavigate();
   const location = useLocation();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [params, setParams] = useSearchParams();
   const navigation = useNavigation();
 
   // State management for search and filtering
   const [selectedFilter, setSelectedFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [shouldReloadLoader, setShouldReloadLoader] = useState(false);
 
   /**
    * Derives the current page name from the location pathname.
@@ -92,6 +96,20 @@ const Root = () => {
   }, [searchQuery, selectedFilter, setParams, currentPage]);
 
   /**
+   * Side effect to update colors based on whether or not you are on the homepage
+   *
+   * @effect
+   * @description Changes background color based on whether or not you are on the homepage
+   */
+  useEffect(() => {
+    if (location.pathname === '/') {
+      setCSSVars('172554');
+    } else {
+      setCSSVars(school?.color ?? '');
+    }
+  }, [location.pathname, school?.color]);
+
+  /**
    * Side effect to reset search and filter settings on page change
    *
    * @effect
@@ -106,64 +124,23 @@ const Root = () => {
     setSearchQuery('');
   }, [currentPage, location.pathname]);
 
-  /**
-   * Trigger a loader reload via custom event
-   */
-  const triggerLoaderReload = useCallback(() => {
-    setShouldReloadLoader(true);
-  }, []);
-
-  /**
-   * Side effect to handle loader reload after logout
-   */
+  // Initialize school context from loader data
   useEffect(() => {
-    if (shouldReloadLoader) {
-      // Reset the reload flag
-      setShouldReloadLoader(false);
-
-      // Force a reload by clearing the loader data
-      window.dispatchEvent(new Event('reload-root-loader'));
+    if (school) {
+      setCurrentSchool(school);
     }
-  }, [shouldReloadLoader]);
+  }, [school, setCurrentSchool]);
 
-  /**
-   * Side effect to handle logout state
-   *
-   * @effect
-   * @description Resets navigation when a logout occurs
-   * Clears logout parameter after processing to prevent repeated resets
-   */
   useEffect(() => {
-    if (params.get('logout') === 'true') {
-      // Clear the logout parameter to prevent repeated triggers
-      const newParams = new URLSearchParams(params.toString());
-      newParams.delete('logout');
-      setParams(newParams, { replace: true });
-
-      // Trigger loader reload
-      triggerLoaderReload();
+    if (navigation.state === 'loading') {
+      // Optional: Add any additional logic when navigation is loading
     }
-  }, [params, setParams, triggerLoaderReload]);
-
-  /**
-   * Side effect to handle reload parameter
-   *
-   * @effect
-   * @description Clears reload parameter after processing to prevent repeated triggers
-   */
-  useEffect(() => {
-    if (params.get('_reload')) {
-      // Clear the reload parameter to prevent repeated triggers
-      const newParams = new URLSearchParams(params.toString());
-      newParams.delete('_reload');
-      setParams(newParams, { replace: true });
-    }
-  }, [params, setParams]);
+  }, [navigation.state]);
 
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       {/* Top Navigation Bar */}
-      <nav className='w-full h-20 sm:min-h-[10%] bg-blue-950 text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
+      <nav className='w-full h-20 sm:min-h-[10%] foreground-filled text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
         {/* Logo */}
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
@@ -198,21 +175,33 @@ const Root = () => {
                 {user ? (
                   <UserDropdown user={user as User} />
                 ) : (
-                  <div className='flex flex-row gap-2 text-nowrap'>
+                  <div className='flex flex-row gap-2 text-nowrap tag rounded-xl p-2'>
                     <Button
                       text='Log In'
-                      color='white'
                       filled={false}
                       onClick={() => {
-                        navigate('/login');
+                        if (
+                          currentSchool !== null &&
+                          currentSchool !== undefined
+                        ) {
+                          navigate(`/login/${currentSchool.id}`);
+                        } else {
+                          navigate('/selectSchool?route=login');
+                        }
                       }}
                     />
                     <Button
                       text='Sign Up'
-                      color='white'
                       filled={false}
                       onClick={() => {
-                        navigate('signup');
+                        if (
+                          currentSchool !== null &&
+                          currentSchool !== undefined
+                        ) {
+                          navigate(`/signup/${currentSchool.id}`);
+                        } else {
+                          navigate('/selectSchool?route=signup');
+                        }
                       }}
                     />
                   </div>

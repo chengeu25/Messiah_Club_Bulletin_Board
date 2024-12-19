@@ -5,3 +5,66 @@
 body {
   margin: 0;
 }
+
+:root {
+  --foreground-rgb: #000000;
+  --foreground-text-rgb: #ffffff;
+  --foreground-disabled-rgb: #808080;
+  --hover-rgb: #303030;
+  --active-rgb: #404040;
+  --tag-rgb: #000000;
+}
+
+.foreground-filled {
+  background-color: var(--foreground-rgb);
+  color: var(--foreground-text-rgb);
+}
+
+.foreground-filled-focusable {
+  background-color: var(--foreground-rgb);
+  color: var(--foreground-text-rgb);
+}
+
+.foreground-filled-focusable:hover {
+  background-color: var(--hover-rgb);
+  color: var(--foreground-text-rgb);
+}
+
+.foreground-filled-focusable:active {
+  background-color: var(--active-rgb);
+  color: var(--foreground-text-rgb);
+}
+
+.foreground-filled:disabled {
+  background-color: var(--foreground-disabled-rgb);
+  color: var(--foreground-disabled-rgb);
+}
+
+.foreground-outlined {
+  color: var(--foreground-rgb);
+  border-color: var(--foreground-rgb);
+}
+
+.foreground-outlined-focusable {
+  color: var(--foreground-rgb);
+  border-color: var(--foreground-rgb);
+}
+
+.foreground-outlined-focusable:hover {
+  color: var(--hover-rgb);
+  border-color: var(--hover-rgb);
+}
+
+.foreground-outlined-focusable:active {
+  color: var(--active-rgb);
+  border-color: var(--active-rgb);
+}
+
+.foreground-outlined-focusable:disabled {
+  color: var(--foreground-disabledrgb);
+  border-color: var(--foreground-disabled-rgb);
+}
+
+.tag {
+  background-color: var(--tag-rgb);
+}

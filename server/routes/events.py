@@ -67,7 +67,10 @@ def get_club_id(cur, club_name):
     - Returns the first column (club_id) if found
     - Raises an exception if no matching club exists
     """
-    cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
+    cur.execute(
+        "SELECT club_id FROM club WHERE club_name = %s AND is_active = 1 AND school_id = %s",
+        (club_name, session.get("school")),
+    )
     result = cur.fetchone()
     if result:
         return result[0]
@@ -137,12 +140,16 @@ def get_event(event_id):
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
 
+    school_id = session.get("school")
+    user_id = session.get("user_id")
+
     cur.execute(
         """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
             WHERE event_id = %s
                 AND is_active = 1
-                AND is_approved = 1""",
-        (event_id,),
+                AND is_approved = 1
+                AND school_id = %s""",
+        (event_id, school_id),
     )
     result = cur.fetchone()
     if result is None:
@@ -153,8 +160,9 @@ def get_event(event_id):
                 INNER JOIN club c 
                     ON c.club_id = eh.club_id
                 WHERE eh.event_id = %s
-                    AND c.is_active = 1""",
-        (event_id,),
+                    AND c.is_active = 1
+                    AND c.school_id = %s""",
+        (event_id, school_id),
     )
     result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
 
@@ -164,7 +172,7 @@ def get_event(event_id):
                 WHERE event_id = %s
                     AND user_id = %s
                     AND is_active = 1""",
-        (event_id, session["user_id"]),
+        (event_id, user_id),
     )
     result_3 = cur.fetchone()
     if result_3 is not None:
@@ -266,6 +274,9 @@ def get_club_events(club_id):
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
 
+    school_id = session.get("school")
+    user_id = session.get("user_id")
+
     # Get start date from query parameters
     start_date = request.args.get("start_date", datetime.now(pytz.utc).isoformat())
 
@@ -278,8 +289,9 @@ def get_club_events(club_id):
                 AND e.is_active = 1
                 AND e.is_approved = 1
                 AND e.start_time >= %s
+                AND e.school_id = %s
             LIMIT 10""",
-        (club_id, start_date),
+        (club_id, start_date, school_id),
     )
     result = cur.fetchall()
     cur.execute(
@@ -292,8 +304,9 @@ def get_club_events(club_id):
                     AND e.is_active = 1
                     AND e.is_approved = 1
                     AND r.is_active = 1
+                    AND e.school_id = %s
                     AND eh.club_id = %s""",
-        (session["user_id"], club_id),
+        (user_id, school_id, club_id),
     )
     result_2 = cur.fetchall()
     result_2 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_2))
@@ -367,6 +380,8 @@ def get_events():
     """
     # Check if user is authenticated
     current_user = get_user_session_info()
+    school_id = session.get("school")
+
     if not current_user["user_id"]:
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -385,14 +400,19 @@ def get_events():
             """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
                 WHERE start_time BETWEEN %s AND %s
                     AND is_active = 1
-                    AND is_approved = 1""",
-            (start_date, end_date),
+                    AND is_approved = 1
+                    AND school_id = %s""",
+            (start_date, end_date, school_id),
         )
         result = cur.fetchall()
+        if result is None:
+            return jsonify({"error": "No events found"}), 404
         cur.execute(
             """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
                     INNER JOIN club c ON c.club_id = eh.club_id
-                    WHERE c.is_active = 1""",
+                    WHERE c.is_active = 1
+                        AND c.school_id = %s""",
+            (school_id,),
         )
         result_2 = cur.fetchall()
         result_2 = list(
@@ -405,8 +425,9 @@ def get_events():
                     WHERE r.user_id = %s
                         AND e.is_active = 1
                         AND e.is_approved = 1
-                        AND r.is_active = 1""",
-            (session["user_id"],),
+                        AND r.is_active = 1
+                        AND e.school_id = %s""",
+            (session["user_id"], school_id),
         )
         result_3 = cur.fetchall()
         result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
@@ -436,8 +457,9 @@ def get_events():
                 INNER JOIN event e 
                     ON e.event_id = eh.event_id
                 WHERE e.is_active = 1
-                AND e.is_approved = 1""",
-            (session["user_id"],),
+                    AND e.is_approved = 1
+                    AND e.school_id = %s""",
+            (session["user_id"], school_id),
         )
         result_5 = cur.fetchall()
         result_5 = list(
@@ -572,6 +594,8 @@ def create_event():
     """
     # Check if the user is logged in
     user_id = session.get("user_id")
+    school_id = session.get("school")
+
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
@@ -656,7 +680,7 @@ def create_event():
                 location,
                 description,
                 event_cost,
-                "1",
+                school_id,
             ),
         )
         event_id = cur.lastrowid  # Get the ID of the newly created event
