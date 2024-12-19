@@ -8,6 +8,7 @@ import home4 from '../../../assets/home4.jpg';
 import Button from '../../components/formElements/Button.component';
 import Card from '../../components/ui/Card';
 import styles from './landingPage.module.css';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * LandingPage component for introducing SHARC and its features.
@@ -33,6 +34,7 @@ import styles from './landingPage.module.css';
 const LandingPage = () => {
   // Navigation hook for programmatic routing
   const navigate = useNavigate();
+  const { currentSchool } = useSchool();
 
   return (
     <div className='bg-blue-900'>
@@ -56,7 +58,11 @@ const LandingPage = () => {
             text='Sign Up'
             className='p-4'
             onClick={() => {
-              navigate('/signup');
+              if (currentSchool) {
+                navigate(`/signup/${currentSchool.id}`);
+              } else {
+                navigate('/selectSchool?route=signup');
+              }
             }}
             filled={true}
           />

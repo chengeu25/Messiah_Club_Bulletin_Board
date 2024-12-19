@@ -363,10 +363,15 @@ def logout():
     - Clears all session variables
     - Ensures complete session termination
     """
+
+    # Clear all session data
     session.clear()
+
+    # Restore the logout flag
+    session["is_logged_out"] = True
     session.modified = True
+
     resp = jsonify({"message": "Logged out successfully"})
-    resp.set_cookie("user_id", "", expires=0, path="/api")
     return resp, 200
 
 
