@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import SidebarButton from './SidebarButton.component';
-import { FaCalendar, FaUsers, FaChalkboardTeacher } from 'react-icons/fa';
+import {
+  FaCalendar,
+  FaUsers,
+  FaUser,
+  FaChalkboardTeacher
+} from 'react-icons/fa';
 import { RiCompassDiscoverFill } from 'react-icons/ri';
 import checkUser from '../../helper/checkUser';
 import { UserType as User } from '../../types/databaseTypes';
@@ -89,7 +94,8 @@ const Sidebar = () => {
           text: 'Faculty',
           icon: <FaChalkboardTeacher />,
           route: '/dashboard/assignFaculty'
-        }
+        },
+        { text: 'Users', icon: <FaUser />, route: '/dashboard/adminUserForm' }
       ]);
     }
   }, [isFaculty]);

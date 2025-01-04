@@ -284,6 +284,8 @@ def login():
             {"error": "Authentication failed"}, 401 status
         - On invalid password:
             {"error": "Authentication failed"}, 401 status
+        - On user is banned:
+            {"error": "User is banned"}, 403 status
 
     Behavior:
     - Validates input data
@@ -304,7 +306,7 @@ def login():
 
     # Retrieve the hashed password from the database
     cur.execute(
-        """SELECT pwd1
+        """SELECT pwd1, is_banned
                 FROM users 
                 WHERE email = %s
                     AND is_active = 1
@@ -316,6 +318,10 @@ def login():
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Authentication failed"}), 401
+
+    # Check if user is banned
+    if result[1] == 1:  # is_banned is the second column
+        return jsonify({"error": "User is banned"}), 403
 
     # Turn off email verified
     update_email_verified(data["email"], verified=False)
@@ -396,6 +402,8 @@ def signup():
         JSON response:
         - On successful signup:
             {"message": "User created successfully"}, 201 status
+        - On successful signup if the user is currently inactive:
+            {"message": "User reactivated successfully"}, 201 status
         - On missing or invalid data:
             {"error": "Missing required fields"}, 400 status
         - On invalid email format:
@@ -406,6 +414,8 @@ def signup():
             {"error": "reCAPTCHA verification failed"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
+        - On banned user:
+            {"error": "User is banned"}, 403 status
 
     Behavior:
     - Validates input data completeness and format
@@ -439,16 +449,42 @@ def signup():
     # to check if the email is unique
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT * FROM users WHERE email = %s",
+        "SELECT name, email, is_banned, is_active FROM users WHERE email = %s",
         (str(email),),
     )
     existing_user = cur.fetchone()
     cur.close()
 
     if existing_user:
-        return jsonify({"error": "email already in use"}), 400
+        # Check if the user is banned
+        if existing_user[2] == 1:
+            return jsonify({"error": "User is banned"}), 403
 
-    # To check password strngth
+        # If user exists but is inactive, reactivate the user
+        if existing_user[3] == 0:
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """UPDATE users 
+                SET PWD1 = %s, 
+                    PWD2 = '',
+                    PWD3 = '',
+                    GENDER = %s, 
+                    IS_ACTIVE = 1, 
+                    NAME = %s, 
+                    EMAIL_VERIFIED = 0 
+                WHERE EMAIL = %s AND SCHOOL_ID = %s""",
+                (generate_password_hash(password), gender, name, email, school),
+            )
+            mysql.connection.commit()
+            cur.close()
+
+            session["user_id"] = email
+            session["school"] = school
+            session["last_activity"] = datetime.now(timezone.utc)
+
+            return jsonify({"message": "User reactivated successfully"}), 200
+
+        return jsonify({"error": "email already in use"}), 400
 
     # Hash da password
     hashed_password = generate_password_hash(password)

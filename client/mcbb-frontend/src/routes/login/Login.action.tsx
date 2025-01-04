@@ -69,7 +69,7 @@ const loginAction: ActionFunction = async ({ request }) => {
 
   // Handle alternative actions (signup or forgot password)
   return action === 'signup'
-    ? redirect('/signup')
+    ? redirect('/selectSchool?route=signup')
     : action === 'forgot'
     ? redirect('/forgot')
     : null;

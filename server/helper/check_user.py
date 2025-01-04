@@ -76,7 +76,7 @@ def get_user_session_info():
     try:
         # Fetch user details
         cur.execute(
-            """SELECT email, email_verified, name, is_faculty, can_delete_faculty
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned
                 FROM users 
                 WHERE email = %s
                     AND is_active = 1
@@ -86,9 +86,9 @@ def get_user_session_info():
         )
         result = cur.fetchone()
 
-        # If no user found, return default
-        if result is None:
-            print("GET_USER_SESSION_INFO: No user found")
+        # If no user found or user is banned, return default
+        if result is None or result[5] == 1:
+            print("GET_USER_SESSION_INFO: No user found or user is banned")
             cur.close()
             session.clear()
             return default_return

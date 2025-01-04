@@ -67,6 +67,9 @@ import selectSchoolLoader from './routes/selectSchool/SelectSchool.loader';
 import selectSchoolAction from './routes/selectSchool/SelectSchool.action';
 import { SchoolProvider } from './contexts/SchoolContext';
 import LoginRedirector from './routes/login/LoginRedirecter.route.tsx';
+import AdminUserForm from './routes/dashboard/adminUserForm/adminUserForm.route.tsx';
+import adminUserFormLoader from './routes/dashboard/adminUserForm/adminUserForm.loader.tsx';
+import adminUserFormAction from './routes/dashboard/adminUserForm/adminUserForm.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -89,10 +92,7 @@ const router = createBrowserRouter(
           action={loginAction}
         />
       </Route>
-      <Route
-        path='logout'
-        loader={logoutLoader}
-      />
+      <Route path='logout' loader={logoutLoader} />
       <Route
         path='signup/:schoolId'
         element={<SignUp />}
@@ -145,6 +145,12 @@ const router = createBrowserRouter(
           element={<AssignFaculty />}
           loader={assignFacultyLoader}
           action={assignFacultyAction}
+        />
+        <Route
+          path='adminUserForm'
+          element={<AdminUserForm />}
+          loader={adminUserFormLoader}
+          action={adminUserFormAction}
         />
         <Route
           path='calendar'
