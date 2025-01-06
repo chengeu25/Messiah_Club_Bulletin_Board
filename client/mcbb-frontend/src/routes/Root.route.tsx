@@ -21,6 +21,7 @@ import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import logo from '../../assets/logo.png';
 import setCSSVars from '../helper/setCSSVars';
 import { useSchool } from '../contexts/SchoolContext';
+import { DynamicLogo } from '../components/ui/DynamicLogo.component';
 
 /**
  * Root component for the application's main layout and navigation.
@@ -144,7 +145,7 @@ const Root = () => {
         {/* Logo */}
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
-            <img src={logo} className='h-[100%]' />
+            <DynamicLogo />
           </Link>
         </span>
 
