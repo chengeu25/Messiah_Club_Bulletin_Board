@@ -52,6 +52,8 @@ import clubEventFormAction from './routes/dashboard/createEvent/ClubEventForm.ac
 import clubEventFormLoader from './routes/dashboard/createEvent/ClubEventForm.loader.tsx';
 import ClubEventForm from './routes/dashboard/createEvent/ClubEventForm.route.tsx';
 import ErrorPage from './routes/error/ErrorPage.tsx';
+import AboutUs from './routes/aboutus/aboutus.route.tsx';
+import ContactUs from './routes/contactus/contactus.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -151,7 +153,9 @@ const router = createBrowserRouter(
         action={EditInterestsAction}
         loader={EditInterestLoader}
       />
-    </Route>
+<Route path='aboutus' element={<AboutUs />} />
+<Route path='contactus' element={<ContactUs />} /> </Route>
+
   )
 );
 
