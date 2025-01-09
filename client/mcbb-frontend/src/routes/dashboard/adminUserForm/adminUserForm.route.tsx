@@ -167,7 +167,7 @@ export const AdminUserForm = () => {
             }
           />
           <input type='hidden' name='intent' value='search' />
-          <Button text='Search' type='submit' className='w-20' filled />
+          <Button text='Search' type='submit' className='max-w-20' filled />
         </div>
 
         {error && <div className='text-red-500 mb-4'>{error}</div>}

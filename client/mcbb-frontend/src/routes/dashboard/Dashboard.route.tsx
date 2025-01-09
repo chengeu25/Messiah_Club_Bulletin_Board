@@ -14,14 +14,14 @@ import Sidebar from '../../components/sidebar/Sidebar.component';
  */
 const Dashboard = () => {
   return (
-    <div className='w-full h-full flex flex-col sm:flex-row'>
+    <div className='w-full h-full flex flex-col sm:flex-row overflow-hidden'>
       {/* Desktop Sidebar */}
       <aside className='hidden sm:flex flex-col h-full border-r-1 border-gray-100 shadow-md gap-2 p-2'>
         <Sidebar />
       </aside>
 
       {/* Content flow */}
-      <div className='flex-grow flex relative overflow-y-scroll h-full'>
+      <div className='flex-grow flex relative overflow-hidden h-full'>
         <Outlet />
       </div>
 

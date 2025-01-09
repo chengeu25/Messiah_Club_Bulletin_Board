@@ -70,6 +70,9 @@ import LoginRedirector from './routes/login/LoginRedirecter.route.tsx';
 import AdminUserForm from './routes/dashboard/adminUserForm/adminUserForm.route.tsx';
 import adminUserFormLoader from './routes/dashboard/adminUserForm/adminUserForm.loader.tsx';
 import adminUserFormAction from './routes/dashboard/adminUserForm/adminUserForm.action.tsx';
+import emailPreferencesLoader from './routes/dashboard/emailPreferences/EmailPreferences.loader.tsx';
+import emailPreferencesAction from './routes/dashboard/emailPreferences/EmailPreferences.action.tsx';
+import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferences.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -209,6 +212,13 @@ const router = createBrowserRouter(
             element={<ClubForm />}
             action={clubFormAction}
             loader={clubFormLoader}
+          />
+
+          <Route
+            path='emailPreferences'
+            loader={emailPreferencesLoader}
+            action={emailPreferencesAction}
+            element={<EmailPreferences />}
           />
         </Route>
       </Route>

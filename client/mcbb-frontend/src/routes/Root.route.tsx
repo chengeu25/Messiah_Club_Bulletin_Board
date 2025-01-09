@@ -213,7 +213,7 @@ const Root = () => {
       </nav>
 
       {/* Main Content Area */}
-      <div className='w-full h-full relative overflow-y-scroll'>
+      <div className='w-full h-full relative overflow-hidden'>
         <Outlet />
       </div>
     </div>

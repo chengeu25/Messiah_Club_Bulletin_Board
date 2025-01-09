@@ -80,6 +80,8 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
       navigate('/changePassword');
     } else if (selected?.value === 'Dashboard') {
       navigate('/dashboard/home');
+    } else if (selected?.value === 'Email Preferences') {
+      navigate('dashboard/emailPreferences');
     }
     setSelectedOption(options[0]);
   };
@@ -124,6 +126,10 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
         {
           value: 'Dashboard',
           label: 'Dashboard'
+        },
+        {
+          value: 'Email Preferences',
+          label: 'Email Preferences'
         },
         {
           value: 'Edit Interests',
