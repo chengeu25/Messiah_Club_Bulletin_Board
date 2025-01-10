@@ -139,17 +139,17 @@ const EditInterests: React.FC = () => {
 
   return (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
-      <div className='flex w-full h-full sm:w-3/4 sm:h-3/4 justify-center items-center shadow-md rounded-lg p-5 bg-white'>
+      <div className='flex flex-col w-full h-full sm:w-3/4 sm:h-3/4 justify-between items-center shadow-md rounded-lg p-5 bg-white'>
         <form
           onSubmit={handleSubmit}
-          className='flex flex-col gap-2 w-full h-full'
+          className='flex flex-col gap-4 w-full h-full'
         >
           <h1 className='text-3xl font-bold'>Edit Interests</h1>
           {message && <p>{message}</p>}
           {error && <p className='text-red-500'>{error}</p>}
           <div
-            className='flex flex-col gap-2 overflow-y-auto'
-            style={{ maxHeight: '200px' }}
+            className='flex flex-col gap-2 overflow-y-auto flex-grow'
+            style={{ maxHeight: '400px' }}  // Increased maxHeight for more interests
           >
             {allInterests.map((interest) => (
               <label
@@ -166,23 +166,26 @@ const EditInterests: React.FC = () => {
               </label>
             ))}
           </div>
-          <button
-            className='foreground-filled-focusable text-white py-2 px-4 rounded'
-            type='submit'
-          >
-            Save Changes
-          </button>
-          <button
-            className='foreground-filled-focusable text-white py-2 px-4 rounded'
-            type='button'
-            onClick={handleRedirect}
-          >
-            Go to Add Interest Page
-          </button>
+          <div className='flex w-full'>
+            <button
+              className='foreground-filled-focusable text-white py-4 flex-1 mr-2 rounded-lg'
+              type='submit'
+            >
+              Save Changes
+            </button>
+            <button
+              className='foreground-filled-focusable text-white py-4 flex-1 ml-2 rounded-lg'
+              type='button'
+              onClick={handleRedirect}
+            >
+              Go to Add Interest Page
+            </button>
+          </div>
         </form>
       </div>
     </div>
-  );
+  );  
+  
 };
 
 export default EditInterests;

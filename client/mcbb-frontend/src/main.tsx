@@ -73,6 +73,9 @@ import adminUserFormAction from './routes/dashboard/adminUserForm/adminUserForm.
 import emailPreferencesLoader from './routes/dashboard/emailPreferences/EmailPreferences.loader.tsx';
 import emailPreferencesAction from './routes/dashboard/emailPreferences/EmailPreferences.action.tsx';
 import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferences.route.tsx';
+import AccountInfo from './routes/accountInfo/accountInfo.route.tsx';
+import accountInfoAction from './routes/accountInfo/accountInfo.action.tsx';
+import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -228,6 +231,14 @@ const router = createBrowserRouter(
         action={EditInterestsAction}
         loader={EditInterestLoader}
       />
+      <Route
+              path={'accountInfo'} // '/account-info' (or whatever the path is)
+              element={<AccountInfo />} // This is the AccountInfo component to render
+              loader={accountInfoLoader} // Loader function to fetch user data
+              action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+            />
+  
+
     </Route>
   )
 );
