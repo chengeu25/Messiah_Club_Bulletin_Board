@@ -199,7 +199,7 @@ def run_scheduler():
     schedule.every().day.at("07:00").do(send_email_notifications)
 
     # Schedule weekly emails every Monday at 7 AM
-    schedule.every().friday.at("07:00").do(send_email_notifications)
+    schedule.every().monday.at("07:00").do(send_email_notifications)
 
     while True:
         schedule.run_pending()
