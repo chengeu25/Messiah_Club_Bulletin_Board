@@ -2,7 +2,7 @@ import Select, { GroupBase } from 'react-select';
 import selectStyles, { OptionType } from '../formElements/Select.styles';
 import { useEffect, useState } from 'react';
 import { UserType as User } from '../../types/databaseTypes';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 /**
  * Defines the properties for the UserDropdown component
@@ -36,6 +36,12 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
    * @type {Function}
    */
   const navigate = useNavigate();
+
+  /**
+   * Location hook from React Router for accessing current location
+   * @type {Object}
+   */
+  const location = useLocation();
 
   /**
    * State to manage dropdown options
@@ -176,11 +182,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
         value={selectedOption}
         name='user'
         styles={{
-          ...selectStyles,
+          ...selectStyles(location.pathname !== '/'),
           menu: (base) => ({
             ...base,
-            ...(selectStyles.menu !== undefined
-              ? (selectStyles.menu as () => object)
+            ...(selectStyles(location.pathname !== '/').menu !== undefined
+              ? (selectStyles(location.pathname !== '/').menu as () => object)
               : () => ({}))(),
             ...menuPosition,
             minWidth: '200px'

@@ -163,7 +163,7 @@ const Root = () => {
               setSelectedFilter={setSelectedFilter}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
-              selectStyles={selectStyles}
+              selectStyles={selectStyles(location.pathname !== '/')}
             />
           </div>
         ) : (
@@ -182,7 +182,7 @@ const Root = () => {
                   <div
                     className={`flex flex-row text-nowrap ${
                       location.pathname === '/'
-                        ? 'bg-blue-950 gap-6 px-10'
+                        ? 'bg-blue-950 gap-6 border-2 border-white rounded-xl'
                         : 'tag gap-2'
                     } rounded-xl p-2`}
                   >

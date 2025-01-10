@@ -12,32 +12,12 @@ export interface OptionType {
   label: string;
 }
 
-/**
- * Custom styling configuration for react-select components
- *
- * Provides a consistent, dark-themed styling for select dropdowns
- * with centered text
- *
- * @type {StylesConfig<OptionType, false, GroupBase<OptionType>>}
- * @description Defines custom styles for different parts of the select component
- *
- * @example
- * <Select
- *   styles={selectStyles}
- *   options={[
- *     { value: 'option1', label: 'Option 1' },
- *     { value: 'option2', label: 'Option 2' }
- *   ]}
- * />
- *
- * @remarks
- * - Provides hover and focus states for improved interactivity
- * - Ensures text is centered for a clean, uniform look
- */
-const selectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
+const selectStyles = (
+  useSchoolColors: boolean
+): StylesConfig<OptionType, false, GroupBase<OptionType>> => ({
   control: (base) => ({
     ...base,
-    'backgroundColor': 'var(--foreground-rgb)',
+    'backgroundColor': useSchoolColors ? 'var(--foreground-rgb)' : '#172554',
     'borderColor': 'white',
     'borderRadius': '10px',
     'borderWidth': '2px',
@@ -55,19 +35,25 @@ const selectStyles: StylesConfig<OptionType, false, GroupBase<OptionType>> = {
   }),
   menu: (base) => ({
     ...base,
-    backgroundColor: 'var(--foreground-rgb)',
+    backgroundColor: useSchoolColors ? 'var(--foreground-rgb)' : '#172554',
     color: 'white'
   }),
   option: (base, { isFocused, isSelected }) => ({
     ...base,
     backgroundColor: isFocused
-      ? 'var(--hover-rgb)'
+      ? useSchoolColors
+        ? 'var(--hover-rgb)'
+        : '#1e40af'
       : isSelected
-      ? 'var(--active-rgb)'
-      : 'var(--foreground-rgb)',
-    color: 'var(--foreground-text-rgb)',
+      ? useSchoolColors
+        ? 'var(--active-rgb)'
+        : '#1d4ed8'
+      : useSchoolColors
+      ? 'var(--foreground-rgb)'
+      : '#172554',
+    color: useSchoolColors ? 'var(--foreground-text-rgb)' : 'white',
     textAlign: 'center' // Center the option text
   })
-};
+});
 
 export default selectStyles;
