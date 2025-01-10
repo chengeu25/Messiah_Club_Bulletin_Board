@@ -179,6 +179,7 @@ const Club = () => {
                   endTime: new Date(event.endTime)
                 }}
                 small={true}
+                showDate={true}
                 handleDetailsClick={() =>
                   submit(
                     { id: event.id, action: 'details' },

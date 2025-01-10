@@ -10,12 +10,14 @@ import { CgDetailsMore } from 'react-icons/cg';
  * @interface EventProps
  * @property {EventType} event - The event details to be displayed
  * @property {boolean} [small=false] - Flag to render the event in a compact view
+ * @property {boolean} [showDate=false] - Flag to show date on small view
  * @property {() => void} handleDetailsClick - Callback for viewing event details
  * @property {(type: string) => void} handleRSVPClick - Callback for RSVP actions
  */
 export interface EventProps {
   event: EventType;
   small?: boolean;
+  showDate?: boolean;
   handleDetailsClick: () => void;
   handleRSVPClick: (type: string) => void;
 }
@@ -31,6 +33,7 @@ export interface EventProps {
  * <Event
  *   event={eventObject}
  *   small={false}
+ *   showDate={false}
  *   handleDetailsClick={() => showEventDetails()}
  *   handleRSVPClick={(type) => updateRSVP(type)}
  * />
@@ -38,6 +41,7 @@ export interface EventProps {
 const Event = ({
   event,
   small = false,
+  showDate = false,
   handleDetailsClick,
   handleRSVPClick
 }: EventProps) => {
@@ -62,6 +66,7 @@ const Event = ({
           <h1 className='text-xl font-bold'>{title}</h1>
           <div className='flex flex-col sm:flex-row gap-2'>
             <div>
+              {showDate && <p>{startTime.toLocaleDateString()}</p>}
               <p className='text-nowrap'>
                 {startTime.toLocaleTimeString([], {
                   hour: 'numeric',
