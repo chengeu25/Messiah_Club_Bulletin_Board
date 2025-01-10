@@ -12,6 +12,21 @@ from config import Config
 
 
 def filter_events(user, events):
+    """
+    Filter events based on user's email event type preferences.
+
+    Args:
+        user (dict): User information containing email preferences and tags
+        events (list): List of events to filter
+
+    Returns:
+        list: Filtered list of events matching user's preferences
+
+    Filtering logic:
+    - 'Suggested': Events with shared tags and not blocked
+    - 'Hosted by Subscribed Clubs': Events from subscribed clubs
+    - 'Attending': Events the user has RSVP'd to
+    """
     if user["email_event_type"] == "Suggested":
         return list(
             filter(
@@ -35,8 +50,20 @@ def filter_events(user, events):
             )
         )
 
+    # If no matching event type, return all events
+    return events
+
 
 def convert_times(event):
+    """
+    Convert event start and end times to a human-readable format.
+
+    Args:
+        event (dict): Event dictionary containing start and end times
+
+    Returns:
+        dict: Event dictionary with converted start and end times
+    """
     start = datetime.fromisoformat(event["startTime"])
     end = datetime.fromisoformat(event["endTime"])
     event.update(
@@ -45,9 +72,19 @@ def convert_times(event):
             "endTime": end.strftime("%I:%M %p"),
         }
     )
+    return event
 
 
 def sort_events(events):
+    """
+    Sort events by date.
+
+    Args:
+        events (list): List of event dictionaries
+
+    Returns:
+        list: List of tuples containing the date and corresponding events
+    """
     # Dictionary to hold events grouped by date
     events_by_date = defaultdict(list)
 
@@ -66,12 +103,21 @@ def sort_events(events):
 
 def send_email_notifications():
     """
-    Send email notifications to users based on their preferences.
+    Send personalized email notifications to users about upcoming events.
 
     Workflow:
-    1. Fetch active, non-banned users with email preferences
-    2. Fetch relevant events based on user preferences and school
-    3. Compose and send personalized emails
+    1. Create a Flask application context
+    2. Fetch active, non-banned users with email preferences
+    3. Retrieve user-specific tags
+    4. Fetch events for each user based on their preferences
+    5. Filter and compose personalized email notifications
+    6. Send emails to users with relevant events
+
+    The function handles both daily and weekly email frequencies,
+    filtering events based on user's preferences such as:
+    - Suggested events with shared tags
+    - Events from subscribed clubs
+    - Events the user is attending
     """
     # Create an application context without importing main.py
     app = Flask(__name__)
@@ -84,13 +130,13 @@ def send_email_notifications():
                 # Fetch active, non-banned users with email preferences
                 cursor.execute(
                     """SELECT u.email, u.email_frequency, u.email_event_type, u.school_id, s.school_name 
-                            FROM users u
-                            INNER JOIN school s 
-                                ON s.school_id = u.school_id
-                            WHERE 
-                                email_frequency != 'Never' AND
-                                is_active = 1 AND 
-                                is_banned = 0
+                        FROM users u
+                        INNER JOIN school s 
+                            ON s.school_id = u.school_id
+                        WHERE 
+                            email_frequency != 'Never' AND
+                            is_active = 1 AND 
+                            is_banned = 0
                 """
                 )
                 initial_users = list(map(lambda x: list(x), cursor.fetchall()))
@@ -165,13 +211,19 @@ def send_email_notifications():
 
 def compose_event_email(events):
     """
-    Compose a formatted email body from events.
+    Compose a formatted email body from a list of events.
 
     Args:
-        events (list): List of event dictionaries
+        events (list): List of event dictionaries containing event details
 
     Returns:
-        str: Formatted email body
+        str: Formatted email body with event information
+
+    The email body includes:
+    - Event title
+    - Event start time
+    - Event hosts
+    - Event description
     """
     email_body = "<h1>Upcoming Events:</h1>"
     for day in sort_events(events):
@@ -193,7 +245,14 @@ def compose_event_email(events):
 
 def run_scheduler():
     """
-    Run the email notification scheduler
+    Run the email notification scheduler.
+
+    This function sets up scheduled tasks for sending email notifications:
+    - Daily emails at 7 AM
+    - Weekly emails every Monday at 7 AM
+
+    The scheduler runs continuously, checking and executing
+    pending scheduled tasks.
     """
     # Schedule daily emails at 7 AM
     schedule.every().day.at("07:00").do(send_email_notifications)
@@ -208,7 +267,14 @@ def run_scheduler():
 
 def start_email_scheduler():
     """
-    Start the email scheduler in a separate thread
+    Start the email scheduler in a separate thread.
+
+    Creates and starts a daemon thread that runs the email notification
+    scheduler. The thread will continue running in the background,
+    executing scheduled email notification tasks.
+
+    Returns:
+        threading.Thread: The scheduler thread
     """
     scheduler_thread = threading.Thread(target=run_scheduler)
     scheduler_thread.daemon = (
