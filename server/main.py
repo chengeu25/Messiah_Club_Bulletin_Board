@@ -9,6 +9,8 @@ from routes.rsvp import rsvp_bp
 from routes.subscriptions import subscriptions_bp
 from routes.admintools import admintools_bp
 from routes.school import school_bp
+from routes.emails import emails_bp
+from jobs.email_notification_job import start_email_scheduler
 
 
 def create_app(config_class=Config):
@@ -59,6 +61,10 @@ def create_app(config_class=Config):
     app.register_blueprint(subscriptions_bp, url_prefix="/api/subscriptions")
     app.register_blueprint(admintools_bp, url_prefix="/api/admintools")
     app.register_blueprint(school_bp, url_prefix="/api/school")
+    app.register_blueprint(emails_bp, url_prefix="/api/emails")
+
+    # Start email scheduler
+    start_email_scheduler()
 
     return app
 

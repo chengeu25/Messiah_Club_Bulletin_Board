@@ -18,7 +18,6 @@ import UserDropdown from '../components/specialDropdowns/UserDropdown.component'
 import { SchoolType, UserType as User, UserType } from '../types/databaseTypes';
 import selectStyles from '../components/formElements/Select.styles';
 import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
-import logo from '../../assets/logo.png';
 import setCSSVars from '../helper/setCSSVars';
 import { useSchool } from '../contexts/SchoolContext';
 import { DynamicLogo } from '../components/ui/DynamicLogo.component';

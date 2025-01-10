@@ -213,14 +213,14 @@ const router = createBrowserRouter(
             action={clubFormAction}
             loader={clubFormLoader}
           />
-
-          <Route
-            path='emailPreferences'
-            loader={emailPreferencesLoader}
-            action={emailPreferencesAction}
-            element={<EmailPreferences />}
-          />
         </Route>
+
+        <Route
+          path='emailPreferences'
+          loader={emailPreferencesLoader}
+          action={emailPreferencesAction}
+          element={<EmailPreferences />}
+        />
       </Route>
       <Route
         path='editinterest'

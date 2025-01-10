@@ -1,9 +1,10 @@
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 from config import Config
 
 
-def send_email(to_email, subject, body):
+def send_email(to_email, subject, body, html=False):
     """
     Send an email using the configured Gmail SMTP server.
 
@@ -32,10 +33,12 @@ def send_email(to_email, subject, body):
     if sender_password is None or sender_email is None:
         return False
 
-    msg = MIMEText(body)
+    msg = MIMEMultipart()
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = to_email
+
+    msg.attach(MIMEText(body, "html" if html else "plain"))
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
