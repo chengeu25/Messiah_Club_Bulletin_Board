@@ -12,6 +12,19 @@ export interface OptionType {
   label: string;
 }
 
+/**
+ * Custom styling configuration for the select component
+ *
+ * @function selectStyles
+ * @param {boolean} useSchoolColors - Determines whether to use school color palette
+ * @returns {StylesConfig<OptionType, false, GroupBase<OptionType>>} - Custom styles for the select component
+ *
+ * @description Defines styling for the select component
+ *
+ * @remarks
+ * - Provides consistent styling across different interaction states
+ * - Centers text for improved readability
+ */
 const selectStyles = (
   useSchoolColors: boolean
 ): StylesConfig<OptionType, false, GroupBase<OptionType>> => ({
