@@ -1,4 +1,5 @@
 import generateStyleClasses from './styleGenerator';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Represents the properties for the Select component
@@ -48,27 +49,35 @@ const Select = ({
   required,
   className,
   value
-}: SelectProps) => (
-  <label className='flex flex-col text-nowrap gap-2'>
-    {label && (
-      <span>
-        {label}
-        {required && <span className='text-red-500'>*</span>}
-      </span>
-    )}
-    <select
-      className={`${generateStyleClasses(filled)} ${className} bg-transparent`}
-      onChange={onChange}
-      name={name}
-      value={value}
-    >
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  </label>
-);
+}: SelectProps) => {
+  const location = useLocation();
+
+  return (
+    <label className='flex flex-col text-nowrap gap-2'>
+      {label && (
+        <span>
+          {label}
+          {required && <span className='text-red-500'>*</span>}
+        </span>
+      )}
+      <select
+        className={`${generateStyleClasses(
+          filled,
+          false,
+          location.pathname !== '/'
+        )} ${className} bg-transparent`}
+        onChange={onChange}
+        name={name}
+        value={value}
+      >
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+};
 
 export default Select;

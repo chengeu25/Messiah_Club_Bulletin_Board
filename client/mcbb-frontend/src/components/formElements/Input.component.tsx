@@ -1,5 +1,6 @@
 import generateStyleClasses from './styleGenerator';
 import { FormEventHandler } from 'react';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Represents the properties for the Input component
@@ -80,52 +81,64 @@ const Input = ({
   accept,
   multiple = false,
   labelOnSameLine = false
-}: InputProps) => (
-  <label
-    className={`flex ${
-      type === 'checkbox' || labelOnSameLine
-        ? 'flex-row items-center'
-        : 'flex-col'
-    } gap-2 text-nowrap flex-grow`}
-  >
-    {label && (
-      <span>
-        {label}
-        {required && <span className='text-red-500'>*</span>}
-      </span>
-    )}
-    {multiline ? (
-      <textarea
-        name={name}
-        placeholder={placeholder}
-        className={`${generateStyleClasses(filled ?? true).replace(
-          'w-full',
-          type === 'checkbox' ? 'max-w-10' : 'w-full'
-        )} p-2 rounded-lg flex-grow`}
-        defaultValue={defaultValue}
-        onInput={onInput}
-        onChange={onChange}
-        value={value}
-      ></textarea>
-    ) : (
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        className={`${generateStyleClasses(filled ?? true).replace(
-          'w-full',
-          type === 'checkbox' ? 'max-w-10' : 'w-full'
-        )} p-2 rounded-lg flex-grow ${!filled && 'text-black'}`}
-        onInput={onInput}
-        onChange={onChange}
-        value={value}
-        checked={checked}
-        defaultValue={defaultValue}
-        accept={accept}
-        multiple={multiple}
-      />
-    )}
-  </label>
-);
+}: InputProps) => {
+  const location = useLocation();
+
+  return (
+    <label
+      className={`flex ${
+        type === 'checkbox' || labelOnSameLine
+          ? 'flex-row items-center'
+          : 'flex-col'
+      } gap-2 text-nowrap flex-grow`}
+    >
+      {label && (
+        <span>
+          {label}
+          {required && <span className='text-red-500'>*</span>}
+        </span>
+      )}
+      {multiline ? (
+        <textarea
+          name={name}
+          placeholder={placeholder}
+          className={`${generateStyleClasses(
+            filled ?? true,
+            false,
+            location.pathname !== '/'
+          ).replace(
+            'w-full',
+            type === 'checkbox' ? 'max-w-10' : 'w-full'
+          )} p-2 rounded-lg flex-grow`}
+          defaultValue={defaultValue}
+          onInput={onInput}
+          onChange={onChange}
+          value={value}
+        ></textarea>
+      ) : (
+        <input
+          type={type}
+          name={name}
+          placeholder={placeholder}
+          className={`${generateStyleClasses(
+            filled ?? true,
+            false,
+            location.pathname !== '/'
+          ).replace(
+            'w-full',
+            type === 'checkbox' ? 'max-w-10' : 'w-full'
+          )} p-2 rounded-lg flex-grow ${!filled && 'text-black'}`}
+          onInput={onInput}
+          onChange={onChange}
+          value={value}
+          checked={checked}
+          defaultValue={defaultValue}
+          accept={accept}
+          multiple={multiple}
+        />
+      )}
+    </label>
+  );
+};
 
 export default Input;

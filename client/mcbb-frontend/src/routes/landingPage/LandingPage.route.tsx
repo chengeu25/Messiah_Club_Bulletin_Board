@@ -37,7 +37,7 @@ const LandingPage = () => {
   const { currentSchool } = useSchool();
 
   return (
-    <div className='bg-blue-900'>
+    <div className='bg-blue-900 relative overflow-y-auto w-full h-full'>
       <div className='flex flex-col gap-4 w-full p-4 sm:px-[15%]'>
         {/* Hero section with headline and call-to-action */}
         <div

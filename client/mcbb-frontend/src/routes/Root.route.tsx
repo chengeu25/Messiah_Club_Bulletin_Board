@@ -140,7 +140,11 @@ const Root = () => {
   return (
     <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
       {/* Top Navigation Bar */}
-      <nav className='w-full h-20 sm:min-h-[10%] foreground-filled text-white p-3 shadow-md relative flex justify-between items-center gap-2'>
+      <nav
+        className={`w-full h-20 sm:min-h-[10%] ${
+          location.pathname === '/' ? 'bg-blue-950' : 'foreground-filled'
+        } text-white p-3 shadow-md relative flex justify-between items-center gap-2`}
+      >
         {/* Logo */}
         <span className='text-xl h-full'>
           <Link to='/' className='h-full'>
@@ -175,10 +179,16 @@ const Root = () => {
                 {user ? (
                   <UserDropdown user={user as User} />
                 ) : (
-                  <div className='flex flex-row gap-2 text-nowrap tag rounded-xl p-2'>
+                  <div
+                    className={`flex flex-row text-nowrap ${
+                      location.pathname === '/'
+                        ? 'bg-blue-950 gap-6 px-10'
+                        : 'tag gap-2'
+                    } rounded-xl p-2`}
+                  >
                     <Button
                       text='Log In'
-                      filled={false}
+                      filled={location.pathname === '/'}
                       onClick={() => {
                         if (
                           currentSchool !== null &&
@@ -192,7 +202,7 @@ const Root = () => {
                     />
                     <Button
                       text='Sign Up'
-                      filled={false}
+                      filled={location.pathname === '/'}
                       onClick={() => {
                         if (
                           currentSchool !== null &&

@@ -1,4 +1,5 @@
 import generateStyleClasses from './styleGenerator';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Represents the properties for the Button component
@@ -51,19 +52,27 @@ const Button = ({
   className,
   disabled = false,
   grow = true
-}: ButtonProps) => (
-  <button
-    disabled={disabled}
-    className={`${generateStyleClasses(filled, disabled)
-      .replace(!grow ? 'w-full' : '', '')
-      .replace(!grow ? 'flex-grow' : '', '')} ${className}`}
-    onClick={onClick}
-    type={type}
-    name={name}
-  >
-    {text}
-    {icon}
-  </button>
-);
+}: ButtonProps) => {
+  const location = useLocation();
+
+  return (
+    <button
+      disabled={disabled}
+      className={`${generateStyleClasses(
+        filled,
+        disabled,
+        !(location.pathname === '/')
+      )
+        .replace(!grow ? 'w-full' : '', '')
+        .replace(!grow ? 'flex-grow' : '', '')} ${className}`}
+      onClick={onClick}
+      type={type}
+      name={name}
+    >
+      {text}
+      {icon}
+    </button>
+  );
+};
 
 export default Button;
