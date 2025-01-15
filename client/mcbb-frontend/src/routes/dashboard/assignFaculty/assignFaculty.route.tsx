@@ -324,7 +324,7 @@ const AssignFaculty = () => {
                           assignDelete(item); // Handle the toggle
                         }}
                         aria-label={`Set ${item.name} as active`}
-                        disabled={!canDelete}
+                        disabled={!item.can_delete_faculty}
                       />
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -336,15 +336,15 @@ const AssignFaculty = () => {
                         aria-label={`Remove ${item.name} from faculty`}
                         style={{
                           padding: '5px 10px',
-                          backgroundColor: canDelete
+                          backgroundColor: item.can_delete_faculty
                             ? 'var(--foreground-rgb)'
                             : 'var(--foreground-disabled-rgb)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '5px',
-                          cursor: canDelete ? 'pointer' : 'not-allowed'
+                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
                         }}
-                        disabled={!canDelete}
+                        disabled={!item.can_delete_faculty}
                       >
                         Remove
                       </button>
