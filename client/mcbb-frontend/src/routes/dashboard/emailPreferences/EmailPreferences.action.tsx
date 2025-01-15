@@ -1,4 +1,4 @@
-import { ActionFunction } from 'react-router-dom';
+import { ActionFunction, redirect } from 'react-router-dom';
 
 /**
  * Action handler for updating user email preferences
@@ -46,14 +46,18 @@ const emailPreferencesAction: ActionFunction = async ({ request }) => {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      return { error: errorData.error || 'Failed to update email preferences' };
+      return redirect(
+        '/dashboard/emailPreferences?error=Failed%20to%20update%20email%20preferences'
+      );
     }
 
-    return { message: 'Email preferences updated successfully' };
+    return redirect(
+      '/dashboard/emailPreferences?message=Email%20preferences%20updated%20successfully'
+    );
   } catch (error) {
-    console.error('Error updating email preferences:', error);
-    return { error: 'Network error. Please try again.' };
+    return redirect(
+      '/dashboard/emailPreferences?error=Failed%20to%20update%20email%20preferences'
+    );
   }
 };
 

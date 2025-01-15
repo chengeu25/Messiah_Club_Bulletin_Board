@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLoaderData, useSubmit } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from '../../../components/formElements/Select.component';
@@ -37,8 +37,13 @@ const EmailPreferences = () => {
     email_event_type: initialEventType
   } = useLoaderData() as EmailPreferencesData;
 
+  const [params] = useSearchParams();
+
   const [emailFrequency, setEmailFrequency] = useState(initialFrequency);
   const [emailEventType, setEmailEventType] = useState(initialEventType);
+
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   /**
    * Handles form submission by creating FormData and submitting
@@ -53,9 +58,16 @@ const EmailPreferences = () => {
     submit(formData, { method: 'post' });
   };
 
+  useEffect(() => {
+    setError(params.get('error'));
+    setMessage(params.get('message'));
+  }, [params]);
+
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Email Preferences</h1>
+      {error && <p className='text-red-500'>{error}</p>}
+      {message && <p className='text-green-500'>{message}</p>}
       <Select
         options={['Weekly', 'Daily', 'Never']}
         label='Receive Updates About Events:'
