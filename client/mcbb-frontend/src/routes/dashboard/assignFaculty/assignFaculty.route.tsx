@@ -324,6 +324,9 @@ const AssignFaculty = () => {
                           assignDelete(item); // Handle the toggle
                         }}
                         aria-label={`Set ${item.name} as active`}
+                        style={{
+                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
+                        }}
                         disabled={!item.can_delete_faculty}
                       />
                     </td>
