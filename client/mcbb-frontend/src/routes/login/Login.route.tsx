@@ -134,6 +134,9 @@ const Login = () => {
       } else if (action === 'forgot') {
         formData.append('action', action);
         submit(formData, { method: 'post' });
+      } else if (action === 'switchSchool') {
+        formData.append('action', action);
+        submit(formData, { method: 'post' });
       } else {
         if (formData.get('email') === '') {
           setError('Please enter an email address.');
@@ -235,6 +238,13 @@ const Login = () => {
         text='Forgot Password?'
         type='submit'
         name='forgot'
+        filled={false}
+      />
+
+      <Button
+        text='Switch School'
+        type='submit'
+        name='switchSchool'
         filled={false}
       />
     </ResponsiveForm>

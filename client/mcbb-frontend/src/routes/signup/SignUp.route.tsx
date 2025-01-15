@@ -114,6 +114,12 @@ const SignUp = () => {
       return;
     }
 
+    if (action === 'switchSchool') {
+      formData.append('action', action);
+      submit(formData, { method: 'post' });
+      return;
+    }
+
     // Validate required fields and CAPTCHA
     if (
       password === '' ||
@@ -288,6 +294,13 @@ const SignUp = () => {
           disabled={!isPasswordStrong || password !== confirmPassword}
         />
       </div>
+
+      <Button
+        text='Switch School'
+        type='submit'
+        name='switchSchool'
+        filled={false}
+      />
 
       {/* Link to Login */}
       <div className='mt-4 text-center'>

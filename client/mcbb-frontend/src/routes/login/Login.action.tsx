@@ -72,6 +72,8 @@ const loginAction: ActionFunction = async ({ request }) => {
     ? redirect('/selectSchool?route=signup')
     : action === 'forgot'
     ? redirect('/forgot')
+    : action === 'switchSchool'
+    ? redirect('/selectSchool?route=login')
     : null;
 };
 
