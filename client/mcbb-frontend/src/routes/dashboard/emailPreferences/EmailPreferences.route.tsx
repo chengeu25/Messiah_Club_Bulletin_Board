@@ -39,8 +39,12 @@ const EmailPreferences = () => {
 
   const [params] = useSearchParams();
 
-  const [emailFrequency, setEmailFrequency] = useState(initialFrequency);
-  const [emailEventType, setEmailEventType] = useState(initialEventType);
+  const [emailFrequency, setEmailFrequency] = useState(
+    initialFrequency ?? 'Weekly'
+  );
+  const [emailEventType, setEmailEventType] = useState(
+    initialEventType ?? 'Suggested'
+  );
 
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
