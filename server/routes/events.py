@@ -67,12 +67,205 @@ def get_club_id(cur, club_name):
     - Returns the first column (club_id) if found
     - Raises an exception if no matching club exists
     """
-    cur.execute("SELECT club_id FROM club WHERE club_name = %s", (club_name,))
+    cur.execute(
+        "SELECT club_id FROM club WHERE club_name = %s AND is_active = 1 AND school_id = %s",
+        (club_name, session.get("school")),
+    )
     result = cur.fetchone()
     if result:
         return result[0]
     else:
         raise ValueError("Club not found")
+
+
+def get_events_by_date(cur, start_date, end_date, school_id, user_id):
+    """
+    Retrieve events within a specified date range for a specific school.
+
+    This function fetches all active and approved events occurring between
+    the given start and end dates for a particular school.
+
+    Args:
+        cur (mysql.connection.cursor): Active database cursor for executing queries
+        start_date (str): ISO 8601 formatted start date to retrieve events from
+        end_date (str): ISO 8601 formatted end date to retrieve events until
+        school_id (int): Unique identifier of the school to filter events
+        user_id (int): Unique identifier of the user
+
+    Returns:
+        dict: A dictionary containing:
+            - On successful retrieval:
+                {
+                    'events': [
+                        {
+                            'id': int,
+                            'startTime': str,
+                            'endTime': str,
+                            'location': str,
+                            'description': str,
+                            'cost': float,
+                            'title': str,
+                            'host': [{'name': str, 'id': int}],
+                            'rsvp': str or None,
+                            'tags': [str],
+                            'subscribed': bool,
+                        }
+                    ]
+                }
+            - On no events found: {'error': 'No events found'}
+
+    Behavior:
+    - Converts input dates to 'YYYY-MM-DD' format
+    - Filters events that are:
+        * Active (is_active = 1)
+        * Approved (is_approved = 1)
+        * Within the specified date range
+        * Belonging to the specified school
+    - Retrieves event details and their hosting clubs
+    - Supports empty result sets
+    """
+    try:
+        start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
+        end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+        cur.execute(
+            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
+                WHERE start_time BETWEEN %s AND %s
+                    AND is_active = 1
+                    AND is_approved = 1
+                    AND school_id = %s""",
+            (start_date, end_date, school_id),
+        )
+        result = cur.fetchall()
+        if result is None:
+            return {"error": "No events found", "status": 404}
+        cur.execute(
+            """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
+                    INNER JOIN club c ON c.club_id = eh.club_id
+                    WHERE c.is_active = 1
+                        AND c.school_id = %s""",
+            (school_id,),
+        )
+        result_2 = cur.fetchall()
+        result_2 = list(
+            map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
+        )
+        cur.execute(
+            """SELECT r.event_id, r.is_yes FROM rsvp r
+                    INNER JOIN event e 
+                        ON e.event_id = r.event_id
+                    WHERE r.user_id = %s
+                        AND e.is_active = 1
+                        AND e.is_approved = 1
+                        AND r.is_active = 1
+                        AND e.school_id = %s""",
+            (user_id, school_id),
+        )
+        result_3 = cur.fetchall()
+        result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
+        cur.execute(
+            """SELECT et.event_id, t.tag_name FROM tag t
+                    INNER JOIN event_tags et
+                        ON t.tag_id = et.tag_id"""
+        )
+        result_4 = cur.fetchall()
+        result_4 = list(
+            map(
+                lambda x: {"event": x[0], "tag": x[1]},
+                result_4,
+            )
+        )
+        cur.execute(
+            """SELECT eh.event_id, ( 
+                SELECT COUNT(*) FROM user_subscription us 
+                    INNER JOIN event_host eh2 
+                        ON us.club_id = eh2.club_id
+                    WHERE us.email = %s
+                        AND eh2.event_id = eh.event_id
+                        AND us.is_active = 1
+                        AND us.subscribed_or_blocked = 1
+                ) > 0 AS is_subscribed 
+                FROM event_host eh
+                INNER JOIN event e 
+                    ON e.event_id = eh.event_id
+                WHERE e.is_active = 1
+                    AND e.is_approved = 1
+                    AND e.school_id = %s""",
+            (user_id, school_id),
+        )
+        result_5 = cur.fetchall()
+        result_5 = list(
+            map(
+                lambda x: {"event": x[0], "subscribed": x[1]},
+                result_5,
+            )
+        )
+        final_result = list(
+            map(
+                lambda x: {
+                    "id": x[0],
+                    "startTime": (
+                        x[1].replace(tzinfo=pytz.UTC).isoformat()
+                        if x[1].tzinfo is None
+                        else x[1].astimezone(pytz.UTC).isoformat()
+                    ),
+                    "endTime": (
+                        x[2].replace(tzinfo=pytz.UTC).isoformat()
+                        if x[2].tzinfo is None
+                        else x[2].astimezone(pytz.UTC).isoformat()
+                    ),
+                    "location": x[3],
+                    "description": x[4],
+                    "cost": x[5],
+                    "title": x[6],
+                    "host": list(
+                        map(
+                            lambda y: {"name": y["club"], "id": y["club_id"]},
+                            list(
+                                filter(
+                                    lambda y: y["event"] == x[0],
+                                    result_2,
+                                )
+                            ),
+                        )
+                    ),
+                    "rsvp": next(
+                        (
+                            ("block" if item["type"] == 0 else "rsvp")
+                            for item in result_3
+                            if item["event"] == x[0]
+                        ),
+                        None,
+                    ),
+                    "tags": list(
+                        map(
+                            lambda y: y["tag"],
+                            list(
+                                filter(
+                                    lambda y: y["event"] == x[0],
+                                    result_4,
+                                )
+                            ),
+                        )
+                    ),
+                    "subscribed": next(
+                        (
+                            item["subscribed"]
+                            for item in result_5
+                            if item["event"] == x[0]
+                        ),
+                        False,
+                    ),
+                },
+                result,
+            )
+        )
+        cur.close()
+        return {"events": final_result}
+    except ValueError:
+        return {"error": "Invalid date format", "status": 400}
+    except Exception as e:
+        print(e)
+        return {"error": f"Failed to get events", "status": 500}
 
 
 @events_bp.route("/event/<event_id>", methods=["GET"])
@@ -137,12 +330,16 @@ def get_event(event_id):
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
 
+    school_id = session.get("school")
+    user_id = session.get("user_id")
+
     cur.execute(
         """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
             WHERE event_id = %s
                 AND is_active = 1
-                AND is_approved = 1""",
-        (event_id,),
+                AND is_approved = 1
+                AND school_id = %s""",
+        (event_id, school_id),
     )
     result = cur.fetchone()
     if result is None:
@@ -153,8 +350,9 @@ def get_event(event_id):
                 INNER JOIN club c 
                     ON c.club_id = eh.club_id
                 WHERE eh.event_id = %s
-                    AND c.is_active = 1""",
-        (event_id,),
+                    AND c.is_active = 1
+                    AND c.school_id = %s""",
+        (event_id, school_id),
     )
     result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
 
@@ -164,7 +362,7 @@ def get_event(event_id):
                 WHERE event_id = %s
                     AND user_id = %s
                     AND is_active = 1""",
-        (event_id, session["user_id"]),
+        (event_id, user_id),
     )
     result_3 = cur.fetchone()
     if result_3 is not None:
@@ -266,6 +464,9 @@ def get_club_events(club_id):
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
 
+    school_id = session.get("school")
+    user_id = session.get("user_id")
+
     # Get start date from query parameters
     start_date = request.args.get("start_date", datetime.now(pytz.utc).isoformat())
 
@@ -278,8 +479,9 @@ def get_club_events(club_id):
                 AND e.is_active = 1
                 AND e.is_approved = 1
                 AND e.start_time >= %s
+                AND e.school_id = %s
             LIMIT 10""",
-        (club_id, start_date),
+        (club_id, start_date, school_id),
     )
     result = cur.fetchall()
     cur.execute(
@@ -292,8 +494,9 @@ def get_club_events(club_id):
                     AND e.is_active = 1
                     AND e.is_approved = 1
                     AND r.is_active = 1
+                    AND e.school_id = %s
                     AND eh.club_id = %s""",
-        (session["user_id"], club_id),
+        (user_id, school_id, club_id),
     )
     result_2 = cur.fetchall()
     result_2 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_2))
@@ -367,6 +570,8 @@ def get_events():
     """
     # Check if user is authenticated
     current_user = get_user_session_info()
+    school_id = session.get("school")
+
     if not current_user["user_id"]:
         return jsonify({"error": "Unauthorized"}), 403
 
@@ -375,144 +580,17 @@ def get_events():
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
 
-    try:
-        start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
-        end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
-        if not mysql.connection:
-            return jsonify({"error": "Database connection error"}), 500
-        cur = mysql.connection.cursor()
-        cur.execute(
-            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-                WHERE start_time BETWEEN %s AND %s
-                    AND is_active = 1
-                    AND is_approved = 1""",
-            (start_date, end_date),
-        )
-        result = cur.fetchall()
-        cur.execute(
-            """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
-                    INNER JOIN club c ON c.club_id = eh.club_id
-                    WHERE c.is_active = 1""",
-        )
-        result_2 = cur.fetchall()
-        result_2 = list(
-            map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
-        )
-        cur.execute(
-            """SELECT r.event_id, r.is_yes FROM rsvp r
-                    INNER JOIN event e 
-                        ON e.event_id = r.event_id
-                    WHERE r.user_id = %s
-                        AND e.is_active = 1
-                        AND e.is_approved = 1
-                        AND r.is_active = 1""",
-            (session["user_id"],),
-        )
-        result_3 = cur.fetchall()
-        result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
-        cur.execute(
-            """SELECT et.event_id, t.tag_name FROM tag t
-                    INNER JOIN event_tags et
-                        ON t.tag_id = et.tag_id"""
-        )
-        result_4 = cur.fetchall()
-        result_4 = list(
-            map(
-                lambda x: {"event": x[0], "tag": x[1]},
-                result_4,
-            )
-        )
-        cur.execute(
-            """SELECT eh.event_id, ( 
-                SELECT COUNT(*) FROM user_subscription us 
-                    INNER JOIN event_host eh2 
-                        ON us.club_id = eh2.club_id
-                    WHERE us.email = %s
-                        AND eh2.event_id = eh.event_id
-                        AND us.is_active = 1
-                        AND us.subscribed_or_blocked = 1
-                ) > 0 AS is_subscribed 
-                FROM event_host eh
-                INNER JOIN event e 
-                    ON e.event_id = eh.event_id
-                WHERE e.is_active = 1
-                AND e.is_approved = 1""",
-            (session["user_id"],),
-        )
-        result_5 = cur.fetchall()
-        result_5 = list(
-            map(
-                lambda x: {"event": x[0], "subscribed": x[1]},
-                result_5,
-            )
-        )
-        final_result = list(
-            map(
-                lambda x: {
-                    "id": x[0],
-                    "startTime": (
-                        x[1].replace(tzinfo=pytz.UTC).isoformat()
-                        if x[1].tzinfo is None
-                        else x[1].astimezone(pytz.UTC).isoformat()
-                    ),
-                    "endTime": (
-                        x[2].replace(tzinfo=pytz.UTC).isoformat()
-                        if x[2].tzinfo is None
-                        else x[2].astimezone(pytz.UTC).isoformat()
-                    ),
-                    "location": x[3],
-                    "description": x[4],
-                    "cost": x[5],
-                    "title": x[6],
-                    "host": list(
-                        map(
-                            lambda y: {"name": y["club"], "id": y["club_id"]},
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_2,
-                                )
-                            ),
-                        )
-                    ),
-                    "rsvp": next(
-                        (
-                            ("block" if item["type"] == 0 else "rsvp")
-                            for item in result_3
-                            if item["event"] == x[0]
-                        ),
-                        None,
-                    ),
-                    "tags": list(
-                        map(
-                            lambda y: y["tag"],
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_4,
-                                )
-                            ),
-                        )
-                    ),
-                    "subscribed": next(
-                        (
-                            item["subscribed"]
-                            for item in result_5
-                            if item["event"] == x[0]
-                        ),
-                        False,
-                    ),
-                },
-                result,
-            )
-        )
-        cur.close()
-        return jsonify({"events": final_result}), 200
-    except ValueError:
-        return jsonify({"error": "Invalid date format"}), 400
-    except Exception as e:
-        print(e)
-        return jsonify({"error": f"Failed to get events"}), 500
+    if not mysql.connection:
+        return jsonify({"error": "Database connection error"}), 500
+    cur = mysql.connection.cursor()
+
+    result = get_events_by_date(
+        cur, start_date, end_date, school_id, current_user["user_id"]
+    )
+    cur.close()
+    if "error" in result:
+        return jsonify(result["error"]), result.get("status", 500)
+    return jsonify(result), 200
 
 
 @events_bp.route("/new-event", methods=["POST"])
@@ -572,6 +650,8 @@ def create_event():
     """
     # Check if the user is logged in
     user_id = session.get("user_id")
+    school_id = session.get("school")
+
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
@@ -656,7 +736,7 @@ def create_event():
                 location,
                 description,
                 event_cost,
-                "1",
+                school_id,
             ),
         )
         event_id = cur.lastrowid  # Get the ID of the newly created event

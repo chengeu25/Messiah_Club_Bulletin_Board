@@ -113,13 +113,7 @@ const Clubs = () => {
     <div className='w-full flex flex-col gap-4 flex-grow overflow-y-scroll p-4 md:px-[15%] items-center'>
       {data.user.isFaculty && (
         <Form onSubmit={handleSubmit}>
-          <Button
-            color='blue'
-            text='Create New Club'
-            filled
-            name='create'
-            type='submit'
-          />
+          <Button text='Create New Club' filled name='create' type='submit' />
         </Form>
       )}
       {data.clubs

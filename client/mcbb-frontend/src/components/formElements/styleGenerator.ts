@@ -1,20 +1,12 @@
 /**
  * Generates dynamic Tailwind CSS classes for form elements based on color, fill state, and disabled status
- * 
+ *
  * @function generateStyleClasses
- * @param {string} color - The base color for the style (e.g., 'blue', 'red', 'green')
  * @param {boolean} filled - Determines whether the element should have a filled or outlined style
  * @param {boolean} [disabled] - Optional flag to apply disabled state styling
+ * @param {boolean} [useSchoolColor] - Optional flag to use school color palette, true by default
  * @returns {string} A string of Tailwind CSS classes for styling the form element
- * 
- * @example
- * // Filled blue button
- * const blueFilledClasses = generateStyleClasses('blue', true);
- * 
- * @example
- * // Outlined red button in disabled state
- * const redOutlinedDisabledClasses = generateStyleClasses('red', false, true);
- * 
+ *
  * @remarks
  * - Uses Tailwind's color scale for consistent styling
  * - Provides hover and active state variations
@@ -22,17 +14,21 @@
  * - Supports a wide range of color options
  */
 const generateStyleClasses = (
-  color: string,
   filled: boolean,
-  disabled?: boolean
+  disabled: boolean = false,
+  useSchoolColor: boolean = true
 ) => {
   const baseClasses = 'p-2 rounded-lg w-full transition duration-200';
-  const filledClasses = `bg-${color}-${
-    disabled ? 800 : 950
-  } hover:bg-${color}-900 active:bg-${color}-800 ${
-    disabled ? 'text-gray-500' : 'text-white'
-  }`;
-  const outlinedClasses = `border-2 border-${color}-950 text-${color}-950 hover:text-${color}-900 hover:border-${color}-900 active:text-${color}-800 active:border-${color}-800`;
+  const filledClasses = `${
+    useSchoolColor
+      ? 'foreground-filled-focusable'
+      : 'bg-blue-950 hover:bg-blue-800 active:bg-blue-700 focus:bg-blue-800'
+  } ${disabled ? 'text-gray-500' : 'text-white'}`;
+  const outlinedClasses = `border-2 ${
+    useSchoolColor
+      ? 'foreground-outlined-focusable'
+      : 'border-blue-950 hover:border-blue-800 active:border-blue-700 focus:border-blue-800'
+  } ${disabled ? 'text-gray-500' : 'foreground-outlined-focusable'}`;
 
   return `${baseClasses} ${filled ? filledClasses : outlinedClasses}`;
 };

@@ -6,31 +6,34 @@ import { CgDetailsMore } from 'react-icons/cg';
 
 /**
  * Represents the properties for the Event component
- * 
+ *
  * @interface EventProps
  * @property {EventType} event - The event details to be displayed
  * @property {boolean} [small=false] - Flag to render the event in a compact view
+ * @property {boolean} [showDate=false] - Flag to show date on small view
  * @property {() => void} handleDetailsClick - Callback for viewing event details
  * @property {(type: string) => void} handleRSVPClick - Callback for RSVP actions
  */
 export interface EventProps {
   event: EventType;
   small?: boolean;
+  showDate?: boolean;
   handleDetailsClick: () => void;
   handleRSVPClick: (type: string) => void;
 }
 
 /**
  * Renders an event card with detailed information and interaction buttons
- * 
+ *
  * @component
  * @param {EventProps} props - The properties for the Event component
  * @returns {JSX.Element} A card displaying event details with details and RSVP buttons
- * 
+ *
  * @example
- * <Event 
- *   event={eventObject} 
+ * <Event
+ *   event={eventObject}
  *   small={false}
+ *   showDate={false}
  *   handleDetailsClick={() => showEventDetails()}
  *   handleRSVPClick={(type) => updateRSVP(type)}
  * />
@@ -38,6 +41,7 @@ export interface EventProps {
 const Event = ({
   event,
   small = false,
+  showDate = false,
   handleDetailsClick,
   handleRSVPClick
 }: EventProps) => {
@@ -62,6 +66,7 @@ const Event = ({
           <h1 className='text-xl font-bold'>{title}</h1>
           <div className='flex flex-col sm:flex-row gap-2'>
             <div>
+              {showDate && <p>{startTime.toLocaleDateString()}</p>}
               <p className='text-nowrap'>
                 {startTime.toLocaleTimeString([], {
                   hour: 'numeric',
@@ -82,10 +87,7 @@ const Event = ({
               {!small && tags?.length > 0 && (
                 <div className='inline-flex justify-center xl:justify-start gap-2'>
                   {tags?.map((tag, index) => (
-                    <div
-                      key={index}
-                      className='text-center bg-blue-200 p-2 rounded-lg'
-                    >
+                    <div key={index} className='text-center tag p-2 rounded-lg'>
                       {tag}
                     </div>
                   ))}
@@ -100,7 +102,6 @@ const Event = ({
           } justify-center items-center gap-2 relative`}
         >
           <Button
-            color='blue'
             text='Details'
             icon={<CgDetailsMore size={20} />}
             className='w-50 text-nowrap flex flex-row items-center gap-2'

@@ -29,7 +29,7 @@ const ClubEventForm = () => {
         { id: 1, name: 'Technology' },
         { id: 2, name: 'Sports' },
         { id: 3, name: 'Music' },
-        { id: 4, name: 'Art' },
+        { id: 4, name: 'Art' }
       ];
       setTags(fetchedTags);
     };
@@ -53,7 +53,9 @@ const ClubEventForm = () => {
     );
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ): Promise<void> => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const errors: string[] = [];
@@ -90,18 +92,18 @@ const ClubEventForm = () => {
 
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
-      <h1 className="text-2xl font-bold text-center">Create Event</h1>
+      <h1 className='text-2xl font-bold text-center'>Create Event</h1>
 
       {/* Display server-side error */}
       {serverError && (
-        <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+        <div className='bg-red-100 text-red-700 p-3 rounded mb-4'>
           <strong>Error:</strong> {serverError}
         </div>
       )}
 
       {/* Display client-side validation errors */}
       {validationErrors.length > 0 && (
-        <div className="text-red-500">
+        <div className='text-red-500'>
           {validationErrors.map((err, idx) => (
             <div key={idx}>{err}</div>
           ))}
@@ -109,97 +111,92 @@ const ClubEventForm = () => {
       )}
 
       <Input
-        label="Club Name:"
-        name="clubName"
-        type="text"
+        label='Club Name:'
+        name='clubName'
+        type='text'
         value={clubName}
         onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
-        placeholder="Enter the club name"
-        color="blue"
+        placeholder='Enter the club name'
         filled={false}
         required
       />
       <Input
-        label="Event Name:"
-        name="eventName"
-        type="text"
+        label='Event Name:'
+        name='eventName'
+        type='text'
         value={eventName}
         onChange={(e) => setEventName((e.target as HTMLInputElement).value)}
-        placeholder="Enter the event name"
-        color="blue"
+        placeholder='Enter the event name'
         filled={false}
         required
       />
       <Input
-        label="Description:"
-        name="description"
-        type="text"
+        label='Description:'
+        name='description'
+        type='text'
         value={description}
         onChange={(e) => setDescription((e.target as HTMLInputElement).value)}
-        placeholder="Enter the event description"
-        color="blue"
+        placeholder='Enter the event description'
         filled={false}
         multiline
         required
       />
       <div>
-        <label htmlFor="startDate">
-          Start Date: <span className="text-red-500">*</span>{' '}
+        <label htmlFor='startDate'>
+          Start Date: <span className='text-red-500'>*</span>{' '}
         </label>
         <DatePicker
           selected={startDate}
           onChange={(date) => setStartDate(date)}
           showTimeSelect
-          timeFormat="HH:mm"
+          timeFormat='HH:mm'
           timeIntervals={15}
-          dateFormat="MMMM d, yyyy h:mm aa"
-          className="input rounded-lg border-blue-950 border-2"
+          dateFormat='MMMM d, yyyy h:mm aa'
+          className='input rounded-lg foreground-outlined border-2'
         />
       </div>
       <div>
-        <label htmlFor="endDate">
-          End Date: <span className="text-red-500">*</span>{' '}
+        <label htmlFor='endDate'>
+          End Date: <span className='text-red-500'>*</span>{' '}
         </label>
         <DatePicker
           selected={endDate}
           onChange={(date) => setEndDate(date)}
           showTimeSelect
-          timeFormat="HH:mm"
+          timeFormat='HH:mm'
           timeIntervals={15}
-          dateFormat="MMMM d, yyyy h:mm aa"
-          className="input rounded-lg border-blue-950 border-2"
+          dateFormat='MMMM d, yyyy h:mm aa'
+          className='input rounded-lg foreground-outlined border-2'
         />
       </div>
       <Input
-        label="Location:"
-        name="location"
-        type="text"
+        label='Location:'
+        name='location'
+        type='text'
         value={location}
         onChange={(e) => setLocation((e.target as HTMLInputElement).value)}
-        placeholder="Enter the event location"
-        color="blue"
+        placeholder='Enter the event location'
         filled={false}
         required
       />
       <div>
         <Input
-          label="Event Photos:"
-          name="eventPhotos"
-          type="file"
-          accept="image/*"
+          label='Event Photos:'
+          name='eventPhotos'
+          type='file'
+          accept='image/*'
           onChange={handlePhotoChange}
-          color="blue"
           filled={false}
           required
           multiple
         />
-        <p className="text-gray-500 text-sm">You can select multiple photos.</p>
+        <p className='text-gray-500 text-sm'>You can select multiple photos.</p>
         {eventPhotos.length > 0 && (
-          <div className="mt-2">
-            <p className="text-sm font-semibold">Selected Photos:</p>
+          <div className='mt-2'>
+            <p className='text-sm font-semibold'>Selected Photos:</p>
             <ul>
               {eventPhotos.map((photo, idx) => (
-                <li key={idx} className="text-sm text-gray-700">
+                <li key={idx} className='text-sm text-gray-700'>
                   {photo.name}
                 </li>
               ))}
@@ -208,37 +205,36 @@ const ClubEventForm = () => {
         )}
       </div>
       <Input
-        label="Event Cost:"
-        name="eventCost"
-        type="text"
+        label='Event Cost:'
+        name='eventCost'
+        type='text'
         value={eventCost}
         onChange={(e) => setEventCost((e.target as HTMLInputElement).value)}
-        placeholder="Enter the event cost (optional)"
-        color="blue"
+        placeholder='Enter the event cost (optional)'
         filled={false}
       />
       <div>
-        <label htmlFor="eventTags">
-          Event Tags: <span className="text-red-500">*</span>
+        <label htmlFor='eventTags'>
+          Event Tags: <span className='text-red-500'>*</span>
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className='flex flex-wrap gap-2'>
           {tags.map((tag) => (
-            <div key={tag.id} className="flex items-center">
+            <div key={tag.id} className='flex items-center'>
               <input
-                type="checkbox"
+                type='checkbox'
                 value={tag.id}
                 checked={selectedTags.includes(tag.id)}
                 onChange={handleTagChange}
-                className="mr-2"
+                className='mr-2'
               />
               <span>{tag.name}</span>
             </div>
           ))}
         </div>
       </div>
-      <div className="flex flex-row gap-2">
-        <Button text="Submit" color="blue" type="submit" filled name="submit" />
-        <Button text="Cancel" color="blue" filled={false} type="reset" name="cancel" />
+      <div className='flex flex-row gap-2'>
+        <Button text='Submit' type='submit' filled name='submit' />
+        <Button text='Cancel' filled={false} type='reset' name='cancel' />
       </div>
     </ResponsiveForm>
   );

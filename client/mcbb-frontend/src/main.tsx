@@ -3,8 +3,12 @@ import ReactDOM from 'react-dom/client';
 import Root from './routes/Root.route.tsx';
 import rootLoader from './routes/Root.loader.tsx';
 import './index.css';
-import { createRoutesFromElements, Route, RouterProvider } from 'react-router';
-import { createBrowserRouter } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
+  RouterProvider
+} from 'react-router-dom';
 import Login from './routes/login/Login.route.tsx';
 import loginAction from './routes/login/Login.action.tsx';
 import LandingPage from './routes/landingPage/LandingPage.route.tsx';
@@ -57,24 +61,47 @@ import eventAction from './routes/dashboard/event/Event.action.tsx';
 import AssignFaculty from './routes/dashboard/assignFaculty/assignFaculty.route.tsx';
 import assignFacultyAction from './routes/dashboard/assignFaculty/assignFaculty.action.tsx';
 import assignFacultyLoader from './routes/dashboard/assignFaculty/assignFaculty.loader.tsx';
+import signUpLoader from './routes/signup/SignUp.loader.tsx';
+import SelectSchool from './routes/selectSchool/SelectSchool.route.tsx';
+import selectSchoolLoader from './routes/selectSchool/SelectSchool.loader';
+import selectSchoolAction from './routes/selectSchool/SelectSchool.action';
+import { SchoolProvider } from './contexts/SchoolContext';
+import LoginRedirector from './routes/login/LoginRedirecter.route.tsx';
+import AdminUserForm from './routes/dashboard/adminUserForm/adminUserForm.route.tsx';
+import adminUserFormLoader from './routes/dashboard/adminUserForm/adminUserForm.loader.tsx';
+import adminUserFormAction from './routes/dashboard/adminUserForm/adminUserForm.action.tsx';
+import emailPreferencesLoader from './routes/dashboard/emailPreferences/EmailPreferences.loader.tsx';
+import emailPreferencesAction from './routes/dashboard/emailPreferences/EmailPreferences.action.tsx';
+import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferences.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route
       path='/'
-      element={<Root />}
+      element={
+        <SchoolProvider>
+          <Root />
+        </SchoolProvider>
+      }
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
       <Route path='/' element={<LandingPage />} />
-      <Route
-        path='login'
-        element={<Login />}
-        loader={loginLoader}
-        action={loginAction}
-      />
+      <Route path='login' element={<LoginRedirector />}>
+        <Route
+          path=':schoolId'
+          element={<Login />}
+          loader={loginLoader}
+          action={loginAction}
+        />
+      </Route>
       <Route path='logout' loader={logoutLoader} />
-      <Route path='signup' element={<SignUp />} action={signUpAction} />
+      <Route
+        path='signup/:schoolId'
+        element={<SignUp />}
+        action={signUpAction}
+        loader={signUpLoader}
+      />
       <Route
         path='verifyEmail'
         element={<VerifyEmail />}
@@ -103,6 +130,12 @@ const router = createBrowserRouter(
         element={<ForgotPasswordToken />}
         action={forgotPasswordTokenAction}
       />
+      <Route
+        path='selectSchool'
+        element={<SelectSchool />}
+        loader={selectSchoolLoader}
+        action={selectSchoolAction}
+      />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route
           path='home'
@@ -115,6 +148,12 @@ const router = createBrowserRouter(
           element={<AssignFaculty />}
           loader={assignFacultyLoader}
           action={assignFacultyAction}
+        />
+        <Route
+          path='adminUserForm'
+          element={<AdminUserForm />}
+          loader={adminUserFormLoader}
+          action={adminUserFormAction}
         />
         <Route
           path='calendar'
@@ -175,6 +214,13 @@ const router = createBrowserRouter(
             loader={clubFormLoader}
           />
         </Route>
+
+        <Route
+          path='emailPreferences'
+          loader={emailPreferencesLoader}
+          action={emailPreferencesAction}
+          element={<EmailPreferences />}
+        />
       </Route>
       <Route
         path='editinterest'

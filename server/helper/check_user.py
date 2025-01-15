@@ -46,6 +46,13 @@ def get_user_session_info():
     # Check session activity
     last_activity = session.get("last_activity")
     user_id = session.get("user_id")
+    school_id = session.get("school")
+
+    # Check for explicit logout flag
+    if session.get("is_logged_out", False):
+        print("GET_USER_SESSION_INFO: Session explicitly logged out")
+        session.clear()
+        return default_return
 
     # Validate session
     if (
@@ -53,32 +60,40 @@ def get_user_session_info():
         or last_activity is None
         or datetime.now(timezone.utc) - last_activity >= timedelta(minutes=15)
     ):
+        print("GET_USER_SESSION_INFO: Invalid session - clearing")
+        session.clear()
         return default_return
 
-    # Check database connection
-    if not mysql.connection:
+    # Establish database connection
+    try:
+        conn = mysql.connection
+        cur = conn.cursor()
+    except Exception as e:
+        print(f"GET_USER_SESSION_INFO: Database connection error: {e}")
+        session.clear()
         return default_return
 
     try:
-        cur = mysql.connection.cursor()
-
         # Fetch user details
         cur.execute(
-            """SELECT email, email_verified, name, is_faculty, can_delete_faculty
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned
                 FROM users 
                 WHERE email = %s
                     AND is_active = 1
+                    AND school_id = %s
             """,
-            (user_id,),
+            (user_id, school_id),
         )
         result = cur.fetchone()
 
-        # If no user found, return default
-        if result is None:
+        # If no user found or user is banned, return default
+        if result is None or result[5] == 1:
+            print("GET_USER_SESSION_INFO: No user found or user is banned")
             cur.close()
+            session.clear()
             return default_return
 
-        # Fetch club administrations
+        # Fetch club admins
         cur.execute(
             """SELECT a.club_id 
             FROM club_admin a
@@ -109,7 +124,7 @@ def get_user_session_info():
         # Update last activity
         session["last_activity"] = datetime.now(timezone.utc)
 
-        # Return user session information
+        # Construct and return user info
         return {
             "user_id": user_id,
             "name": result[2],
@@ -121,5 +136,6 @@ def get_user_session_info():
         }
 
     except Exception as e:
-        print(e)
+        print(f"GET_USER_SESSION_INFO: Session validation error: {e}")
+        session.clear()
         return default_return

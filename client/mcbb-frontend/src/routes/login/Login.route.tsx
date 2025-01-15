@@ -3,28 +3,31 @@ import {
   useSubmit,
   useSearchParams,
   useLoaderData,
-  useNavigation
+  useNavigation,
+  useParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import Loading from '../../components/ui/Loading';
+import { SchoolType } from '../../types/databaseTypes';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * Login component for user authentication and account management.
- * 
+ *
  * @component Login
  * @description Provides a comprehensive login interface with multiple authentication options
- * 
+ *
  * @returns {JSX.Element} Rendered login form with email, password, and additional actions
- * 
+ *
  * @workflow
- * 1. Validate Messiah email format
+ * 1. Validate school email format
  * 2. Handle login, signup, and password reset actions
  * 3. Manage form state and validation
  * 4. Display loading state during authentication
  * 5. Show error and success messages
- * 
+ *
  * @features
  * - Email format validation
  * - Remember me functionality
@@ -36,8 +39,12 @@ const Login = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
   const navigation = useNavigation();
-  const [params] = useSearchParams();
-  const { userId } = useLoaderData() as { userId: string };
+  const [searchParams] = useSearchParams();
+  const { schoolId } = useParams();
+  const { userId, schools } = useLoaderData() as {
+    userId: string;
+    schools: SchoolType[];
+  };
 
   // State management for form and authentication
   const [error, setError] = useState<string | null>(null);
@@ -45,30 +52,42 @@ const Login = () => {
   const [message, setMessage] = useState<string | null>(null);
   const [remember, setRemember] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { currentSchool, setCurrentSchool } = useSchool();
+
+  // School input state management
+  // Initialize selected school from schools list if not set
+  useEffect(() => {
+    if (schools.length > 0) {
+      setCurrentSchool(schools.find((s) => s.id === Number(schoolId)) ?? null);
+    }
+  }, [schools, schoolId, setCurrentSchool]);
 
   // Email validation using memoized computation
-  const emailIsValid = useMemo(() => email.endsWith('@messiah.edu'), [email]);
+  const emailIsValid = useMemo(
+    () => email.endsWith(currentSchool?.emailDomain ?? ''),
+    [email, currentSchool?.emailDomain]
+  );
 
   /**
    * Handles URL parameters for error and message display.
-   * 
+   *
    * @function useEffect
    * @description Updates error and message states based on URL parameters
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    if (searchParams.get('error')) {
+      setError(decodeURIComponent(searchParams.get('error') ?? ''));
       setIsLoading(false); // Reset loading state when error is present
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
+    if (searchParams.get('message')) {
+      setMessage(decodeURIComponent(searchParams.get('message') ?? ''));
       setIsLoading(false); // Reset loading state when message is present
     }
-  }, [params]);
+  }, [searchParams]);
 
   /**
    * Manages loading state based on navigation state.
-   * 
+   *
    * @function useEffect
    * @description Resets loading state when navigation is complete
    */
@@ -80,7 +99,7 @@ const Login = () => {
 
   /**
    * Populates email and remember me state from loader data.
-   * 
+   *
    * @function useEffect
    * @description Sets email and remember me checkbox if user ID is available
    */
@@ -93,7 +112,7 @@ const Login = () => {
 
   /**
    * Handles form submission with multiple authentication actions.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
    * @description Validates input and submits form for login, signup, or password reset
@@ -115,6 +134,9 @@ const Login = () => {
       } else if (action === 'forgot') {
         formData.append('action', action);
         submit(formData, { method: 'post' });
+      } else if (action === 'switchSchool') {
+        formData.append('action', action);
+        submit(formData, { method: 'post' });
       } else {
         if (formData.get('email') === '') {
           setError('Please enter an email address.');
@@ -126,6 +148,7 @@ const Login = () => {
           return;
         } else {
           formData.append('action', action);
+          formData.append('schoolId', currentSchool?.id.toString() ?? '');
           submit(formData, { method: 'post' });
         }
       }
@@ -138,7 +161,7 @@ const Login = () => {
 
   /**
    * Validates and updates email input.
-   * 
+   *
    * @function validateEmail
    * @param {React.ChangeEvent<HTMLInputElement>} event - Input change event
    * @description Updates email state and checks email format
@@ -153,42 +176,42 @@ const Login = () => {
   ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Login</h1>
-      
+
       {/* Error message display */}
       {error && <p className='text-red-500'>{error}</p>}
-      
+
       {/* Success message display */}
       {message && <p className='text-green-500'>{message}</p>}
-      
+
       {/* Email format validation message */}
       {!emailIsValid && email !== '' && (
-        <p className='text-red-500'>Please enter your full Messiah email.</p>
+        <p className='text-red-500'>
+          Please enter your full {currentSchool?.name} email.
+        </p>
       )}
-      
+
       {/* Email input */}
       <Input
-        label='Messiah Email:'
+        label={`${currentSchool?.name} Email:`}
         name='email'
         type='text'
-        placeholder='Messiah Email'
-        color='blue'
+        placeholder={`${currentSchool?.name} Email`}
         filled={false}
         onInput={validateEmail}
         value={email}
         required
       />
-      
+
       {/* Password input */}
       <Input
         label='Password:'
         name='password'
         type='password'
         placeholder='Password'
-        color='blue'
         filled={false}
         required
       />
-      
+
       {/* Remember me checkbox */}
       <Input
         type='checkbox'
@@ -198,25 +221,30 @@ const Login = () => {
         checked={remember}
         onChange={() => setRemember(!remember)}
       />
-      
+
       {/* Login button */}
-      <Button color='blue' text='Sign In' type='submit' name='login' />
-      
+      <Button text='Sign In' type='submit' name='login' />
+
       {/* Signup button */}
       <Button
-        color='blue'
         text={"Don't have an account? Sign Up"}
         type='submit'
         name='signup'
         filled={false}
       />
-      
+
       {/* Forgot password button */}
       <Button
-        color='blue'
         text='Forgot Password?'
         type='submit'
         name='forgot'
+        filled={false}
+      />
+
+      <Button
+        text='Switch School'
+        type='submit'
+        name='switchSchool'
         filled={false}
       />
     </ResponsiveForm>

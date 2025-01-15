@@ -44,7 +44,12 @@ def get_avaliable_tags():
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
-    cur.execute("SELECT tag_id, tag_name FROM tag")
+    cur.execute(
+        """SELECT tag_id, tag_name 
+                FROM tag
+                WHERE school_id = %s""",
+        (session.get("school"),),
+    )
     result = cur.fetchall()
     result = list(map(lambda x: {"tag": x[1], "tag_id": x[0]}, result))
     cur.close()
@@ -140,7 +145,9 @@ def getallinterests():
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
     try:
-        cur.execute("SELECT tag_name FROM tag")
+        cur.execute(
+            "SELECT tag_name FROM tag WHERE school_id = %s", (session.get("school"),)
+        )
         result = cur.fetchall()
         all_interests = [row[0] for row in result]
         return jsonify({"interests": all_interests}), 200
@@ -286,18 +293,25 @@ def add_tag():
     cur = mysql.connection.cursor()
     try:
         # Check if tag already exists
-        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (tag_name,))
+        cur.execute(
+            "SELECT tag_id FROM tag WHERE tag_name = %s AND school_id = %s",
+            (tag_name, session.get("school")),
+        )
         if cur.fetchone():
             cur.close()
             return jsonify({"error": f"Interest '{tag_name}' already exists."}), 400
 
         # Add new tag
-        cur.execute("INSERT INTO tag (tag_name) VALUES (%s)", (tag_name,))
+        cur.execute(
+            "INSERT INTO tag (tag_name, school_id) VALUES (%s, %s)",
+            (tag_name, session.get("school")),
+        )
         mysql.connection.commit()
         cur.close()
         return jsonify({"message": f"Interest '{tag_name}' added successfully!"}), 201
 
     except Exception as e:
+        print(e)
         mysql.connection.rollback()
         cur.close()
         return jsonify({"error": "Failed to add interest"}), 500
@@ -359,13 +373,19 @@ def remove_tag():
     cur = mysql.connection.cursor()
     try:
         # Check if tag exists
-        cur.execute("SELECT tag_id FROM tag WHERE tag_name = %s", (tag_name,))
+        cur.execute(
+            "SELECT tag_id FROM tag WHERE tag_name = %s AND school_id = %s",
+            (tag_name, session.get("school")),
+        )
         if not cur.fetchone():
             cur.close()
             return jsonify({"error": f"Interest '{tag_name}' does not exist."}), 404
 
         # Remove tag
-        cur.execute("DELETE FROM tag WHERE tag_name = %s", (tag_name,))
+        cur.execute(
+            "DELETE FROM tag WHERE tag_name = %s AND school_id = %s",
+            (tag_name, session.get("school")),
+        )
         mysql.connection.commit()
         cur.close()
         return jsonify({"message": f"Interest '{tag_name}' removed successfully!"}), 200

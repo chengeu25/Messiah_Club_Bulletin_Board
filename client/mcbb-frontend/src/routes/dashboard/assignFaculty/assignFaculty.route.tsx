@@ -7,7 +7,7 @@ import { UserType as User } from '../../../types/databaseTypes';
 
 /**
  * Represents a faculty member's data structure.
- * 
+ *
  * @typedef {Object} FacultyData
  * @property {string} name - Name of the faculty member
  * @property {string} email - Email address of the faculty member
@@ -21,13 +21,13 @@ type FacultyData = {
 
 /**
  * AssignFaculty dashboard component for managing faculty assignments.
- * 
+ *
  * @component
  * @description Provides functionality to:
  * - Assign new faculty members
  * - Manage faculty deletion permissions
  * - Remove faculty members
- * 
+ *
  * @returns {React.ReactElement} Rendered faculty assignment dashboard
  */
 const AssignFaculty = () => {
@@ -40,10 +40,10 @@ const AssignFaculty = () => {
 
   /**
    * Fetches faculty data from the server on component mount.
-   * 
+   *
    * @function
    * @description Retrieves faculty information and populates table and email list
-   * 
+   *
    * @throws {Error} Throws an error if data fetching fails
    */
   useEffect(() => {
@@ -79,7 +79,7 @@ const AssignFaculty = () => {
 
   /**
    * Handles URL-based error and success messages.
-   * 
+   *
    * @function
    * @description Updates error and success messages from URL parameters
    */
@@ -94,7 +94,7 @@ const AssignFaculty = () => {
 
   /**
    * Checks user's permission to delete faculty.
-   * 
+   *
    * @function
    * @description Verifies if the current user can delete faculty members
    */
@@ -115,15 +115,15 @@ const AssignFaculty = () => {
 
   /**
    * Handles faculty assignment form submission.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   * 
+   *
    * @description Validates and submits new faculty member assignment
    * - Validates email uniqueness
    * - Sends assignment request to server
    * - Updates table and email list dynamically
-   * 
+   *
    * @throws {Error} Throws an error if assignment fails
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -198,14 +198,14 @@ const AssignFaculty = () => {
 
   /**
    * Toggles faculty member's ability to delete other faculty.
-   * 
+   *
    * @function assignDelete
    * @param {FacultyData} item - Faculty member to modify
-   * 
+   *
    * @description Sends request to update faculty deletion permissions
    * - Toggles can_delete_faculty status
    * - Updates table data dynamically
-   * 
+   *
    * @throws {Error} Throws an error if permission update fails
    */
   const assignDelete = async (item: FacultyData) => {
@@ -241,14 +241,14 @@ const AssignFaculty = () => {
 
   /**
    * Removes a faculty member from the system.
-   * 
+   *
    * @function deleteFaculty
    * @param {FacultyData} item - Faculty member to remove
-   * 
+   *
    * @description Sends request to remove a faculty member
    * - Deletes faculty from the system
    * - Updates table and email list dynamically
-   * 
+   *
    * @throws {Error} Throws an error if faculty removal fails
    */
   const deleteFaculty = async (item: FacultyData) => {
@@ -287,7 +287,6 @@ const AssignFaculty = () => {
             name='userEmail'
             type='text'
             placeholder='Email'
-            color='blue'
             filled={false}
           />
           <Input
@@ -299,12 +298,7 @@ const AssignFaculty = () => {
             onChange={() => setCanDelete(!canDelete)}
           />
           <div className='flex flex-row gap-2'>
-            <Button
-              text='Assign Faculty'
-              type='submit'
-              name='assignFaculty'
-              color='blue'
-            />
+            <Button text='Assign Faculty' type='submit' name='assignFaculty' />
           </div>
           <table className='custom-table'>
             <thead>
@@ -330,7 +324,10 @@ const AssignFaculty = () => {
                           assignDelete(item); // Handle the toggle
                         }}
                         aria-label={`Set ${item.name} as active`}
-                        disabled={!canDelete}
+                        style={{
+                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
+                        }}
+                        disabled={!item.can_delete_faculty}
                       />
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -342,13 +339,15 @@ const AssignFaculty = () => {
                         aria-label={`Remove ${item.name} from faculty`}
                         style={{
                           padding: '5px 10px',
-                          backgroundColor: canDelete ? 'blue' : 'gray',
+                          backgroundColor: item.can_delete_faculty
+                            ? 'var(--foreground-rgb)'
+                            : 'var(--foreground-disabled-rgb)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '5px',
-                          cursor: canDelete ? 'pointer' : 'not-allowed'
+                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
                         }}
-                        disabled={!canDelete}
+                        disabled={!item.can_delete_faculty}
                       >
                         Remove
                       </button>

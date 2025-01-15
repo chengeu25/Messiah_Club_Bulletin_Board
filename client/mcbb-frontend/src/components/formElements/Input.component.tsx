@@ -1,5 +1,6 @@
 import generateStyleClasses from './styleGenerator';
 import { FormEventHandler } from 'react';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Represents the properties for the Input component
@@ -8,7 +9,6 @@ import { FormEventHandler } from 'react';
  * @property {string} label - The label text for the input
  * @property {string} name - The name attribute for the input
  * @property {string} type - The type of input (e.g., 'text', 'checkbox', 'file')
- * @property {string} [color='white'] - The color theme of the input
  * @property {boolean} [filled=true] - Determines if the input is filled or outlined
  * @property {string} [placeholder=''] - Optional placeholder text
  * @property {boolean} [required=false] - Makes the input required
@@ -26,7 +26,6 @@ interface InputProps {
   label: string;
   name: string;
   type: string;
-  color?: 'blue' | 'green' | 'red' | 'purple' | 'orange' | 'gray' | 'white';
   filled?: boolean;
   placeholder?: string;
   required?: boolean;
@@ -53,7 +52,6 @@ interface InputProps {
  *   label="Username"
  *   name="username"
  *   type="text"
- *   color="blue"
  *   placeholder="Enter your username"
  *   required={true}
  * />
@@ -71,7 +69,6 @@ const Input = ({
   label,
   name,
   type,
-  color,
   filled,
   placeholder = '',
   required = false,
@@ -84,57 +81,64 @@ const Input = ({
   accept,
   multiple = false,
   labelOnSameLine = false
-}: InputProps) => (
-  <label
-    className={`flex ${
-      type === 'checkbox' || labelOnSameLine
-        ? 'flex-row items-center'
-        : 'flex-col'
-    } gap-2 text-nowrap flex-grow`}
-  >
-    {label && (
-      <span>
-        {label}
-        {required && <span className='text-red-500'>*</span>}
-      </span>
-    )}
-    {multiline ? (
-      <textarea
-        name={name}
-        placeholder={placeholder}
-        className={`${generateStyleClasses(color ?? 'white', filled ?? true)
-          .replace(`text-${color ?? 'white'}`, 'text-black')
-          .replace(
+}: InputProps) => {
+  const location = useLocation();
+
+  return (
+    <label
+      className={`flex ${
+        type === 'checkbox' || labelOnSameLine
+          ? 'flex-row items-center'
+          : 'flex-col'
+      } gap-2 text-nowrap flex-grow`}
+    >
+      {label && (
+        <span>
+          {label}
+          {required && <span className='text-red-500'>*</span>}
+        </span>
+      )}
+      {multiline ? (
+        <textarea
+          name={name}
+          placeholder={placeholder}
+          className={`${generateStyleClasses(
+            filled ?? true,
+            false,
+            location.pathname !== '/'
+          ).replace(
             'w-full',
             type === 'checkbox' ? 'max-w-10' : 'w-full'
-          )} p-2 rounded-lg flex-grow text-black`}
-        defaultValue={defaultValue}
-        onInput={onInput}
-        onChange={onChange}
-        value={value}
-      ></textarea>
-    ) : (
-      <input
-        type={type}
-        name={name}
-        placeholder={placeholder}
-        className={`${generateStyleClasses(color ?? 'white', filled ?? true)
-          .replace(`text-${color ?? 'white'}`, 'text-black')
-          .replace(`text-white`, 'text-black')
-          .replace(
+          )} p-2 rounded-lg flex-grow`}
+          defaultValue={defaultValue}
+          onInput={onInput}
+          onChange={onChange}
+          value={value}
+        ></textarea>
+      ) : (
+        <input
+          type={type}
+          name={name}
+          placeholder={placeholder}
+          className={`${generateStyleClasses(
+            filled ?? true,
+            false,
+            location.pathname !== '/'
+          ).replace(
             'w-full',
             type === 'checkbox' ? 'max-w-10' : 'w-full'
           )} p-2 rounded-lg flex-grow ${!filled && 'text-black'}`}
-        onInput={onInput}
-        onChange={onChange}
-        value={value}
-        checked={checked}
-        defaultValue={defaultValue}
-        accept={accept}
-        multiple={multiple}
-      />
-    )}
-  </label>
-);
+          onInput={onInput}
+          onChange={onChange}
+          value={value}
+          checked={checked}
+          defaultValue={defaultValue}
+          accept={accept}
+          multiple={multiple}
+        />
+      )}
+    </label>
+  );
+};
 
 export default Input;

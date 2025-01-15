@@ -1,10 +1,10 @@
 import generateStyleClasses from './styleGenerator';
+import { useLocation } from 'react-router-dom';
 
 /**
  * Represents the properties for the Button component
- * 
+ *
  * @interface ButtonProps
- * @property {string} color - The color theme of the button
  * @property {string} [text] - Optional text to display on the button
  * @property {JSX.Element} [icon] - Optional icon to display on the button
  * @property {() => void} [onClick] - Optional click event handler
@@ -16,15 +16,6 @@ import generateStyleClasses from './styleGenerator';
  * @property {boolean} [grow=true] - Determines if the button should grow to fill available space
  */
 interface ButtonProps {
-  color:
-    | 'red'
-    | 'blue'
-    | 'green'
-    | 'yellow'
-    | 'purple'
-    | 'orange'
-    | 'gray'
-    | 'white';
   text?: string;
   icon?: JSX.Element;
   onClick?: () => void;
@@ -38,22 +29,20 @@ interface ButtonProps {
 
 /**
  * A flexible and customizable button component with various styling options
- * 
+ *
  * @component
  * @param {ButtonProps} props - The properties for the Button component
  * @returns {JSX.Element} A styled and configurable button
- * 
+ *
  * @example
- * <Button 
- *   color="blue" 
- *   text="Click me" 
+ * <Button
+ *   text="Click me"
  *   onClick={() => handleClick()}
  *   icon={<IconComponent />}
  *   filled={true}
  * />
  */
 const Button = ({
-  color,
   text,
   icon,
   onClick,
@@ -61,21 +50,29 @@ const Button = ({
   name,
   filled = true,
   className,
-  disabled,
+  disabled = false,
   grow = true
-}: ButtonProps) => (
-  <button
-    disabled={disabled}
-    className={`${generateStyleClasses(color, filled, disabled)
-      .replace(!grow ? 'w-full' : '', '')
-      .replace(!grow ? 'flex-grow' : '', '')} ${className}`}
-    onClick={onClick}
-    type={type}
-    name={name}
-  >
-    {text}
-    {icon}
-  </button>
-);
+}: ButtonProps) => {
+  const location = useLocation();
+
+  return (
+    <button
+      disabled={disabled}
+      className={`${generateStyleClasses(
+        filled,
+        disabled,
+        !(location.pathname === '/')
+      )
+        .replace(!grow ? 'w-full' : '', '')
+        .replace(!grow ? 'flex-grow' : '', '')} ${className}`}
+      onClick={onClick}
+      type={type}
+      name={name}
+    >
+      {text}
+      {icon}
+    </button>
+  );
+};
 
 export default Button;

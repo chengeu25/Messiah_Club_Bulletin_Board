@@ -266,7 +266,8 @@ def login():
     {
         "email": str,       # User's email address
         "password": str,    # User's password
-        "remember": bool    # Whether to maintain a longer session
+        "remember": bool,   # Whether to maintain a longer session
+        "school": int       # School ID
     }
 
     Returns:
@@ -283,6 +284,8 @@ def login():
             {"error": "Authentication failed"}, 401 status
         - On invalid password:
             {"error": "Authentication failed"}, 401 status
+        - On user is banned:
+            {"error": "User is banned"}, 403 status
 
     Behavior:
     - Validates input data
@@ -303,20 +306,25 @@ def login():
 
     # Retrieve the hashed password from the database
     cur.execute(
-        """SELECT pwd1
+        """SELECT pwd1, is_banned
                 FROM users 
                 WHERE email = %s
-                    AND is_active = 1""",
-        (data["email"],),
+                    AND is_active = 1
+                    AND school_id = %s""",
+        (data["email"], data["school"]),
     )
     result = cur.fetchone()
-
-    # Turn off email verified
-    update_email_verified(data["email"], verified=False)
 
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Authentication failed"}), 401
+
+    # Check if user is banned
+    if result[1] == 1:  # is_banned is the second column
+        return jsonify({"error": "User is banned"}), 403
+
+    # Turn off email verified
+    update_email_verified(data["email"], verified=False)
 
     # Verify the provided password against the hashed password
     hashed_password = result[0]
@@ -325,6 +333,7 @@ def login():
 
     # Set the user ID and activity timestamp in the session
     session["user_id"] = data["email"]
+    session["school"] = data["school"]
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()
@@ -360,10 +369,15 @@ def logout():
     - Clears all session variables
     - Ensures complete session termination
     """
+
+    # Clear all session data
     session.clear()
+
+    # Restore the logout flag
+    session["is_logged_out"] = True
     session.modified = True
+
     resp = jsonify({"message": "Logged out successfully"})
-    resp.set_cookie("user_id", "", expires=0, path="/api")
     return resp, 200
 
 
@@ -381,12 +395,15 @@ def signup():
         "password": str,       # User's password
         "name": str,           # User's full name
         "captchaResponse": str # reCAPTCHA verification token
+        "school": int          # School ID
     }
 
     Returns:
         JSON response:
         - On successful signup:
             {"message": "User created successfully"}, 201 status
+        - On successful signup if the user is currently inactive:
+            {"message": "User reactivated successfully"}, 201 status
         - On missing or invalid data:
             {"error": "Missing required fields"}, 400 status
         - On invalid email format:
@@ -397,6 +414,8 @@ def signup():
             {"error": "reCAPTCHA verification failed"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
+        - On banned user:
+            {"error": "User is banned"}, 403 status
 
     Behavior:
     - Validates input data completeness and format
@@ -411,12 +430,13 @@ def signup():
     email = data.get("email")  # These are to get the current inputs
     name = data.get("name")
     password = data.get("password")
+    school = data.get("school")
     if data.get("gender") == "male":
-        gender = 1
+        gender = "M"
     elif data.get("gender") == "female":
-        gender = 0
+        gender = "F"
     else:
-        gender = None
+        gender = "O"
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
@@ -429,16 +449,42 @@ def signup():
     # to check if the email is unique
     cur = mysql.connection.cursor()
     cur.execute(
-        "SELECT * FROM users WHERE email = %s",
+        "SELECT name, email, is_banned, is_active FROM users WHERE email = %s",
         (str(email),),
     )
     existing_user = cur.fetchone()
     cur.close()
 
     if existing_user:
-        return jsonify({"error": "email already in use"}), 400
+        # Check if the user is banned
+        if existing_user[2] == 1:
+            return jsonify({"error": "User is banned"}), 403
 
-    # To check password strngth
+        # If user exists but is inactive, reactivate the user
+        if existing_user[3] == 0:
+            cur = mysql.connection.cursor()
+            cur.execute(
+                """UPDATE users 
+                SET PWD1 = %s, 
+                    PWD2 = '',
+                    PWD3 = '',
+                    GENDER = %s, 
+                    IS_ACTIVE = 1, 
+                    NAME = %s, 
+                    EMAIL_VERIFIED = 0 
+                WHERE EMAIL = %s AND SCHOOL_ID = %s""",
+                (generate_password_hash(password), gender, name, email, school),
+            )
+            mysql.connection.commit()
+            cur.close()
+
+            session["user_id"] = email
+            session["school"] = school
+            session["last_activity"] = datetime.now(timezone.utc)
+
+            return jsonify({"message": "User reactivated successfully"}), 200
+
+        return jsonify({"error": "email already in use"}), 400
 
     # Hash da password
     hashed_password = generate_password_hash(password)
@@ -446,12 +492,13 @@ def signup():
 
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,1,%s)",
-        (email, hashed_password, gender, name),
+        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s)",
+        (email, hashed_password, gender, school, name),
     )
     mysql.connection.commit()
 
     session["user_id"] = email
+    session["school"] = school
     session["last_activity"] = datetime.now(timezone.utc)
 
     cur.close()
@@ -622,7 +669,7 @@ def forgot_password():
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        """Select pwd1, pwd2, email_verified
+        """Select pwd1, pwd2, email_verified, school_id
            FROM users 
            WHERE email = %s 
            AND is_active = 1""",
@@ -630,14 +677,11 @@ def forgot_password():
     )
     result = cur.fetchone()
 
+    school_id = result[3]
+
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Invalid email"}), 401
-
-    # Check if email is verified
-    is_email_verified = result[2]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
 
     if Config.SECRET_KEY is None:
         return jsonify({"error": "Developer did not set secret key"}), 500
@@ -666,7 +710,9 @@ def forgot_password():
     result = cur.fetchone()
 
     # Create reset link
-    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
+    reset_link = (
+        f"http://localhost:5173/ForgotPasswordToken?token={token}&schoolId={school_id}"
+    )
 
     # Send email
     send_email(

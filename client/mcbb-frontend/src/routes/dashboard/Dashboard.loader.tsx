@@ -1,6 +1,5 @@
 import { LoaderFunction, LoaderFunctionArgs, redirect } from 'react-router-dom';
 import checkUser from '../../helper/checkUser';
-import { UserType } from '../../types/databaseTypes';
 
 /**
  * Loader function for the dashboard route.

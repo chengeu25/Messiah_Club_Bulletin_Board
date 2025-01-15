@@ -73,7 +73,7 @@ const Club = ({
       <p className='text-center xl:text-left'>{description}</p>
       <div className='inline-flex justify-center xl:justify-start gap-2'>
         {tags?.map((tag, index) => (
-          <div key={index} className='text-center bg-blue-200 p-2 rounded-lg'>
+          <div key={index} className='text-center tag p-2 rounded-lg'>
             {tag}
           </div>
         ))}
@@ -85,7 +85,6 @@ const Club = ({
         text='Details'
         onClick={() => {}}
         icon={<CgDetailsMore size={20} />}
-        color='blue'
         type='submit'
         name='details'
       />
@@ -95,7 +94,6 @@ const Club = ({
           text='Reactivate'
           onClick={() => {}}
           icon={<LiaTrashRestoreSolid size={20} />}
-          color='blue'
           type='submit'
           name='reactivate'
           filled={false}
@@ -108,7 +106,6 @@ const Club = ({
             text='Edit'
             onClick={() => {}}
             icon={<CiEdit size={20} />}
-            color='blue'
             type='submit'
             name='edit'
             filled={false}
@@ -119,7 +116,6 @@ const Club = ({
               text='Delete'
               icon={<CiTrash size={20} />}
               onClick={() => {}}
-              color='blue'
               type='submit'
               name='delete'
               filled={false}

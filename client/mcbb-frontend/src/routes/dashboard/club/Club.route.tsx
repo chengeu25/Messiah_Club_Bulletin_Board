@@ -17,7 +17,7 @@ import checkSubscription from '../../../helper/checkSubscription';
 
 /**
  * Club details page component for displaying comprehensive club information.
- * 
+ *
  * @component
  * @description Renders a detailed view of a club, including:
  * - Club name and description
@@ -26,7 +26,7 @@ import checkSubscription from '../../../helper/checkSubscription';
  * - Club tags
  * - Club officers
  * - Upcoming events
- * 
+ *
  * @returns {React.ReactElement} Detailed club information page
  */
 const Club = () => {
@@ -37,9 +37,9 @@ const Club = () => {
     events: EventType[];
   };
 
-  /** 
+  /**
    * State to track user's subscription status for the club.
-   * 
+   *
    * @type {[boolean, React.Dispatch<React.SetStateAction<boolean>>]}
    * @description Manages whether the current user is subscribed to the club
    */
@@ -47,7 +47,7 @@ const Club = () => {
 
   /**
    * Fetches and updates the user's subscription status when component mounts.
-   * 
+   *
    * @function
    * @description Checks if the user is subscribed to the club using their email
    * - Updates isSubscribed state based on subscription check
@@ -63,10 +63,10 @@ const Club = () => {
 
   /**
    * Handles form submission for subscription and event creation actions.
-   * 
+   *
    * @function handleSubmit
    * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   * 
+   *
    * @description Processes club-related actions:
    * - Prevents default form submission
    * - Determines action type (subscribe/unsubscribe/new event)
@@ -105,10 +105,9 @@ const Club = () => {
           onSubmit={handleSubmit}
           className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
-          {user?.clubAdmins.includes(club?.id) && (
+          {user?.clubAdmins?.includes(club?.id) && (
             <Button
               type='submit'
-              color='blue'
               text='New Event'
               filled={true}
               name='newEvent'
@@ -116,7 +115,6 @@ const Club = () => {
           )}
           <Button
             type='submit'
-            color='blue'
             text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
             name={isSubscribed ? 'unsubscribe' : 'subscribe'}
             filled={true}
@@ -181,6 +179,7 @@ const Club = () => {
                   endTime: new Date(event.endTime)
                 }}
                 small={true}
+                showDate={true}
                 handleDetailsClick={() =>
                   submit(
                     { id: event.id, action: 'details' },

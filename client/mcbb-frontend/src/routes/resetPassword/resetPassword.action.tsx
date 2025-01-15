@@ -28,8 +28,9 @@ const resetPasswordAction: ActionFunction = async ({ request }) => {
   // Extract form data
   const formData = await request.formData();
   const email = formData.get('email');
+  const schoolId = formData.get('schoolId');
 
-  // Send reset link request to backend
+  // Send reset request to backend
   await fetch('http://localhost:5173/api/resetPassword', {
     method: 'POST',
     headers: {
@@ -39,8 +40,9 @@ const resetPasswordAction: ActionFunction = async ({ request }) => {
     body: JSON.stringify({ email })
   });
 
-  alert('Reset link to ' + email);
-  return redirect('/login');
+  return redirect(
+    `/login/${schoolId}?message=Password%20changed%20successfully`
+  );
 };
 
 export default resetPasswordAction;

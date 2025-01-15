@@ -13,6 +13,7 @@ import { CiCirclePlus, CiTrash } from 'react-icons/ci';
 import { useSearchParams, useSubmit } from 'react-router-dom';
 import Select from 'react-select';
 import { OptionType } from '../../../../components/formElements/Select.styles';
+import { useSchool } from '../../../../contexts/SchoolContext';
 
 interface LoaderData {
   user: UserType;
@@ -28,6 +29,7 @@ const ClubForm = () => {
   const [params] = useSearchParams();
   const data = useLoaderData() as LoaderData | null;
   const { user, club, tagsAvailable } = data || {};
+  const { currentSchool } = useSchool();
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
@@ -59,7 +61,7 @@ const ClubForm = () => {
    * @param newAdmin - The new email for the admin.
    */
   const updateAdmin = (id: number, newAdmin: string) => {
-    if (newAdmin !== '' && !newAdmin.endsWith('@messiah.edu'))
+    if (newAdmin !== '' && !newAdmin.endsWith(currentSchool?.emailDomain ?? ''))
       setAdminErrors((prevErrors) => [...prevErrors, id]);
     else setAdminErrors((prevErrors) => prevErrors.filter((e) => e !== id));
     setAdmins((prevAdmins) =>
@@ -246,7 +248,9 @@ const ClubForm = () => {
     } else if (action === 'add-admin') {
       if (
         formData.get('admins-new') === '' ||
-        !(formData.get('admins-new') as string)?.endsWith('@messiah.edu')
+        !(formData.get('admins-new') as string)?.endsWith(
+          currentSchool?.emailDomain ?? ''
+        )
       ) {
         return;
       }
@@ -318,7 +322,6 @@ const ClubForm = () => {
         onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
           setName(e.target.value)
         }
-        color='blue'
         filled={false}
         placeholder='Enter the name of the club'
         required
@@ -331,7 +334,6 @@ const ClubForm = () => {
         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
           setDescription(e.target.value)
         }
-        color='blue'
         filled={false}
         placeholder='Tell us a little bit about this club...'
         multiline
@@ -370,7 +372,7 @@ const ClubForm = () => {
               <li key={idx} className='flex-col inline-flex gap-2'>
                 {adminErrors.includes(user.id) && (
                   <span className='text-red-500'>
-                    Please enter a valid Messiah email.
+                    Please enter a valid {currentSchool?.name} email.
                   </span>
                 )}
                 <div className='flex flex-row items-center gap-2'>
@@ -380,7 +382,6 @@ const ClubForm = () => {
                       type='text'
                       name={`admin-${user.id}`}
                       label=''
-                      color='blue'
                       filled={false}
                       placeholder='officeremail@domain.edu'
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -390,7 +391,6 @@ const ClubForm = () => {
                   </span>
                   <Button
                     text='Remove'
-                    color='blue'
                     filled={false}
                     className='inline-flex flex-row items-center justify-center gap-2 h-12'
                     icon={<CiTrash size={20} />}
@@ -411,16 +411,19 @@ const ClubForm = () => {
                     type='text'
                     name='admins-new'
                     label=''
-                    color='blue'
                     filled={false}
                     placeholder='officeremail@domain.edu'
                     value={newAdmin}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       if (
-                        !e.target.value.endsWith('@messiah.edu') &&
+                        !e.target.value.endsWith(
+                          currentSchool?.emailDomain ?? ''
+                        ) &&
                         e.target.value !== ''
                       )
-                        setNewAdminError('Please enter a valid Messiah email.');
+                        setNewAdminError(
+                          `Please enter a valid ${currentSchool?.name} email.`
+                        );
                       else setNewAdminError('');
                       setNewAdmin(e.target.value);
                     }}
@@ -428,7 +431,6 @@ const ClubForm = () => {
                 </span>
                 <Button
                   text='Add'
-                  color='blue'
                   filled={false}
                   className='inline-flex flex-row items-center justify-center gap-2'
                   icon={<CiCirclePlus size={20} />}
@@ -452,7 +454,6 @@ const ClubForm = () => {
         />
         <Button
           text='Set Logo'
-          color='blue'
           filled={false}
           className='inline-flex flex-row items-center justify-center gap-2 h-12'
           grow={false}
@@ -482,7 +483,6 @@ const ClubForm = () => {
             </span>
             <Button
               text='Remove'
-              color='blue'
               filled={false}
               className='inline-flex flex-row items-center justify-center gap-2 h-12'
               icon={<CiTrash size={20} />}
@@ -498,7 +498,6 @@ const ClubForm = () => {
           </span>
           <Button
             text='Add'
-            color='blue'
             filled={false}
             className='inline-flex flex-row items-center justify-center gap-2'
             icon={<CiCirclePlus size={20} />}
@@ -511,18 +510,11 @@ const ClubForm = () => {
       <div className='flex flex-row gap-2'>
         <Button
           text={club ? 'Update' : 'Create'}
-          color='blue'
           type='submit'
           name={club ? 'update' : 'create'}
           filled
         />
-        <Button
-          text='Cancel'
-          color='blue'
-          filled={false}
-          type='submit'
-          name='cancel'
-        />
+        <Button text='Cancel' filled={false} type='submit' name='cancel' />
       </div>
     </ResponsiveForm>
   );
