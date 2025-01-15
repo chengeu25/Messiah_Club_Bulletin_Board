@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
+import { useLoaderData, useLocation, useSubmit } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from '../../../components/formElements/Select.component';
@@ -37,7 +37,7 @@ const EmailPreferences = () => {
     email_event_type: initialEventType
   } = useLoaderData() as EmailPreferencesData;
 
-  const [params] = useSearchParams();
+  const location = useLocation();
 
   const [emailFrequency, setEmailFrequency] = useState(
     initialFrequency ?? 'Weekly'
@@ -63,9 +63,26 @@ const EmailPreferences = () => {
   };
 
   useEffect(() => {
-    setError(params.get('error'));
-    setMessage(params.get('message'));
-  }, [params]);
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      setError(newError);
+      setMessage(newMessage);
+
+      // Remove error and message params
+      searchParams.delete('error');
+      searchParams.delete('message');
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [location.search]);
 
   return (
     <ResponsiveForm onSubmit={handleSubmit}>

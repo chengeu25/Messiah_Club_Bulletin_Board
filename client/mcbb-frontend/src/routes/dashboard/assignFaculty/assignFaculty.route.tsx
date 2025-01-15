@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSearchParams } from 'react-router-dom';
+import { Form, useLocation } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import checkUser from '../../../helper/checkUser';
@@ -31,7 +31,7 @@ type FacultyData = {
  * @returns {React.ReactElement} Rendered faculty assignment dashboard
  */
 const AssignFaculty = () => {
-  const [params] = useSearchParams();
+  const location = useLocation();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState<boolean>(false);
@@ -84,13 +84,29 @@ const AssignFaculty = () => {
    * @description Updates error and success messages from URL parameters
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        setError(decodeURIComponent(newError));
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        setMessage(decodeURIComponent(newMessage));
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
-    }
-  }, [params]);
+  }, [location.search]);
 
   /**
    * Checks user's permission to delete faculty.
@@ -325,7 +341,9 @@ const AssignFaculty = () => {
                         }}
                         aria-label={`Set ${item.name} as active`}
                         style={{
-                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
+                          cursor: item.can_delete_faculty
+                            ? 'pointer'
+                            : 'not-allowed'
                         }}
                         disabled={!item.can_delete_faculty}
                       />
@@ -345,7 +363,9 @@ const AssignFaculty = () => {
                           color: 'white',
                           border: 'none',
                           borderRadius: '5px',
-                          cursor: item.can_delete_faculty ? 'pointer' : 'not-allowed'
+                          cursor: item.can_delete_faculty
+                            ? 'pointer'
+                            : 'not-allowed'
                         }}
                         disabled={!item.can_delete_faculty}
                       >
