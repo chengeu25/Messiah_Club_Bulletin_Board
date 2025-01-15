@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   useSubmit,
-  useSearchParams,
   Link,
   useLoaderData,
   useParams,
@@ -41,7 +40,6 @@ import { useSchool } from '../../contexts/SchoolContext';
 const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
-  const [params] = useSearchParams();
   const { schoolId } = useParams();
   const location = useLocation();
 
