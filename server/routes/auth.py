@@ -432,11 +432,11 @@ def signup():
     password = data.get("password")
     school = data.get("school")
     if data.get("gender") == "male":
-        gender = 1
+        gender = "M"
     elif data.get("gender") == "female":
-        gender = 0
+        gender = "F"
     else:
-        gender = None
+        gender = "O"
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
