@@ -3,6 +3,7 @@ import { Form, useSubmit, useSearchParams } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import passwordStrongOrNah from '../../helper/passwordstrength';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * ChangePassword component for updating user account password.
@@ -18,6 +19,7 @@ import passwordStrongOrNah from '../../helper/passwordstrength';
 const ChangePassword = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
+  const { currentSchool } = useSchool();
 
   /**
    * State variable to manage and display error messages during password change process.
@@ -85,6 +87,7 @@ const ChangePassword = () => {
         'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)'
       );
     } else {
+      formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
       submit(formData, { method: 'post' });
     }

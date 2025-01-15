@@ -3,6 +3,7 @@ import { useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * ResetPassword component for changing user password.
@@ -30,6 +31,8 @@ const ResetPassword = () => {
 
   // State management for error handling
   const [error, setError] = useState<string | null>(null);
+
+  const { currentSchool } = useSchool();
 
   /**
    * Handles password reset form submission.
@@ -61,6 +64,7 @@ const ResetPassword = () => {
     } else {
       // Append action and submit form
       formData.append('action', action);
+      formData.append('schoolId', currentSchool?.id.toString() ?? '');
       submit(formData, { method: 'post' });
     }
   };

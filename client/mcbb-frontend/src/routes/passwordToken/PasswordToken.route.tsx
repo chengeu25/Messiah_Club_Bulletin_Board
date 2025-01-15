@@ -87,6 +87,7 @@ const ForgotPassswordToken = () => {
       // Append token and submit form
       formData.append('action', action);
       formData.append('token', params.get('token') as string);
+      formData.append('schoolId', params.get('schoolId') as string);
       submit(formData, { method: 'post' });
     }
   };

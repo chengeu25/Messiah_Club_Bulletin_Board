@@ -669,7 +669,7 @@ def forgot_password():
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        """Select pwd1, pwd2, email_verified
+        """Select pwd1, pwd2, email_verified, school_id
            FROM users 
            WHERE email = %s 
            AND is_active = 1""",
@@ -677,14 +677,11 @@ def forgot_password():
     )
     result = cur.fetchone()
 
+    school_id = result[3]
+
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Invalid email"}), 401
-
-    # Check if email is verified
-    is_email_verified = result[2]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
 
     if Config.SECRET_KEY is None:
         return jsonify({"error": "Developer did not set secret key"}), 500
@@ -713,7 +710,9 @@ def forgot_password():
     result = cur.fetchone()
 
     # Create reset link
-    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
+    reset_link = (
+        f"http://localhost:5173/ForgotPasswordToken?token={token}&schoolId={school_id}"
+    )
 
     # Send email
     send_email(
