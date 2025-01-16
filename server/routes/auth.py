@@ -431,6 +431,8 @@ def signup():
     name = data.get("name")
     password = data.get("password")
     school = data.get("school")
+    email_frequency = data.get("emailFrequency")
+    email_preferences = data.get("emailPreferences")
     if data.get("gender") == "male":
         gender = "M"
     elif data.get("gender") == "female":
@@ -471,9 +473,19 @@ def signup():
                     GENDER = %s, 
                     IS_ACTIVE = 1, 
                     NAME = %s, 
-                    EMAIL_VERIFIED = 0 
+                    EMAIL_VERIFIED = 0,
+                    EMAIL_FREQUENCY = %s,
+                    EMAIL_EVENT_TYPE = %s
                 WHERE EMAIL = %s AND SCHOOL_ID = %s""",
-                (generate_password_hash(password), gender, name, email, school),
+                (
+                    generate_password_hash(password),
+                    gender,
+                    name,
+                    email_frequency,
+                    email_preferences,
+                    email,
+                    school,
+                ),
             )
             mysql.connection.commit()
             cur.close()
@@ -492,8 +504,28 @@ def signup():
 
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s)",
-        (email, hashed_password, gender, school, name),
+        """INSERT INTO users (
+                EMAIL, 
+                EMAIL_VERIFIED, 
+                PWD1, 
+                GENDER, 
+                IS_FACULTY, 
+                CAN_DELETE_FACULTY, 
+                IS_ACTIVE, 
+                SCHOOL_ID, 
+                NAME,
+                EMAIL_FREQUENCY,
+                EMAIL_EVENT_TYPE
+            ) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s, %s, %s)""",
+        (
+            email,
+            hashed_password,
+            gender,
+            school,
+            name,
+            email_frequency,
+            email_preferences,
+        ),
     )
     mysql.connection.commit()
 

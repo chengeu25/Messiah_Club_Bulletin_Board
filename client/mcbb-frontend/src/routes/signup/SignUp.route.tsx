@@ -285,6 +285,24 @@ const SignUp = () => {
         />
       </div>
 
+      {/* Email Preferences */}
+      <div className='w-full'>
+        <Select
+          label='Send Regular Emails About Events That Are:'
+          name='emailPreferences'
+          options={['Suggested', 'Hosted by Subscribed Clubs', 'Attending']}
+          filled={false}
+          required
+        />
+        <Select
+          label='Send These Emails:'
+          name='emailFrequency'
+          options={['Weekly', 'Daily', 'Never']}
+          filled={false}
+          required
+        />
+      </div>
+
       {/* Submit Button */}
       <div className='flex flex-row gap-2 mt-4'>
         <Button
