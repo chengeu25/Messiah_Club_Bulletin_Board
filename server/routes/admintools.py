@@ -556,6 +556,36 @@ def toggle_user_status(email):
                 WHERE school_id = %s AND email = %s
             """
             cur.execute(update_query, params)
+            if not is_active:
+                update_query = f"""
+                    UPDATE users u
+                    INNER JOIN club_admin ca
+                        ON u.email = ca.user_id
+                    INNER JOIN rsvp r
+                        ON u.email = r.user_id
+                    INNER JOIN user_subscription us
+                        ON u.email = us.email
+                    SET u.is_active = 0,
+                        ca.is_active = 0,
+                        r.is_active = 0,
+                        us.is_active = 0
+                    WHERE u.email = %s 
+                        AND u.school_id = %s
+                """
+                cur.execute(
+                    update_query,
+                    (
+                        email,
+                        session.get("school"),
+                    ),
+                )
+                delete_query = f"""
+                    DELETE ut FROM user_tags ut
+                    INNER JOIN users u 
+                        ON ut.user_id = u.email
+                    WHERE ut.user_id = %s 
+                        AND u.school_id = %s"""
+                cur.execute(delete_query, (email, session.get("school")))
             conn.commit()
 
         return (
