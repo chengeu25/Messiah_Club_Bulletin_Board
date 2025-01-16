@@ -189,6 +189,8 @@ def send_email_notifications():
                     elif user["email_frequency"] == "Weekly":
                         current_date = datetime.now(timezone.utc)
                         one_week_later = current_date + timedelta(weeks=1)
+                        if not current_date.weekday() == 0:
+                            return
                         cd_iso = current_date.isoformat()
                         owl_iso = one_week_later.isoformat()
                         events = get_events_by_date(
