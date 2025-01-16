@@ -50,6 +50,7 @@ def get_school():
             200,
         )
     except Exception as e:
+        print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 

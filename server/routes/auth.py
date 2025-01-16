@@ -391,11 +391,14 @@ def signup():
 
     Expected JSON payload:
     {
-        "email": str,          # User's email address
-        "password": str,       # User's password
-        "name": str,           # User's full name
-        "captchaResponse": str # reCAPTCHA verification token
-        "school": int          # School ID
+        "email": str,           # User's email address
+        "password": str,        # User's password
+        "name": str,            # User's full name
+        "captchaResponse": str  # reCAPTCHA verification token
+        "school": int           # School ID
+        "emailFrequency": str   # Email frequency preference
+        "emailPreferences": str # Email preferences
+        "gender": str           # User's gender
     }
 
     Returns:
@@ -433,9 +436,9 @@ def signup():
     school = data.get("school")
     email_frequency = data.get("emailFrequency")
     email_preferences = data.get("emailPreferences")
-    if data.get("gender") == "male":
+    if data.get("gender") == "Male":
         gender = "M"
-    elif data.get("gender") == "female":
+    elif data.get("gender") == "Female":
         gender = "F"
     else:
         gender = "O"
@@ -838,8 +841,8 @@ def forgot_password_reset():
 
     if (
         check_password_hash(result[0], new_password)
-        or check_password_hash(result[1], new_password)
-        or check_password_hash(result[2], new_password)
+        or check_password_hash(result[1] if result[1] is not None else "", new_password)
+        or check_password_hash(result[2] if result[2] is not None else "", new_password)
     ):
         return (
             jsonify({"error": "New password cannot be a previously used password"}),
