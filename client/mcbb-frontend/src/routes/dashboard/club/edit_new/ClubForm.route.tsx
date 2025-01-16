@@ -1,4 +1,4 @@
-import { useLoaderData } from 'react-router';
+import { useLoaderData, useLocation } from 'react-router-dom';
 import Input from '../../../../components/formElements/Input.component';
 import {
   ClubAdminType,
@@ -10,7 +10,7 @@ import Button from '../../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../../components/formElements/ResponsiveForm';
 import { useEffect, useState } from 'react';
 import { CiCirclePlus, CiTrash } from 'react-icons/ci';
-import { useSearchParams, useSubmit } from 'react-router-dom';
+import { useSubmit } from 'react-router-dom';
 import Select from 'react-select';
 import { OptionType } from '../../../../components/formElements/Select.styles';
 import { useSchool } from '../../../../contexts/SchoolContext';
@@ -26,7 +26,7 @@ interface LoaderData {
  */
 const ClubForm = () => {
   const submit = useSubmit();
-  const [params] = useSearchParams();
+  const location = useLocation();
   const data = useLoaderData() as LoaderData | null;
   const { user, club, tagsAvailable } = data || {};
   const { currentSchool } = useSchool();
@@ -288,10 +288,22 @@ const ClubForm = () => {
 
   // Handle error messages from URL parameters
   useEffect(() => {
-    if (params.get('error')) {
-      setError([params.get('error') as string]);
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+
+    if (newError) {
+      const errorArray = [decodeURIComponent(newError)];
+      setError(errorArray);
+      searchParams.delete('error');
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-  }, [params]);
+  }, [location.search]);
 
   // Update highest image and admin IDs
   useEffect(() => {
@@ -450,7 +462,8 @@ const ClubForm = () => {
           type='file'
           accept='image/*'
           name='image'
-          filled
+          filled={false}
+          labelOnSameLine
         />
         <Button
           text='Set Logo'
@@ -494,7 +507,13 @@ const ClubForm = () => {
         ))}
         <li className='flex-row inline-flex gap-2'>
           <span className='flex-grow'>
-            <Input type='file' accept='image/*' name='images-new' label='' />
+            <Input
+              type='file'
+              accept='image/*'
+              name='images-new'
+              label=''
+              filled={false}
+            />
           </span>
           <Button
             text='Add'

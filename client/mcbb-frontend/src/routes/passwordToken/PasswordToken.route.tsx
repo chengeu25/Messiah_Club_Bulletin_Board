@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useSubmit, useSearchParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useSubmit, useLocation, useNavigate } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -27,15 +27,12 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 const ForgotPassswordToken = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
-  const [params] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
   // State management for form validation and messages
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-
-  // Extract and memoize password reset token
-  const token = useMemo(() => params.get('token'), [params]);
 
   /**
    * Handles token validation and error/message display.
@@ -44,16 +41,36 @@ const ForgotPassswordToken = () => {
    * @description Validates password reset token and manages error/message states
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+    const currentToken = searchParams.get('token');
+
+    if (newError || newMessage || !currentToken) {
+      if (newError) {
+        const decodedError = decodeURIComponent(newError);
+        setError(decodedError);
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        const decodedMessage = decodeURIComponent(newMessage);
+        setMessage(decodedMessage);
+        searchParams.delete('message');
+      }
+
+      if (!currentToken) {
+        navigate('/forgotPasswordToken?error=' + (newError ?? ''));
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
-    }
-    if (!params.get('token')) {
-      navigate('/forgotPasswordToken?error=' + params.get('error'));
-    }
-  }, [token, navigate, params]);
+  }, [location.search, navigate]);
 
   /**
    * Handles password reset form submission.
@@ -73,6 +90,9 @@ const ForgotPassswordToken = () => {
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
 
+    // Create search params from location
+    const searchParams = new URLSearchParams(location.search);
+
     // Validate password inputs
     if (String(formData.get('newPassword')) === '') {
       setError('Please enter a new password');
@@ -86,8 +106,8 @@ const ForgotPassswordToken = () => {
     } else {
       // Append token and submit form
       formData.append('action', action);
-      formData.append('token', params.get('token') as string);
-      formData.append('schoolId', params.get('schoolId') as string);
+      formData.append('token', searchParams.get('token') as string);
+      formData.append('schoolId', searchParams.get('schoolId') as string);
       submit(formData, { method: 'post' });
     }
   };
