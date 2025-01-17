@@ -1,8 +1,8 @@
 import { Link, useNavigate } from 'react-router-dom';
 
-import home1 from '../../../assets/home1.png';
-import home2 from '../../../assets/home2.png';
-import home3 from '../../../assets/home3.png';
+import home1 from '../../../assets/home1.jpg';
+import home2 from '../../../assets/home2.jpg';
+import home3 from '../../../assets/home3.jpg';
 import home4 from '../../../assets/home4.jpg';
 
 import Button from '../../components/formElements/Button.component';
@@ -67,7 +67,6 @@ const LandingPage = () => {
             filled={true}
           />
         </div>
-
         {/* Features grid with image and text cards */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {/* Feature cards showcasing application capabilities */}
@@ -129,6 +128,7 @@ const LandingPage = () => {
             />
           </Card>
         </div>
+        Photos by Messiah Pulse.
       </div>
 
       {/* Footer with creator information and external links */}
