@@ -44,7 +44,7 @@ const Event = () => {
       <Card
         color='gray-300'
         padding={4}
-        className='w-full max-w-full flex gap-2 relative flex-row justify-between items-center'
+        className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
         <Form className='flex-shrink-0 flex'>
@@ -61,12 +61,8 @@ const Event = () => {
       </Card>
 
       {/* Event metadata section */}
-      <div className='flex flex-col w-full max-w-full gap-4 m-2'>
-        <Card
-          color='gray-300'
-          padding={4}
-          className='flex-col gap-2 w-full max-w-full'
-        >
+      <div className='flex flex-col w-full gap-4 m-2'>
+        <Card color='gray-300' padding={4} className='flex-col gap-2 w-full'>
           <p className='flex flex-row gap-2 items-center flex-wrap'>
             <IoMdTime size={24} /> <strong>Time:</strong>{' '}
             {format(new Date(event?.startTime), 'MM/dd/yyyy HH:mm')} -{' '}
@@ -96,17 +92,13 @@ const Event = () => {
       </div>
 
       {/* Event description */}
-      <Card
-        color='gray-300'
-        padding={4}
-        className='w-full max-w-full flex-col gap-2'
-      >
+      <Card color='gray-300' padding={4} className='w-full flex-col gap-2'>
         <p>{event?.description}</p>
       </Card>
 
       {/* Event tags */}
       {(event?.tags?.length ?? 0) > 0 && (
-        <div className='inline-flex flex-row w-full max-w-full gap-2 items-center flex-wrap'>
+        <div className='inline-flex flex-row w-full gap-2 items-center flex-wrap'>
           {event?.tags?.map((tag: string, index: number) => (
             <Card
               key={index}
@@ -121,7 +113,7 @@ const Event = () => {
       )}
 
       {/* Event images */}
-      <div className='flex flex-row w-full max-w-full gap-4 overflow-x-auto min-h-48 mt-2'>
+      <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48 mt-2'>
         {event?.images?.map((image: ImageType, index: number) => (
           <img
             key={index}
