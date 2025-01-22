@@ -39,7 +39,7 @@ const Event = () => {
   const submit = useSubmit();
 
   return (
-    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
+    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll overflow-x-hidden gap-2'>
       {/* Event title and RSVP section */}
       <Card
         color='gray-300'
