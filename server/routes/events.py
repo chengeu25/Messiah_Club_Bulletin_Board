@@ -413,29 +413,51 @@ def get_event(event_id):
     cur.close()
     return jsonify({"event": final_result}), 200
 
+
 @events_bp.route("/event/<int:event_id>/cancel", methods=["POST", "DELETE"])
 def cancel_event(event_id):
     try:
+        user = get_user_session_info()
         # Fetch user information (assuming session contains user info)
-        user_id = session.get("user_id")
+        user_id = user["user_id"]
         if not user_id:
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Get event details to verify if the user is the organizer
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            """SELECT u.email, ca.club_id, eh.event_id FROM users u
+                    INNER JOIN club_admin ca
+                        ON u.email = ca.user_id
+                    INNER JOIN event_host eh
+                        ON ca.club_id = eh.club_id
+                    WHERE u.email = %s
+                        AND u.is_active = 1
+                        AND eh.event_id = %s""",
+            (user_id, event_id),
+        )
+
+        result = cur.fetchone()
+        if not result:
+            cur.close()
+            print(
+                f"User with ID {user_id} is not the organizer of event with ID {event_id}"
+            )
             return jsonify({"error": "Unauthorized"}), 403
 
         # Log the event_id being passed
         print(f"Canceling event with ID: {event_id}")
 
-        # Get event details to verify if the user is the organizer
-        cur = mysql.connection.cursor()
-
         # Query to get the event and organizer details
         cur.execute(
-            "SELECT event_name FROM event WHERE event_id = %s AND is_active = 1", # CHANGE TO ORGANIZER ID
-            (event_id,)
+            "SELECT event_name FROM event WHERE event_id = %s AND is_active = 1",  # CHANGE TO ORGANIZER ID
+            (event_id,),
         )
-        
+
         # # Check if the execute call was successful
         print("Query executed successfully")
-        
+
         event = cur.fetchone()  # Fetch the first result
         if not event:
             cur.close()  # Don't forget to close the cursor
@@ -446,10 +468,7 @@ def cancel_event(event_id):
         print(f"Event found: {event}")
 
         # Update the event status to inactive (cancel the event)
-        cur.execute(
-            "UPDATE event SET is_active = 0 WHERE event_id = %s",
-            (event_id,)
-        )
+        cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
 
         # Check if the update was successful
         print(f"Event with ID {event_id} canceled successfully")
