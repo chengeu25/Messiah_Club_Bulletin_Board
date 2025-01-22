@@ -7,7 +7,11 @@ import { Form, Link, useLoaderData, useSubmit } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import Input from '../../../components/formElements/Input.component';
 import Comment from '../../../components/forums/Comment.component';
-import { EventDetailType, ImageType } from '../../../types/databaseTypes';
+import {
+  EventDetailType,
+  ImageType,
+  UserType
+} from '../../../types/databaseTypes';
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
 
@@ -35,13 +39,16 @@ import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.comp
  */
 const Event = () => {
   // Retrieve event details from loader
-  const { event } = useLoaderData() as { event: EventDetailType };
+  const { event, user } = useLoaderData() as {
+    event: EventDetailType;
+    user: UserType;
+  };
   const submit = useSubmit();
 
   if (!event) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-xl font-semibold text-red-500">
+      <div className='flex items-center justify-center h-full'>
+        <p className='text-xl font-semibold text-red-500'>
           Event details could not be loaded. Please try again later.
         </p>
       </div>
@@ -57,7 +64,7 @@ const Event = () => {
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
-        
+
         {/* Cancel Event Button (first now) */}
         <Form
           onSubmit={(e) => {
@@ -68,14 +75,18 @@ const Event = () => {
           method='post'
           className='flex-shrink-0'
         >
-          <button
-            type='submit'
-            name='action'
-            value='cancel'
-            className='bg-red-500 text-white py-2 px-4 rounded'
-          >
-            Cancel Event
-          </button>
+          {user?.clubAdmins?.some((adminClubId) =>
+            event.host.some((host) => host.id === adminClubId)
+          ) && (
+            <button
+              type='submit'
+              name='action'
+              value='cancel'
+              className='bg-red-500 text-white py-2 px-4 rounded'
+            >
+              Cancel Event
+            </button>
+          )}
           <input type='hidden' name='id' value={event.id} />
         </Form>
 
