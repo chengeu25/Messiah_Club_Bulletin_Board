@@ -8,7 +8,9 @@ from helper.send_email import send_email
 import requests
 from config import Config
 import jwt
+from flask_cors import CORS
 from helper.check_user import get_user_session_info
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -831,3 +833,78 @@ def forgot_password_reset():
     cur.close()
     session.pop("user_id", None)
     return jsonify({"message": "Password reset successful"}), 200
+
+@auth_bp.route('/account-info', methods=['POST'])
+def update_account_info():
+    try:
+        # Parse the input data
+        data = request.get_json()
+        print(f"Received request data: {data}")
+
+        if not data:
+            return jsonify({"error": "No data was provided"}), 400
+
+        # Validate name
+        new_name = data.get("name")
+        if not new_name:
+            return jsonify({"error": "New name is required"}), 400
+
+        # Map gender to the expected format
+        gender_input = data.get("gender")
+        gender_map = {"male": "M", "female": "F", "other": "O"}
+        gender = gender_map.get(gender_input.lower())
+        if not gender:
+            return jsonify({"error": "Invalid gender value"}), 400
+
+        # Retrieve the current user from session
+        current_user = get_user_session_info()
+        print(f"Current user session info: {current_user}")
+
+        # Validate session data
+        if not current_user or "user_id" not in current_user:
+            print(f"Invalid session data: {current_user}")
+            return jsonify({"error": "User session is invalid or expired"}), 401
+
+        # Map user_id to email
+        email = current_user["user_id"]
+
+        # Database connection
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cur = mysql.connection.cursor()
+
+        # Check if the user exists by EMAIL
+        cur.execute(
+            "SELECT EMAIL FROM users WHERE EMAIL = %s",
+            (email,)
+        )
+        user = cur.fetchone()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Update the user's name and gender in the database
+        cur.execute(
+            "UPDATE users SET NAME = %s, gender = %s WHERE EMAIL = %s",
+            (new_name, gender, email)
+        )
+        mysql.connection.commit()
+
+        return jsonify({"message": "Account info updated successfully"}), 200
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")  # Debugging
+        return jsonify({"error": "An error occurred while updating your account info"}), 500
+
+
+
+
+
+
+
+
+
+
+
+
