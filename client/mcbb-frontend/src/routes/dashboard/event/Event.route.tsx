@@ -57,6 +57,29 @@ const Event = () => {
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
+        
+        {/* Cancel Event Button (first now) */}
+        <Form
+          onSubmit={(e) => {
+            if (!confirm('Are you sure you want to cancel this event?')) {
+              e.preventDefault(); // Prevent the form from submitting if the user cancels
+            }
+          }}
+          method='post'
+          className='flex-shrink-0'
+        >
+          <button
+            type='submit'
+            name='action'
+            value='cancel'
+            className='bg-red-500 text-white py-2 px-4 rounded'
+          >
+            Cancel Event
+          </button>
+          <input type='hidden' name='id' value={event.id} />
+        </Form>
+
+        {/* RSVP Dropdown (second now) */}
         <Form className='flex-shrink-0 flex'>
           <RSVPDropdown
             handleRSVPClick={(type) =>
@@ -69,30 +92,6 @@ const Event = () => {
           />
         </Form>
       </Card>
-
-      
-
-      {/* Cancel Event Button */}
-      {/* {event?.isOrganizer && ( // Check if the user is the organizer */}
-        <Form
-          onSubmit={(e) => {
-            if (!confirm('Are you sure you want to cancel this event?')) {
-              e.preventDefault(); // Prevent the form from submitting if the user cancels
-            }
-          }}
-          method='post'
-        >
-          <button
-            type='submit'
-            name='action'
-            value='cancel'
-            className='bg-red-500 text-white py-2 px-4 rounded mt-2'
-          >
-            Cancel Event
-          </button>
-          <input type='hidden' name='id' value={event.id} />
-        </Form>
-      
 
       {/* Event metadata section */}
       <div className='flex flex-col w-full gap-4 m-2'>
