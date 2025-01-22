@@ -121,7 +121,7 @@ const Event = () => {
       )}
 
       {/* Event images */}
-      <div className='flex flex-row w-full max-w-full gap-4 overflow-x-auto min-h-48 mt-2 px-1'>
+      <div className='flex flex-row w-full max-w-full gap-4 overflow-x-auto min-h-48 mt-2'>
         {event?.images?.map((image: ImageType, index: number) => (
           <img
             key={index}
