@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSubmit, useSearchParams } from 'react-router-dom';
+import { useSubmit, useLocation } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -28,7 +28,7 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 const ForgotPassword = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
-  const [params] = useSearchParams();
+  const location = useLocation();
 
   // State for managing errors and messages
   const [error, setError] = useState<string | null>(null);
@@ -41,13 +41,31 @@ const ForgotPassword = () => {
    * @description Checks URL for error or message parameters and updates state
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        const decodedError = decodeURIComponent(newError);
+        setError(decodedError);
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        const decodedMessage = decodeURIComponent(newMessage);
+        setMessage(decodedMessage);
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
-    }
-  }, [params]);
+  }, [location.search]);
 
   /**
    * Handles form submission for password reset request.
@@ -89,7 +107,7 @@ const ForgotPassword = () => {
 
       {/* Email input */}
       <Input
-        label='Enter your Messiah email:'
+        label='Enter your school email:'
         name='email'
         type='text'
         placeholder='Messiah Email'

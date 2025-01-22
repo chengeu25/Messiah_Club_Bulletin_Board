@@ -393,11 +393,14 @@ def signup():
 
     Expected JSON payload:
     {
-        "email": str,          # User's email address
-        "password": str,       # User's password
-        "name": str,           # User's full name
-        "captchaResponse": str # reCAPTCHA verification token
-        "school": int          # School ID
+        "email": str,           # User's email address
+        "password": str,        # User's password
+        "name": str,            # User's full name
+        "captchaResponse": str  # reCAPTCHA verification token
+        "school": int           # School ID
+        "emailFrequency": str   # Email frequency preference
+        "emailPreferences": str # Email preferences
+        "gender": str           # User's gender
     }
 
     Returns:
@@ -433,12 +436,14 @@ def signup():
     name = data.get("name")
     password = data.get("password")
     school = data.get("school")
-    if data.get("gender") == "male":
-        gender = 1
-    elif data.get("gender") == "female":
-        gender = 0
+    email_frequency = data.get("emailFrequency")
+    email_preferences = data.get("emailPreferences")
+    if data.get("gender") == "Male":
+        gender = "M"
+    elif data.get("gender") == "Female":
+        gender = "F"
     else:
-        gender = None
+        gender = "O"
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
@@ -473,9 +478,19 @@ def signup():
                     GENDER = %s, 
                     IS_ACTIVE = 1, 
                     NAME = %s, 
-                    EMAIL_VERIFIED = 0 
+                    EMAIL_VERIFIED = 0,
+                    EMAIL_FREQUENCY = %s,
+                    EMAIL_EVENT_TYPE = %s
                 WHERE EMAIL = %s AND SCHOOL_ID = %s""",
-                (generate_password_hash(password), gender, name, email, school),
+                (
+                    generate_password_hash(password),
+                    gender,
+                    name,
+                    email_frequency,
+                    email_preferences,
+                    email,
+                    school,
+                ),
             )
             mysql.connection.commit()
             cur.close()
@@ -494,8 +509,28 @@ def signup():
 
     cur = mysql.connection.cursor()
     cur.execute(
-        "INSERT INTO users(EMAIL, EMAIL_VERIFIED, PWD1, GENDER, IS_FACULTY, CAN_DELETE_FACULTY, IS_ACTIVE, SCHOOL_ID, NAME) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s)",
-        (email, hashed_password, gender, school, name),
+        """INSERT INTO users (
+                EMAIL, 
+                EMAIL_VERIFIED, 
+                PWD1, 
+                GENDER, 
+                IS_FACULTY, 
+                CAN_DELETE_FACULTY, 
+                IS_ACTIVE, 
+                SCHOOL_ID, 
+                NAME,
+                EMAIL_FREQUENCY,
+                EMAIL_EVENT_TYPE
+            ) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s, %s, %s)""",
+        (
+            email,
+            hashed_password,
+            gender,
+            school,
+            name,
+            email_frequency,
+            email_preferences,
+        ),
     )
     mysql.connection.commit()
 
@@ -671,7 +706,7 @@ def forgot_password():
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        """Select pwd1, pwd2, email_verified
+        """Select pwd1, pwd2, email_verified, school_id
            FROM users 
            WHERE email = %s 
            AND is_active = 1""",
@@ -679,14 +714,11 @@ def forgot_password():
     )
     result = cur.fetchone()
 
+    school_id = result[3]
+
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Invalid email"}), 401
-
-    # Check if email is verified
-    is_email_verified = result[2]
-    if not is_email_verified == 1:
-        return jsonify({"error": "Email not verified"}), 401
 
     if Config.SECRET_KEY is None:
         return jsonify({"error": "Developer did not set secret key"}), 500
@@ -715,7 +747,9 @@ def forgot_password():
     result = cur.fetchone()
 
     # Create reset link
-    reset_link = f"http://localhost:5173/ForgotPasswordToken?token={token}"
+    reset_link = (
+        f"http://localhost:5173/ForgotPasswordToken?token={token}&schoolId={school_id}"
+    )
 
     # Send email
     send_email(
@@ -809,8 +843,8 @@ def forgot_password_reset():
 
     if (
         check_password_hash(result[0], new_password)
-        or check_password_hash(result[1], new_password)
-        or check_password_hash(result[2], new_password)
+        or check_password_hash(result[1] if result[1] is not None else "", new_password)
+        or check_password_hash(result[2] if result[2] is not None else "", new_password)
     ):
         return (
             jsonify({"error": "New password cannot be a previously used password"}),

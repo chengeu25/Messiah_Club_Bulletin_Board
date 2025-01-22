@@ -23,6 +23,7 @@ import { AuthSync } from '../../helper/checkUser';
 const logoutLoader = async () => {
   const authSync = AuthSync.getInstance();
   await authSync.performLogout();
+  window.location.reload();
   return redirect('/login');
 };
 

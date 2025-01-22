@@ -69,6 +69,7 @@ const Select = ({
         onChange={onChange}
         name={name}
         value={value}
+        defaultValue={value === null ? options[0] : value}
       >
         {options.map((option) => (
           <option key={option} value={option}>

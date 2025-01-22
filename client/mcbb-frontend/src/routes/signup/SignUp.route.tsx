@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import {
   useSubmit,
-  useSearchParams,
   Link,
   useLoaderData,
-  useParams
+  useParams,
+  useLocation
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -40,8 +40,8 @@ import { useSchool } from '../../contexts/SchoolContext';
 const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
-  const [params] = useSearchParams();
   const { schoolId } = useParams();
+  const location = useLocation();
 
   // Get schools from loader
   const { schools } = useLoaderData() as {
@@ -76,13 +76,31 @@ const SignUp = () => {
    * @description Parses and sets error or success messages from URL parameters
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        const decodedError = decodeURIComponent(newError);
+        setError(decodedError);
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        const decodedMessage = decodeURIComponent(newMessage);
+        setMessage(decodedMessage);
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
-    }
-  }, [params]);
+  }, [location.search]);
 
   /**
    * Handles form submission with comprehensive validation
@@ -111,6 +129,12 @@ const SignUp = () => {
     }
 
     if (password !== confirmPassword) {
+      return;
+    }
+
+    if (action === 'switchSchool') {
+      formData.append('action', action);
+      submit(formData, { method: 'post' });
       return;
     }
 
@@ -279,6 +303,24 @@ const SignUp = () => {
         />
       </div>
 
+      {/* Email Preferences */}
+      <div className='w-full'>
+        <Select
+          label='Send Regular Emails About Events That Are:'
+          name='emailPreferences'
+          options={['Suggested', 'Hosted by Subscribed Clubs', 'Attending']}
+          filled={false}
+          required
+        />
+        <Select
+          label='Send These Emails:'
+          name='emailFrequency'
+          options={['Weekly', 'Daily', 'Never']}
+          filled={false}
+          required
+        />
+      </div>
+
       {/* Submit Button */}
       <div className='flex flex-row gap-2 mt-4'>
         <Button
@@ -288,6 +330,13 @@ const SignUp = () => {
           disabled={!isPasswordStrong || password !== confirmPassword}
         />
       </div>
+
+      <Button
+        text='Switch School'
+        type='submit'
+        name='switchSchool'
+        filled={false}
+      />
 
       {/* Link to Login */}
       <div className='mt-4 text-center'>

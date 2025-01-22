@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useSearchParams } from 'react-router-dom';
+import { Form, useSubmit, useLocation } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import passwordStrongOrNah from '../../helper/passwordstrength';
+import { useSchool } from '../../contexts/SchoolContext';
 
 /**
  * ChangePassword component for updating user account password.
@@ -17,7 +18,8 @@ import passwordStrongOrNah from '../../helper/passwordstrength';
  */
 const ChangePassword = () => {
   const submit = useSubmit();
-  const [params] = useSearchParams();
+  const location = useLocation();
+  const { currentSchool } = useSchool();
 
   /**
    * State variable to manage and display error messages during password change process.
@@ -45,13 +47,29 @@ const ChangePassword = () => {
    * and updates the component's state accordingly when the page loads or reloads
    */
   useEffect(() => {
-    if (params.get('error')) {
-      setError(decodeURIComponent(params.get('error') ?? ''));
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        setError(decodeURIComponent(newError));
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        setMessage(decodeURIComponent(newMessage));
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (params.get('message')) {
-      setMessage(decodeURIComponent(params.get('message') ?? ''));
-    }
-  }, [params]);
+  }, [location.search]);
 
   /**
    * Validates and submits the password change form.
@@ -85,6 +103,7 @@ const ChangePassword = () => {
         'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)'
       );
     } else {
+      formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
       submit(formData, { method: 'post' });
     }

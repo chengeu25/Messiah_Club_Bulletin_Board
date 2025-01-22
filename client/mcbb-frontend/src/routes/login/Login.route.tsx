@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useSubmit,
-  useSearchParams,
+  useLocation,
   useLoaderData,
   useNavigation,
   useParams
@@ -39,7 +39,7 @@ const Login = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
   const navigation = useNavigation();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { schoolId } = useParams();
   const { userId, schools } = useLoaderData() as {
     userId: string;
@@ -75,15 +75,33 @@ const Login = () => {
    * @description Updates error and message states based on URL parameters
    */
   useEffect(() => {
-    if (searchParams.get('error')) {
-      setError(decodeURIComponent(searchParams.get('error') ?? ''));
-      setIsLoading(false); // Reset loading state when error is present
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        const decodedError = decodeURIComponent(newError);
+        setError(decodedError);
+        setIsLoading(false); // Reset loading state when error is present
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        const decodedMessage = decodeURIComponent(newMessage);
+        setMessage(decodedMessage);
+        setIsLoading(false); // Reset loading state when message is present
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
     }
-    if (searchParams.get('message')) {
-      setMessage(decodeURIComponent(searchParams.get('message') ?? ''));
-      setIsLoading(false); // Reset loading state when message is present
-    }
-  }, [searchParams]);
+  }, [location.search]);
 
   /**
    * Manages loading state based on navigation state.
@@ -132,6 +150,9 @@ const Login = () => {
         formData.append('action', action);
         submit(formData, { method: 'post' });
       } else if (action === 'forgot') {
+        formData.append('action', action);
+        submit(formData, { method: 'post' });
+      } else if (action === 'switchSchool') {
         formData.append('action', action);
         submit(formData, { method: 'post' });
       } else {
@@ -235,6 +256,13 @@ const Login = () => {
         text='Forgot Password?'
         type='submit'
         name='forgot'
+        filled={false}
+      />
+
+      <Button
+        text='Switch School'
+        type='submit'
+        name='switchSchool'
         filled={false}
       />
     </ResponsiveForm>

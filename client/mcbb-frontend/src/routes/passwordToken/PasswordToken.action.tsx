@@ -2,24 +2,24 @@ import { ActionFunction, redirect } from 'react-router';
 
 /**
  * Action handler for processing password reset token and resetting password.
- * 
+ *
  * @function ForgotPasswordTokenAction
  * @param {Object} context - Action function context
  * @param {Request} context.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirect response based on password reset result
- * 
+ *
  * @description Handles the password reset workflow:
  * 1. Validate password reset token
  * 2. Send password reset request to backend
  * 3. Handle successful or failed password reset
- * 
+ *
  * @workflow
  * 1. Extract token and new password from form data
  * 2. Validate token presence
  * 3. Send password reset request to backend
  * 4. Redirect based on reset result
- * 
+ *
  * @features
  * - Secure token-based password reset
  * - Comprehensive error handling
@@ -32,11 +32,12 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     const formData = await request.formData();
     const newPassword = formData.get('newPassword');
     const token = formData.get('token');
+    const schoolId = formData.get('schoolId');
 
     // Validate token presence
     if (!token) {
       console.error('Token is missing from the parameters.');
-      return redirect('/login?error=Token%20missing');
+      return redirect(`/login/${schoolId}?error=Token%20missing`);
     }
 
     // Send password reset request to backend
@@ -55,7 +56,9 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     // Handle password reset response
     if (loginRequest.ok) {
       // Successful password reset
-      return redirect('/login?message=' + 'Password%20reset%20successful');
+      return redirect(
+        `/login/${schoolId}?message=Password%20reset%20successful`
+      );
     } else {
       // Handle error response
       let errorMessage = 'an error has occured';

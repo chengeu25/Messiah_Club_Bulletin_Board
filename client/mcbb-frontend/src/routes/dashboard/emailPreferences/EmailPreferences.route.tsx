@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLoaderData, useSubmit } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useLoaderData, useLocation, useSubmit } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from '../../../components/formElements/Select.component';
@@ -37,8 +37,17 @@ const EmailPreferences = () => {
     email_event_type: initialEventType
   } = useLoaderData() as EmailPreferencesData;
 
-  const [emailFrequency, setEmailFrequency] = useState(initialFrequency);
-  const [emailEventType, setEmailEventType] = useState(initialEventType);
+  const location = useLocation();
+
+  const [emailFrequency, setEmailFrequency] = useState(
+    initialFrequency ?? 'Weekly'
+  );
+  const [emailEventType, setEmailEventType] = useState(
+    initialEventType ?? 'Suggested'
+  );
+
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   /**
    * Handles form submission by creating FormData and submitting
@@ -53,9 +62,33 @@ const EmailPreferences = () => {
     submit(formData, { method: 'post' });
   };
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      setError(newError);
+      setMessage(newMessage);
+
+      // Remove error and message params
+      searchParams.delete('error');
+      searchParams.delete('message');
+
+      // Update URL without triggering a page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [location.search]);
+
   return (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Email Preferences</h1>
+      {error && <p className='text-red-500'>{error}</p>}
+      {message && <p className='text-green-500'>{message}</p>}
       <Select
         options={['Weekly', 'Daily', 'Never']}
         label='Receive Updates About Events:'

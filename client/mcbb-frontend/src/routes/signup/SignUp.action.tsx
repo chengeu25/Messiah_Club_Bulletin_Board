@@ -34,9 +34,16 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   const password = formData.get('password');
   const confirmPassword = formData.get('confirm-password');
   const gender = formData.get('gender');
+  const emailPreferences = formData.get('emailPreferences');
+  const emailFrequency = formData.get('emailFrequency');
   const name = formData.get('name');
   const school = formData.get('schoolId');
   const captchaResponse = formData.get('captchaResponse');
+  const action = formData.get('action');
+
+  if (action === 'switchSchool') {
+    return redirect(`/selectSchool?route=signup`);
+  }
 
   // Basic validation before making the request
   if (!email || !password || !confirmPassword || !gender || !school) {
@@ -60,7 +67,9 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
         gender,
         name,
         captchaResponse,
-        school
+        school,
+        emailPreferences,
+        emailFrequency
       }),
       credentials: 'include'
     }
