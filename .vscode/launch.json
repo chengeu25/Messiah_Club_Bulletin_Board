@@ -12,7 +12,8 @@
         "FLASK_ENV": "development"
       },
       "python": "${workspaceFolder}/server/venv/bin/python",
-      "justMyCode": true
+      "justMyCode": true,
+      "django": true
     },
     {
       "name": "Vite Frontend",
