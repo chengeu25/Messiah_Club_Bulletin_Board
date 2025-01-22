@@ -38,6 +38,16 @@ const Event = () => {
   const { event } = useLoaderData() as { event: EventDetailType };
   const submit = useSubmit();
 
+  if (!event) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-xl font-semibold text-red-500">
+          Event details could not be loaded. Please try again later.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
       {/* Event title and RSVP section */}
@@ -59,6 +69,30 @@ const Event = () => {
           />
         </Form>
       </Card>
+
+      
+
+      {/* Cancel Event Button */}
+      {/* {event?.isOrganizer && ( // Check if the user is the organizer */}
+        <Form
+          onSubmit={(e) => {
+            if (!confirm('Are you sure you want to cancel this event?')) {
+              e.preventDefault(); // Prevent the form from submitting if the user cancels
+            }
+          }}
+          method='post'
+        >
+          <button
+            type='submit'
+            name='action'
+            value='cancel'
+            className='bg-red-500 text-white py-2 px-4 rounded mt-2'
+          >
+            Cancel Event
+          </button>
+          <input type='hidden' name='id' value={event.id} />
+        </Form>
+      
 
       {/* Event metadata section */}
       <div className='flex flex-col w-full gap-4 m-2'>

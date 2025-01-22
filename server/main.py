@@ -12,7 +12,6 @@ from routes.school import school_bp
 from routes.emails import emails_bp
 from jobs.email_notification_job import start_email_scheduler
 
-
 def create_app(config_class=Config):
     """
     Create and configure the Flask application.
@@ -32,12 +31,14 @@ def create_app(config_class=Config):
 
     # Initialize extensions
     mysql.init_app(app)
+    
+    # CORS configuration
     cors.init_app(
         app,
         supports_credentials=True,
         resources={
             r"/api/*": {
-                "origins": "http://localhost:5173",
+                "origins": "http://localhost:5173",  # Your frontend's URL
                 "supports_credentials": True,
                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
                 "allow_headers": [
