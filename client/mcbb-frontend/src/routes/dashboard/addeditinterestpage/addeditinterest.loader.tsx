@@ -25,6 +25,9 @@ const AddedInterestLoader: LoaderFunction = async () => {
   if (user === false) {
     return redirect('/login');
   }
+  if ((user as User).isFaculty === false) {
+    return redirect('/dashboard/home');
+}
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
