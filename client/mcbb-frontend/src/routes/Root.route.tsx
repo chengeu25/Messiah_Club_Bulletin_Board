@@ -138,7 +138,7 @@ const Root = () => {
   }, [navigation.state]);
 
   return (
-    <div className='w-screen h-screen flex flex-col relative bg-gray-100'>
+    <div className='w-screen h-[100dvh] flex flex-col relative bg-gray-100'>
       {/* Top Navigation Bar */}
       <nav
         className={`w-full h-20 sm:min-h-[10%] ${

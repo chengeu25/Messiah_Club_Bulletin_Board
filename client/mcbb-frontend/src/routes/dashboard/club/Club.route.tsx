@@ -94,7 +94,7 @@ const Club = () => {
   };
 
   return (
-    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
+    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
       <Card
         color='gray-300'
         padding={4}
@@ -157,7 +157,7 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Club Officers</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
+          <div className='overflow-y-auto h-full flex gap-2 flex-col'>
             {club.admins.map((officer: ClubAdminType, index: number) => (
               <Officer key={index} {...officer} />
             ))}
@@ -169,7 +169,7 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
+          <div className='overflow-y-auto h-full flex gap-2 flex-col'>
             {events.map((event: EventType, index: number) => (
               <Event
                 key={index}

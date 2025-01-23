@@ -110,7 +110,7 @@ const Clubs = () => {
       : true;
 
   return (
-    <div className='w-full flex flex-col gap-4 flex-grow overflow-y-scroll p-4 md:px-[15%] items-center'>
+    <div className='w-full flex flex-col gap-4 flex-grow overflow-y-auto p-4 md:px-[15%] items-center'>
       {data.user.isFaculty && (
         <Form onSubmit={handleSubmit}>
           <Button text='Create New Club' filled name='create' type='submit' />

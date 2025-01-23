@@ -56,7 +56,7 @@ const Event = () => {
   }
 
   return (
-    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
+    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
       {/* Event title and RSVP section */}
       <Card
         color='gray-300'
@@ -106,7 +106,7 @@ const Event = () => {
 
       {/* Event metadata section */}
       <div className='flex flex-col w-full gap-4 m-2'>
-        <Card color='gray-300' padding={4} className='flex-col gap-2'>
+        <Card color='gray-300' padding={4} className='flex-col gap-2 w-full'>
           <p className='flex flex-row gap-2 items-center flex-wrap'>
             <IoMdTime size={24} /> <strong>Time:</strong>{' '}
             {format(new Date(event?.startTime), 'MM/dd/yyyy HH:mm')} -{' '}
@@ -157,14 +157,14 @@ const Event = () => {
       )}
 
       {/* Event images */}
-      <div className='flex flex-row w-full gap-4 overflow-x-scroll min-h-48 mt-2'>
+      <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48 mt-2'>
         {event?.images?.map((image: ImageType, index: number) => (
           <img
             key={index}
             src={image.image}
             alt={event.title}
-            style={{ objectFit: 'cover' }}
-            className='h-[200px] w-[200px] bg-gray-800 rounded-lg'
+            style={{ objectFit: 'cover', flexShrink: 0 }}
+            className='h-[200px] w-[200px] bg-gray-800 rounded-lg flex-shrink-0'
           />
         ))}
       </div>

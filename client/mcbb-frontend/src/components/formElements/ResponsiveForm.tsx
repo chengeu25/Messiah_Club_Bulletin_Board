@@ -28,7 +28,7 @@ interface FormProps {
  */
 const ResponsiveForm = ({ children, onSubmit }: FormProps) => (
   <div className='w-full h-full flex justify-center items-center'>
-    <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] sm:max-h-[90%] justify-center items-start shadow-md rounded-lg p-5 bg-white overflow-y-scroll'>
+    <div className='flex w-full h-full sm:h-auto sm:w-1/2 sm:min-h-[50%] sm:max-h-[90%] justify-center items-start sm:shadow-md sm:rounded-lg p-5 bg-white overflow-y-auto'>
       <Form onSubmit={onSubmit} className='flex flex-col gap-2 w-full'>
         {children}
       </Form>
