@@ -109,6 +109,10 @@ const ClubEventForm = () => {
       'tags',
       JSON.stringify(selectedTags.map((tag) => tag.value))
     );
+    formData.append(
+      'cohosts',
+      JSON.stringify(selectedClubs.map((club) => club.value))
+    );
 
     eventPhotos.forEach((photo, index) => {
       formData.append(`eventPhotos[${index}]`, photo);

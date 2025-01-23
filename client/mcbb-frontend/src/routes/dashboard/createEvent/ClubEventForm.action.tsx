@@ -13,6 +13,9 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const tags = formData.get('tags')
     ? JSON.parse(formData.get('tags') as string)
     : [];
+  const cohosts = formData.get('cohosts')
+    ? JSON.parse(formData.get('cohosts') as string)
+    : [];
   const eventPhotos = formData.getAll('eventPhotos[]');
 
   if (action === 'cancel') {
@@ -29,6 +32,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
+    data.append('cohosts', JSON.stringify(cohosts));
     eventPhotos.forEach((photo) => data.append('eventPhotos[]', photo));
 
     const response = await fetch(

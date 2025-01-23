@@ -741,6 +741,7 @@ def create_event():
     end_date = request.form.get("endDate")
     location = request.form.get("location")
     event_cost = request.form.get("eventCost")
+    co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")  # This should be a JSON string (e.g., "[1, 2, 3]")
 
     if tags:
@@ -756,6 +757,20 @@ def create_event():
             )
     else:
         tags = []
+        
+    if co_hosts:
+        try:
+            # Convert the tags string into a list of integers
+            co_hosts = json.loads(
+                co_hosts
+            )  # This will handle strings like "[1, 2, 3]" as a Python list
+        except json.JSONDecodeError:
+            return (
+                jsonify({"error": "Invalid tags format, should be a JSON array"}),
+                400,
+            )
+    else:
+        co_hosts = []
 
     # Validate the data
     if (
@@ -838,6 +853,12 @@ def create_event():
             """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
+        
+        for co_host in co_hosts:
+            cur.execute(
+                """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
+                (co_host, event_id),
+            )
 
         # Save photos into the database as blobs and store the file names
         for image_data, filename in saved_photos:
