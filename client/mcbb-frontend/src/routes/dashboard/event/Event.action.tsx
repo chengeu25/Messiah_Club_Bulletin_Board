@@ -50,6 +50,26 @@ const eventAction: ActionFunction = async ({ request }) => {
     }
     return redirect(`/dashboard/event/${id}`);
   }
+
+  // Handle cancel action
+  if (action === 'cancel') {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/event/${id}/cancel`,
+      {
+        method: 'DELETE',
+        credentials: 'include',
+      }
+    );
+    
+  
+    if (!response.ok) {
+      alert(`Failed to cancel the event: ${response.statusText}`);
+      return null;
+    }
+  
+    return redirect('/dashboard/clubs');
+  }
+  
   return null;
 };
 

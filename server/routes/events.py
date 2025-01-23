@@ -414,6 +414,78 @@ def get_event(event_id):
     return jsonify({"event": final_result}), 200
 
 
+@events_bp.route("/event/<int:event_id>/cancel", methods=["POST", "DELETE"])
+def cancel_event(event_id):
+    try:
+        user = get_user_session_info()
+        # Fetch user information (assuming session contains user info)
+        user_id = user["user_id"]
+        if not user_id:
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Get event details to verify if the user is the organizer
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            """SELECT u.email, ca.club_id, eh.event_id FROM users u
+                    INNER JOIN club_admin ca
+                        ON u.email = ca.user_id
+                    INNER JOIN event_host eh
+                        ON ca.club_id = eh.club_id
+                    WHERE u.email = %s
+                        AND u.is_active = 1
+                        AND eh.event_id = %s""",
+            (user_id, event_id),
+        )
+
+        result = cur.fetchone()
+        if not result:
+            cur.close()
+            print(
+                f"User with ID {user_id} is not the organizer of event with ID {event_id}"
+            )
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Log the event_id being passed
+        print(f"Canceling event with ID: {event_id}")
+
+        # Query to get the event and organizer details
+        cur.execute(
+            "SELECT event_name FROM event WHERE event_id = %s AND is_active = 1",  # CHANGE TO ORGANIZER ID
+            (event_id,),
+        )
+
+        # # Check if the execute call was successful
+        print("Query executed successfully")
+
+        event = cur.fetchone()  # Fetch the first result
+        if not event:
+            cur.close()  # Don't forget to close the cursor
+            print(f"Event with ID {event_id} not found")
+            return jsonify({"error": "Event not found"}), 404
+
+        # Log event details for debugging
+        print(f"Event found: {event}")
+
+        # Update the event status to inactive (cancel the event)
+        cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
+
+        # Check if the update was successful
+        print(f"Event with ID {event_id} canceled successfully")
+
+        mysql.connection.commit()
+
+        # Close the cursor
+        cur.close()
+
+        return jsonify({"message": "Event successfully canceled"}), 200
+
+    except Exception as e:
+        # Log the error message with more details
+        print(f"Error canceling event: {e}")
+        return jsonify({"error": "Failed to cancel event"}), 500
+
+
 @events_bp.route("/club-events/<club_id>", methods=["GET"])
 def get_club_events(club_id):
     """

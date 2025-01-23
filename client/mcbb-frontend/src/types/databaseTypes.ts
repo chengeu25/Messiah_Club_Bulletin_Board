@@ -154,6 +154,7 @@ export interface EventHostType {
  * such as cost and RSVP status.
  */
 export interface EventDetailType {
+  isOrganizer: any;
   /** Unique identifier for the event */
   id: number;
   /** The title or name of the event */

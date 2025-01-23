@@ -29,14 +29,14 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
-    eventPhotos.forEach((photo) => formData.append('eventPhotos[]', photo));
+    eventPhotos.forEach((photo) => data.append('eventPhotos[]', photo));
 
     const response = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/events/new-event`,
       {
         method: 'POST',
         credentials: 'include',
-        body: data
+        body: data,
       }
     );
 
