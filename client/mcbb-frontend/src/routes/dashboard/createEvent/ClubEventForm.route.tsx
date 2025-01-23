@@ -1,5 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { useSubmit, useSearchParams, useParams, useLoaderData } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  useSubmit,
+  useSearchParams,
+  useParams,
+  useLoaderData
+} from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import DatePicker from 'react-datepicker';
@@ -13,7 +18,7 @@ const ClubEventForm = () => {
   const [searchParams] = useSearchParams();
   const serverError = searchParams.get('error'); // Retrieve "error" from query parameters
 
-  const { clubs } = useLoaderData() as {clubs: ClubType};
+  const { clubs } = useLoaderData() as { clubs: ClubType[] };
   const { id: clubId } = useParams();
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -26,6 +31,15 @@ const ClubEventForm = () => {
   const [selectedTags, setSelectedTags] = useState<OptionType[]>([]); // Tags selected by the user
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [selectedClubs, setSelectedClubs] = useState<OptionType[]>([]);
+  const selectableClubs = useMemo(() => {
+    return clubs.map(
+      (club: ClubType) =>
+        ({
+          value: club.id,
+          label: club.name
+        } as OptionType)
+    );
+  }, [clubs]);
   const submit = useSubmit();
 
   // Fetch tags from the API
@@ -216,15 +230,31 @@ const ClubEventForm = () => {
           isMulti
           options={tags}
           onChange={(selected) => setSelectedTags(selected as OptionType[])}
+          menuPortalTarget={document.body}
+          menuPosition='fixed'
+          styles={{
+            menuPortal: (base) => ({
+              ...base,
+              zIndex: 9999
+            })
+          }}
         />
       </div>
       <div>
         <label htmlFor='coHosts'>Co-Hosts:</label>
         <Select
           isMulti
-          options={clubs}
+          options={selectableClubs}
           value={selectedClubs}
           onChange={(selected) => setSelectedClubs(selected as OptionType[])}
+          menuPortalTarget={document.body}
+          menuPosition='fixed'
+          styles={{
+            menuPortal: (base) => ({
+              ...base,
+              zIndex: 9999
+            })
+          }}
         />
       </div>
       <div className='flex flex-row gap-2'>
