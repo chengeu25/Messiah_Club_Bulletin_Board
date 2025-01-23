@@ -32,7 +32,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
-    data.append('cohosts', JSON.stringify(cohosts));
+    data.append('coHosts', JSON.stringify(cohosts));
     eventPhotos.forEach((photo) => data.append('eventPhotos[]', photo));
 
     const response = await fetch(
@@ -40,7 +40,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
       {
         method: 'POST',
         credentials: 'include',
-        body: data,
+        body: data
       }
     );
 

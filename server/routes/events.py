@@ -757,7 +757,7 @@ def create_event():
             )
     else:
         tags = []
-        
+
     if co_hosts:
         try:
             # Convert the tags string into a list of integers
@@ -853,7 +853,7 @@ def create_event():
             """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
-        
+
         for co_host in co_hosts:
             cur.execute(
                 """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
