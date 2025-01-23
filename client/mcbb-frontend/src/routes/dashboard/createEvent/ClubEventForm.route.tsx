@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSubmit, useSearchParams, useParams } from 'react-router-dom';
+import { useSubmit, useSearchParams, useParams, useLoaderData } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import DatePicker from 'react-datepicker';
@@ -7,11 +7,13 @@ import 'react-datepicker/dist/react-datepicker.css';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from 'react-select';
 import { OptionType } from '../../../components/formElements/Select.styles';
+import { ClubType } from '../../../types/databaseTypes';
 
 const ClubEventForm = () => {
   const [searchParams] = useSearchParams();
   const serverError = searchParams.get('error'); // Retrieve "error" from query parameters
 
+  const { clubs } = useLoaderData() as {clubs: ClubType};
   const { id: clubId } = useParams();
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
@@ -23,6 +25,7 @@ const ClubEventForm = () => {
   const [tags, setTags] = useState<OptionType[]>([]); // List of available tags
   const [selectedTags, setSelectedTags] = useState<OptionType[]>([]); // Tags selected by the user
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [selectedClubs, setSelectedClubs] = useState<OptionType[]>([]);
   const submit = useSubmit();
 
   // Fetch tags from the API
@@ -212,8 +215,16 @@ const ClubEventForm = () => {
         <Select
           isMulti
           options={tags}
-          value={selectedTags}
           onChange={(selected) => setSelectedTags(selected as OptionType[])}
+        />
+      </div>
+      <div>
+        <label htmlFor='coHosts'>Co-Hosts:</label>
+        <Select
+          isMulti
+          options={clubs}
+          value={selectedClubs}
+          onChange={(selected) => setSelectedClubs(selected as OptionType[])}
         />
       </div>
       <div className='flex flex-row gap-2'>

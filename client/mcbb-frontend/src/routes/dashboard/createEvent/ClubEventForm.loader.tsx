@@ -15,6 +15,20 @@ const clubEventFormLoader: LoaderFunction = async ({ params }) => {
     return redirect('/verifyEmail');
   }
 
+  const clubsResponse = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/clubs`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+
+  const clubs = await clubsResponse.json();
+
+  
   // const clubId = params.clubId; // Assuming clubId is passed as a route parameter
   // const isAdmin = await isAdminForClub(user, clubId);
   // if (!isAdmin) {
@@ -22,7 +36,7 @@ const clubEventFormLoader: LoaderFunction = async ({ params }) => {
   // }
 
   return json(
-    { user },
+    { user, clubs },
     {
       status: 200
     }

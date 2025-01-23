@@ -142,7 +142,8 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
             """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
                     INNER JOIN club c ON c.club_id = eh.club_id
                     WHERE c.is_active = 1
-                        AND c.school_id = %s""",
+                        AND c.school_id = %s
+                        AND eh.is_approved = 1""",
             (school_id,),
         )
         result_2 = cur.fetchall()
@@ -189,6 +190,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
                     ON e.event_id = eh.event_id
                 WHERE e.is_active = 1
                     AND e.is_approved = 1
+                    AND eh.is_approved = 1
                     AND e.school_id = %s""",
             (user_id, school_id),
         )
@@ -351,7 +353,8 @@ def get_event(event_id):
                     ON c.club_id = eh.club_id
                 WHERE eh.event_id = %s
                     AND c.is_active = 1
-                    AND c.school_id = %s""",
+                    AND c.school_id = %s
+                    AND eh.is_approved = 1""",
         (event_id, school_id),
     )
     result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
@@ -434,6 +437,7 @@ def cancel_event(event_id):
                         ON ca.club_id = eh.club_id
                     WHERE u.email = %s
                         AND u.is_active = 1
+                        AND eh.is_approved = 1
                         AND eh.event_id = %s""",
             (user_id, event_id),
         )
@@ -552,6 +556,7 @@ def get_club_events(club_id):
                 AND e.is_approved = 1
                 AND e.start_time >= %s
                 AND e.school_id = %s
+                AND eh.is_approved = 1
             LIMIT 10""",
         (club_id, start_date, school_id),
     )
@@ -567,7 +572,8 @@ def get_club_events(club_id):
                     AND e.is_approved = 1
                     AND r.is_active = 1
                     AND e.school_id = %s
-                    AND eh.club_id = %s""",
+                    AND eh.club_id = %s
+                    AND eh.is_approved = 1""",
         (user_id, school_id, club_id),
     )
     result_2 = cur.fetchall()
@@ -829,7 +835,7 @@ def create_event():
         # insert club_id and event_id into event_host table**
 
         cur.execute(
-            """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
+            """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
 
