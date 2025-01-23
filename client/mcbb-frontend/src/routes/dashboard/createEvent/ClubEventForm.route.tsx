@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSubmit, useSearchParams } from 'react-router-dom';
+import { useSubmit, useSearchParams, useParams } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import DatePicker from 'react-datepicker';
@@ -12,7 +12,7 @@ const ClubEventForm = () => {
   const [searchParams] = useSearchParams();
   const serverError = searchParams.get('error'); // Retrieve "error" from query parameters
 
-  const [clubName, setClubName] = useState('');
+  const { clubId } = useParams();
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -60,7 +60,6 @@ const ClubEventForm = () => {
     event.preventDefault();
     const errors: string[] = [];
 
-    if (!clubName.trim()) errors.push('Club name is required.');
     if (!eventName.trim()) errors.push('Event name is required.');
     if (!description.trim()) errors.push('Event description is required.');
     if (!startDate || !endDate) errors.push('Event dates are required.');
@@ -77,7 +76,7 @@ const ClubEventForm = () => {
     }
 
     const formData = new FormData();
-    formData.append('clubName', clubName);
+    formData.append('clubId', clubId?.toString()??'');
     formData.append('eventName', eventName);
     formData.append('description', description);
     formData.append('startDate', startDate?.toISOString() || '');
@@ -111,16 +110,7 @@ const ClubEventForm = () => {
         </div>
       )}
 
-      <Input
-        label="Club Name:"
-        name="clubName"
-        type="text"
-        value={clubName}
-        onChange={(e) => setClubName((e.target as HTMLInputElement).value)}
-        placeholder="Enter the club name"
-        filled={false}
-        required
-      />
+      
       <Input
         label="Event Name:"
         name="eventName"

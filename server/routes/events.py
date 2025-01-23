@@ -728,7 +728,7 @@ def create_event():
         return jsonify({"error": "User not logged in"}), 401
 
     # Get the event data from the request
-    club_name = request.form.get("clubName")
+    club_id = request.form.get("clubId")
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
@@ -827,7 +827,6 @@ def create_event():
                 return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
 
         # insert club_id and event_id into event_host table**
-        club_id = get_club_id(cur, club_name)
 
         cur.execute(
             """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
