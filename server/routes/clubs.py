@@ -65,8 +65,62 @@ def get_clubs():
     school = session.get("school")
 
     cur = mysql.connection.cursor()
+
+    # Fetch all valid tag names for the school
+    cur.execute("SELECT LOWER(tag_name) FROM tag WHERE school_id = %s", (school,))
+    valid_school_tags = {row[0] for row in cur.fetchall()}
+
+    # Split search query into words
+    search_words = search_query.lower().split() if search_query else []
+
+    # Separate tag and name search words
+    tag_search_words = [word for word in search_words if word in valid_school_tags]
+    name_search_words = [word for word in search_words if word not in valid_school_tags]
+
+    # Construct the name search condition
+    name_conditions = []
+
+    # Name conditions (all words must be in name)
+    for _ in name_search_words:
+        name_conditions.append("c.club_name LIKE %s")
+
+    # Combine name search conditions
+    name_search_condition = " AND ".join(name_conditions) if name_conditions else "1=1"
+
+    # Prepare query parameters
+    query_params = [
+        current_user["user_id"],
+        school,
+        inactive_query,
+        school,
+        search_query,
+    ]
+
+    # Add name search parameters
+    query_params.extend([f"%{word}%" for word in name_search_words])
+
+    # Modify the query to handle tag search differently
+    tag_search_condition = "1=1"
+    if tag_search_words:
+        # Subquery to check if all specified tags exist for the club
+        tag_search_condition = f"""(
+            (SELECT COUNT(DISTINCT LOWER(t.tag_name)) 
+             FROM club_tags ct 
+             JOIN tag t ON ct.tag_id = t.tag_id AND t.school_id = %s
+             WHERE ct.club_id = c.club_id 
+               AND LOWER(t.tag_name) IN ({','.join(['%s']*len(tag_search_words))})
+            ) = {len(tag_search_words)}
+        )"""
+
+        # Add school and tag search parameters
+        query_params.append(school)
+        query_params.extend(tag_search_words)
+
+    # Add remaining parameters
+    query_params.extend([filter_query, filter_query, current_user["user_id"]])
+
     cur.execute(
-        """SELECT c.club_id, 
+        f"""SELECT c.club_id, 
                   c.club_name, 
                   c.description, 
                   c.club_logo, 
@@ -86,8 +140,8 @@ def get_clubs():
             WHERE c.is_active = %s
                 AND c.school_id = %s
                 AND (%s = '' 
-                    OR (c.club_name LIKE %s
-                        OR t.tag_name LIKE %s))
+                    OR (({name_search_condition})
+                        AND {tag_search_condition}))
                 AND ((us.subscribed_or_blocked = 1 
                         AND us.is_active = 1) 
                     OR (%s <> 'Subscribed'))
@@ -101,18 +155,7 @@ def get_clubs():
                         ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
                                 OR us.email IS NULL))))
             GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
-        (
-            current_user["user_id"],
-            school,
-            inactive_query,
-            school,
-            search_query,
-            f"%{search_query}%",
-            f"%{search_query}%",
-            filter_query,
-            filter_query,
-            current_user["user_id"],
-        ),
+        tuple(query_params),
     )
     result = None
     try:

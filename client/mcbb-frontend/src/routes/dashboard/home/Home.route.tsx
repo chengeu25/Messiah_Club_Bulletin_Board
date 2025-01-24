@@ -48,10 +48,8 @@ const Home = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter(
-        (event: EventType) =>
-          passesSearch(event, params.get('search') ?? '') &&
-          passesFilter(event, user, params.get('filter') ?? '')
+      events.filter((event: EventType) =>
+        passesFilter(event, user, params.get('filter') ?? '')
       ),
     [events, params]
   );

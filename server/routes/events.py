@@ -78,7 +78,9 @@ def get_club_id(cur, club_name):
         raise ValueError("Club not found")
 
 
-def get_events_by_date(cur, start_date, end_date, school_id, user_id):
+def get_events_by_date(
+    cur, start_date, end_date, school_id, user_id, search_query="", filter_query=""
+):
     """
     Retrieve events within a specified date range for a specific school.
 
@@ -91,6 +93,11 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
         end_date (str): ISO 8601 formatted end date to retrieve events until
         school_id (int): Unique identifier of the school to filter events
         user_id (int): Unique identifier of the user
+        search_query (str): Optional search query to filter events
+        filter_query (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
 
     Returns:
         dict: A dictionary containing:
@@ -127,13 +134,28 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+
         cur.execute(
-            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-                WHERE start_time BETWEEN %s AND %s
-                    AND is_active = 1
-                    AND is_approved = 1
-                    AND school_id = %s""",
-            (start_date, end_date, school_id),
+            """SELECT e.event_id,
+                      e.start_time, 
+                      e.end_time, 
+                      e.location, 
+                      e.description, 
+                      e.cost, 
+                      e.event_name 
+                FROM event e
+                WHERE e.start_time BETWEEN %s AND %s
+                    AND e.is_active = 1
+                    AND e.is_approved = 1
+                    AND e.school_id = %s
+                    AND (e.event_name LIKE %s 
+                         OR EXISTS (SELECT * FROM event_tags et
+                                        INNER JOIN tag t
+                                            ON t.tag_id = et.tag_id
+                                        WHERE et.event_id = e.event_id
+                                            AND t.tag_name LIKE %s
+                                    ))""",
+            (start_date, end_date, school_id, f"%{search_query}%", f"%{search_query}%"),
         )
         result = cur.fetchall()
         if result is None:
@@ -621,6 +643,11 @@ def get_events():
     Query Parameters:
         start_date (str): ISO format start date for event range
         end_date (str): ISO format end date for event range
+        search (str): Optional search query to filter events
+        filter (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
 
     Returns:
         JSON response:
@@ -655,15 +682,27 @@ def get_events():
 
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    search_query = request.args.get("search")
+    filter_query = request.args.get("filter")
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
+    if not search_query:
+        search_query = ""
+    if not filter_query:
+        filter_query = ""
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
 
     result = get_events_by_date(
-        cur, start_date, end_date, school_id, current_user["user_id"]
+        cur,
+        start_date,
+        end_date,
+        school_id,
+        current_user["user_id"],
+        search_query,
+        filter_query,
     )
     cur.close()
     if "error" in result:
