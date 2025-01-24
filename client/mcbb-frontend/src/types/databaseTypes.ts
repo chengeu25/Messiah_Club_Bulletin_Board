@@ -135,6 +135,8 @@ export interface EventType {
   rsvp: string;
   /** Indicates whether the event is from a subscribed club */
   subscribed: boolean;
+  /** Indicates whether the event is from a blocked club */
+  blocked: boolean;
 }
 
 /**

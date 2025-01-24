@@ -7,7 +7,7 @@ import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import {
   passesFilter,
-  passesSearch,
+  eventPassesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
@@ -115,7 +115,7 @@ const Calendar = () => {
     () =>
       events.filter(
         (event) =>
-          passesSearch(event, searchParams.get('search') ?? '') &&
+          eventPassesSearch(event, searchParams.get('search') ?? '') &&
           passesFilter(event, user, searchParams.get('filter') ?? '')
       ),
     [events, searchParams]

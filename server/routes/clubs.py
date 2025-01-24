@@ -18,7 +18,6 @@ def get_clubs():
     and attaches tags for each club. Authentication is required to access this endpoint.
 
     Query Parameters:
-        - 'search' (optional): A search query to filter clubs by name or tags
         - 'filter' (optional): Filter clubs by 'Subscribed', 'Suggested', or none
         - 'inactive' (optional): Filter clubs by being inactive, or not inactive (default)
 
@@ -47,10 +46,8 @@ def get_clubs():
         TypeError: If there's an issue processing the database results
     """
     filter_query = request.args.get("filter")
-    search_query = request.args.get("search")
     inactive_query = request.args.get("inactive")
     filter_query = filter_query if filter_query else ""
-    search_query = search_query if search_query else ""
     inactive_query = "0" if inactive_query else "1"
 
     # Check if user is authenticated
@@ -66,61 +63,8 @@ def get_clubs():
 
     cur = mysql.connection.cursor()
 
-    # Fetch all valid tag names for the school
-    cur.execute("SELECT LOWER(tag_name) FROM tag WHERE school_id = %s", (school,))
-    valid_school_tags = {row[0] for row in cur.fetchall()}
-
-    # Split search query into words
-    search_words = search_query.lower().split() if search_query else []
-
-    # Separate tag and name search words
-    tag_search_words = [word for word in search_words if word in valid_school_tags]
-    name_search_words = [word for word in search_words if word not in valid_school_tags]
-
-    # Construct the name search condition
-    name_conditions = []
-
-    # Name conditions (all words must be in name)
-    for _ in name_search_words:
-        name_conditions.append("c.club_name LIKE %s")
-
-    # Combine name search conditions
-    name_search_condition = " AND ".join(name_conditions) if name_conditions else "1=1"
-
-    # Prepare query parameters
-    query_params = [
-        current_user["user_id"],
-        school,
-        inactive_query,
-        school,
-        search_query,
-    ]
-
-    # Add name search parameters
-    query_params.extend([f"%{word}%" for word in name_search_words])
-
-    # Modify the query to handle tag search differently
-    tag_search_condition = "1=1"
-    if tag_search_words:
-        # Subquery to check if all specified tags exist for the club
-        tag_search_condition = f"""(
-            (SELECT COUNT(DISTINCT LOWER(t.tag_name)) 
-             FROM club_tags ct 
-             JOIN tag t ON ct.tag_id = t.tag_id AND t.school_id = %s
-             WHERE ct.club_id = c.club_id 
-               AND LOWER(t.tag_name) IN ({','.join(['%s']*len(tag_search_words))})
-            ) = {len(tag_search_words)}
-        )"""
-
-        # Add school and tag search parameters
-        query_params.append(school)
-        query_params.extend(tag_search_words)
-
-    # Add remaining parameters
-    query_params.extend([filter_query, filter_query, current_user["user_id"]])
-
     cur.execute(
-        f"""SELECT c.club_id, 
+        """SELECT c.club_id, 
                   c.club_name, 
                   c.description, 
                   c.club_logo, 
@@ -139,9 +83,6 @@ def get_clubs():
                 AND t.school_id = %s
             WHERE c.is_active = %s
                 AND c.school_id = %s
-                AND (%s = '' 
-                    OR (({name_search_condition})
-                        AND {tag_search_condition}))
                 AND ((us.subscribed_or_blocked = 1 
                         AND us.is_active = 1) 
                     OR (%s <> 'Subscribed'))
@@ -155,7 +96,15 @@ def get_clubs():
                         ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
                                 OR us.email IS NULL))))
             GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
-        tuple(query_params),
+        (
+            current_user["user_id"],
+            school,
+            inactive_query,
+            school,
+            filter_query,
+            filter_query,
+            current_user["user_id"],
+        ),
     )
     result = None
     try:
@@ -305,6 +254,7 @@ def get_club(club_id):
         """SELECT subscribed_or_blocked 
             FROM user_subscription
             WHERE email = %s 
+                AND is_active = 1
                 AND club_id = %s""",
         (current_user["user_id"], club_id),
     )

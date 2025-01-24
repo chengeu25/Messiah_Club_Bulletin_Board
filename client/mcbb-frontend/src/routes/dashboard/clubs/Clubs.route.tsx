@@ -1,7 +1,13 @@
-import { Form, useLoaderData, useSubmit } from 'react-router-dom';
+import {
+  Form,
+  useLoaderData,
+  useSearchParams,
+  useSubmit
+} from 'react-router-dom';
 import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
+import { clubPassesSearch } from '../../../helper/eventHelpers';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
@@ -32,6 +38,7 @@ interface LoaderData {
 const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
+  const [searchParams] = useSearchParams();
 
   /**
    * Handles form submission for club-related actions.
@@ -67,30 +74,38 @@ const Clubs = () => {
           <Button text='Create New Club' filled name='create' type='submit' />
         </Form>
       )}
-      {data.clubs.map((club) => (
-        <Club
-          key={club.name}
-          {...club}
-          editable={
-            data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
-          }
-          deletable={data.user.isFaculty}
-          onSubmit={(e) => handleSubmit(e, club.id)}
-        />
-      ))}
+      {data.clubs
+        .filter((club) =>
+          clubPassesSearch(club, searchParams.get('search') ?? '')
+        )
+        .map((club) => (
+          <Club
+            key={club.name}
+            {...club}
+            editable={
+              data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
+            }
+            deletable={data.user.isFaculty}
+            onSubmit={(e) => handleSubmit(e, club.id)}
+          />
+        ))}
       {data.user.isFaculty && data.inactiveClubs.length > 0 && (
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
-          {data.inactiveClubs.map((club) => (
-            <Club
-              key={club.name + '-' + club.id}
-              {...club}
-              editable={false}
-              deletable={false}
-              inactive
-              onSubmit={(e) => handleSubmit(e, club.id)}
-            />
-          ))}
+          {data.inactiveClubs
+            .filter((club) =>
+              clubPassesSearch(club, searchParams.get('search') ?? '')
+            )
+            .map((club) => (
+              <Club
+                key={club.name + '-' + club.id}
+                {...club}
+                editable={false}
+                deletable={false}
+                inactive
+                onSubmit={(e) => handleSubmit(e, club.id)}
+              />
+            ))}
         </>
       )}
     </div>

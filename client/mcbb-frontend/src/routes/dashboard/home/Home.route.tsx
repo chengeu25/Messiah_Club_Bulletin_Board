@@ -1,6 +1,10 @@
 import Day from '../../../components/dashboard/Day.component';
 import { useSchool } from '../../../contexts/SchoolContext';
-import { passesFilter, sortEventsByDay } from '../../../helper/eventHelpers';
+import {
+  eventPassesSearch,
+  passesFilter,
+  sortEventsByDay
+} from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
 import {
@@ -44,8 +48,10 @@ const Home = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter((event: EventType) =>
-        passesFilter(event, user, params.get('filter') ?? '')
+      events.filter(
+        (event: EventType) =>
+          eventPassesSearch(event, params.get('search') ?? '') &&
+          passesFilter(event, user, params.get('filter') ?? '')
       ),
     [events, params]
   );
