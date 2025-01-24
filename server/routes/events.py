@@ -131,12 +131,67 @@ def get_events_by_date(
     - Retrieves event details and their hosting clubs
     - Supports empty result sets
     """
+
+    # Fetch all valid tag names for the school
+    cur.execute("SELECT LOWER(tag_name) FROM tag WHERE school_id = %s", (school_id,))
+    valid_school_tags = {row[0] for row in cur.fetchall()}
+
+    # Split search query into words
+    search_words = search_query.lower().split() if search_query else []
+
+    # Separate tag and name search words
+    tag_search_words = [word for word in search_words if word in valid_school_tags]
+    name_search_words = [word for word in search_words if word not in valid_school_tags]
+
+    # Construct the name search condition
+    name_conditions = []
+
+    # Name conditions (all words must be in name)
+    for _ in name_search_words:
+        name_conditions.append("e.event_name LIKE %s")
+
+    # Combine name search conditions
+    name_search_condition = " AND ".join(name_conditions) if name_conditions else "1=1"
+
+    # Prepare query parameters
+    query_params = [
+        start_date,
+        end_date,
+        school_id,
+        search_query,
+    ]
+
+    # Add name search parameters
+    query_params.extend([f"%{word}%" for word in name_search_words])
+
+    # Modify the query to handle tag search differently
+    tag_search_condition = "1=1"
+    if tag_search_words:
+        # Subquery to check if all specified tags exist for the club
+        tag_search_condition = f"""(
+            (SELECT COUNT(DISTINCT LOWER(t.tag_name)) 
+             FROM event_tags et 
+             JOIN tag t ON et.tag_id = t.tag_id AND t.school_id = %s
+             WHERE et.event_id = e.event_id 
+               AND LOWER(t.tag_name) IN ({','.join(['%s']*len(tag_search_words))})
+            ) = {len(tag_search_words)}
+        )"""
+
+        # Add school and tag search parameters
+        query_params.append(school_id)
+        query_params.extend(tag_search_words)
+
+    # Add remaining parameters
+    query_params.extend([])
+
+    print(query_params)
+
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
 
         cur.execute(
-            """SELECT e.event_id,
+            f"""SELECT e.event_id,
                       e.start_time, 
                       e.end_time, 
                       e.location, 
@@ -148,14 +203,10 @@ def get_events_by_date(
                     AND e.is_active = 1
                     AND e.is_approved = 1
                     AND e.school_id = %s
-                    AND (e.event_name LIKE %s 
-                         OR EXISTS (SELECT * FROM event_tags et
-                                        INNER JOIN tag t
-                                            ON t.tag_id = et.tag_id
-                                        WHERE et.event_id = e.event_id
-                                            AND t.tag_name LIKE %s
-                                    ))""",
-            (start_date, end_date, school_id, f"%{search_query}%", f"%{search_query}%"),
+                    AND (%s = '' 
+                    OR (({name_search_condition})
+                        AND {tag_search_condition}))""",
+            tuple(query_params),
         )
         result = cur.fetchall()
         if result is None:

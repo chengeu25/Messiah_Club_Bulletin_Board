@@ -1,10 +1,6 @@
 import Day from '../../../components/dashboard/Day.component';
 import { useSchool } from '../../../contexts/SchoolContext';
-import {
-  passesFilter,
-  passesSearch,
-  sortEventsByDay
-} from '../../../helper/eventHelpers';
+import { passesFilter, sortEventsByDay } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import { useMemo } from 'react';
 import {
