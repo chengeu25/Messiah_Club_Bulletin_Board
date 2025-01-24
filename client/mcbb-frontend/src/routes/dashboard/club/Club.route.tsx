@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
@@ -13,7 +13,6 @@ import {
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
-import checkSubscription from '../../../helper/checkSubscription';
 
 /**
  * Club details page component for displaying comprehensive club information.
@@ -38,28 +37,14 @@ const Club = () => {
   };
 
   /**
-   * State to track user's subscription status for the club.
-   *
-   * @type {[boolean, React.Dispatch<React.SetStateAction<boolean>>]}
-   * @description Manages whether the current user is subscribed to the club
+   * Memo to track user's subscription status for the club.
    */
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const isSubscribed = useMemo(() => club?.isSubscribed ?? false, [club]);
 
   /**
-   * Fetches and updates the user's subscription status when component mounts.
-   *
-   * @function
-   * @description Checks if the user is subscribed to the club using their email
-   * - Updates isSubscribed state based on subscription check
-   * - Only runs if both user email and club ID are available
+   * Memo to track user's blocking status for the club.
    */
-  useEffect(() => {
-    const getSubscriptionStatus = async () => {
-      setIsSubscribed(await checkSubscription(user.email, club.id));
-    };
-
-    if (user?.email && club?.id) getSubscriptionStatus();
-  }, [user?.email, club?.id]);
+  const isBlocked = useMemo(() => club?.isBlocked ?? false, [club]);
 
   /**
    * Handles form submission for subscription and event creation actions.
@@ -82,13 +67,6 @@ const Club = () => {
     formData.append('clubId', club.id.toString());
     formData.append('action', action);
     formData.append('userId', user.email);
-
-    // Update UI state based on the action
-    if (action === 'subscribe') {
-      setIsSubscribed(true);
-    } else if (action === 'unsubscribe') {
-      setIsSubscribed(false);
-    }
 
     submit(formData, { method: 'post' });
   };
@@ -117,6 +95,12 @@ const Club = () => {
             type='submit'
             text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
             name={isSubscribed ? 'unsubscribe' : 'subscribe'}
+            filled={true}
+          />
+          <Button
+            type='submit'
+            text={isBlocked ? 'Unblock' : 'Block'}
+            name={isBlocked ? 'unblock' : 'block'}
             filled={true}
           />
         </Form>

@@ -94,11 +94,12 @@ def get_clubs():
                 AND (%s <> 'Suggested' 
                     OR ((us.is_active = 1 
                         AND us.subscribed_or_blocked = 1)
-                        OR EXISTS (
+                        OR (EXISTS (
                             SELECT * FROM user_tags ut
                             WHERE ut.user_id = %s
                                 AND ut.tag_id IN (SELECT tag_id FROM club_tags WHERE club_id = c.club_id)
-                        )))
+                        ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
+                                OR us.email IS NULL))))
             GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
         (
             current_user["user_id"],
@@ -183,6 +184,8 @@ def get_club(club_id):
                     "value": int
                 }
             ]
+            "isSubscribed": bool,
+            "isBlocked": bool
         }
 
     Raises:
@@ -255,6 +258,23 @@ def get_club(club_id):
         (club_id,),
     )
     result["tags"] = list(map(lambda x: {"label": x[1], "value": x[0]}, cur.fetchall()))
+    cur.execute(
+        """SELECT subscribed_or_blocked 
+            FROM user_subscription
+            WHERE email = %s 
+                AND club_id = %s""",
+        (current_user["user_id"], club_id),
+    )
+    sub_result = cur.fetchone()
+    if sub_result is not None:
+        if sub_result[0] == 1:
+            result["isSubscribed"] = True
+        else:
+            result["isSubscribed"] = False
+            if sub_result[0] == 0:
+                result["isBlocked"] = True
+            else:
+                result["isBlocked"] = False
     cur.close()
     return jsonify(result), 200
 
