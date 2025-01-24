@@ -6,12 +6,15 @@ import { UserType as User } from '../../../types/databaseTypes';
  * Loader function for the clubs dashboard route.
  *
  * @function clubsLoader
+ * @param {Object} params - Loader function parameters
+ * @param {Request} params.request - The current request object containing URL information
  * @returns {Promise<Response>} JSON response with user, active and inactive clubs data, or redirect
  *
  * @description Prepares data for the clubs dashboard by:
  * - Checking user authentication
  * - Verifying email verification status
  * - Fetching active and inactive clubs
+ * - Applying optional search and filter query parameters
  *
  * @throws {Error} Throws an error if clubs cannot be fetched
  *
@@ -20,11 +23,12 @@ import { UserType as User } from '../../../types/databaseTypes';
  * 2. Redirect to login if not authenticated
  * 3. Redirect to email verification if email is not verified
  * 4. Redirect to edit interests if user has no interests
- * 5. Fetch active clubs
- * 6. Fetch inactive clubs (optional)
- * 7. Return user and clubs data
+ * 5. Extract search and filter query parameters from URL
+ * 6. Fetch active clubs with optional search and filter
+ * 7. Fetch inactive clubs with optional search and filter
+ * 8. Return user and clubs data
  */
-const clubsLoader: LoaderFunction = async () => {
+const clubsLoader: LoaderFunction = async ({ request }) => {
   const user = await checkUser();
   if (user === false) {
     return redirect('/login');
@@ -37,8 +41,18 @@ const clubsLoader: LoaderFunction = async () => {
       "Please let us know what you're interested in so we can get you connected with the right clubs and events!";
     return redirect(`/editinterest?message=${encodeURIComponent(message)}`);
   }
+
+  // Extract search and filter query parameters
+  const url = new URL(request.url);
+  const search = url.searchParams.get('search') || '';
+  const filter = url.searchParams.get('filter') || '';
+
   const clubsResponse = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/clubs`,
+    `${
+      import.meta.env.VITE_API_BASE_URL
+    }/api/clubs/clubs?search=${encodeURIComponent(
+      search
+    )}&filter=${encodeURIComponent(filter)}`,
     {
       method: 'GET',
       credentials: 'include',
@@ -53,7 +67,11 @@ const clubsLoader: LoaderFunction = async () => {
   }
 
   const inactiveClubsResponse = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL}/api/clubs/inactive-clubs`,
+    `${
+      import.meta.env.VITE_API_BASE_URL
+    }/api/clubs/clubs?inactive=true&search=${encodeURIComponent(
+      search
+    )}&filter=${encodeURIComponent(filter)}`,
     {
       method: 'GET',
       credentials: 'include',
