@@ -131,7 +131,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
-
+        print(filter_query)
         cur.execute(
             """SELECT e.event_id,
                       e.start_time, 
@@ -145,8 +145,8 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                       r.is_yes,
                       GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ','),
                       CASE 
-                        WHEN MAX(us.subscribed_or_blocked) = 1 THEN 1
-                        WHEN MIN(us.subscribed_or_blocked) = 0 THEN 0
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 1 THEN 1 ELSE 0 END) = 1 THEN 1
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
                         ELSE NULL
                       END AS is_subscribed
                 FROM event e
@@ -166,23 +166,41 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     ON t.tag_id = et.tag_id
                 LEFT JOIN user_subscription us
                     ON us.club_id = eh.club_id
-                    AND eh.event_id = e.event_id
-                    AND us.is_active = 1
                     AND us.email = %s
+                    AND us.is_active = 1
+                    AND eh.event_id = e.event_id
                 WHERE e.start_time BETWEEN %s AND %s
                     AND e.is_active = 1
                     AND e.is_approved = 1
                     AND e.school_id = %s
-                GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name""",
+                    AND (r.is_yes = 1 OR %s <> 'Attending')
+                GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
+                HAVING (is_subscribed = 1 OR (%s <> 'Hosted by Subscribed Clubs'))
+                    AND ((is_subscribed <> 0 OR is_subscribed IS NULL) OR (%s <> 'Suggested'))
+                    AND (is_subscribed = 1
+                            OR %s <> 'Suggested'
+                            OR r.is_yes = 1
+                            OR EXISTS
+                                (SELECT * FROM user_tags ut
+                                    INNER JOIN event_tags et2
+                                        ON et2.event_id = e.event_id
+                                            AND et2.tag_id = ut.tag_id
+                                    WHERE ut.user_id = %s))""",
             (
                 user_id,
                 user_id,
                 start_date,
                 end_date,
                 school_id,
+                filter_query,
+                filter_query,
+                filter_query,
+                filter_query,
+                user_id,
             ),
         )
         result = cur.fetchall()
+        print((result[0][11]) if result else None)
         if result is None:
             return {"error": "No events found", "status": 404}
         final_result = list(

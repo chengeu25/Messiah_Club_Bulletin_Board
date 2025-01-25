@@ -99,7 +99,7 @@ const Club = () => {
           />
           <Button
             type='submit'
-            text={isBlocked ? 'Unblock' : 'Block'}
+            text={isBlocked ? 'Allow Suggestions' : "Don't Suggest"}
             name={isBlocked ? 'unblock' : 'block'}
             filled={true}
           />

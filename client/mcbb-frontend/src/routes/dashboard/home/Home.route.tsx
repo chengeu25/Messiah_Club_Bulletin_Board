@@ -2,7 +2,6 @@ import Day from '../../../components/dashboard/Day.component';
 import { useSchool } from '../../../contexts/SchoolContext';
 import {
   eventPassesSearch,
-  passesFilter,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
@@ -26,7 +25,7 @@ import {
  * @returns {React.ReactElement} Rendered home dashboard with events
  */
 const Home = () => {
-  const { user, events } = useLoaderData() as {
+  const { events } = useLoaderData() as {
     events: EventType[];
     user: UserType;
   };
@@ -48,10 +47,8 @@ const Home = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter(
-        (event: EventType) =>
-          eventPassesSearch(event, params.get('search') ?? '') &&
-          passesFilter(event, user, params.get('filter') ?? '')
+      events.filter((event: EventType) =>
+        eventPassesSearch(event, params.get('search') ?? '')
       ),
     [events, params]
   );
