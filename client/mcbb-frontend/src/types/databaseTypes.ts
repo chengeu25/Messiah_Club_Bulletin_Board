@@ -97,6 +97,10 @@ export interface ClubDetailType {
   images: ImageType[];
   /** Optional list of tags associated with the club */
   tags?: OptionType[];
+  /** Boolean indicating whether the user is subscribed to the club */
+  isSubscribed?: boolean;
+  /** Boolean indicating whether the user has blocked the club */
+  isBlocked?: boolean;
 }
 
 /**
@@ -131,6 +135,8 @@ export interface EventType {
   rsvp: string;
   /** Indicates whether the event is from a subscribed club */
   subscribed: boolean;
+  /** Indicates whether the event is from a blocked club */
+  blocked: boolean;
 }
 
 /**

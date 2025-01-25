@@ -1,5 +1,5 @@
 import { DayProps } from '../components/dashboard/Day.component';
-import { EventType, UserType } from '../types/databaseTypes';
+import { ClubType, EventType, UserType } from '../types/databaseTypes';
 
 /**
  * Sorts the events by day
@@ -47,13 +47,30 @@ export const sortEventsByDay =
  * @param search The search query
  * @returns True if the club passes the search query
  */
-export const passesSearch = (event: EventType, search: string) =>
+export const eventPassesSearch = (event: EventType, search: string) =>
   event.title.toLowerCase().includes(search?.toLowerCase() ?? '') ||
   search
     ?.toLowerCase()
     .split(' ')
     .some((tag) =>
       event.tags?.some((eventTag) => tag.includes(eventTag.toLowerCase()))
+    );
+
+/**
+ * Checks if the club passes the search query
+ * Passes if the name includes the search query or if any of the words in the search query
+ * include a tag of the club
+ * @param club The club to check
+ * @param search The search query
+ * @returns True if the club passes the search query
+ */
+export const clubPassesSearch = (club: ClubType, search: string) =>
+  club.name.toLowerCase().includes(search?.toLowerCase() ?? '') ||
+  search
+    ?.toLowerCase()
+    .split(' ')
+    .some((tag) =>
+      club.tags?.some((clubTag) => tag.includes(clubTag.toLowerCase()))
     );
 
 /**

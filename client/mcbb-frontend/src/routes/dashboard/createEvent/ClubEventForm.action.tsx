@@ -3,7 +3,7 @@ import { ActionFunction, redirect } from 'react-router';
 const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const formData = await request.formData();
   const action = formData.get('action');
-  const clubName = formData.get('clubName') as string;
+  const clubId = formData.get('clubId') as string;
   const eventName = formData.get('eventName') as string;
   const description = formData.get('description') as string;
   const startDate = formData.get('startDate') as string;
@@ -13,6 +13,9 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const tags = formData.get('tags')
     ? JSON.parse(formData.get('tags') as string)
     : [];
+  const cohosts = formData.get('cohosts')
+    ? JSON.parse(formData.get('cohosts') as string)
+    : [];
   const eventPhotos = formData.getAll('eventPhotos[]');
 
   if (action === 'cancel') {
@@ -21,7 +24,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
 
   try {
     const data = new FormData();
-    data.append('clubName', clubName);
+    data.append('clubId', clubId);
     data.append('eventName', eventName);
     data.append('description', description);
     data.append('startDate', startDate);
@@ -29,6 +32,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
+    data.append('coHosts', JSON.stringify(cohosts));
     eventPhotos.forEach((photo) => data.append('eventPhotos[]', photo));
 
     const response = await fetch(
@@ -36,7 +40,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
       {
         method: 'POST',
         credentials: 'include',
-        body: data,
+        body: data
       }
     );
 

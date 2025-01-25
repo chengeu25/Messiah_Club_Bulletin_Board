@@ -7,6 +7,7 @@ import {
 import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
+import { clubPassesSearch } from '../../../helper/eventHelpers';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
@@ -37,7 +38,7 @@ interface LoaderData {
 const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
-  const [params] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   /**
    * Handles form submission for club-related actions.
@@ -66,49 +67,6 @@ const Clubs = () => {
     submit(formData, { method: 'post' });
   };
 
-  /**
-   * Checks if a club matches the current search query.
-   *
-   * @function passesSearch
-   * @param {ClubType} club - The club to check against the search query
-   *
-   * @description Determines if a club matches the search criteria by:
-   * - Checking if club name contains the search term
-   * - Checking if any club tags match search terms
-   *
-   * @returns {boolean} True if the club passes the search filter, false otherwise
-   */
-  const passesSearch = (club: ClubType) =>
-    club.name
-      .toLowerCase()
-      .includes(params.get('search')?.toLowerCase() ?? '') ||
-    params
-      .get('search')
-      ?.toLowerCase()
-      .split(' ')
-      .some((tag) =>
-        club.tags?.some((clubTag) => tag.includes(clubTag.toLowerCase()))
-      );
-
-  /**
-   * Filters clubs based on user-selected filter.
-   *
-   * @function passesFilter
-   * @param {ClubType} club - The club to check against the filter
-   *
-   * @description Applies filtering based on selected criteria:
-   * - 'Suggested': Clubs with tags matching user's interests
-   * - 'Subscribed': Clubs the user is subscribed to
-   *
-   * @returns {boolean} True if the club passes the filter, false otherwise
-   */
-  const passesFilter = (club: ClubType) =>
-    params.get('filter') === 'Suggested'
-      ? club.tags.some((tag) => data.user?.tags?.includes(tag) ?? false)
-      : params.get('filter') === 'Subscribed'
-      ? club.subscribed
-      : true;
-
   return (
     <div className='w-full flex flex-col gap-4 flex-grow overflow-y-auto p-4 md:px-[15%] items-center'>
       {data.user.isFaculty && (
@@ -117,7 +75,9 @@ const Clubs = () => {
         </Form>
       )}
       {data.clubs
-        .filter((club) => passesSearch(club) && passesFilter(club))
+        .filter((club) =>
+          clubPassesSearch(club, searchParams.get('search') ?? '')
+        )
         .map((club) => (
           <Club
             key={club.name}
@@ -133,7 +93,9 @@ const Clubs = () => {
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
           {data.inactiveClubs
-            .filter((club) => passesSearch(club) && passesFilter(club))
+            .filter((club) =>
+              clubPassesSearch(club, searchParams.get('search') ?? '')
+            )
             .map((club) => (
               <Club
                 key={club.name + '-' + club.id}

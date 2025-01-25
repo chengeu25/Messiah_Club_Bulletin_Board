@@ -6,8 +6,7 @@ import DatePicker from 'react-datepicker';
 import { subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import {
-  passesFilter,
-  passesSearch,
+  eventPassesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
@@ -29,7 +28,7 @@ const Calendar = () => {
   const submit = useSubmit();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { events, user } = useLoaderData() as {
+  const { events } = useLoaderData() as {
     events: EventType[];
     user: UserType;
   };
@@ -113,10 +112,8 @@ const Calendar = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter(
-        (event) =>
-          passesSearch(event, searchParams.get('search') ?? '') &&
-          passesFilter(event, user, searchParams.get('filter') ?? '')
+      events.filter((event) =>
+        eventPassesSearch(event, searchParams.get('search') ?? '')
       ),
     [events, searchParams]
   );

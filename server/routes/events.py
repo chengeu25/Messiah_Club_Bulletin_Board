@@ -78,7 +78,7 @@ def get_club_id(cur, club_name):
         raise ValueError("Club not found")
 
 
-def get_events_by_date(cur, start_date, end_date, school_id, user_id):
+def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_query=""):
     """
     Retrieve events within a specified date range for a specific school.
 
@@ -91,6 +91,10 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
         end_date (str): ISO 8601 formatted end date to retrieve events until
         school_id (int): Unique identifier of the school to filter events
         user_id (int): Unique identifier of the user
+        filter_query (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
 
     Returns:
         dict: A dictionary containing:
@@ -127,78 +131,78 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+        print(filter_query)
         cur.execute(
-            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-                WHERE start_time BETWEEN %s AND %s
-                    AND is_active = 1
-                    AND is_approved = 1
-                    AND school_id = %s""",
-            (start_date, end_date, school_id),
+            """SELECT e.event_id,
+                      e.start_time, 
+                      e.end_time, 
+                      e.location, 
+                      e.description, 
+                      e.cost, 
+                      e.event_name,
+                      GROUP_CONCAT(DISTINCT eh.club_id SEPARATOR ','),
+                      GROUP_CONCAT(DISTINCT c.club_name SEPARATOR ','),
+                      r.is_yes,
+                      GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ','),
+                      CASE 
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 1 THEN 1 ELSE 0 END) = 1 THEN 1
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
+                        ELSE NULL
+                      END AS is_subscribed
+                FROM event e
+                LEFT JOIN event_host eh
+                    ON eh.event_id = e.event_id
+                    AND eh.is_approved = 1
+                LEFT JOIN club c
+                    ON c.club_id = eh.club_id
+                    AND c.is_active = 1
+                LEFT JOIN rsvp r
+                    ON r.event_id = e.event_id
+                    AND r.user_id = %s
+                    AND r.is_active = 1
+                LEFT JOIN event_tags et
+                    ON et.event_id = e.event_id
+                LEFT JOIN tag t
+                    ON t.tag_id = et.tag_id
+                LEFT JOIN user_subscription us
+                    ON us.club_id = eh.club_id
+                    AND us.email = %s
+                    AND us.is_active = 1
+                    AND eh.event_id = e.event_id
+                WHERE e.start_time BETWEEN %s AND %s
+                    AND e.is_active = 1
+                    AND e.is_approved = 1
+                    AND e.school_id = %s
+                    AND (r.is_yes = 1 OR %s <> 'Attending')
+                GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
+                HAVING (is_subscribed = 1 OR (%s <> 'Hosted by Subscribed Clubs'))
+                    AND ((is_subscribed <> 0 OR is_subscribed IS NULL) OR (%s <> 'Suggested'))
+                    AND (is_subscribed = 1
+                            OR %s <> 'Suggested'
+                            OR r.is_yes = 1
+                            OR EXISTS
+                                (SELECT * FROM user_tags ut
+                                    INNER JOIN event_tags et2
+                                        ON et2.event_id = e.event_id
+                                            AND et2.tag_id = ut.tag_id
+                                    WHERE ut.user_id = %s))""",
+            (
+                user_id,
+                user_id,
+                start_date,
+                end_date,
+                school_id,
+                filter_query,
+                filter_query,
+                filter_query,
+                filter_query,
+                user_id,
+            ),
         )
         result = cur.fetchall()
+        print((result[0][11]) if result else None)
         if result is None:
             return {"error": "No events found", "status": 404}
-        cur.execute(
-            """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
-                    INNER JOIN club c ON c.club_id = eh.club_id
-                    WHERE c.is_active = 1
-                        AND c.school_id = %s""",
-            (school_id,),
-        )
-        result_2 = cur.fetchall()
-        result_2 = list(
-            map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
-        )
-        cur.execute(
-            """SELECT r.event_id, r.is_yes FROM rsvp r
-                    INNER JOIN event e 
-                        ON e.event_id = r.event_id
-                    WHERE r.user_id = %s
-                        AND e.is_active = 1
-                        AND e.is_approved = 1
-                        AND r.is_active = 1
-                        AND e.school_id = %s""",
-            (user_id, school_id),
-        )
-        result_3 = cur.fetchall()
-        result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
-        cur.execute(
-            """SELECT et.event_id, t.tag_name FROM tag t
-                    INNER JOIN event_tags et
-                        ON t.tag_id = et.tag_id"""
-        )
-        result_4 = cur.fetchall()
-        result_4 = list(
-            map(
-                lambda x: {"event": x[0], "tag": x[1]},
-                result_4,
-            )
-        )
-        cur.execute(
-            """SELECT eh.event_id, ( 
-                SELECT COUNT(*) FROM user_subscription us 
-                    INNER JOIN event_host eh2 
-                        ON us.club_id = eh2.club_id
-                    WHERE us.email = %s
-                        AND eh2.event_id = eh.event_id
-                        AND us.is_active = 1
-                        AND us.subscribed_or_blocked = 1
-                ) > 0 AS is_subscribed 
-                FROM event_host eh
-                INNER JOIN event e 
-                    ON e.event_id = eh.event_id
-                WHERE e.is_active = 1
-                    AND e.is_approved = 1
-                    AND e.school_id = %s""",
-            (user_id, school_id),
-        )
-        result_5 = cur.fetchall()
-        result_5 = list(
-            map(
-                lambda x: {"event": x[0], "subscribed": x[1]},
-                result_5,
-            )
-        )
         final_result = list(
             map(
                 lambda x: {
@@ -217,44 +221,17 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
                     "description": x[4],
                     "cost": x[5],
                     "title": x[6],
-                    "host": list(
-                        map(
-                            lambda y: {"name": y["club"], "id": y["club_id"]},
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_2,
-                                )
-                            ),
+                    "host": [
+                        {"id": id_val, "name": name_val}
+                        for id_val, name_val in zip(
+                            [] if x[7] is None else x[7].split(","),
+                            [] if x[8] is None else x[8].split(","),
                         )
-                    ),
-                    "rsvp": next(
-                        (
-                            ("block" if item["type"] == 0 else "rsvp")
-                            for item in result_3
-                            if item["event"] == x[0]
-                        ),
-                        None,
-                    ),
-                    "tags": list(
-                        map(
-                            lambda y: y["tag"],
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_4,
-                                )
-                            ),
-                        )
-                    ),
-                    "subscribed": next(
-                        (
-                            item["subscribed"]
-                            for item in result_5
-                            if item["event"] == x[0]
-                        ),
-                        False,
-                    ),
+                    ],
+                    "rsvp": "" if x[9] is None else ("rsvp" if x[9] else "block"),
+                    "tags": [] if x[10] is None else x[10].split(","),
+                    "subscribed": True if x[11] == 1 else False,
+                    "blocked": True if x[11] == 0 else False,
                 },
                 result,
             )
@@ -351,7 +328,8 @@ def get_event(event_id):
                     ON c.club_id = eh.club_id
                 WHERE eh.event_id = %s
                     AND c.is_active = 1
-                    AND c.school_id = %s""",
+                    AND c.school_id = %s
+                    AND eh.is_approved = 1""",
         (event_id, school_id),
     )
     result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
@@ -434,6 +412,7 @@ def cancel_event(event_id):
                         ON ca.club_id = eh.club_id
                     WHERE u.email = %s
                         AND u.is_active = 1
+                        AND eh.is_approved = 1
                         AND eh.event_id = %s""",
             (user_id, event_id),
         )
@@ -552,6 +531,7 @@ def get_club_events(club_id):
                 AND e.is_approved = 1
                 AND e.start_time >= %s
                 AND e.school_id = %s
+                AND eh.is_approved = 1
             LIMIT 10""",
         (club_id, start_date, school_id),
     )
@@ -567,7 +547,8 @@ def get_club_events(club_id):
                     AND e.is_approved = 1
                     AND r.is_active = 1
                     AND e.school_id = %s
-                    AND eh.club_id = %s""",
+                    AND eh.club_id = %s
+                    AND eh.is_approved = 1""",
         (user_id, school_id, club_id),
     )
     result_2 = cur.fetchall()
@@ -615,6 +596,10 @@ def get_events():
     Query Parameters:
         start_date (str): ISO format start date for event range
         end_date (str): ISO format end date for event range
+        filter (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
 
     Returns:
         JSON response:
@@ -649,15 +634,23 @@ def get_events():
 
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    filter_query = request.args.get("filter")
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
+    if not filter_query:
+        filter_query = ""
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
 
     result = get_events_by_date(
-        cur, start_date, end_date, school_id, current_user["user_id"]
+        cur,
+        start_date,
+        end_date,
+        school_id,
+        current_user["user_id"],
+        filter_query,
     )
     cur.close()
     if "error" in result:
@@ -728,13 +721,14 @@ def create_event():
         return jsonify({"error": "User not logged in"}), 401
 
     # Get the event data from the request
-    club_name = request.form.get("clubName")
+    club_id = request.form.get("clubId")
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
     end_date = request.form.get("endDate")
     location = request.form.get("location")
     event_cost = request.form.get("eventCost")
+    co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")  # This should be a JSON string (e.g., "[1, 2, 3]")
 
     if tags:
@@ -750,6 +744,20 @@ def create_event():
             )
     else:
         tags = []
+
+    if co_hosts:
+        try:
+            # Convert the tags string into a list of integers
+            co_hosts = json.loads(
+                co_hosts
+            )  # This will handle strings like "[1, 2, 3]" as a Python list
+        except json.JSONDecodeError:
+            return (
+                jsonify({"error": "Invalid tags format, should be a JSON array"}),
+                400,
+            )
+    else:
+        co_hosts = []
 
     # Validate the data
     if (
@@ -827,12 +835,17 @@ def create_event():
                 return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
 
         # insert club_id and event_id into event_host table**
-        club_id = get_club_id(cur, club_name)
 
         cur.execute(
-            """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
+            """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
+
+        for co_host in co_hosts:
+            cur.execute(
+                """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
+                (co_host, event_id),
+            )
 
         # Save photos into the database as blobs and store the file names
         for image_data, filename in saved_photos:

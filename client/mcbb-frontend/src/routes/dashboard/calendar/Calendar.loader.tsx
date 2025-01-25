@@ -28,6 +28,8 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   // Parse URL and search parameters
   const url = new URL(request.url);
   const searchParams = new URLSearchParams(url.search);
+  const searchParam = url.searchParams.get('search') || '';
+  const filterParam = url.searchParams.get('filter') || '';
 
   // Authenticate and verify user
   const user = await checkUser();
@@ -59,6 +61,8 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
       new Date(startingDate).toISOString()
     )}&end_date=${encodeURIComponent(
       subtractDays(new Date(startingDate), -numDays).toISOString()
+    )}&search=${encodeURIComponent(searchParam)}&filter=${encodeURIComponent(
+      filterParam
     )}`,
     {
       method: 'GET',

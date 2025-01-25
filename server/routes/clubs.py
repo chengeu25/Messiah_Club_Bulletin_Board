@@ -2,6 +2,7 @@ import base64
 from flask import Blueprint, jsonify, request, session
 from extensions import mysql
 from helper.check_user import get_user_session_info
+import json
 
 
 clubs_bp = Blueprint("clubs", __name__)
@@ -12,9 +13,13 @@ def get_clubs():
     """
     Retrieve a list of all active clubs with their details.
 
-    This endpoint fetches all active clubs from the database, including their
-    ID, name, description, and logo. It also retrieves and attaches tags for each club.
-    Authentication is required to access this endpoint.
+    This endpoint fetches all active clubs from the database (or inactive, if
+    specified), including their ID, name, description, and logo. It also retrieves
+    and attaches tags for each club. Authentication is required to access this endpoint.
+
+    Query Parameters:
+        - 'filter' (optional): Filter clubs by 'Subscribed', 'Suggested', or none
+        - 'inactive' (optional): Filter clubs by being inactive, or not inactive (default)
 
     Returns:
         JSON response with the following structure:
@@ -34,12 +39,17 @@ def get_clubs():
             {"error": "Unauthorized"}, 403 status
         - On database connection error:
             {"error": "Database connection error"}, 500 status
-        - If no clubs are found:
+        - On no clubs found:
             {"error": "No clubs found"}, 404 status
 
     Raises:
         TypeError: If there's an issue processing the database results
     """
+    filter_query = request.args.get("filter")
+    inactive_query = request.args.get("inactive")
+    filter_query = filter_query if filter_query else ""
+    inactive_query = "0" if inactive_query else "1"
+
     # Check if user is authenticated
     current_user = get_user_session_info()
     if not current_user["user_id"]:
@@ -52,16 +62,49 @@ def get_clubs():
     school = session.get("school")
 
     cur = mysql.connection.cursor()
+
     cur.execute(
-        """SELECT c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked 
+        """SELECT c.club_id, 
+                  c.club_name, 
+                  c.description, 
+                  c.club_logo, 
+                  c.logo_prefix, 
+                  COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked,
+                  GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ',') AS tags
             FROM club c
             LEFT JOIN user_subscription us
                 ON c.club_id = us.club_id
                 AND us.email = %s
                 AND us.is_active = 1
-            WHERE c.is_active = 1
-                AND c.school_id = %s""",
-        (current_user["user_id"], school),
+            LEFT JOIN club_tags ct
+                ON c.club_id = ct.club_id
+            LEFT JOIN tag t
+                ON ct.tag_id = t.tag_id
+                AND t.school_id = %s
+            WHERE c.is_active = %s
+                AND c.school_id = %s
+                AND ((us.subscribed_or_blocked = 1 
+                        AND us.is_active = 1) 
+                    OR (%s <> 'Subscribed'))
+                AND (%s <> 'Suggested' 
+                    OR ((us.is_active = 1 
+                        AND us.subscribed_or_blocked = 1)
+                        OR (EXISTS (
+                            SELECT * FROM user_tags ut
+                            WHERE ut.user_id = %s
+                                AND ut.tag_id IN (SELECT tag_id FROM club_tags WHERE club_id = c.club_id)
+                        ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
+                                OR us.email IS NULL))))
+            GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
+        (
+            current_user["user_id"],
+            school,
+            inactive_query,
+            school,
+            filter_query,
+            filter_query,
+            current_user["user_id"],
+        ),
     )
     result = None
     try:
@@ -78,6 +121,7 @@ def get_clubs():
                         else None
                     ),
                     "subscribed": True if (x[5] == 1 or x[5] == True) else False,
+                    "tags": x[6].split(",") if x[6] else [],
                 },
                 result,
             )
@@ -87,131 +131,6 @@ def get_clubs():
         result = None
     if result is None:
         return jsonify({"error": "No clubs found"}), 404
-    try:
-        cur.execute(
-            """SELECT c.club_id, t.tag_name 
-                FROM club_tags c 
-                INNER JOIN tag t 
-                    ON c.tag_id = t.tag_id""",
-        )
-        tags = cur.fetchall()
-        tags = list(map(lambda x: {"tag": x[1], "club_id": x[0]}, tags))
-        result = list(
-            map(
-                lambda x: {
-                    **x,
-                    "tags": list(
-                        map(
-                            lambda y: y["tag"],
-                            filter(lambda y: y["club_id"] == x["id"], tags),
-                        )
-                    ),
-                },
-                result,
-            )
-        )
-    except TypeError as e:
-        print(e)
-    cur.close()
-    return jsonify(result), 200
-
-
-@clubs_bp.route("/inactive-clubs", methods=["GET"])
-def get_inactive_clubs():
-    """
-    Retrieve a list of all inactive clubs with their details.
-
-    This endpoint fetches all inactive clubs from the database, including their
-    ID, name, description, and logo. It also retrieves and attaches tags for each club.
-    Only faculty members can access this endpoint.
-
-    Returns:
-        JSON response with the following structure:
-        - On success:
-            {
-                "clubs": [
-                    {
-                        "id": int,
-                        "name": str,
-                        "description": str,
-                        "image": str (base64 encoded logo or None),
-                        "tags": [str]
-                    }
-                ]
-            }
-        - On unauthorized access (not faculty):
-            {"error": "Unauthorized"}, 403 status
-        - On database connection error:
-            {"error": "Database connection error"}, 500 status
-        - If no clubs are found:
-            {"error": "No clubs found"}, 404 status
-
-    Raises:
-        TypeError: If there's an issue processing the database results
-    """
-    # Check if current user has faculty privileges
-    current_user = get_user_session_info()
-    if not current_user["isFaculty"]:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    if not mysql.connection:
-        return jsonify({"error": "Database connection error"}), 500
-    cur = mysql.connection.cursor()
-    cur.execute(
-        """SELECT club_id, club_name, description, club_logo, logo_prefix 
-            FROM club 
-            WHERE is_active = 0
-                AND school_id = %s""",
-        (session.get("school"),),
-    )
-    result = None
-    try:
-        result = cur.fetchall()
-        result = list(
-            map(
-                lambda x: {
-                    "id": x[0],
-                    "name": x[1],
-                    "description": x[2],
-                    "image": (
-                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
-                        if x[3]
-                        else None
-                    ),
-                },
-                result,
-            )
-        )
-    except TypeError as e:
-        print(e)
-        result = None
-    if result is None:
-        return jsonify({"error": "No clubs found"}), 404
-    try:
-        cur.execute(
-            """SELECT c.club_id, t.tag_name 
-                FROM club_tags c 
-                INNER JOIN tag t 
-                    ON c.tag_id = t.tag_id""",
-        )
-        tags = cur.fetchall()
-        tags = list(map(lambda x: {"tag": x[1], "club_id": x[0]}, tags))
-        result = list(
-            map(
-                lambda x: {
-                    **x,
-                    "tags": list(
-                        map(
-                            lambda y: y["tag"],
-                            filter(lambda y: y["club_id"] == x["id"], tags),
-                        )
-                    ),
-                },
-                result,
-            )
-        )
-    except TypeError as e:
-        print(e)
     cur.close()
     return jsonify(result), 200
 
@@ -257,6 +176,8 @@ def get_club(club_id):
                     "value": int
                 }
             ]
+            "isSubscribed": bool,
+            "isBlocked": bool
         }
 
     Raises:
@@ -329,6 +250,24 @@ def get_club(club_id):
         (club_id,),
     )
     result["tags"] = list(map(lambda x: {"label": x[1], "value": x[0]}, cur.fetchall()))
+    cur.execute(
+        """SELECT subscribed_or_blocked 
+            FROM user_subscription
+            WHERE email = %s 
+                AND is_active = 1
+                AND club_id = %s""",
+        (current_user["user_id"], club_id),
+    )
+    sub_result = cur.fetchone()
+    if sub_result is not None:
+        if sub_result[0] == 1:
+            result["isSubscribed"] = True
+        else:
+            result["isSubscribed"] = False
+            if sub_result[0] == 0:
+                result["isBlocked"] = True
+            else:
+                result["isBlocked"] = False
     cur.close()
     return jsonify(result), 200
 
