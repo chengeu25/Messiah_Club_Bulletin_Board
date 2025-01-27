@@ -8,13 +8,14 @@ from config import Config
 import json
 from werkzeug.utils import secure_filename
 from helper.check_user import get_user_session_info
-from flask_mail import Mail, Message
-import os
+import traceback
+from helper.send_email import send_email
 
 
 events_bp = Blueprint("events", __name__)
 
 mail = None
+
 
 # Check if the file is allowed based on its extension
 def allowed_file(filename):
@@ -674,19 +675,15 @@ def get_events():
         return jsonify(result["error"]), result.get("status", 500)
     return jsonify(result), 200
 
-def init_mail(app):
-    """Initialize the Mail extension with the Flask app."""
-    global mail
-    mail = Mail(app)
 
 def generate_approval_token(club_id, event_id):
     """
     Generates a JWT token for approving an event.
-    
+
     Args:
         club_id (int): ID of the club.
         event_id (int): ID of the event.
-    
+
     Returns:
         str: Encoded JWT token.
     """
@@ -697,22 +694,27 @@ def generate_approval_token(club_id, event_id):
     }
     return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
 
-def send_approval_email(mail, email, club_id, event_id):
+
+def send_approval_email(email, club_id, event_id):
     token = generate_approval_token(club_id, event_id)
-    approval_link = f"http://localhost:3000/api/events/approve-collaboration?token={token}"
-    msg = Message(
-        subject="Event Collaboration Approval Required",
-        sender="your_email@gmail.com",
-        recipients=[email],
-        body=f"""
-        You have been invited to co-host an event. 
-        Please approve the collaboration by clicking the link below:
-        {approval_link}
-        """
+    approval_link = (
+        f"http://localhost:3000/api/events/approve-collaboration?token={token}"
     )
-    mail.send(msg)
-    
-@events_bp.route("/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new")
+
+    send_email(
+        email,
+        "Event Collaboration Approval Required",
+        f"""<p>You have been invited to co-host an event.</p>
+         <p>Please approve the collaboration by clicking the link below:</p>
+         <p><a href={approval_link}>{approval_link}</a></p>
+         """,
+        True,
+    )
+
+
+@events_bp.route(
+    "/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new"
+)
 def approve_collaboration():
     token = request.args.get("token")
     if not token:
@@ -721,8 +723,8 @@ def approve_collaboration():
     try:
         # Decode the token
         payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=["HS256"])
-        club_id = payload['club_id']
-        event_id = payload['event_id']
+        club_id = payload["club_id"]
+        event_id = payload["event_id"]
 
         # Update the event_host table to set is_approved = 1
         cur = mysql.connection.cursor()
@@ -735,14 +737,20 @@ def approve_collaboration():
         cur.close()
 
         # Temporary page with success message
-        return jsonify({
-            "message": f"Collaboration for event {event_id} approved successfully!"
-        }), 200
+        return (
+            jsonify(
+                {
+                    "message": f"Collaboration for event {event_id} approved successfully!"
+                }
+            ),
+            200,
+        )
 
     except jwt.ExpiredSignatureError:
         return jsonify({"error": "Token has expired"}), 400
     except jwt.InvalidTokenError:
         return jsonify({"error": "Invalid token"}), 400
+
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
@@ -752,8 +760,10 @@ def create_event():
     This endpoint allows authenticated users to create a new event with
     comprehensive details, including optional photos and tags.
     """
+    current_user = get_user_session_info()
+
     # Check if the user is logged in
-    user_id = session.get("user_id")
+    user_id = current_user["user_id"]
     school_id = session.get("school")
 
     if not user_id:
@@ -769,7 +779,6 @@ def create_event():
     event_cost = request.form.get("eventCost")
     co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")
-
 
     # Check if club_id is provided and valid
     if not club_id or club_id == "undefined":
@@ -814,10 +823,28 @@ def create_event():
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
+
+        # Return 403 if user is not an admin for the club
         cur.execute(
-            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (event_name, start_date_obj, end_date_obj, location, description, event_cost, school_id),
+            """SELECT * FROM club_admin WHERE CLUB_ID = %s AND USER_ID = %s""",
+            (club_id, user_id),
+        )
+
+        if not cur.fetchone():
+            return jsonify({"error": "Unauthorized"}), 403
+
+        cur.execute(
+            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_active)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, 1)""",
+            (
+                event_name,
+                start_date_obj,
+                end_date_obj,
+                location,
+                description,
+                event_cost,
+                school_id,
+            ),
         )
         event_id = cur.lastrowid
 
@@ -849,7 +876,7 @@ def create_event():
             co_host_data = cur.fetchone()
             if co_host_data:
                 co_host_email = co_host_data[0]  # USER_ID is the email
-                send_approval_email(mail, co_host_email, co_host, event_id)
+                send_approval_email(co_host_email, co_host, event_id)
             else:
                 return jsonify({"error": "No email found for the co-host"}), 400
 
@@ -863,13 +890,17 @@ def create_event():
 
         mysql.connection.commit()
         cur.close()
-        return jsonify({"message": "Event created successfully", "event_id": event_id}), 201
+        return (
+            jsonify({"message": "Event created successfully", "event_id": event_id}),
+            201,
+        )
 
     except Exception as e:
+        print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
 
-    
-#For processing approval links:
+
+# For processing approval links:
 @events_bp.route("/approve-collaboration", methods=["GET"])
 def approve_collaboration():
     token = request.args.get("token")
@@ -878,9 +909,9 @@ def approve_collaboration():
 
     try:
         # Decode the token
-        payload = jwt.decode(token, app.config['JWT_SECRET'], algorithms=["HS256"])
-        club_id = payload['club_id']
-        event_id = payload['event_id']
+        payload = jwt.decode(token, app.config["JWT_SECRET"], algorithms=["HS256"])
+        club_id = payload["club_id"]
+        event_id = payload["event_id"]
 
         # Update the event_host table to set is_approved = 1
         cur = mysql.connection.cursor()

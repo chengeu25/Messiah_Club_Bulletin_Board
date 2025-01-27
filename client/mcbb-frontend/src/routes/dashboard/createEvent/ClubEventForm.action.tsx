@@ -1,6 +1,6 @@
 import { ActionFunction, redirect } from 'react-router';
 
-const clubEventFormAction: ActionFunction = async ({ request, params }) => {
+const clubEventFormAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');
   const clubId = formData.get('clubId') as string;
@@ -19,7 +19,7 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const eventPhotos = formData.getAll('eventPhotos[]');
 
   if (action === 'cancel') {
-    return redirect('/dashboard/clubs');
+    return redirect(`/dashboard/club/${clubId}`);
   }
 
   try {
@@ -46,7 +46,6 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      const { clubId } = params; // Retrieve clubId from params
       return redirect(
         `/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(
           errorData.error
@@ -54,10 +53,12 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
       );
     }
 
-    return redirect('/dashboard/clubs');
+    return redirect(`/dashboard/club/${clubId}`);
   } catch (error) {
     console.error('Error submitting event:', error);
-    return redirect('/dashboard/club/new?error=Unexpected error occurred');
+    return redirect(
+      `/dashboard/club/${clubId}/newEvent?error=Unexpected error occurred`
+    );
   }
 };
 

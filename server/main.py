@@ -4,7 +4,7 @@ from config import Config
 from extensions import mysql, cors
 from routes.auth import auth_bp
 from routes.clubs import clubs_bp
-from routes.events import events_bp, init_mail
+from routes.events import events_bp
 from routes.interests import interests_bp
 from routes.rsvp import rsvp_bp
 from routes.subscriptions import subscriptions_bp
@@ -14,6 +14,7 @@ from routes.emails import emails_bp
 from jobs.email_notification_job import start_email_scheduler
 from flask_jwt_extended import JWTManager
 
+
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
@@ -22,9 +23,9 @@ def create_app(config_class=Config):
 
     # Initialize extensions
     mysql.init_app(app)
-    init_mail(app)  # Initialize mail here
+
     # Access JWT_EXPIRATION in your setup
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=Config.JWT_EXPIRATION)
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=Config.JWT_EXPIRATION)
 
     # CORS configuration
     cors.init_app(
@@ -62,6 +63,7 @@ def create_app(config_class=Config):
     start_email_scheduler()
 
     return app
+
 
 if __name__ == "__main__":
     app = create_app()
