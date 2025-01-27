@@ -696,6 +696,22 @@ def generate_approval_token(club_id, event_id):
 
 
 def send_approval_email(email, club_id, event_id):
+    """
+    Send an approval email to the specified email address.
+
+    Args:
+        email (str): The recipient's email address.
+        club_id (int): ID of the club hosting the event.
+        event_id (int): ID of the event.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Behavior:
+    - Generates a JWT token for the collaboration approval
+    - Constructs the approval link using the token
+    - Sends the email using the send_email helper function
+    """
     token = generate_approval_token(club_id, event_id)
     approval_link = (
         f"http://localhost:3000/api/events/approve-collaboration?token={token}"
@@ -716,6 +732,27 @@ def send_approval_email(email, club_id, event_id):
     "/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new"
 )
 def approve_collaboration():
+    """
+    Approve a collaboration for a specific event.
+
+    This endpoint approves a collaboration by setting the `is_approved` flag to true
+    for the specified club and event.
+
+    Returns:
+        JSON response:
+        - On successful approval:
+            {"message": "Collaboration approved successfully!"}, 200 status
+        - On invalid or missing token:
+            {"error": "Invalid or missing token"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update collaboration approval"}, 500 status
+
+    Behavior:
+    - Verifies the presence of a valid token
+    - Decodes the token to extract club_id and event_id
+    - Updates the event_host table to set is_approved = true
+    - Returns a success message
+    """
     token = request.args.get("token")
     if not token:
         return jsonify({"error": "Invalid or missing token"}), 400
@@ -759,6 +796,58 @@ def create_event():
 
     This endpoint allows authenticated users to create a new event with
     comprehensive details, including optional photos and tags.
+
+    Authentication:
+    - Requires user to be logged in
+    - User must be an admin for the club hosting the eent
+
+    Request Form Parameters:
+        clubId (int): ID of the club hosting the event
+        eventName (str): Title of the event
+        description (str): Detailed description of the event
+        startDate (str): ISO 8601 formatted start date and time (UTC)
+        endDate (str): ISO 8601 formatted end date and time (UTC)
+        location (str): Physical or virtual location of the event
+        eventCost (float, optional): Cost to attend the event
+        tags (str, optional): JSON array of tag IDs associated with the event
+        coHosts (str, optional): JSON array of co-host IDs
+        eventPhotos (file[], optional): List of image files to attach to the event
+
+    Returns:
+        JSON response:
+
+        - On successful event creation:
+            {
+                "message": "Event created successfully",
+                "event_id": int
+            }, 201 status
+
+        - On authentication failure:
+            {"error": "User not logged in"}, 401 status
+
+        - On validation failure:
+            {"error": "Missing required fields"}, 400 status
+            {"error": "Invalid event cost value"}, 400 status
+            {"error": "Invalid tags format, should be a JSON array"}, 400 status
+
+        - On database or server error:
+            {"error": "Failed to create event"}, 500 status
+
+    Behavior:
+    - Validates all input parameters
+    - Converts event cost to float or None
+    - Handles multiple file uploads for event photos
+    - Supports optional tags and event cost
+    - Converts dates to UTC timezone
+    - Generates a new event record in the database
+    - Associates event with hosting club
+    - Attaches tags and photos to the event
+    - Logs event creation for audit purposes
+
+    Security Considerations:
+    - Checks user authentication before event creation
+    - Validates file types for uploaded photos
+    - Sanitizes input data to prevent injection
     """
     current_user = get_user_session_info()
 
@@ -903,6 +992,27 @@ def create_event():
 # For processing approval links:
 @events_bp.route("/approve-collaboration", methods=["GET"])
 def approve_collaboration():
+    """
+    Approve a collaboration for a specific event.
+
+    This endpoint approves a collaboration by setting the `is_approved` flag to true
+    for the specified club and event.
+
+    Returns:
+        JSON response:
+        - On successful approval:
+            {"message": "Collaboration approved successfully!"}, 200 status
+        - On invalid or missing token:
+            {"error": "Invalid or missing token"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update collaboration approval"}, 500 status
+
+    Behavior:
+    - Verifies the presence of a valid token
+    - Decodes the token to extract club_id and event_id
+    - Updates the event_host table to set is_approved = true
+    - Returns a success message
+    """
     token = request.args.get("token")
     if not token:
         return jsonify({"error": "Invalid or missing token"}), 400
