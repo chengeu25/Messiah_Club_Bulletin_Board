@@ -1,6 +1,6 @@
 import base64
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, app, jsonify, session, request
+from flask import Blueprint, app, jsonify, render_template, session, request
 import jwt
 import pytz
 from extensions import mysql
@@ -699,7 +699,7 @@ def generate_approval_token(club_id, event_id):
 
 def send_approval_email(mail, email, club_id, event_id):
     token = generate_approval_token(club_id, event_id)
-    approval_link = f"http://localhost:3000/approve-collaboration?token={token}"
+    approval_link = f"http://localhost:3000/api/events/approve-collaboration?token={token}"
     msg = Message(
         subject="Event Collaboration Approval Required",
         sender="your_email@gmail.com",
@@ -711,6 +711,38 @@ def send_approval_email(mail, email, club_id, event_id):
         """
     )
     mail.send(msg)
+    
+@events_bp.route("/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new")
+def approve_collaboration():
+    token = request.args.get("token")
+    if not token:
+        return jsonify({"error": "Invalid or missing token"}), 400
+
+    try:
+        # Decode the token
+        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=["HS256"])
+        club_id = payload['club_id']
+        event_id = payload['event_id']
+
+        # Update the event_host table to set is_approved = 1
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """UPDATE event_host SET is_approved = true
+               WHERE club_id = %s AND event_id = %s""",
+            (club_id, event_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+
+        # Temporary page with success message
+        return jsonify({
+            "message": f"Collaboration for event {event_id} approved successfully!"
+        }), 200
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token has expired"}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 400
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
