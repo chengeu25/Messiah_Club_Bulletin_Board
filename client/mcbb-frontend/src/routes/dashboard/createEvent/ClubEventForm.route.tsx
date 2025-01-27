@@ -20,7 +20,6 @@ const ClubEventForm = () => {
 
   const { clubs } = useLoaderData() as { clubs: ClubType[] };
   const { id: clubId } = useParams();
-  console.log("clubId:", clubId);  // Add this line to log clubId
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);

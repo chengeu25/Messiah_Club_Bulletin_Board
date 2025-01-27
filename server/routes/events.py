@@ -761,7 +761,6 @@ def create_event():
 
     # Get the event data from the request
     club_id = request.form.get("clubId")
-    print(f"Received club_id: {club_id}")  # Debugging line to check received club_id
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
@@ -771,7 +770,6 @@ def create_event():
     co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")
 
-    print(f"Request form data: {request.form}")  # Debugging line to check entire request data
 
     # Check if club_id is provided and valid
     if not club_id or club_id == "undefined":
@@ -779,7 +777,6 @@ def create_event():
 
     try:
         club_id = int(club_id)
-        print(f"Parsed club_id as integer: {club_id}")  # Debugging line to check parsed club_id
     except ValueError:
         return jsonify({"error": "Invalid club ID format"}), 400
 
