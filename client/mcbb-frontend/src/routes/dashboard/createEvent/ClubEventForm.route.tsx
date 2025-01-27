@@ -20,6 +20,7 @@ const ClubEventForm = () => {
 
   const { clubs } = useLoaderData() as { clubs: ClubType[] };
   const { id: clubId } = useParams();
+  console.log("clubId:", clubId);  // Add this line to log clubId
   const [eventName, setEventName] = useState('');
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -80,7 +81,8 @@ const ClubEventForm = () => {
   ): Promise<void> => {
     event.preventDefault();
     const errors: string[] = [];
-
+  
+    // Validation checks
     if (!eventName.trim()) errors.push('Event name is required.');
     if (!description.trim()) errors.push('Event description is required.');
     if (!startDate || !endDate) errors.push('Event dates are required.');
@@ -91,14 +93,16 @@ const ClubEventForm = () => {
       errors.push('Event cost must be a valid number.');
     if (eventPhotos.length === 0)
       errors.push('At least one event photo is required.');
-
+  
+    // If there are validation errors, return early
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
     }
-
+  
+    // Form data to send in the request
     const formData = new FormData();
-    formData.append('clubId', clubId?.toString() ?? '');
+    formData.append('clubId', clubId?.toString() ?? '');  // Include clubId
     formData.append('eventName', eventName);
     formData.append('description', description);
     formData.append('startDate', startDate?.toISOString() || '');
@@ -113,13 +117,20 @@ const ClubEventForm = () => {
       'cohosts',
       JSON.stringify(selectedClubs.map((club) => club.value))
     );
-
+  
+    // Add event photos to form data
     eventPhotos.forEach((photo, index) => {
       formData.append(`eventPhotos[${index}]`, photo);
     });
-
+  
+    // Log the clubId and other form data for debugging
+    console.log('clubId:', clubId);
+    console.log('formData:', formData);
+  
+    // Submit the form data
     submit(formData, { method: 'post' });
   };
+  
 
   return (
     <ResponsiveForm onSubmit={handleSubmit}>

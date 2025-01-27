@@ -24,6 +24,7 @@ class Config:
         ALLOWED_EXTENSIONS (set): Set of allowed file extensions for uploads.
         SENDER_EMAIL (str): Email address used for sending system emails.
         SENDER_PASSWORD (str): Password for the sender email account.
+        JWT_SECRET_KEY (str): Secret key for signing and verifying JWTs.
     """
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
@@ -42,3 +43,16 @@ class Config:
     # Email configuration
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
     SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
+    # JWT configuration
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # Load from environment variables
+    JWT_EXPIRATION = int(os.getenv("JWT_EXPIRATION", 3600))  # Default to 3600 if not set
+    
+    # Flask-Mail configuration
+    MAIL_SERVER = os.getenv("MAIL_SERVER")
+    MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "True").lower() == "true"
+    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
+    MAIL_USERNAME = os.getenv("MAIL_USERNAME")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_USERNAME")

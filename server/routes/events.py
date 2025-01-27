@@ -1,16 +1,20 @@
 import base64
-from datetime import datetime
-from flask import Blueprint, jsonify, session, request
+from datetime import datetime, timedelta, timezone
+from flask import Blueprint, app, jsonify, session, request
+import jwt
 import pytz
 from extensions import mysql
 from config import Config
 import json
 from werkzeug.utils import secure_filename
 from helper.check_user import get_user_session_info
+from flask_mail import Mail, Message
+import os
 
 
 events_bp = Blueprint("events", __name__)
 
+mail = None
 
 # Check if the file is allowed based on its extension
 def allowed_file(filename):
@@ -670,6 +674,43 @@ def get_events():
         return jsonify(result["error"]), result.get("status", 500)
     return jsonify(result), 200
 
+def init_mail(app):
+    """Initialize the Mail extension with the Flask app."""
+    global mail
+    mail = Mail(app)
+
+def generate_approval_token(club_id, event_id):
+    """
+    Generates a JWT token for approving an event.
+    
+    Args:
+        club_id (int): ID of the club.
+        event_id (int): ID of the event.
+    
+    Returns:
+        str: Encoded JWT token.
+    """
+    payload = {
+        "club_id": club_id,
+        "event_id": event_id,
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=Config.JWT_EXPIRATION),
+    }
+    return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
+
+def send_approval_email(mail, email, club_id, event_id):
+    token = generate_approval_token(club_id, event_id)
+    approval_link = f"http://localhost:3000/approve-collaboration?token={token}"
+    msg = Message(
+        subject="Event Collaboration Approval Required",
+        sender="your_email@gmail.com",
+        recipients=[email],
+        body=f"""
+        You have been invited to co-host an event. 
+        Please approve the collaboration by clicking the link below:
+        {approval_link}
+        """
+    )
+    mail.send(msg)
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
@@ -678,53 +719,6 @@ def create_event():
 
     This endpoint allows authenticated users to create a new event with
     comprehensive details, including optional photos and tags.
-
-    Authentication:
-    - Requires user to be logged in
-    - User must have appropriate permissions to create an event
-
-    Request Form Parameters:
-        clubName (str): Name of the hosting club
-        eventName (str): Title of the event
-        description (str): Detailed description of the event
-        startDate (str): ISO 8601 formatted start date and time (UTC)
-        endDate (str): ISO 8601 formatted end date and time (UTC)
-        location (str): Physical or virtual location of the event
-        eventCost (float, optional): Cost to attend the event
-        tags (str, optional): JSON array of tag IDs associated with the event
-        eventPhotos (file[], optional): List of image files to attach to the event
-
-    Returns:
-        JSON response:
-        - On successful event creation:
-            {
-                "message": "Event created successfully",
-                "event_id": int
-            }, 201 status
-        - On authentication failure:
-            {"error": "User not logged in"}, 401 status
-        - On validation failure:
-            {"error": "Missing required fields"}, 400 status
-            {"error": "Invalid event cost value"}, 400 status
-            {"error": "Invalid tags format, should be a JSON array"}, 400 status
-        - On database or server error:
-            {"error": "Failed to create event"}, 500 status
-
-    Behavior:
-    - Validates all input parameters
-    - Converts event cost to float or None
-    - Handles multiple file uploads for event photos
-    - Supports optional tags and event cost
-    - Converts dates to UTC timezone
-    - Generates a new event record in the database
-    - Associates event with hosting club
-    - Attaches tags and photos to the event
-    - Logs event creation for audit purposes
-
-    Security Considerations:
-    - Checks user authentication before event creation
-    - Validates file types for uploaded photos
-    - Sanitizes input data to prevent injection
     """
     # Check if the user is logged in
     user_id = session.get("user_id")
@@ -735,6 +729,7 @@ def create_event():
 
     # Get the event data from the request
     club_id = request.form.get("clubId")
+    print(f"Received club_id: {club_id}")  # Debugging line to check received club_id
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
@@ -742,144 +737,135 @@ def create_event():
     location = request.form.get("location")
     event_cost = request.form.get("eventCost")
     co_hosts = request.form.get("coHosts")
-    tags = request.form.get("tags")  # This should be a JSON string (e.g., "[1, 2, 3]")
+    tags = request.form.get("tags")
 
-    if tags:
-        try:
-            # Convert the tags string into a list of integers
-            tags = json.loads(
-                tags
-            )  # This will handle strings like "[1, 2, 3]" as a Python list
-        except json.JSONDecodeError:
-            return (
-                jsonify({"error": "Invalid tags format, should be a JSON array"}),
-                400,
-            )
-    else:
-        tags = []
+    print(f"Request form data: {request.form}")  # Debugging line to check entire request data
 
-    if co_hosts:
-        try:
-            # Convert the tags string into a list of integers
-            co_hosts = json.loads(
-                co_hosts
-            )  # This will handle strings like "[1, 2, 3]" as a Python list
-        except json.JSONDecodeError:
-            return (
-                jsonify({"error": "Invalid tags format, should be a JSON array"}),
-                400,
-            )
-    else:
-        co_hosts = []
+    # Check if club_id is provided and valid
+    if not club_id or club_id == "undefined":
+        return jsonify({"error": "Invalid club ID"}), 400
 
-    # Validate the data
-    if (
-        not event_name
-        or not description
-        or not start_date
-        or not end_date
-        or not location
-    ):
+    try:
+        club_id = int(club_id)
+        print(f"Parsed club_id as integer: {club_id}")  # Debugging line to check parsed club_id
+    except ValueError:
+        return jsonify({"error": "Invalid club ID format"}), 400
+
+    # Process tags
+    tags = json.loads(tags) if tags else []
+    co_hosts = json.loads(co_hosts) if co_hosts else []
+
+    # Validate required fields
+    if not all([event_name, description, start_date, end_date, location]):
         return jsonify({"error": "Missing required fields"}), 400
 
-    # Validate event cost (set to None if empty or invalid)
     try:
-        if event_cost:
-            event_cost = float(event_cost)  # Try to convert the cost to a float
-        else:
-            event_cost = None  # If no cost is provided, set it to None (nullable)
+        event_cost = float(event_cost) if event_cost else None
     except ValueError:
         return jsonify({"error": "Invalid event cost value"}), 400
 
     # Handle file uploads
     event_photos = request.files.getlist("eventPhotos[]")
-    saved_photos = []
-
-    for photo in event_photos:
-        if photo and allowed_file(photo.filename) and photo.filename is not None:
-            filename = secure_filename(photo.filename)
-            image_data = photo.read()  # Read the image file into binary data
-            saved_photos.append((image_data, filename))  # Store image data and filename
+    saved_photos = [
+        (photo.read(), secure_filename(photo.filename))
+        for photo in event_photos
+        if photo and allowed_file(photo.filename)
+    ]
 
     try:
-        # Updated date parsing logic
+        # Parse dates
         try:
-            # Handle ISO 8601 with milliseconds and 'Z' for UTC
             start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ")
             end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            try:
-                # Fallback if no milliseconds are present
-                start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
-                end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
-            except ValueError as e:
-                return jsonify({"error": f"Invalid date format: {str(e)}"}), 400
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
+            end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
 
-        # Insert the event into the database
+        # Insert the event
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
         cur.execute(
             """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id)
                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (
-                event_name,
-                start_date_obj,
-                end_date_obj,
-                location,
-                description,
-                event_cost,
-                school_id,
-            ),
+            (event_name, start_date_obj, end_date_obj, location, description, event_cost, school_id),
         )
-        event_id = cur.lastrowid  # Get the ID of the newly created event
+        event_id = cur.lastrowid
 
-        # Optional: Associate tags with the event
+        # Add tags
         for tag in tags:
-            try:
-                tag_id = int(tag)  # Ensure tag is an integer
-                cur.execute(
-                    """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
-                    (event_id, tag_id),
-                )
-            except ValueError:
-                return jsonify({"error": f"Invalid tag format: {tag}"}), 400
-            except Exception as e:
-                return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
+            cur.execute(
+                """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
+                (event_id, int(tag)),
+            )
 
-        # insert club_id and event_id into event_host table**
-
+        # Add the main host
         cur.execute(
             """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
 
+        # Add co-hosts and send approval emails
         for co_host in co_hosts:
             cur.execute(
                 """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
                 (co_host, event_id),
             )
+            cur.execute(
+                """SELECT USER_ID 
+                   FROM club_admin 
+                   WHERE CLUB_ID = %s""",
+                (co_host,),
+            )
+            co_host_data = cur.fetchone()
+            if co_host_data:
+                co_host_email = co_host_data[0]  # USER_ID is the email
+                send_approval_email(mail, co_host_email, co_host, event_id)
+            else:
+                return jsonify({"error": "No email found for the co-host"}), 400
 
-        # Save photos into the database as blobs and store the file names
+        # Save photos
         for image_data, filename in saved_photos:
-            try:
-                image_prefix = filename  # You can store the filename as the prefix
-                cur.execute(
-                    """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
-                    VALUES (%s, %s, %s)""",
-                    (event_id, image_data, image_prefix),
-                )
-            except Exception as e:
-                return jsonify({"error": f"Failed to insert photo: {str(e)}"}), 500
+            cur.execute(
+                """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
+                   VALUES (%s, %s, %s)""",
+                (event_id, image_data, filename),
+            )
 
-        mysql.connection.commit()  # Commit the transaction
+        mysql.connection.commit()
         cur.close()
-
-        # Return a success response
-        return (
-            jsonify({"message": "Event created successfully", "event_id": event_id}),
-            201,
-        )
+        return jsonify({"message": "Event created successfully", "event_id": event_id}), 201
 
     except Exception as e:
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
+
+    
+#For processing approval links:
+@events_bp.route("/approve-collaboration", methods=["GET"])
+def approve_collaboration():
+    token = request.args.get("token")
+    if not token:
+        return jsonify({"error": "Invalid or missing token"}), 400
+
+    try:
+        # Decode the token
+        payload = jwt.decode(token, app.config['JWT_SECRET'], algorithms=["HS256"])
+        club_id = payload['club_id']
+        event_id = payload['event_id']
+
+        # Update the event_host table to set is_approved = 1
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """UPDATE event_host SET is_approved = true
+               WHERE club_id = %s AND event_id = %s""",
+            (club_id, event_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+
+        return jsonify({"message": "Collaboration approved successfully"}), 200
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token has expired"}), 400
+    except jwt.InvalidTokenError:
+        return jsonify({"error": "Invalid token"}), 400
