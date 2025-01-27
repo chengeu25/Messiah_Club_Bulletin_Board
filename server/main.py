@@ -1,3 +1,4 @@
+from datetime import timedelta
 from flask import Flask
 from config import Config
 from extensions import mysql, cors
@@ -11,27 +12,31 @@ from routes.admintools import admintools_bp
 from routes.school import school_bp
 from routes.emails import emails_bp
 from jobs.email_notification_job import start_email_scheduler
+from flask_jwt_extended import JWTManager
+
 
 def create_app(config_class=Config):
     """
     Create and configure the Flask application.
-
     This function initializes the Flask application with the specified configuration,
     sets up database and CORS extensions, and registers all API blueprints.
-
     Args:
         config_class (Config, optional): Configuration class for the application.
                                          Defaults to the Config class.
-
     Returns:
         Flask: A configured Flask application instance.
     """
     app = Flask(__name__)
     app.config.from_object(config_class)
 
+    jwt = JWTManager(app)
+
     # Initialize extensions
     mysql.init_app(app)
-    
+
+    # Access JWT_EXPIRATION in your setup
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=Config.JWT_EXPIRATION)
+
     # CORS configuration
     cors.init_app(
         app,
