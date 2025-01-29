@@ -157,7 +157,7 @@ const Event = () => {
       {/* Event images */}
       <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48 mt-2'>
         {event?.images?.map((image: ImageType) => {
-          const [prefix, base64Image] = image.image.split(',');
+          const [prefix, base64Image] = image?.image?.split(',') ?? ['', ''];
           return (
             <img
               src={`data:image/${prefix};base64,${base64Image}`}
