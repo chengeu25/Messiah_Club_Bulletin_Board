@@ -1,6 +1,6 @@
 import base64
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, app, jsonify, render_template, session, request
+from flask import Blueprint, app, jsonify, logging, render_template, session, request
 import jwt
 import pytz
 from extensions import mysql
@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from helper.check_user import get_user_session_info
 import traceback
 from helper.send_email import send_email
+import pytz
 
 
 events_bp = Blueprint("events", __name__)
@@ -682,7 +683,7 @@ def generate_approval_token(club_id, event_id):
     return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
 
 
-def send_approval_email(email, club_id, event_id):
+def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_name, event_description, event_start_date, event_end_date, event_location):
     """
     Send an approval email to the specified email address.
 
@@ -703,11 +704,34 @@ def send_approval_email(email, club_id, event_id):
     approval_link = (
         f"http://localhost:3000/api/events/approve-collaboration?token={token}"
     )
+    
+    # Define the local timezone
+    local_tz = pytz.timezone('US/Eastern')
+
+    # Parse the event start and end dates in UTC
+    start_date_obj = datetime.strptime(event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+
+    # Convert the dates to the local timezone
+    local_start_date = start_date_obj.astimezone(local_tz)
+    local_end_date = end_date_obj.astimezone(local_tz)
+
+    # Format the dates to the desired format
+    formatted_start_date = local_start_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
+    formatted_end_date = local_end_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
 
     send_email(
         email,
         "Event Collaboration Approval Required",
-        f"""<p>You have been invited to co-host an event.</p>
+        f"""<li>{cohost_name} has been invited to co-host an event with {club_name}.</li>
+         <p> Event Details: </p>
+         <ul>
+            <li>Event Name: {event_name}</li>
+            <li>Event Description: {event_description}</li>
+            <li>Event Start Date: {formatted_start_date}</li>
+            <li>Event End Date: {formatted_end_date}</li>
+            <li>Event Location: {event_location}</li>
+        </ul>
          <p>Please approve the collaboration by clicking the link below:</p>
          <p><a href={approval_link}>{approval_link}</a></p>
          """,
@@ -899,7 +923,23 @@ def create_event():
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
+        
+        # Fetch the club name
+        cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (club_id,))
+        club_data = cur.fetchone()
+        if not club_data:
+            logging.error("Club not found")
+            return jsonify({"error": "Club not found"}), 400
+        club_name = club_data[0]
 
+        # Fetch the cohost name
+        cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (co_hosts[0],))
+        cohost_data = cur.fetchone()
+        if not cohost_data:
+            logging.error("Cohost not found")
+            return jsonify({"error": "Cohost not found"}), 400
+        cohost_name = cohost_data[0]
+        
         # Return 403 if user is not an admin for the club
         cur.execute(
             """SELECT * FROM club_admin WHERE CLUB_ID = %s AND USER_ID = %s""",
@@ -952,7 +992,7 @@ def create_event():
             co_host_data = cur.fetchone()
             if co_host_data:
                 co_host_email = co_host_data[0]  # USER_ID is the email
-                send_approval_email(co_host_email, co_host, event_id)
+                send_approval_email(co_host_email, co_host, event_id, club_name, cohost_name, event_name, description, start_date, end_date, location)
             else:
                 return jsonify({"error": "No email found for the co-host"}), 400
 
