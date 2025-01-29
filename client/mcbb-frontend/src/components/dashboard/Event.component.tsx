@@ -49,7 +49,10 @@ const Event = ({
   const { title, startTime, endTime, description, host, image, rsvp, tags } =
     event;
 
-  const [prefix, base64Image] = useMemo(() => image.image.split(','), [image]);
+  const [prefix, base64Image] = useMemo(
+    () => image?.image?.split(',') ?? ['', ''],
+    [image]
+  );
 
   return (
     <div>

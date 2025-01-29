@@ -78,14 +78,12 @@ const Event = () => {
           {user?.clubAdmins?.some((adminClubId) =>
             event.host.some((host) => host.id === adminClubId)
           ) && (
-            <button
+            <Button
               type='submit'
               name='action'
               value='cancel'
-              className='bg-red-500 text-white py-2 px-4 rounded'
-            >
-              Cancel Event
-            </button>
+              text='Cancel Event'
+            />
           )}
           <input type='hidden' name='id' value={event.id} />
         </Form>
