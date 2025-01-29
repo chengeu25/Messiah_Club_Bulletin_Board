@@ -2,3 +2,4 @@ server/venv
 **/.DS_Store
 server/.env
 **/__pycache__
+db/create_tables_full.sql
