@@ -119,6 +119,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                             'rsvp': str or None,
                             'tags': [str],
                             'subscribed': bool,
+                            'image': str
                         }
                     ]
                 }
@@ -137,7 +138,6 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
-        print(filter_query)
         cur.execute(
             """SELECT e.event_id,
                       e.start_time, 
@@ -154,7 +154,22 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                         WHEN MAX(CASE WHEN us.subscribed_or_blocked = 1 THEN 1 ELSE 0 END) = 1 THEN 1
                         WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
                         ELSE NULL
-                      END AS is_subscribed
+                      END AS is_subscribed,
+                      (SELECT image_prefix
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_prefix,
+                      (SELECT image
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image,
+                      (SELECT event_photo_id
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_id
                 FROM event e
                 LEFT JOIN event_host eh
                     ON eh.event_id = e.event_id
@@ -170,6 +185,8 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     ON et.event_id = e.event_id
                 LEFT JOIN tag t
                     ON t.tag_id = et.tag_id
+                LEFT JOIN event_photo ep
+                    ON ep.event_id = e.event_id
                 LEFT JOIN user_subscription us
                     ON us.club_id = eh.club_id
                     AND us.email = %s
@@ -206,7 +223,6 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
             ),
         )
         result = cur.fetchall()
-        print((result[0][11]) if result else None)
         if result is None:
             return {"error": "No events found", "status": 404}
         final_result = list(
@@ -238,6 +254,10 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     "tags": [] if x[10] is None else x[10].split(","),
                     "subscribed": True if x[11] == 1 else False,
                     "blocked": True if x[11] == 0 else False,
+                    "image": {
+                        "image": f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}",
+                        "id": x[14],
+                    },
                 },
                 result,
             )
@@ -931,7 +951,6 @@ def create_event():
             # Reset file pointer before reading
             photo.seek(0)
             saved_photos.append((photo.read(), photo.content_type))
-    print(saved_photos)
 
     try:
         # Parse dates
