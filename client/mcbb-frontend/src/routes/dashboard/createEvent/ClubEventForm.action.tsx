@@ -17,15 +17,6 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
     ? JSON.parse(formData.get('cohosts') as string)
     : [];
   const eventPhotos = formData.getAll('eventPhotos');
-  console.log('DEBUG: eventPhotos from formData:', eventPhotos);
-  console.log('DEBUG: eventPhotos type:', typeof eventPhotos[0]);
-  console.log(
-    'DEBUG: eventPhotos instanceof File:',
-    eventPhotos[0] instanceof File
-  );
-  console.log('DEBUG: eventPhotos keys:', Object.keys(eventPhotos[0] || {}));
-  console.log('DEBUG: formData keys:', Array.from(formData.keys()));
-  console.log('DEBUG: formData entries:', Array.from(formData.entries()));
 
   if (action === 'cancel') {
     return redirect(`/dashboard/club/${clubId}`);

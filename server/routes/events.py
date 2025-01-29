@@ -925,14 +925,13 @@ def create_event():
 
     # Handle file uploads
     event_photos = request.files.getlist("eventPhotos")
-    print("DEBUG: Full request.files:", request.files)
-    print("DEBUG: request.files.getlist('eventPhotos'):", event_photos)
-    print("DEBUG: request.form:", request.form)
-    saved_photos = [
-        (photo.read(), secure_filename(photo.filename))
-        for photo in event_photos
-        if photo and allowed_file(photo.filename)
-    ]
+    saved_photos = []
+    for photo in event_photos:
+        if photo and allowed_file(photo.filename):
+            # Reset file pointer before reading
+            photo.seek(0)
+            saved_photos.append((photo.read(), photo.content_type))
+    print(saved_photos)
 
     try:
         # Parse dates

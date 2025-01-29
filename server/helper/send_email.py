@@ -30,6 +30,9 @@ def send_email(to_email, subject, body, html=False):
     sender_email = Config.SENDER_EMAIL
     sender_password = Config.SENDER_PASSWORD
 
+    if isinstance(recipients, list):
+        recipients = ", ".join(recipients)
+
     if sender_password is None or sender_email is None:
         return False
 
