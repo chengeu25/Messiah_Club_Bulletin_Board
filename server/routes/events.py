@@ -886,15 +886,13 @@ def create_event():
     - Sanitizes input data to prevent injection
     """
     current_user = get_user_session_info()
-
-    # Check if the user is logged in
     user_id = current_user["user_id"]
     school_id = session.get("school")
 
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
-    # Get the event data from the request
+    # Get event data from the request
     club_id = request.form.get("clubId")
     event_name = request.form.get("eventName")
     description = request.form.get("description")
@@ -905,23 +903,21 @@ def create_event():
     co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")
 
-    # Check if club_id is provided and valid
+    # Validate club_id
     if not club_id or club_id == "undefined":
         return jsonify({"error": "Invalid club ID"}), 400
-
     try:
         club_id = int(club_id)
     except ValueError:
         return jsonify({"error": "Invalid club ID format"}), 400
 
-    # Process tags
+    # Process optional fields
     tags = json.loads(tags) if tags else []
     co_hosts = json.loads(co_hosts) if co_hosts else []
 
     # Validate required fields
     if not all([event_name, description, start_date, end_date, location]):
         return jsonify({"error": "Missing required fields"}), 400
-
     try:
         event_cost = float(event_cost) if event_cost else None
     except ValueError:
@@ -947,7 +943,6 @@ def create_event():
             start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
             end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
 
-        # Insert the event
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
@@ -956,27 +951,18 @@ def create_event():
         cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (club_id,))
         club_data = cur.fetchone()
         if not club_data:
-            logging.error("Club not found")
             return jsonify({"error": "Club not found"}), 400
         club_name = club_data[0]
 
-        # Fetch the cohost name
-        cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (co_hosts[0],))
-        cohost_data = cur.fetchone()
-        if not cohost_data:
-            logging.error("Cohost not found")
-            return jsonify({"error": "Cohost not found"}), 400
-        cohost_name = cohost_data[0]
-
-        # Return 403 if user is not an admin for the club
+        # Check if user is an admin for the club
         cur.execute(
-            """SELECT * FROM club_admin WHERE CLUB_ID = %s AND USER_ID = %s""",
+            """SELECT * FROM club_admin WHERE club_id = %s AND user_id = %s""",
             (club_id, user_id),
         )
-
         if not cur.fetchone():
             return jsonify({"error": "Unauthorized"}), 403
 
+        # Insert the event
         cur.execute(
             """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_active)
                VALUES (%s, %s, %s, %s, %s, %s, %s, 1)""",
@@ -1005,35 +991,40 @@ def create_event():
             (club_id, event_id),
         )
 
-        # Add co-hosts and send approval emails
+        # Process multiple co-hosts
+        cohost_names = []
         for co_host in co_hosts:
-            cur.execute(
-                """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
-                (co_host, event_id),
-            )
-            cur.execute(
-                """SELECT USER_ID 
-                   FROM club_admin 
-                   WHERE CLUB_ID = %s""",
-                (co_host,),
-            )
-            co_host_data = cur.fetchone()
-            if co_host_data:
-                co_host_email = co_host_data[0]  # USER_ID is the email
-                send_approval_email(
-                    co_host_email,
-                    co_host,
-                    event_id,
-                    club_name,
-                    cohost_name,
-                    event_name,
-                    description,
-                    start_date,
-                    end_date,
-                    location,
+            cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (co_host,))
+            cohost_data = cur.fetchone()
+            if cohost_data:
+                cohost_names.append(cohost_data[0])
+
+                # Add co-host to event with pending approval
+                cur.execute(
+                    """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
+                    (co_host, event_id),
                 )
-            else:
-                return jsonify({"error": "No email found for the co-host"}), 400
+
+                # Fetch co-host email
+                cur.execute(
+                    """SELECT user_id FROM club_admin WHERE club_id = %s""",
+                    (co_host,),
+                )
+                co_host_data = cur.fetchone()
+                if co_host_data:
+                    co_host_email = co_host_data[0]  # USER_ID is the email
+                    send_approval_email(
+                        co_host_email,
+                        co_host,
+                        event_id,
+                        club_name,
+                        cohost_data[0],  # Use fetched co-host name
+                        event_name,
+                        description,
+                        start_date,
+                        end_date,
+                        location,
+                    )
 
         # Save photos
         for image_data, filename in saved_photos:
