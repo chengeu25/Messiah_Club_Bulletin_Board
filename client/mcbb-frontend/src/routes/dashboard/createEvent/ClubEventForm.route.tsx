@@ -80,7 +80,7 @@ const ClubEventForm = () => {
   ): Promise<void> => {
     event.preventDefault();
     const errors: string[] = [];
-  
+
     // Validation checks
     if (!eventName.trim()) errors.push('Event name is required.');
     if (!description.trim()) errors.push('Event description is required.');
@@ -92,16 +92,16 @@ const ClubEventForm = () => {
       errors.push('Event cost must be a valid number.');
     if (eventPhotos.length === 0)
       errors.push('At least one event photo is required.');
-  
+
     // If there are validation errors, return early
     if (errors.length > 0) {
       setValidationErrors(errors);
       return;
     }
-  
+
     // Form data to send in the request
     const formData = new FormData();
-    formData.append('clubId', clubId?.toString() ?? '');  // Include clubId
+    formData.append('clubId', clubId?.toString() ?? ''); // Include clubId
     formData.append('eventName', eventName);
     formData.append('description', description);
     formData.append('startDate', startDate?.toISOString() || '');
@@ -116,23 +116,18 @@ const ClubEventForm = () => {
       'cohosts',
       JSON.stringify(selectedClubs.map((club) => club.value))
     );
-  
+
     // Add event photos to form data
-    eventPhotos.forEach((photo, index) => {
-      formData.append(`eventPhotos[${index}]`, photo);
+    eventPhotos.forEach((photo) => {
+      formData.append('eventPhotos', photo);
     });
-  
-    // Log the clubId and other form data for debugging
-    console.log('clubId:', clubId);
-    console.log('formData:', formData);
-  
+
     // Submit the form data
-    submit(formData, { method: 'post' });
+    submit(formData, { method: 'post', encType: 'multipart/form-data' });
   };
-  
 
   return (
-    <ResponsiveForm onSubmit={handleSubmit}>
+    <ResponsiveForm onSubmit={handleSubmit} encType='multipart/form-data'>
       <h1 className='text-2xl font-bold text-center'>Create Event</h1>
 
       {serverError && (

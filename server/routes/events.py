@@ -683,7 +683,18 @@ def generate_approval_token(club_id, event_id):
     return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
 
 
-def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_name, event_description, event_start_date, event_end_date, event_location):
+def send_approval_email(
+    email,
+    club_id,
+    event_id,
+    club_name,
+    cohost_name,
+    event_name,
+    event_description,
+    event_start_date,
+    event_end_date,
+    event_location,
+):
     """
     Send an approval email to the specified email address.
 
@@ -704,21 +715,35 @@ def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_
     approval_link = (
         f"http://localhost:3000/api/events/approve-collaboration?token={token}"
     )
-    
+
     # Define the local timezone
-    local_tz = pytz.timezone('US/Eastern')
+    local_tz = pytz.timezone("US/Eastern")
 
     # Parse the event start and end dates in UTC
-    start_date_obj = datetime.strptime(event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
-    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+    start_date_obj = datetime.strptime(
+        event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ"
+    ).replace(tzinfo=pytz.utc)
+    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+        tzinfo=pytz.utc
+    )
 
     # Convert the dates to the local timezone
     local_start_date = start_date_obj.astimezone(local_tz)
     local_end_date = end_date_obj.astimezone(local_tz)
 
     # Format the dates to the desired format
-    formatted_start_date = local_start_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
-    formatted_end_date = local_end_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
+    formatted_start_date = (
+        local_start_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
+    formatted_end_date = (
+        local_end_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
 
     send_email(
         email,
@@ -903,7 +928,10 @@ def create_event():
         return jsonify({"error": "Invalid event cost value"}), 400
 
     # Handle file uploads
-    event_photos = request.files.getlist("eventPhotos[]")
+    event_photos = request.files.getlist("eventPhotos")
+    print("DEBUG: Full request.files:", request.files)
+    print("DEBUG: request.files.getlist('eventPhotos'):", event_photos)
+    print("DEBUG: request.form:", request.form)
     saved_photos = [
         (photo.read(), secure_filename(photo.filename))
         for photo in event_photos
@@ -923,7 +951,7 @@ def create_event():
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
-        
+
         # Fetch the club name
         cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (club_id,))
         club_data = cur.fetchone()
@@ -939,7 +967,7 @@ def create_event():
             logging.error("Cohost not found")
             return jsonify({"error": "Cohost not found"}), 400
         cohost_name = cohost_data[0]
-        
+
         # Return 403 if user is not an admin for the club
         cur.execute(
             """SELECT * FROM club_admin WHERE CLUB_ID = %s AND USER_ID = %s""",
@@ -992,7 +1020,18 @@ def create_event():
             co_host_data = cur.fetchone()
             if co_host_data:
                 co_host_email = co_host_data[0]  # USER_ID is the email
-                send_approval_email(co_host_email, co_host, event_id, club_name, cohost_name, event_name, description, start_date, end_date, location)
+                send_approval_email(
+                    co_host_email,
+                    co_host,
+                    event_id,
+                    club_name,
+                    cohost_name,
+                    event_name,
+                    description,
+                    start_date,
+                    end_date,
+                    location,
+                )
             else:
                 return jsonify({"error": "No email found for the co-host"}), 400
 
