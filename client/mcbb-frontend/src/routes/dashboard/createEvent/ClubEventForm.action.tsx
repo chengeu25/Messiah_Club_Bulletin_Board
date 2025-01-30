@@ -16,7 +16,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
   const cohosts = formData.get('cohosts')
     ? JSON.parse(formData.get('cohosts') as string)
     : [];
-  const eventPhotos = formData.getAll('eventPhotos[]');
+  const eventPhotos = formData.getAll('eventPhotos');
 
   if (action === 'cancel') {
     return redirect(`/dashboard/club/${clubId}`);
@@ -33,7 +33,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
     data.append('coHosts', JSON.stringify(cohosts));
-    eventPhotos.forEach((photo) => data.append('eventPhotos[]', photo));
+    eventPhotos.forEach((photo) => data.append('eventPhotos', photo));
 
     const response = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/events/new-event`,

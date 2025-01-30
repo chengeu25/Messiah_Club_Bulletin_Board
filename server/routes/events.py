@@ -120,6 +120,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                             'rsvp': str or None,
                             'tags': [str],
                             'subscribed': bool,
+                            'image': str
                         }
                     ]
                 }
@@ -138,7 +139,6 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
     try:
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
-        print(filter_query)
         cur.execute(
             """SELECT e.event_id,
                       e.start_time, 
@@ -155,7 +155,22 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                         WHEN MAX(CASE WHEN us.subscribed_or_blocked = 1 THEN 1 ELSE 0 END) = 1 THEN 1
                         WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
                         ELSE NULL
-                      END AS is_subscribed
+                      END AS is_subscribed,
+                      (SELECT image_prefix
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_prefix,
+                      (SELECT image
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image,
+                      (SELECT event_photo_id
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_id
                 FROM event e
                 LEFT JOIN event_host eh
                     ON eh.event_id = e.event_id
@@ -171,6 +186,8 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     ON et.event_id = e.event_id
                 LEFT JOIN tag t
                     ON t.tag_id = et.tag_id
+                LEFT JOIN event_photo ep
+                    ON ep.event_id = e.event_id
                 LEFT JOIN user_subscription us
                     ON us.club_id = eh.club_id
                     AND us.email = %s
@@ -207,7 +224,6 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
             ),
         )
         result = cur.fetchall()
-        print((result[0][11]) if result else None)
         if result is None:
             return {"error": "No events found", "status": 404}
         final_result = list(
@@ -239,6 +255,10 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     "tags": [] if x[10] is None else x[10].split(","),
                     "subscribed": True if x[11] == 1 else False,
                     "blocked": True if x[11] == 0 else False,
+                    "image": {
+                        "image": f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}",
+                        "id": x[14],
+                    },
                 },
                 result,
             )
@@ -684,7 +704,18 @@ def generate_approval_token(club_id, event_id):
     return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
 
 
-def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_name, event_description, event_start_date, event_end_date, event_location):
+def send_approval_email(
+    email,
+    club_id,
+    event_id,
+    club_name,
+    cohost_name,
+    event_name,
+    event_description,
+    event_start_date,
+    event_end_date,
+    event_location,
+):
     """
     Send an approval email to the specified email address.
 
@@ -705,21 +736,35 @@ def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_
     approval_link = (
         f"http://localhost:5173/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}"
     )
-    
+
     # Define the local timezone
-    local_tz = pytz.timezone('US/Eastern')
+    local_tz = pytz.timezone("US/Eastern")
 
     # Parse the event start and end dates in UTC
-    start_date_obj = datetime.strptime(event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
-    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=pytz.utc)
+    start_date_obj = datetime.strptime(
+        event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ"
+    ).replace(tzinfo=pytz.utc)
+    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+        tzinfo=pytz.utc
+    )
 
     # Convert the dates to the local timezone
     local_start_date = start_date_obj.astimezone(local_tz)
     local_end_date = end_date_obj.astimezone(local_tz)
 
     # Format the dates to the desired format
-    formatted_start_date = local_start_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
-    formatted_end_date = local_end_date.strftime("%Y-%m-%d %-I:%M%p").lower().replace("pm", "p.m.").replace("am", "a.m.")
+    formatted_start_date = (
+        local_start_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
+    formatted_end_date = (
+        local_end_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
 
     send_email(
         email,
@@ -1049,7 +1094,7 @@ def create_event():
     # Process optional fields
     tags = json.loads(tags) if tags else []
     co_hosts = json.loads(co_hosts) if co_hosts else []
-    
+
     # Validate required fields
     if not all([event_name, description, start_date, end_date, location]):
         return jsonify({"error": "Missing required fields"}), 400
@@ -1059,12 +1104,13 @@ def create_event():
         return jsonify({"error": "Invalid event cost value"}), 400
 
     # Handle file uploads
-    event_photos = request.files.getlist("eventPhotos[]")
-    saved_photos = [
-        (photo.read(), secure_filename(photo.filename))
-        for photo in event_photos
-        if photo and allowed_file(photo.filename)
-    ]
+    event_photos = request.files.getlist("eventPhotos")
+    saved_photos = []
+    for photo in event_photos:
+        if photo and allowed_file(photo.filename):
+            # Reset file pointer before reading
+            photo.seek(0)
+            saved_photos.append((photo.read(), photo.content_type))
 
     try:
         # Parse dates
@@ -1078,7 +1124,7 @@ def create_event():
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
-        
+
         # Fetch the club name
         cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (club_id,))
         club_data = cur.fetchone()
@@ -1130,7 +1176,7 @@ def create_event():
             cohost_data = cur.fetchone()
             if cohost_data:
                 cohost_names.append(cohost_data[0])
-                
+
                 # Add co-host to event with pending approval
                 cur.execute(
                     """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",

@@ -1,0 +1,9 @@
+DELETE FROM event_photo;
+
+DELETE FROM club_photo;
+
+UPDATE club
+  SET CLUB_LOGO = NULL;
+
+UPDATE school
+  SET SCHOOL_LOGO = NULL;
