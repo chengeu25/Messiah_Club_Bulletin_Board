@@ -1,62 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useLoaderData, useSubmit } from 'react-router-dom';
+import React, { useState } from 'react';
 import Button from '../../../components/formElements/Button.component';
 
 const CohostApproval = () => {
-    return <div>waz gud</div>;
-//   const { eventId } = useParams(); // Get event ID from URL params
-//   const submit = useSubmit();
-//   const { eventDetails } = useLoaderData();
+    const [message, setMessage] = useState<string | null>(null);
 
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-//   const [event, setEvent] = useState(null);
+    const handleApproval = async (decision: 'approve' | 'decline') => {
+        setMessage(null); // Clear previous messages
 
-//   useEffect(() => {
-//     fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/${eventId}`, {
-//       credentials: 'include',
-//     })
-//       .then((response) => response.json())
-//       .then((data) => {
-//         if (data.event) {
-//           setEvent(data.event);
-//         } else {
-//           setError('Event not found');
-//         }
-//         setLoading(false);
-//       })
-//       .catch((err) => {
-//         setError('Error fetching event details');
-//         setLoading(false);
-//       });
-//   }, [eventId]);
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('eventId');
+        const clubId = urlParams.get('clubId');
 
-//   const handleApproval = (status) => {
-//     const formData = new FormData();
-//     formData.append('eventId', eventId);
-//     formData.append('status', status);
-//     submit(formData, { method: 'post', action: '/api/events/cohost-approval' });
-//   };
+        if (!eventId || !clubId) {
+            setMessage('Missing eventId or clubId in URL.');
+            return;
+        }
 
-//   if (loading) return <p>Loading event details...</p>;
-//   if (error) return <p className='text-red-500'>{error}</p>;
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/${decision}-collaboration`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId, clubId }) // Include eventId and clubId in the request body
+        });
 
-//   return (
-//     <div className='p-6 bg-white shadow-md rounded-lg'>
-//       <h1 className='text-2xl font-bold text-center mb-4'>Cohost Approval</h1>
-//       <h2 className='text-xl font-semibold'>{event.eventName}</h2>
-//       <p className='text-gray-700'>{event.description}</p>
-//       <p className='text-gray-600 mt-2'>Location: {event.location}</p>
-//       <p className='text-gray-600'>Start: {new Date(event.startDate).toLocaleString()}</p>
-//       <p className='text-gray-600'>End: {new Date(event.endDate).toLocaleString()}</p>
-//       <p className='text-gray-600'>Cost: {event.eventCost ? `$${event.eventCost}` : 'Free'}</p>
+        const data = await response.json();
+        if (response.ok) {
+            setMessage(data.message); // Show success message
+        } else {
+            setMessage(data.error || 'An error occurred.');
+        }
+    };
 
-//       <div className='flex flex-row gap-4 mt-4'>
-//         <Button text='Approve' filled name='approve' onClick={() => handleApproval('approved')} />
-//         <Button text='Decline' filled={false} name='decline' onClick={() => handleApproval('declined')} />
-//       </div>
-//     </div>
-//   );
+    return (
+        <div className="p-6 bg-white shadow-md rounded-lg text-center">
+            <h1 className="text-2xl font-bold mb-4">Approve Collaboration?</h1>
+
+            <div className="flex justify-center gap-4">
+                <Button text="Approve" filled onClick={() => handleApproval('approve')} />
+                <Button text="Decline" filled={false} onClick={() => handleApproval('decline')} />
+            </div>
+
+            {message && <p className="mt-4 text-lg font-semibold text-blue-600">{message}</p>}
+        </div>
+    );
 };
 
 export default CohostApproval;

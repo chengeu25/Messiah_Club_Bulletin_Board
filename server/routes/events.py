@@ -2,6 +2,7 @@ import base64
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, app, jsonify, logging, render_template, session, request
 import jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import pytz
 from extensions import mysql
 from config import Config
@@ -700,9 +701,9 @@ def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_
     - Constructs the approval link using the token
     - Sends the email using the send_email helper function
     """
-    token = generate_approval_token(club_id, event_id)
+    # token = generate_approval_token(club_id, event_id)
     approval_link = (
-        f"http://localhost:3000/api/events/approve-collaboration?token={token}"
+        f"http://localhost:5173/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}"
     )
     
     # Define the local timezone
@@ -738,10 +739,140 @@ def send_approval_email(email, club_id, event_id, club_name, cohost_name, event_
         True,
     )
 
+def send_decline_email(event_id):
+    """
+    Send a decline email to the club admin.
 
-@events_bp.route(
-    "/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new"
-)
+    Args:
+        event_id (int): ID of the event.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Behavior:
+    - Fetches the club admin email and event name from the database
+    - Sends the email using the send_email helper function
+    """
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT u.email, e.event_name FROM users u
+            INNER JOIN club_admin ca ON u.email = ca.user_id
+            INNER JOIN event_host eh ON ca.club_id = eh.club_id
+            INNER JOIN event e ON eh.event_id = e.event_id
+            WHERE eh.event_id = %s""",
+        (event_id,),
+    )
+    result = cur.fetchone()
+    email = result[0]
+    event_name = result[1]
+
+    send_email(
+        email,
+        "Event Collaboration Declined",
+        f"Your collaboration request for the event '{event_name}' has been declined.",
+        True,
+    )
+
+    cur.close()
+    
+# def send_decline_email(event_id):
+#     """
+#     Send a decline email to the club admin.
+
+#     Args:
+#         event_id (int): ID of the event.
+
+#     Returns:
+#         bool: True if the email was sent successfully, False otherwise.
+
+#     Behavior:
+#     - Fetches the club admin email and event name from the database
+#     - Sends the email using the send_email helper function
+#     """
+#     cur = mysql.connection.cursor()
+#     cur.execute(
+#         """SELECT u.email, e.event_name FROM users u
+#             INNER JOIN club_admin ca ON u.email = ca.user_id
+#             INNER JOIN event_host eh ON ca.club_id = eh.club_id
+#             INNER JOIN event e ON eh.event_id = e.id
+#             WHERE eh.event_id = %s""",
+#         (event_id,),
+#     )
+#     result = cur.fetchone()
+#     email = result[0]
+#     event_name = result[1]
+
+#     send_email(
+#         email,
+#         "Event Collaboration Declined",
+#         f"Your collaboration request for the event '{event_name}' has been declined.",
+#         True,
+#     )
+
+#     cur.close()
+
+
+# @events_bp.route(
+#     "/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new"
+# )
+# def approve_collaboration():
+#     """
+#     Approve a collaboration for a specific event.
+
+#     This endpoint approves a collaboration by setting the `is_approved` flag to true
+#     for the specified club and event.
+
+#     Returns:
+#         JSON response:
+#         - On successful approval:
+#             {"message": "Collaboration approved successfully!"}, 200 status
+#         - On invalid or missing token:
+#             {"error": "Invalid or missing token"}, 400 status
+#         - On database update failure:
+#             {"error": "Failed to update collaboration approval"}, 500 status
+
+#     Behavior:
+#     - Verifies the presence of a valid token
+#     - Decodes the token to extract club_id and event_id
+#     - Updates the event_host table to set is_approved = true
+#     - Returns a success message
+#     """
+#     token = request.args.get("token")
+#     if not token:
+#         return jsonify({"error": "Invalid or missing token"}), 400
+
+#     try:
+#         # Decode the token
+#         payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=["HS256"])
+#         club_id = payload["club_id"]
+#         event_id = payload["event_id"]
+
+#         # Update the event_host table to set is_approved = 1
+#         cur = mysql.connection.cursor()
+#         cur.execute(
+#             """UPDATE event_host SET is_approved = true
+#                WHERE club_id = %s AND event_id = %s""",
+#             (club_id, event_id),
+#         )
+#         mysql.connection.commit()
+#         cur.close()
+
+#         # Temporary page with success message
+#         return (
+#             jsonify(
+#                 {
+#                     "message": f"Collaboration for event {event_id} approved successfully!"
+#                 }
+#             ),
+#             200,
+#         )
+
+#     except jwt.ExpiredSignatureError:
+#         return jsonify({"error": "Token has expired"}), 400
+#     except jwt.InvalidTokenError:
+#         return jsonify({"error": "Invalid token"}), 400
+
+@events_bp.route("/approve-collaboration", methods=["POST"])
 def approve_collaboration():
     """
     Approve a collaboration for a specific event.
@@ -749,56 +880,85 @@ def approve_collaboration():
     This endpoint approves a collaboration by setting the `is_approved` flag to true
     for the specified club and event.
 
+    Request JSON Parameters:
+        eventId (int): ID of the event.
+        clubId (int): ID of the club.
+
     Returns:
         JSON response:
         - On successful approval:
             {"message": "Collaboration approved successfully!"}, 200 status
-        - On invalid or missing token:
-            {"error": "Invalid or missing token"}, 400 status
+        - On invalid or missing parameters:
+            {"error": "Invalid or missing parameters"}, 400 status
         - On database update failure:
-            {"error": "Failed to update collaboration approval"}, 500 status
-
-    Behavior:
-    - Verifies the presence of a valid token
-    - Decodes the token to extract club_id and event_id
-    - Updates the event_host table to set is_approved = true
-    - Returns a success message
+            {"error": "Failed to update collaboration approval: <error_message>"}, 500 status
     """
-    token = request.args.get("token")
-    if not token:
-        return jsonify({"error": "Invalid or missing token"}), 400
+    data = request.get_json()
+    event_id = data.get("eventId")
+    club_id = data.get("clubId")
+    print(event_id, club_id)
+
+    if not event_id or not club_id:
+        return jsonify({"error": "Invalid or missing parameters"}), 400
 
     try:
-        # Decode the token
-        payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=["HS256"])
-        club_id = payload["club_id"]
-        event_id = payload["event_id"]
-
-        # Update the event_host table to set is_approved = 1
         cur = mysql.connection.cursor()
         cur.execute(
             """UPDATE event_host SET is_approved = true
-               WHERE club_id = %s AND event_id = %s""",
-            (club_id, event_id),
+               WHERE event_id = %s AND club_id = %s""",
+            (event_id, club_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Collaboration approved successfully!"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Failed to update collaboration approval: {str(e)}"}), 500
+
+@events_bp.route("/decline-collaboration", methods=["POST"])
+def decline_collaboration():
+    """
+    Decline a collaboration for a specific event.
+
+    This endpoint declines a collaboration by setting the `is_active` flag to false
+    for the specified event and sends a notification email to the club admin.
+
+    Request JSON Parameters:
+        eventId (int): ID of the event.
+
+    Returns:
+        JSON response:
+        - On successful decline:
+            {"message": "Collaboration declined successfully!"}, 200 status
+        - On invalid or missing parameters:
+            {"error": "Invalid or missing parameters"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update collaboration decline: <error_message>"}, 500 status
+    """
+    data = request.get_json()
+    event_id = data.get("eventId")
+
+    if not event_id:
+        return jsonify({"error": "Invalid or missing parameters"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """UPDATE event SET is_active = 0
+               WHERE id = %s""",
+            (event_id,),
         )
         mysql.connection.commit()
         cur.close()
 
-        # Temporary page with success message
-        return (
-            jsonify(
-                {
-                    "message": f"Collaboration for event {event_id} approved successfully!"
-                }
-            ),
-            200,
-        )
+        # Send notification email to club admin
+        send_decline_email(event_id)
 
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Token has expired"}), 400
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "Invalid token"}), 400
+        return jsonify({"message": "Collaboration declined successfully!"}), 200
 
+    except Exception as e:
+        return jsonify({"error": f"Failed to update collaboration decline: {str(e)}"}), 500
+    
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
@@ -1017,54 +1177,3 @@ def create_event():
         print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
 
-
-# For processing approval links:
-@events_bp.route("/approve-collaboration", methods=["GET"])
-def approve_collaboration():
-    """
-    Approve a collaboration for a specific event.
-
-    This endpoint approves a collaboration by setting the `is_approved` flag to true
-    for the specified club and event.
-
-    Returns:
-        JSON response:
-        - On successful approval:
-            {"message": "Collaboration approved successfully!"}, 200 status
-        - On invalid or missing token:
-            {"error": "Invalid or missing token"}, 400 status
-        - On database update failure:
-            {"error": "Failed to update collaboration approval"}, 500 status
-
-    Behavior:
-    - Verifies the presence of a valid token
-    - Decodes the token to extract club_id and event_id
-    - Updates the event_host table to set is_approved = true
-    - Returns a success message
-    """
-    token = request.args.get("token")
-    if not token:
-        return jsonify({"error": "Invalid or missing token"}), 400
-
-    try:
-        # Decode the token
-        payload = jwt.decode(token, app.config["JWT_SECRET"], algorithms=["HS256"])
-        club_id = payload["club_id"]
-        event_id = payload["event_id"]
-
-        # Update the event_host table to set is_approved = 1
-        cur = mysql.connection.cursor()
-        cur.execute(
-            """UPDATE event_host SET is_approved = true
-               WHERE club_id = %s AND event_id = %s""",
-            (club_id, event_id),
-        )
-        mysql.connection.commit()
-        cur.close()
-
-        return jsonify({"message": "Collaboration approved successfully"}), 200
-
-    except jwt.ExpiredSignatureError:
-        return jsonify({"error": "Token has expired"}), 400
-    except jwt.InvalidTokenError:
-        return jsonify({"error": "Invalid token"}), 400
