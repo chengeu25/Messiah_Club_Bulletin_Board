@@ -1,7 +1,13 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 import smtplib
+import os
+import base64
 from config import Config
+
+# Hardcoded logo path and email template
+LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "logo.png")
 
 
 def send_email(to_email, subject, body, html=False):
@@ -15,6 +21,7 @@ def send_email(to_email, subject, body, html=False):
         to_email (str | list): The email address(es) of the recipient.
         subject (str): The subject line of the email.
         body (str): The plain text content of the email.
+        html (bool, optional): Whether the body is already in HTML format. Defaults to False.
 
     Returns:
         None
@@ -41,7 +48,26 @@ def send_email(to_email, subject, body, html=False):
     msg["From"] = sender_email
     msg["To"] = to_email
 
-    msg.attach(MIMEText(body, "html" if html else "plain"))
+    # Prepare logo
+    with open(LOGO_PATH, "rb") as logo_file:
+        logo_data = base64.b64encode(logo_file.read()).decode("utf-8")
+
+    # Email template with blue bar, logo, and light gray background
+    email_template = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f0f0f0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #172554; color: white; padding: 15px; display: flex; align-items: center;">
+            <img src="data:image/png;base64,{logo_data}" alt="Logo" style="max-height: 50px; margin-right: 15px;">
+            <h1 style="margin: 0; font-size: 18px;">{subject}</h1>
+        </div>
+        <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
+            {body if html else body.replace(chr(10), '<br>')}
+        </div>
+    </div>
+    """
+
+    # Attach HTML part
+    html_part = MIMEText(email_template, "html")
+    msg.attach(html_part)
 
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
