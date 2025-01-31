@@ -737,9 +737,7 @@ def send_approval_email(
     - Sends the email using the send_email helper function
     """
     token = generate_approval_token(club_id, event_id)
-    approval_link = (
-        f"http://localhost:5173/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}&token={token}"
-    )
+    approval_link = f"http://localhost:5173/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}&token={token}"
 
     # Define the local timezone
     local_tz = pytz.timezone("US/Eastern")
@@ -788,6 +786,7 @@ def send_approval_email(
         True,
     )
 
+
 def send_decline_email(event_id):
     """
     Send a decline email to the club admin.
@@ -823,7 +822,8 @@ def send_decline_email(event_id):
     )
 
     cur.close()
-    
+
+
 # def send_decline_email(event_id):
 #     """
 #     Send a decline email to the club admin.
@@ -921,6 +921,7 @@ def send_decline_email(event_id):
 #     except jwt.InvalidTokenError:
 #         return jsonify({"error": "Invalid token"}), 400
 
+
 @events_bp.route("/approve-collaboration", methods=["POST"])
 def approve_collaboration():
     """
@@ -962,7 +963,11 @@ def approve_collaboration():
         return jsonify({"message": "Collaboration approved successfully!"}), 200
 
     except Exception as e:
-        return jsonify({"error": f"Failed to update collaboration approval: {str(e)}"}), 500
+        return (
+            jsonify({"error": f"Failed to update collaboration approval: {str(e)}"}),
+            500,
+        )
+
 
 @events_bp.route("/decline-collaboration", methods=["POST"])
 def decline_collaboration():
@@ -994,7 +999,7 @@ def decline_collaboration():
         cur = mysql.connection.cursor()
         cur.execute(
             """UPDATE event SET is_active = 0
-               WHERE id = %s""",
+               WHERE event_id = %s""",
             (event_id,),
         )
         mysql.connection.commit()
@@ -1006,8 +1011,11 @@ def decline_collaboration():
         return jsonify({"message": "Collaboration declined successfully!"}), 200
 
     except Exception as e:
-        return jsonify({"error": f"Failed to update collaboration decline: {str(e)}"}), 500
-    
+        return (
+            jsonify({"error": f"Failed to update collaboration decline: {str(e)}"}),
+            500,
+        )
+
 
 @events_bp.route("/new-event", methods=["POST"])
 def create_event():
@@ -1189,12 +1197,17 @@ def create_event():
 
                 # Fetch co-host email
                 cur.execute(
-                    """SELECT user_id FROM club_admin WHERE club_id = %s""",
+                    """SELECT user_id 
+                        FROM club_admin 
+                        WHERE club_id = %s
+                            AND is_active = 1""",
                     (co_host,),
                 )
-                co_host_data = cur.fetchone()
+                co_host_data = cur.fetchall()
                 if co_host_data:
-                    co_host_email = co_host_data[0]  # USER_ID is the email
+                    co_host_email = list(
+                        emails[0] for emails in co_host_data
+                    )  # USER_ID is the email
                     send_approval_email(
                         co_host_email,
                         co_host,
@@ -1226,4 +1239,3 @@ def create_event():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
-
