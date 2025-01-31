@@ -39,7 +39,7 @@ class Config:
 
     # Upload configuration
     UPLOAD_FOLDER = "uploads/"
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "heic"}
 
     # Email configuration
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")

@@ -12,7 +12,7 @@ def send_email(to_email, subject, body, html=False):
     It uses the SMTP protocol with TLS encryption to send emails via Gmail's SMTP server.
 
     Args:
-        to_email (str): The email address of the recipient.
+        to_email (str | list): The email address(es) of the recipient.
         subject (str): The subject line of the email.
         body (str): The plain text content of the email.
 
@@ -29,6 +29,9 @@ def send_email(to_email, subject, body, html=False):
     """
     sender_email = Config.SENDER_EMAIL
     sender_password = Config.SENDER_PASSWORD
+
+    if isinstance(to_email, list):
+        to_email = ", ".join(to_email)
 
     if sender_password is None or sender_email is None:
         return False

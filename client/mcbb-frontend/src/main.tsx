@@ -76,6 +76,9 @@ import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferenc
 import AccountInfo from './routes/accountInfo/accountInfo.route.tsx';
 import accountInfoAction from './routes/accountInfo/accountInfo.action.tsx';
 import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
+import cohostApprovalLoader from './routes/dashboard/cohostApproval/cohostApproval.loader.tsx';
+import CohostApproval from './routes/dashboard/cohostApproval/cohostApproval.route.tsx';
+import { cohostApprovalAction } from './routes/dashboard/cohostApproval/cohostApproval.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -145,6 +148,12 @@ const router = createBrowserRouter(
           element={<Home />}
           loader={homeLoader}
           action={homeAction}
+        />
+        <Route
+          path='cohostApproval'
+          element={<CohostApproval />}
+          loader={cohostApprovalLoader}
+          action={cohostApprovalAction}
         />
         <Route
           path='assignFaculty'
