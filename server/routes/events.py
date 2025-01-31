@@ -255,7 +255,11 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     "subscribed": True if x[11] == 1 else False,
                     "blocked": True if x[11] == 0 else False,
                     "image": {
-                        "image": f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}",
+                        "image": (
+                            f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}"
+                            if (x[12] is not None and x[13] is not None)
+                            else None
+                        ),
                         "id": x[14],
                     },
                 },
