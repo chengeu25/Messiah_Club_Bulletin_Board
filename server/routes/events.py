@@ -2,6 +2,7 @@ import base64
 from datetime import datetime, timedelta, timezone
 from flask import Blueprint, app, jsonify, logging, render_template, session, request
 import jwt
+from jwt import ExpiredSignatureError, InvalidTokenError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import pytz
 from extensions import mysql
@@ -12,12 +13,18 @@ from helper.check_user import get_user_session_info
 import traceback
 from helper.send_email import send_email
 import pytz
+from dotenv import load_dotenv
+import os   
 
 
 events_bp = Blueprint("events", __name__)
 
 mail = None
 
+# Load environment variables from .env file
+load_dotenv()
+
+SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 
 # Check if the file is allowed based on its extension
 def allowed_file(filename):
@@ -688,6 +695,42 @@ def get_events():
         return jsonify(result["error"]), result.get("status", 500)
     return jsonify(result), 200
 
+def validate_jwt(token):
+    """
+    Validate a JWT token for approving an event.
+
+    Args:
+        token (str): Encoded JWT token.
+
+    Returns:
+        dict: Decoded payload if the token is valid, None otherwise.
+    """
+    try:
+        print(f"Decoding Token: {token}")  # Debugging: Print the token before decoding
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        print(f"Decoded Payload: {payload}")  # Debugging: Print the decoded payload
+        return payload, None
+    except jwt.ExpiredSignatureError:
+        print("JWT Validation Error: Token has expired")
+        return None, "Token has expired"
+    except jwt.InvalidTokenError as e:
+        print(f"JWT Validation Error: {str(e)}")  # Print actual error message
+        return None, "Invalid token"
+    except Exception as e:
+        print(f"Unexpected Error: {str(e)}")  # Catch any unexpected errors
+        return None, "Unexpected token error"
+    
+@events_bp.route('/api/validate_token', methods=['GET'])
+def validate_token():
+    token = request.args.get('token')
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    validation_result = validate_jwt(token)
+    if isinstance(validation_result, tuple):  # If validation fails
+        return jsonify(validation_result[0]), validation_result[1]
+
+    return jsonify({"message": "Token is valid", "data": validation_result})
 
 def generate_approval_token(club_id, event_id):
     """
@@ -824,104 +867,6 @@ def send_decline_email(event_id):
     cur.close()
 
 
-# def send_decline_email(event_id):
-#     """
-#     Send a decline email to the club admin.
-
-#     Args:
-#         event_id (int): ID of the event.
-
-#     Returns:
-#         bool: True if the email was sent successfully, False otherwise.
-
-#     Behavior:
-#     - Fetches the club admin email and event name from the database
-#     - Sends the email using the send_email helper function
-#     """
-#     cur = mysql.connection.cursor()
-#     cur.execute(
-#         """SELECT u.email, e.event_name FROM users u
-#             INNER JOIN club_admin ca ON u.email = ca.user_id
-#             INNER JOIN event_host eh ON ca.club_id = eh.club_id
-#             INNER JOIN event e ON eh.event_id = e.id
-#             WHERE eh.event_id = %s""",
-#         (event_id,),
-#     )
-#     result = cur.fetchone()
-#     email = result[0]
-#     event_name = result[1]
-
-#     send_email(
-#         email,
-#         "Event Collaboration Declined",
-#         f"Your collaboration request for the event '{event_name}' has been declined.",
-#         True,
-#     )
-
-#     cur.close()
-
-
-# @events_bp.route(
-#     "/approve-collaboration", methods=["GET"], endpoint="approve_collaboration_new"
-# )
-# def approve_collaboration():
-#     """
-#     Approve a collaboration for a specific event.
-
-#     This endpoint approves a collaboration by setting the `is_approved` flag to true
-#     for the specified club and event.
-
-#     Returns:
-#         JSON response:
-#         - On successful approval:
-#             {"message": "Collaboration approved successfully!"}, 200 status
-#         - On invalid or missing token:
-#             {"error": "Invalid or missing token"}, 400 status
-#         - On database update failure:
-#             {"error": "Failed to update collaboration approval"}, 500 status
-
-#     Behavior:
-#     - Verifies the presence of a valid token
-#     - Decodes the token to extract club_id and event_id
-#     - Updates the event_host table to set is_approved = true
-#     - Returns a success message
-#     """
-#     token = request.args.get("token")
-#     if not token:
-#         return jsonify({"error": "Invalid or missing token"}), 400
-
-#     try:
-#         # Decode the token
-#         payload = jwt.decode(token, Config.JWT_SECRET_KEY, algorithms=["HS256"])
-#         club_id = payload["club_id"]
-#         event_id = payload["event_id"]
-
-#         # Update the event_host table to set is_approved = 1
-#         cur = mysql.connection.cursor()
-#         cur.execute(
-#             """UPDATE event_host SET is_approved = true
-#                WHERE club_id = %s AND event_id = %s""",
-#             (club_id, event_id),
-#         )
-#         mysql.connection.commit()
-#         cur.close()
-
-#         # Temporary page with success message
-#         return (
-#             jsonify(
-#                 {
-#                     "message": f"Collaboration for event {event_id} approved successfully!"
-#                 }
-#             ),
-#             200,
-#         )
-
-#     except jwt.ExpiredSignatureError:
-#         return jsonify({"error": "Token has expired"}), 400
-#     except jwt.InvalidTokenError:
-#         return jsonify({"error": "Invalid token"}), 400
-
-
 @events_bp.route("/approve-collaboration", methods=["POST"])
 def approve_collaboration():
     """
@@ -943,10 +888,29 @@ def approve_collaboration():
         - On database update failure:
             {"error": "Failed to update collaboration approval: <error_message>"}, 500 status
     """
-    data = request.get_json()
-    event_id = data.get("eventId")
-    club_id = data.get("clubId")
-    print(event_id, club_id)
+    token = request.headers.get("Authorization")
+    
+    if not token:
+        return jsonify({"error": "Missing token"}), 403
+
+    if token.startswith("Bearer "):
+        token = token.split(" ")[1]  # Remove "Bearer " prefix
+
+    payload, error = validate_jwt(token)
+    
+    if error:
+        print(f"JWT Validation Error: {error}")
+        return jsonify({"error": error}), 403
+    
+    event_id = request.json.get("eventId")
+    club_id = request.json.get("clubId")
+
+    print(f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}")
+    print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
+
+    if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
+        print("Error: Token payload does not match request data")
+        return jsonify({"error": "Invalid event or club ID"}), 403
 
     if not event_id or not club_id:
         return jsonify({"error": "Invalid or missing parameters"}), 400
@@ -989,10 +953,31 @@ def decline_collaboration():
         - On database update failure:
             {"error": "Failed to update collaboration decline: <error_message>"}, 500 status
     """
-    data = request.get_json()
-    event_id = data.get("eventId")
+    token = request.headers.get("Authorization")
+    
+    if not token:
+        return jsonify({"error": "Missing token"}), 403
 
-    if not event_id:
+    if token.startswith("Bearer "):
+        token = token.split(" ")[1]  # Remove "Bearer " prefix
+
+    payload, error = validate_jwt(token)
+    
+    if error:
+        print(f"JWT Validation Error: {error}")
+        return jsonify({"error": error}), 403
+    
+    event_id = request.json.get("eventId")
+    club_id = request.json.get("clubId")
+
+    print(f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}")
+    print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
+
+    if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
+        print("Error: Token payload does not match request data")
+        return jsonify({"error": "Invalid event or club ID"}), 403
+    
+    if not event_id or not club_id:
         return jsonify({"error": "Invalid or missing parameters"}), 400
 
     try:

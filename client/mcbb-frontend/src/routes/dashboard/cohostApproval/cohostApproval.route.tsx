@@ -11,9 +11,10 @@ const CohostApproval = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('eventId');
     const clubId = urlParams.get('clubId');
+    const token = urlParams.get('token'); // Extract JWT token from URL
 
-    if (!eventId || !clubId) {
-      setMessage('Missing eventId or clubId in URL.');
+    if (!eventId || !clubId || !token) {
+      setMessage('Missing eventId, clubId, or token in URL.');
       return;
     }
 
@@ -24,8 +25,11 @@ const CohostApproval = () => {
       {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, clubId }) // Include eventId and clubId in the request body
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Send token in header
+        },
+        body: JSON.stringify({ eventId, clubId })
       }
     );
 
