@@ -1079,6 +1079,10 @@ def create_event():
     event_cost = request.form.get("eventCost")
     co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")
+    gender_restriction = request.form.get("genderRestriction")
+    
+    if gender_restriction not in ["male", "female", "none"]:
+        return jsonify({"error": "Invalid gender restriction"}), 400
 
     # Validate club_id
     if not club_id or club_id == "undefined":
@@ -1139,8 +1143,8 @@ def create_event():
 
         # Insert the event
         cur.execute(
-            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_active)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, 1)""",
+            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_active, gender_restriction)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s)""",
             (
                 event_name,
                 start_date_obj,
@@ -1149,6 +1153,7 @@ def create_event():
                 description,
                 event_cost,
                 school_id,
+                gender_restriction
             ),
         )
         event_id = cur.lastrowid

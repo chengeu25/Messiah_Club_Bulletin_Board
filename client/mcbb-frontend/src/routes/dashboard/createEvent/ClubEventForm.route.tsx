@@ -31,6 +31,7 @@ const ClubEventForm = () => {
   const [selectedTags, setSelectedTags] = useState<OptionType[]>([]); // Tags selected by the user
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [selectedClubs, setSelectedClubs] = useState<OptionType[]>([]);
+  const [genderRestriction, setGenderRestriction] = useState('none');
   const selectableClubs = useMemo(() => {
     return clubs.map(
       (club: ClubType) =>
@@ -108,6 +109,7 @@ const ClubEventForm = () => {
     formData.append('endDate', endDate?.toISOString() || '');
     formData.append('location', location);
     formData.append('eventCost', eventCost);
+    formData.append('genderRestriction', genderRestriction);
     formData.append(
       'tags',
       JSON.stringify(selectedTags.map((tag) => tag.value))
@@ -265,6 +267,22 @@ const ClubEventForm = () => {
             })
           }}
         />
+      </div>
+      <div className='mb-4'>
+        <label htmlFor='genderRestriction' className='block text-sm font-medium text-gray-700'>
+          Gender Restriction
+        </label>
+        <select
+          id='genderRestriction'
+          name='genderRestriction'
+          value={genderRestriction}
+          onChange={(e) => setGenderRestriction(e.target.value)}
+          className='mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm'
+        >
+          <option value='none'>None</option>
+          <option value='male'>Male</option>
+          <option value='female'>Female</option>
+        </select>
       </div>
       <div className='flex flex-row gap-2'>
         <Button text='Submit' type='submit' filled name='submit' />

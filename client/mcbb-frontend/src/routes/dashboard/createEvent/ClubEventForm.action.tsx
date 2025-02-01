@@ -17,6 +17,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
     ? JSON.parse(formData.get('cohosts') as string)
     : [];
   const eventPhotos = formData.getAll('eventPhotos');
+  const genderRestriction = formData.get('genderRestriction') as string;
 
   if (action === 'cancel') {
     return redirect(`/dashboard/club/${clubId}`);
@@ -33,6 +34,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
     data.append('coHosts', JSON.stringify(cohosts));
+    data.append('genderRestriction', genderRestriction);
     eventPhotos.forEach((photo) => data.append('eventPhotos', photo));
 
     const response = await fetch(
