@@ -4,34 +4,34 @@ import { UserType as User } from '../../../types/databaseTypes';
 
 /**
  * Loader function for the Club details page.
- * 
+ *
  * @function clubLoader
  * @param {Object} context - Loader function context
  * @param {Object} context.params - Route parameters
  * @param {string} context.params.id - Club ID from route
- * 
+ *
  * @returns {Promise<Response>} JSON response with user, club, and events data
- * 
+ *
  * @description Prepares data for the Club details page:
  * 1. Checks user authentication and email verification
  * 2. Fetches club details by ID
  * 3. Retrieves upcoming events for the club
  * 4. Handles potential errors and redirects
- * 
+ *
  * @workflow
  * 1. Validate user authentication
  * 2. Verify club ID is present
  * 3. Fetch club details from backend
  * 4. Fetch upcoming club events
  * 5. Return user, club, and events data
- * 
+ *
  * @throws {Error} Redirects to login or verification page if authentication fails
  */
-const clubLoader: LoaderFunction = async ({ params }) => {
+const clubLoader: LoaderFunction = async ({ params, request }) => {
   // Authenticate and verify user
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

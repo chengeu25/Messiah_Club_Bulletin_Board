@@ -44,23 +44,32 @@ const VerifyEmail = () => {
     const searchParams = new URLSearchParams(location.search);
     const newError = searchParams.get('error');
     const newMessage = searchParams.get('message');
+    const serviceTo = searchParams.get('serviceTo');
 
     if (newError || newMessage) {
+      // Create a new URLSearchParams to avoid mutating the original
+      const updatedParams = new URLSearchParams(location.search);
+
       if (newError) {
         const decodedError = decodeURIComponent(newError);
         setError(decodedError);
-        searchParams.delete('error');
+        updatedParams.delete('error');
       }
 
       if (newMessage) {
         const decodedMessage = decodeURIComponent(newMessage);
         setMessage(decodedMessage);
-        searchParams.delete('message');
+        updatedParams.delete('message');
+      }
+
+      // Ensure serviceTo is preserved
+      if (serviceTo) {
+        updatedParams.set('serviceTo', serviceTo);
       }
 
       // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
+      const newUrl = updatedParams.toString()
+        ? `${location.pathname}?${updatedParams.toString()}`
         : location.pathname;
 
       window.history.replaceState({}, document.title, newUrl);

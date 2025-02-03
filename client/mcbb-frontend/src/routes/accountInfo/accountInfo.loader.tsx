@@ -14,15 +14,13 @@ import checkUser from '../../helper/checkUser';
  *
  * @throws {Error} Redirects to login page if authentication check fails
  */
-const accountInfoLoader: LoaderFunction = async () => {
-    const user = await checkUser();
-    if (user === false) {
-        return redirect('/login');
-    }
-    return json({ user: user }, { status: 200 });
+const accountInfoLoader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
+  const user = await checkUser();
+  if (user === false) {
+    return redirect('/login?serviceTo=' + url.pathname);
+  }
+  return json({ user: user }, { status: 200 });
 };
 
 export default accountInfoLoader;
-
-
-

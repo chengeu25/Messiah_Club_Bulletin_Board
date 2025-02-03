@@ -3,18 +3,18 @@ import checkUser from '../../../helper/checkUser';
 
 /**
  * Action handler for faculty assignment interactions.
- * 
+ *
  * @function assignFacultyAction
  * @param {Object} args - Action function arguments from React Router
  * @param {Request} args.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirects to assign faculty page with success or error message
- * 
+ *
  * @description Handles faculty assignment process:
  * 1. Validates user authentication
  * 2. Sends faculty assignment request to backend
  * 3. Redirects with appropriate message
- * 
+ *
  * @workflow
  * 1. Extract form data (email, delete permissions)
  * 2. Check user authentication
@@ -26,6 +26,7 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
   const email = formData.get('userEmail');
   const canDelete = formData.get('cdf') ? true : false;
   const action = formData.get('action');
+  const pathname = new URL(request.url).pathname;
 
   const emailRequest = await checkUser();
   if (emailRequest) {
@@ -50,7 +51,9 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
       return redirect('/dashboard/assignFaculty?error=' + json.error);
     }
   } else {
-    return redirect('/login?error' + 'Not%20logged%20in');
+    return redirect(
+      '/login?error' + 'Not%20logged%20in' + '&serviceTo=' + pathname
+    );
   }
 };
 
