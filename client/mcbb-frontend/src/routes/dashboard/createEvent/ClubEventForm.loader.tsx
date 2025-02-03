@@ -6,10 +6,10 @@ import { UserType as User } from '../../../types/databaseTypes';
 // @ts-ignore
 // Remove @ts-ignore when params is actually used, ignoring is necessary to get the project
 // to successfully build
-const clubEventFormLoader: LoaderFunction = async ({ params }) => {
+const clubEventFormLoader: LoaderFunction = async ({ params, request }) => {
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
@@ -28,7 +28,6 @@ const clubEventFormLoader: LoaderFunction = async ({ params }) => {
 
   const clubs = await clubsResponse.json();
 
-  
   // const clubId = params.clubId; // Assuming clubId is passed as a route parameter
   // const isAdmin = await isAdminForClub(user, clubId);
   // if (!isAdmin) {

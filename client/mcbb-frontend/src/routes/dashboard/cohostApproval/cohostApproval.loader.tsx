@@ -4,7 +4,8 @@ import { UserType as User } from '../../../types/databaseTypes';
 
 const cohostApprovalLoader: LoaderFunction = async ({ request }) => {
   const user = await checkUser();
-  if (user === false) return redirect('/login');
+  if (user === false)
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   if ((user as User).emailVerified === false) return redirect('/verifyEmail');
 
   const url = new URL(request.url);
