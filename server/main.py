@@ -11,6 +11,7 @@ from routes.subscriptions import subscriptions_bp
 from routes.admintools import admintools_bp
 from routes.school import school_bp
 from routes.emails import emails_bp
+from routes.prefs import prefs_bp
 from jobs.email_notification_job import start_email_scheduler
 from flask_jwt_extended import JWTManager
 
@@ -68,6 +69,7 @@ def create_app(config_class=Config):
     app.register_blueprint(admintools_bp, url_prefix="/api/admintools")
     app.register_blueprint(school_bp, url_prefix="/api/school")
     app.register_blueprint(emails_bp, url_prefix="/api/emails")
+    app.register_blueprint(prefs_bp, url_prefix="/api/prefs")
 
     # Start email scheduler
     start_email_scheduler()

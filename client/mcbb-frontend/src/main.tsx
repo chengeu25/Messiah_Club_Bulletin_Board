@@ -92,7 +92,7 @@ const router = createBrowserRouter(
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
-      <Route path='/' element={<LandingPage />} />
+      <Route index element={<LandingPage />} />
       <Route path='login' element={<LoginRedirector />}>
         <Route
           path=':schoolId'
@@ -241,13 +241,11 @@ const router = createBrowserRouter(
         loader={EditInterestLoader}
       />
       <Route
-              path={'accountInfo'} // '/account-info' (or whatever the path is)
-              element={<AccountInfo />} // This is the AccountInfo component to render
-              loader={accountInfoLoader} // Loader function to fetch user data
-              action={accountInfoAction} // Action function to handle form submission or other actions (optional)
-            />
-  
-
+        path={'accountInfo'} // '/account-info' (or whatever the path is)
+        element={<AccountInfo />} // This is the AccountInfo component to render
+        loader={accountInfoLoader} // Loader function to fetch user data
+        action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+      />
     </Route>
   )
 );

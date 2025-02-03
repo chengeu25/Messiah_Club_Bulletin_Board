@@ -3,6 +3,54 @@ import checkUser from '../helper/checkUser';
 import setCSSVars from '../helper/setCSSVars';
 
 /**
+ * Determine the current page name based on the route
+ *
+ * @returns {string} The page name for preference fetching
+ */
+const getCurrentPageName = (pathname: string): string => {
+  const pageMapping: { [key: string]: string } = {
+    '/dashboard/home': 'home',
+    '/dashboard/calendar': 'calendar',
+    '/dashboard/clubs': 'clubs'
+  };
+
+  return pageMapping[pathname] || 'home'; // Default to home if no match
+};
+
+/**
+ * Fetch user preferences for a specific page
+ *
+ * @param page The page to fetch preferences for
+ * @returns User preferences or null if fetch fails
+ */
+const fetchPagePreferences = async (page: string) => {
+  try {
+    const prefsResp = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/prefs/${page}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!prefsResp.ok) {
+      console.error(
+        `Error fetching ${page} preferences:`,
+        await prefsResp.json()
+      );
+    }
+
+    return prefsResp.ok ? await prefsResp.json() : null;
+  } catch (error) {
+    console.error(`Error fetching ${page} preferences:`, error);
+    return null;
+  }
+};
+
+/**
  * Root loader function for application-wide user authentication.
  *
  * @function rootLoader
@@ -12,12 +60,14 @@ import setCSSVars from '../helper/setCSSVars';
  *
  * @workflow
  * 1. Invoke user authentication check
- * 2. Return user status as JSON response
+ * 2. Fetch school data
+ * 3. Fetch page preferences
+ * 4. Return comprehensive application state
  *
  * @features
  * - Global user authentication verification
  * - Centralized authentication state management
- * - Consistent user status reporting
+ * - Page-specific preference retrieval
  */
 const rootLoader = async () => {
   // Check user authentication status
@@ -25,7 +75,7 @@ const rootLoader = async () => {
 
   // If user is false, return immediately
   if (!user) {
-    return json({ user: false, school: null }, { status: 200 });
+    return json({ user: false, school: null, prefs: null }, { status: 200 });
   }
 
   // Fetch school data
@@ -43,8 +93,12 @@ const rootLoader = async () => {
   const school = schoolResp.ok ? await schoolResp.json() : null;
   setCSSVars(school?.color ?? '');
 
-  // Return user status as JSON response
-  return json({ user, school }, { status: 200 });
+  // Determine current page and fetch preferences
+  const currentPage = getCurrentPageName(window.location.pathname);
+  const prefs = await fetchPagePreferences(currentPage);
+
+  // Return comprehensive application state
+  return json({ user, school, prefs }, { status: 200 });
 };
 
 export default rootLoader;
