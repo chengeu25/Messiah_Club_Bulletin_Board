@@ -16,33 +16,37 @@ const sendEmailAction: ActionFunction = async ({ request }) => {
     }
 
     // Send the email to the backend
-    const response = await fetch(`${
-        import.meta.env.VITE_API_BASE_URL
-      }/api/clubs/club/${clubId}/sendEmail`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ subject, message }),  // Send only subject and message (no clubId in body)
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/clubs/club/${clubId}/sendEmail`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ subject, message }) // Send only subject and message (no clubId in body)
+      }
+    );
 
     // If the email is sent successfully, redirect to the club page
     if (response.ok) {
-      return redirect(`/club/${clubId}`);
+      return redirect(`/dashboard/club/${clubId}`);
     } else {
       // Handle error response from backend
       const errorData = await response.json();
-      return json({ error: (errorData.message || 'Failed to send email.') }, { status: response.status });
+      return json(
+        { error: errorData.message || 'Failed to send email.' },
+        { status: response.status }
+      );
     }
   } catch (error) {
     // General error handling for unexpected issues
     console.error('Error sending email:', error);
-    return json({ error: 'Something went wrong. Please try again later.' }, { status: 500 });
+    return json(
+      { error: 'Something went wrong. Please try again later.' },
+      { status: 500 }
+    );
   }
 };
 
 export default sendEmailAction;
-
-
-
