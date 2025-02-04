@@ -14,7 +14,7 @@ import traceback
 from helper.send_email import send_email
 import pytz
 from dotenv import load_dotenv
-import os   
+import os
 
 
 events_bp = Blueprint("events", __name__)
@@ -24,7 +24,8 @@ mail = None
 # Load environment variables from .env file
 load_dotenv()
 
-SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+
 
 # Check if the file is allowed based on its extension
 def allowed_file(filename):
@@ -92,7 +93,9 @@ def get_club_id(cur, club_name):
         raise ValueError("Club not found")
 
 
-def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_query=""):
+def get_events_by_date(
+    cur, start_date, end_date, school_id, user_id, filter_query="", approved=True
+):
     """
     Retrieve events within a specified date range for a specific school.
 
@@ -109,6 +112,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
             - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
             - 'Attending' for events the user has RSVP'd to
             - 'Suggested' for events that share tags with the user
+        approved (bool): Optional flag to filter events by approval status (default: True)
 
     Returns:
         dict: A dictionary containing:
@@ -202,7 +206,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                     AND eh.event_id = e.event_id
                 WHERE e.start_time BETWEEN %s AND %s
                     AND e.is_active = 1
-                    AND e.is_approved = 1
+                    AND e.is_approved = %s
                     AND e.school_id = %s
                     AND (r.is_yes = 1 OR %s <> 'Attending')
                 GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
@@ -222,6 +226,7 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id, filter_que
                 user_id,
                 start_date,
                 end_date,
+                approved,
                 school_id,
                 filter_query,
                 filter_query,
@@ -638,6 +643,7 @@ def get_events():
             - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
             - 'Attending' for events the user has RSVP'd to
             - 'Suggested' for events that share tags with the user
+        approved (bool): Optional flag to filter events by approval status (default: True)
 
     Returns:
         JSON response:
@@ -673,10 +679,14 @@ def get_events():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
     filter_query = request.args.get("filter")
+    approved = request.args.get("approved")
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
     if not filter_query:
         filter_query = ""
+    approved = (
+        approved == "true" or approved == True or approved is None or approved == ""
+    )
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
@@ -689,11 +699,13 @@ def get_events():
         school_id,
         current_user["user_id"],
         filter_query,
+        approved,
     )
     cur.close()
     if "error" in result:
         return jsonify(result["error"]), result.get("status", 500)
     return jsonify(result), 200
+
 
 def validate_jwt(token):
     """
@@ -719,10 +731,11 @@ def validate_jwt(token):
     except Exception as e:
         print(f"Unexpected Error: {str(e)}")  # Catch any unexpected errors
         return None, "Unexpected token error"
-    
-@events_bp.route('/api/validate_token', methods=['GET'])
+
+
+@events_bp.route("/api/validate_token", methods=["GET"])
 def validate_token():
-    token = request.args.get('token')
+    token = request.args.get("token")
     if not token:
         return jsonify({"error": "Token is required"}), 400
 
@@ -731,6 +744,7 @@ def validate_token():
         return jsonify(validation_result[0]), validation_result[1]
 
     return jsonify({"message": "Token is valid", "data": validation_result})
+
 
 def generate_approval_token(club_id, event_id):
     """
@@ -889,7 +903,7 @@ def approve_collaboration():
             {"error": "Failed to update collaboration approval: <error_message>"}, 500 status
     """
     token = request.headers.get("Authorization")
-    
+
     if not token:
         return jsonify({"error": "Missing token"}), 403
 
@@ -897,15 +911,17 @@ def approve_collaboration():
         token = token.split(" ")[1]  # Remove "Bearer " prefix
 
     payload, error = validate_jwt(token)
-    
+
     if error:
         print(f"JWT Validation Error: {error}")
         return jsonify({"error": error}), 403
-    
+
     event_id = request.json.get("eventId")
     club_id = request.json.get("clubId")
 
-    print(f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}")
+    print(
+        f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}"
+    )
     print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
 
     if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
@@ -954,7 +970,7 @@ def decline_collaboration():
             {"error": "Failed to update collaboration decline: <error_message>"}, 500 status
     """
     token = request.headers.get("Authorization")
-    
+
     if not token:
         return jsonify({"error": "Missing token"}), 403
 
@@ -962,21 +978,23 @@ def decline_collaboration():
         token = token.split(" ")[1]  # Remove "Bearer " prefix
 
     payload, error = validate_jwt(token)
-    
+
     if error:
         print(f"JWT Validation Error: {error}")
         return jsonify({"error": error}), 403
-    
+
     event_id = request.json.get("eventId")
     club_id = request.json.get("clubId")
 
-    print(f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}")
+    print(
+        f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}"
+    )
     print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
 
     if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
         print("Error: Token payload does not match request data")
         return jsonify({"error": "Invalid event or club ID"}), 403
-    
+
     if not event_id or not club_id:
         return jsonify({"error": "Invalid or missing parameters"}), 400
 
@@ -1080,7 +1098,7 @@ def create_event():
     co_hosts = request.form.get("coHosts")
     tags = request.form.get("tags")
     gender_restriction = request.form.get("genderRestriction")
-    
+
     if gender_restriction not in ["male", "female", "none"]:
         return jsonify({"error": "Invalid gender restriction"}), 400
 
@@ -1153,7 +1171,7 @@ def create_event():
                 description,
                 event_cost,
                 school_id,
-                gender_restriction
+                gender_restriction,
             ),
         )
         event_id = cur.lastrowid
