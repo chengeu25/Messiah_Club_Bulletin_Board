@@ -2,7 +2,9 @@ import base64
 from flask import Blueprint, jsonify, request, session
 from extensions import mysql
 from helper.check_user import get_user_session_info
+import traceback
 import json
+from helper.send_email import send_email
 
 
 clubs_bp = Blueprint("clubs", __name__)
@@ -709,3 +711,68 @@ def new_club():
     cur.close()
 
     return jsonify({"id": int(new_club_id)}), 200
+@clubs_bp.route("/club/<int:club_id>/sendEmail", methods=["POST"])
+def send_email_to_club_members(club_id):
+    """
+    Send an email to all members of a specific club.
+    """
+    print(f"Request received to send email to club {club_id}!")  # Logging the incoming request
+    
+    # Add more print statements to check where the request is failing
+    # Get current user
+    current_user = get_user_session_info()
+    print(f"Current user session info: {current_user}")
+
+    if not current_user["user_id"]:
+        print("Unauthorized: No user session found")
+        return jsonify({"error": "Unauthorized"}), 403
+
+    # More logs for request data
+    data = request.get_json()
+    print(f"Received data: {data}")
+
+    subject = data.get("subject")
+    message = data.get("message")
+
+    if not subject or not message:
+        print(f"Missing required fields: subject={subject}, message={message}")
+        return jsonify({"error": "Missing required fields (subject or message)"}), 400
+    
+    try:
+        # Retrieve email addresses of club members
+        with mysql.connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT u.email
+                FROM users u
+                JOIN user_subscription us ON u.email = us.EMAIL
+                WHERE us.CLUB_ID = %s AND us.IS_ACTIVE = 1 AND us.SUBSCRIBED_OR_BLOCKED = 1
+            """, (club_id,))
+            
+            recipients = cursor.fetchall()
+
+            if recipients is None:
+                print(f"No recipients found for club {club_id}")
+                return jsonify({"error": "No recipients found for this club"}), 404
+
+            # Extract emails from the result
+            recipients = [row[0] for row in recipients]  # Ensure that we get just the emails
+            
+            print(f"Recipients for club {club_id}: {recipients}")  # Log recipients
+        
+        if not recipients:
+            print(f"No recipients found for club {club_id}")
+            return jsonify({"error": "No recipients found for this club"}), 404
+
+        # Send email
+        try:
+            send_email(subject, message, recipients)
+            print(f"Email sent successfully to {len(recipients)} recipients.")
+        except Exception as e:
+            print(f"Error in send_email: {e}")
+            return jsonify({"error": f"Failed to send email: {str(e)}"}), 500
+
+        return jsonify({"message": "Email sent successfully"}), 200
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        traceback.print_exc()
+        return jsonify({"error": "An unexpected error occurred"}), 500
