@@ -51,9 +51,7 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
       return redirect('/dashboard/assignFaculty?error=' + json.error);
     }
   } else {
-    return redirect(
-      '/login?error' + 'Not%20logged%20in' + '&serviceTo=' + pathname
-    );
+    return redirect('/login');
   }
 };
 

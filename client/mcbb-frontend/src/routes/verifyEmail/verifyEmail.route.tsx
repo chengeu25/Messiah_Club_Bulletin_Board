@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useSubmit } from 'react-router-dom';
+import { useActionData, useSearchParams, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -28,53 +28,31 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 const VerifyEmail = () => {
   // Form submission hook
   const submit = useSubmit();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const actionData = useActionData() as {
+    error: string | null;
+    message: string | null;
+  };
 
   // State management for error and success messages
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
-  /**
-   * Side effect to handle URL parameters for error and success messages
-   *
-   * @effect
-   * @description Parses and sets error or success messages from URL parameters
-   */
+  // Effect to handle form submission errors
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-    const serviceTo = searchParams.get('serviceTo');
-
-    if (newError || newMessage) {
-      // Create a new URLSearchParams to avoid mutating the original
-      const updatedParams = new URLSearchParams(location.search);
-
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        updatedParams.delete('error');
-      }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        updatedParams.delete('message');
-      }
-
-      // Ensure serviceTo is preserved
-      if (serviceTo) {
-        updatedParams.set('serviceTo', serviceTo);
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = updatedParams.toString()
-        ? `${location.pathname}?${updatedParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
+    if (actionData?.error) {
+      setError(actionData.error);
     }
-  }, [location.search]);
+    if (actionData?.message) {
+      setMessage(actionData.message);
+    }
+    if (searchParams.get('error')) {
+      setError(searchParams.get('error'));
+    }
+    if (searchParams.get('message')) {
+      setMessage(searchParams.get('message'));
+    }
+  }, [actionData]);
 
   /**
    * Handles form submission for email verification

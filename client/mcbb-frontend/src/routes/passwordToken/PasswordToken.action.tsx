@@ -84,7 +84,6 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
   } catch (error) {
     // Handle unexpected errors
     console.error('An unexpected error occurred:', error);
-    return redirect('/login?error=Unexpected%20error');
   }
 };
 

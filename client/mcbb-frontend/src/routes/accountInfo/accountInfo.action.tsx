@@ -41,9 +41,7 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
       return redirect('/accountInfo?error=' + json.error);
     }
   } else {
-    return redirect(
-      '/login?error=' + 'Not%20logged%20in' + '&serviceTo=' + pathname
-    );
+    return redirect('/login');
   }
 };
 

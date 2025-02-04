@@ -4,7 +4,8 @@ import {
   Link,
   useLoaderData,
   useParams,
-  useLocation
+  useActionData,
+  useSearchParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -41,11 +42,14 @@ const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
   const { schoolId } = useParams();
-  const location = useLocation();
 
   // Get schools from loader
   const { schools } = useLoaderData() as {
     schools: SchoolType[];
+  };
+
+  const actionData = useActionData() as {
+    error: string;
   };
 
   // State management for form validation and feedback
@@ -62,6 +66,12 @@ const SignUp = () => {
   // School input state management
   const { currentSchool, setCurrentSchool } = useSchool();
 
+  // Set message
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    setMessage(searchParams.get('message'));
+  });
+
   // Initialize selected school from schools list if not set
   useEffect(() => {
     if (schools.length > 0) {
@@ -69,38 +79,12 @@ const SignUp = () => {
     }
   }, [schools, schoolId, setCurrentSchool]);
 
-  /**
-   * Side effect to handle URL parameters for error and success messages
-   *
-   * @effect
-   * @description Parses and sets error or success messages from URL parameters
-   */
+  // Initialize error message from action data
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
+    if (actionData?.error) {
+      setError(actionData?.error);
     }
-  }, [location.search]);
+  }, [actionData]);
 
   /**
    * Handles form submission with comprehensive validation

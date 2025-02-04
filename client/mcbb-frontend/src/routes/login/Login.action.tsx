@@ -1,5 +1,5 @@
 // Login.action.tsx
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, redirect, json } from 'react-router';
 
 /**
  * Login action handler for user authentication and routing.
@@ -62,14 +62,14 @@ const loginAction: ActionFunction = async ({ request }) => {
     }
     // Check if login failed because email is not verified
     else {
-      const json = await loginResponse.json();
-      if (json?.error === 'Email not verified') {
+      const jsonResp = await loginResponse.json();
+      if (jsonResp?.error === 'Email not verified') {
         return redirect(
           '/verifyEmail?serviceTo=' + searchParams.get('serviceTo') || ''
         );
       }
       // Redirect with error message for other login failures
-      return redirect(`/login/${school}?error=` + json.error);
+      return json({ error: jsonResp.error }, { status: 400 });
     }
   }
 

@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 
 /**
  * Action handler for email verification process.
@@ -31,7 +31,13 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
 
   // Manually parse the URL to get serviceTo
   const fullUrl = new URL(request.url);
-  const serviceTo = fullUrl.searchParams.get('serviceTo');
+  const serviceToString = fullUrl.searchParams.get('serviceTo');
+  const serviceTo =
+    serviceToString !== null &&
+    serviceToString !== '' &&
+    serviceToString !== 'null'
+      ? serviceToString
+      : '';
 
   const code = formData.get('code');
   const action = formData.get('action');
@@ -55,10 +61,8 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
     if (request.ok) {
       return redirect(serviceTo || '/dashboard');
     } else {
-      const json = await request.json();
-      return redirect(
-        '/verifyEmail?error=' + json.error + '&serviceTo=' + (serviceTo || '')
-      );
+      const jsonResp = await request.json();
+      return json({ error: jsonResp.error }, { status: jsonResp.status });
     }
   }
 
@@ -78,16 +82,14 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
 
     // Redirect based on code resend result
     if (request.ok) {
-      return redirect(
-        '/verifyEmail?message=Code%20resend%20succesfully&serviceTo=' +
-          serviceTo
+      return json(
+        { message: 'Verification code resent successfully' },
+        { status: 200 }
       );
     } else {
-      const json = await request.json();
+      const jsonResp = await request.json();
 
-      return redirect(
-        '/verifyEmail?error=' + json.error + '&serviceTo=' + serviceTo
-      );
+      return json({ error: jsonResp.error }, { status: jsonResp.status });
     }
   }
 };
