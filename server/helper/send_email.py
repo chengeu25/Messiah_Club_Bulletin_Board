@@ -73,6 +73,6 @@ def send_email(to_email, subject, body, html=False):
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
             server.login(sender_email, sender_password)
-            server.sendmail(sender_email, to_email, msg.as_string())
+            server.sendmail(sender_email, to_email.split(","), msg.as_string())
     except Exception as e:
         raise Exception(f"Failed to send email to {to_email}: {e}")
