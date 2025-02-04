@@ -776,3 +776,4 @@ def send_email_to_club_members(club_id):
         print(f"Unexpected error: {str(e)}")
         traceback.print_exc()
         return jsonify({"error": "An unexpected error occurred"}), 500
+
