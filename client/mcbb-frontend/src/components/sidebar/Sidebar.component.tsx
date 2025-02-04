@@ -97,7 +97,11 @@ const Sidebar = () => {
           route: '/dashboard/assignFaculty'
         },
         { text: 'Users', icon: <FaUser />, route: '/dashboard/adminUserForm' },
-        { text: 'Approve Event', icon: <FaCheckCircle />, route: '/dashboard/approveEvent' }
+        {
+          text: 'Approvals',
+          icon: <FaCheckCircle />,
+          route: '/dashboard/approveEvent'
+        }
       ]);
     }
   }, [isFaculty]);
