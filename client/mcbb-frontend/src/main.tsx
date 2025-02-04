@@ -76,6 +76,9 @@ import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferenc
 import AccountInfo from './routes/accountInfo/accountInfo.route.tsx';
 import accountInfoAction from './routes/accountInfo/accountInfo.action.tsx';
 import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
+import cohostApprovalLoader from './routes/dashboard/cohostApproval/cohostApproval.loader.tsx';
+import CohostApproval from './routes/dashboard/cohostApproval/cohostApproval.route.tsx';
+import { cohostApprovalAction } from './routes/dashboard/cohostApproval/cohostApproval.action.tsx';
 import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.route.tsx'
 import sendEmailAction from './routes/dashboard/club/SendEmailForm/SendEmail.action.tsx';
 
@@ -91,7 +94,7 @@ const router = createBrowserRouter(
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
-      <Route path='/' element={<LandingPage />} />
+      <Route index element={<LandingPage />} />
       <Route path='login' element={<LoginRedirector />}>
         <Route
           path=':schoolId'
@@ -147,6 +150,12 @@ const router = createBrowserRouter(
           element={<Home />}
           loader={homeLoader}
           action={homeAction}
+        />
+        <Route
+          path='cohostApproval'
+          element={<CohostApproval />}
+          loader={cohostApprovalLoader}
+          action={cohostApprovalAction}
         />
         <Route
           path='assignFaculty'
@@ -234,11 +243,11 @@ const router = createBrowserRouter(
         loader={EditInterestLoader}
       />
       <Route
-              path={'accountInfo'} // '/account-info' (or whatever the path is)
-              element={<AccountInfo />} // This is the AccountInfo component to render
-              loader={accountInfoLoader} // Loader function to fetch user data
-              action={accountInfoAction} // Action function to handle form submission or other actions (optional)
-            />
+        path={'accountInfo'} // '/account-info' (or whatever the path is)
+        element={<AccountInfo />} // This is the AccountInfo component to render
+        loader={accountInfoLoader} // Loader function to fetch user data
+        action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+      />
   
       <Route path="/club/:clubId" element={<Club />} />
       <Route path="/club/:clubId/sendEmail" element={<SendEmailForm />} 

@@ -78,14 +78,12 @@ const Event = () => {
           {user?.clubAdmins?.some((adminClubId) =>
             event.host.some((host) => host.id === adminClubId)
           ) && (
-            <button
+            <Button
               type='submit'
               name='action'
               value='cancel'
-              className='bg-red-500 text-white py-2 px-4 rounded'
-            >
-              Cancel Event
-            </button>
+              text='Cancel Event'
+            />
           )}
           <input type='hidden' name='id' value={event.id} />
         </Form>
@@ -158,15 +156,16 @@ const Event = () => {
 
       {/* Event images */}
       <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48 mt-2'>
-        {event?.images?.map((image: ImageType, index: number) => (
-          <img
-            key={index}
-            src={image.image}
-            alt={event.title}
-            style={{ objectFit: 'cover', flexShrink: 0 }}
-            className='h-[200px] w-[200px] bg-gray-800 rounded-lg flex-shrink-0'
-          />
-        ))}
+        {event?.images?.map((image: ImageType) => {
+          const [prefix, base64Image] = image?.image?.split(',') ?? ['', ''];
+          return (
+            <img
+              src={`data:image/${prefix};base64,${base64Image}`}
+              alt={event.title}
+              className='w-auto h-full object-contain rounded-lg'
+            />
+          );
+        })}
       </div>
 
       {/* Comment section */}

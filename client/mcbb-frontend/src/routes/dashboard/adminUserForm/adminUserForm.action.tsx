@@ -14,9 +14,10 @@ import { UserType as User } from '../../../types/databaseTypes';
  */
 const adminUserFormAction: ActionFunction = async ({ request }) => {
   // Check user authentication
+  const url = new URL(request.url);
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + url.pathname);
   }
   if ((user as User).isFaculty === false) {
     return redirect('/dashboard/home');

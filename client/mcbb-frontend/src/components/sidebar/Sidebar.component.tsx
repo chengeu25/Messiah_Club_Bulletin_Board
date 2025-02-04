@@ -4,7 +4,8 @@ import {
   FaCalendar,
   FaUsers,
   FaUser,
-  FaChalkboardTeacher
+  FaChalkboardTeacher,
+  FaCheckCircle
 } from 'react-icons/fa';
 import { RiCompassDiscoverFill } from 'react-icons/ri';
 import checkUser from '../../helper/checkUser';
@@ -95,7 +96,8 @@ const Sidebar = () => {
           icon: <FaChalkboardTeacher />,
           route: '/dashboard/assignFaculty'
         },
-        { text: 'Users', icon: <FaUser />, route: '/dashboard/adminUserForm' }
+        { text: 'Users', icon: <FaUser />, route: '/dashboard/adminUserForm' },
+        { text: 'Approve Event', icon: <FaCheckCircle />, route: '/dashboard/approveEvent' }
       ]);
     }
   }, [isFaculty]);

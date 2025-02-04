@@ -1,5 +1,5 @@
 // Login.action.tsx
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, redirect, json } from 'react-router';
 
 /**
  * Login action handler for user authentication and routing.
@@ -30,6 +30,8 @@ import { ActionFunction, redirect } from 'react-router';
 const loginAction: ActionFunction = async ({ request }) => {
   // Extract form data
   const formData = await request.formData();
+  const url = new URL(request.url);
+  const searchParams = new URLSearchParams(url.search);
   const email = formData.get('email');
   const password = formData.get('password');
   const remember = formData.get('remember') === 'true' ? true : false;
@@ -54,16 +56,20 @@ const loginAction: ActionFunction = async ({ request }) => {
     // Handle login response
     if (loginResponse.ok) {
       // Successful login, redirect to email verification
-      return redirect('/verifyEmail');
+      return redirect(
+        '/verifyEmail?serviceTo=' + searchParams.get('serviceTo') || ''
+      );
     }
     // Check if login failed because email is not verified
     else {
-      const json = await loginResponse.json();
-      if (json?.error === 'Email not verified') {
-        return redirect('/verifyEmail');
+      const jsonResp = await loginResponse.json();
+      if (jsonResp?.error === 'Email not verified') {
+        return redirect(
+          '/verifyEmail?serviceTo=' + searchParams.get('serviceTo') || ''
+        );
       }
       // Redirect with error message for other login failures
-      return redirect(`/login/${school}?error=` + json.error);
+      return json({ error: jsonResp.error }, { status: 400 });
     }
   }
 
@@ -73,7 +79,10 @@ const loginAction: ActionFunction = async ({ request }) => {
     : action === 'forgot'
     ? redirect('/forgot')
     : action === 'switchSchool'
-    ? redirect('/selectSchool?route=login')
+    ? redirect(
+        '/selectSchool?route=login&serviceTo=' +
+          searchParams.get('serviceTo') || ''
+      )
     : null;
 };
 

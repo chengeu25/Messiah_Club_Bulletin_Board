@@ -80,8 +80,8 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
     // Redirect on successful signup
     return redirect('/verifyEmail');
   } else {
-    const json = await response.json();
-    return redirect(`/signup/${school}?error=` + json.error);
+    const respJson = await response.json();
+    return json({ error: respJson.error }, { status: 400 });
   }
 };
 

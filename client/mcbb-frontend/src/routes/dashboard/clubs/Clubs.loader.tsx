@@ -31,7 +31,7 @@ import { UserType as User } from '../../../types/databaseTypes';
 const clubsLoader: LoaderFunction = async ({ request }) => {
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

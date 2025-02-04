@@ -1,24 +1,24 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 
 /**
  * Action handler for email verification process.
- * 
+ *
  * @function verifyEmailAction
  * @param {Object} context - Action function context
  * @param {Request} context.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirect response based on verification result
- * 
+ *
  * @description Handles two primary workflows:
  * 1. Email verification using a verification code
  * 2. Resending verification code
- * 
+ *
  * @workflow
  * 1. Extract form data (action, code, email)
  * 2. Handle email verification request
  * 3. Handle code resend request
  * 4. Redirect based on request result
- * 
+ *
  * @features
  * - Secure email verification
  * - Code resend functionality
@@ -28,6 +28,17 @@ import { ActionFunction, redirect } from 'react-router';
 const verifyEmailAction: ActionFunction = async ({ request }) => {
   // Parse the incoming form data
   const formData = await request.formData();
+
+  // Manually parse the URL to get serviceTo
+  const fullUrl = new URL(request.url);
+  const serviceToString = fullUrl.searchParams.get('serviceTo');
+  const serviceTo =
+    serviceToString !== null &&
+    serviceToString !== '' &&
+    serviceToString !== 'null'
+      ? serviceToString
+      : '';
+
   const code = formData.get('code');
   const action = formData.get('action');
   const email = formData.get('email');
@@ -48,10 +59,10 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
 
     // Redirect based on verification result
     if (request.ok) {
-      return redirect('/dashboard');
+      return redirect(serviceTo || '/dashboard');
     } else {
-      const json = await request.json();
-      return redirect('/verifyEmail?error=' + json.error);
+      const jsonResp = await request.json();
+      return json({ error: jsonResp.error }, { status: jsonResp.status });
     }
   }
 
@@ -71,11 +82,14 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
 
     // Redirect based on code resend result
     if (request.ok) {
-      return redirect('/verifyEmail?message=Code%20resend%20succesfully');
+      return json(
+        { message: 'Verification code resent successfully' },
+        { status: 200 }
+      );
     } else {
-      const json = await request.json();
+      const jsonResp = await request.json();
 
-      return redirect('/verifyEmail?error=' + json.error);
+      return json({ error: jsonResp.error }, { status: jsonResp.status });
     }
   }
 };

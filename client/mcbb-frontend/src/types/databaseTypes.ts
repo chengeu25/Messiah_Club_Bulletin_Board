@@ -118,7 +118,7 @@ export interface EventType {
   /** A description of the event */
   description: string;
   /** URL or path to the event's representative image */
-  image: string;
+  image: ImageType;
   /** The start time of the event */
   startTime: Date;
   /** The end time of the event */
@@ -129,8 +129,6 @@ export interface EventType {
   host: EventHostType[];
   /** List of tags associated with the event */
   tags: string[];
-  /** List of images associated with the event */
-  images: ImageType[];
   /** RSVP status for the event (e.g., 'rsvp', 'block') */
   rsvp: string;
   /** Indicates whether the event is from a subscribed club */

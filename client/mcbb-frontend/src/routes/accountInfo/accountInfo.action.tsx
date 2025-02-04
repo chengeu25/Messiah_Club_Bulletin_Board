@@ -15,6 +15,9 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
   const name = formData.get('name');
   const gender = formData.get('gender');
 
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
   const emailRequest = await checkUser();
   if (emailRequest) {
     const updateRequest = await fetch(
@@ -30,15 +33,16 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
     );
 
     if (updateRequest.ok) {
-      return redirect('/accountInfo?message=' + 'Account%20info%20updated%20successfully');
+      return redirect(
+        '/accountInfo?message=' + 'Account%20info%20updated%20successfully'
+      );
     } else {
       const json = await updateRequest.json();
       return redirect('/accountInfo?error=' + json.error);
     }
   } else {
-    return redirect('/login?error=' + 'Not%20logged%20in');
+    return redirect('/login');
   }
 };
 
 export default accountInfoAction;
-

@@ -29,11 +29,11 @@ import { UserType as User } from '../../../../types/databaseTypes';
  * @throws {Error} Redirects to login, verification, or clubs page if unauthorized
  * @throws {Error} Throws error if fetching tags or club details fails
  */
-const clubFormLoader: LoaderFunction = async ({ params }) => {
+const clubFormLoader: LoaderFunction = async ({ params, request }) => {
   // Authenticate and verify user
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

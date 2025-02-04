@@ -11,6 +11,7 @@ import { useLocation } from 'react-router-dom';
  * @property {boolean} [filled=true] - Determines if the button is filled or outlined
  * @property {'button' | 'submit' | 'reset' | undefined} [type='button'] - The type of button
  * @property {string} [name] - Optional name attribute for the button
+ * @property {string} [value] - Optional value attribute for the button
  * @property {string} [className] - Additional CSS classes to apply to the button
  * @property {boolean} [disabled] - Disables the button if true
  * @property {boolean} [grow=true] - Determines if the button should grow to fill available space
@@ -22,6 +23,7 @@ interface ButtonProps {
   filled?: boolean;
   type?: 'button' | 'submit' | 'reset' | undefined;
   name?: string;
+  value?: string;
   className?: string;
   disabled?: boolean;
   grow?: boolean;
@@ -48,6 +50,7 @@ const Button = ({
   onClick,
   type = 'button',
   name,
+  value,
   filled = true,
   className,
   disabled = false,
@@ -68,6 +71,7 @@ const Button = ({
       onClick={onClick}
       type={type}
       name={name}
+      value={value}
     >
       {text}
       {icon}

@@ -33,7 +33,7 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   // Authenticate and verify user
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + url.pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

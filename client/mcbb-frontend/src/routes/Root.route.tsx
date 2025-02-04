@@ -9,7 +9,8 @@ import {
   Link,
   useLocation,
   useSearchParams,
-  useNavigation
+  useNavigation,
+  useRevalidator
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
 import { useEffect, useMemo, useState } from 'react';
@@ -49,10 +50,12 @@ import { DynamicLogo } from '../components/ui/DynamicLogo.component';
  */
 const Root = () => {
   // Hook for accessing loader data (user authentication)
-  const { user, school } = useLoaderData() as {
+  const { user, school, prefs } = useLoaderData() as {
     user: UserType;
     school: SchoolType;
+    prefs: { value: string };
   };
+  const revalidate = useRevalidator();
   const { currentSchool, setCurrentSchool } = useSchool();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,7 +63,24 @@ const Root = () => {
   const navigation = useNavigation();
 
   // State management for search and filtering
-  const [selectedFilter, setSelectedFilter] = useState('');
+  const selectedFilter = useMemo(() => prefs?.value, [prefs]);
+  const setSelectedFilter = async (filter: string) => {
+    const page = location.pathname.split('/')[2];
+    const resp = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/prefs/${page}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value: filter })
+      }
+    );
+    if (resp.ok) {
+      revalidate.revalidate();
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
 
   /**
@@ -108,21 +128,6 @@ const Root = () => {
       setCSSVars(school?.color ?? '');
     }
   }, [location.pathname, school?.color]);
-
-  /**
-   * Side effect to reset search and filter settings on page change
-   *
-   * @effect
-   * @description Resets filter and search query based on current page
-   */
-  useEffect(() => {
-    if (location.pathname.includes('calendar')) {
-      setSelectedFilter('Attending');
-    } else {
-      setSelectedFilter('Suggested');
-    }
-    setSearchQuery('');
-  }, [currentPage, location.pathname]);
 
   // Initialize school context from loader data
   useEffect(() => {

@@ -3,6 +3,7 @@ import Button from '../formElements/Button.component';
 import Card from '../ui/Card';
 import RSVPDropdown from '../specialDropdowns/RSVPDropdown.component';
 import { CgDetailsMore } from 'react-icons/cg';
+import { useMemo } from 'react';
 
 /**
  * Represents the properties for the Event component
@@ -48,15 +49,20 @@ const Event = ({
   const { title, startTime, endTime, description, host, image, rsvp, tags } =
     event;
 
+  const [prefix, base64Image] = useMemo(
+    () => image?.image?.split(',') ?? ['', ''],
+    [image]
+  );
+
   return (
     <div>
       <Card
         color='gray-200'
-        className='flex flex-col lg:flex-row gap-4 w-full items-center'
+        className='flex flex-col lg:flex-row gap-4 w-full items-center text-black'
       >
         {!small && (
           <img
-            src={image}
+            src={`data:image/${prefix};base64,${base64Image}`}
             alt={title}
             style={{ objectFit: 'cover' }}
             className='h-[200px] w-[200px] lg:h-[100px] lg:w-[100px] bg-gray-800 rounded-lg'
