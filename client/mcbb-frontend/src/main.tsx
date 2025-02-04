@@ -79,8 +79,10 @@ import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
 import cohostApprovalLoader from './routes/dashboard/cohostApproval/cohostApproval.loader.tsx';
 import CohostApproval from './routes/dashboard/cohostApproval/cohostApproval.route.tsx';
 import { cohostApprovalAction } from './routes/dashboard/cohostApproval/cohostApproval.action.tsx';
-import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.route.tsx'
+import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.route.tsx';
 import sendEmailAction from './routes/dashboard/club/SendEmailForm/SendEmail.action.tsx';
+import AboutUs from './routes/aboutus/aboutus.route.tsx';
+import ContactUs from './routes/contactus/contactus.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -235,6 +237,12 @@ const router = createBrowserRouter(
           action={emailPreferencesAction}
           element={<EmailPreferences />}
         />
+        <Route
+          path={'accountInfo'} // '/account-info' (or whatever the path is)
+          element={<AccountInfo />} // This is the AccountInfo component to render
+          loader={accountInfoLoader} // Loader function to fetch user data
+          action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+        />
       </Route>
       <Route
         path='editinterest'
@@ -242,19 +250,15 @@ const router = createBrowserRouter(
         action={EditInterestsAction}
         loader={EditInterestLoader}
       />
+      <Route path='/club/:clubId' element={<Club />} />
       <Route
-        path={'accountInfo'} // '/account-info' (or whatever the path is)
-        element={<AccountInfo />} // This is the AccountInfo component to render
-        loader={accountInfoLoader} // Loader function to fetch user data
-        action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+        path='/club/:clubId/sendEmail'
+        element={<SendEmailForm />}
+        action={sendEmailAction}
       />
-  
-      <Route path="/club/:clubId" element={<Club />} />
-      <Route path="/club/:clubId/sendEmail" element={<SendEmailForm />} 
-        action={sendEmailAction} />
+      <Route path='aboutus' element={<AboutUs />} />
+      <Route path='contactus' element={<ContactUs />} />{' '}
     </Route>
-
-
   )
 );
 
