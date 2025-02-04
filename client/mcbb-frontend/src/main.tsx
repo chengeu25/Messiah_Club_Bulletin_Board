@@ -76,6 +76,8 @@ import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferenc
 import AccountInfo from './routes/accountInfo/accountInfo.route.tsx';
 import accountInfoAction from './routes/accountInfo/accountInfo.action.tsx';
 import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
+import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.route.tsx'
+import sendEmailAction from './routes/dashboard/club/SendEmailForm/SendEmail.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -238,8 +240,12 @@ const router = createBrowserRouter(
               action={accountInfoAction} // Action function to handle form submission or other actions (optional)
             />
   
-
+      <Route path="/club/:clubId" element={<Club />} />
+      <Route path="/club/:clubId/sendEmail" element={<SendEmailForm />} 
+        action={sendEmailAction} />
     </Route>
+
+
   )
 );
 

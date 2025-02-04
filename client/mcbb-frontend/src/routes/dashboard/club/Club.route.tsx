@@ -3,7 +3,7 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
 import Event from '../../../components/dashboard/Event.component';
-import { useLoaderData } from 'react-router';
+import { useLoaderData, useNavigate } from 'react-router';
 import {
   ClubAdminType,
   ClubDetailType,
@@ -14,50 +14,18 @@ import {
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
 
-/**
- * Club details page component for displaying comprehensive club information.
- *
- * @component
- * @description Renders a detailed view of a club, including:
- * - Club name and description
- * - Subscription toggle
- * - Club images
- * - Club tags
- * - Club officers
- * - Upcoming events
- *
- * @returns {React.ReactElement} Detailed club information page
- */
 const Club = () => {
   const submit = useSubmit();
+  const navigate = useNavigate();
   const { user, club, events } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
     events: EventType[];
   };
 
-  /**
-   * Memo to track user's subscription status for the club.
-   */
   const isSubscribed = useMemo(() => club?.isSubscribed ?? false, [club]);
-
-  /**
-   * Memo to track user's blocking status for the club.
-   */
   const isBlocked = useMemo(() => club?.isBlocked ?? false, [club]);
 
-  /**
-   * Handles form submission for subscription and event creation actions.
-   *
-   * @function handleSubmit
-   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   *
-   * @description Processes club-related actions:
-   * - Prevents default form submission
-   * - Determines action type (subscribe/unsubscribe/new event)
-   * - Updates local subscription state
-   * - Submits form data to backend
-   */
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -84,12 +52,19 @@ const Club = () => {
           className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
           {user?.clubAdmins?.includes(club?.id) && (
-            <Button
-              type='submit'
-              text='New Event'
-              filled={true}
-              name='newEvent'
-            />
+            <>
+              <Button
+                type='submit'
+                text='New Event'
+                filled={true}
+                name='newEvent'
+              />
+              <Button
+                onClick={() => navigate(`/club/${club.id}/sendEmail`)}
+                text='Send Email'
+                filled={true}
+              />
+            </>
           )}
           <Button
             type='submit'
@@ -186,3 +161,4 @@ const Club = () => {
 };
 
 export default Club;
+
