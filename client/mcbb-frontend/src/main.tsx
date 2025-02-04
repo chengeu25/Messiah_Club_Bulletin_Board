@@ -250,7 +250,6 @@ const router = createBrowserRouter(
         action={EditInterestsAction}
         loader={EditInterestLoader}
       />
-      <Route path='/club/:clubId' element={<Club />} />
       <Route
         path='/club/:clubId/sendEmail'
         element={<SendEmailForm />}
