@@ -765,7 +765,7 @@ def send_email_to_club_members(club_id):
 
         # Send email
         try:
-            send_email(subject, message, recipients)
+            send_email(recipients, subject, message)
             print(f"Email sent successfully to {len(recipients)} recipients.")
         except Exception as e:
             print(f"Error in send_email: {e}")
