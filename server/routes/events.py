@@ -1202,8 +1202,8 @@ def create_event():
 
         # Insert the event
         cur.execute(
-            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_active, gender_restriction)
-               VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s)""",
+            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_approved, is_active, gender_restriction)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, 0, 1, %s)""",
             (
                 event_name,
                 start_date_obj,

@@ -69,6 +69,7 @@ export interface ClubAdminType {
  * @description Provides a way to reference and store images with a unique identifier.
  */
 export interface ImageType {
+  url: string | undefined;
   /** Unique identifier for the image */
   id: number;
   /** URL or path to the image */
@@ -111,6 +112,9 @@ export interface ClubDetailType {
  * timing, location, hosting, and additional metadata.
  */
 export interface EventType {
+  genderRestriction: string;
+  coHosts: any;
+  cost: any;
   /** Unique identifier for the event */
   id: number;
   /** The title or name of the event */

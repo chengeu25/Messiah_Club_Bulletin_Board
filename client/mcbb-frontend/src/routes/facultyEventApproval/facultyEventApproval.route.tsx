@@ -42,18 +42,24 @@ const FacultyEventApproval = () => {
             <h2>{date}</h2>
             <ul>
               {groupedEvents[date].map((event) => (
-                <li key={event.id}>
-                  <h3>{event.title}</h3>
-                  <p>{event.description}</p>
-                  <Form method="post">
+                <li key={event.id} className="mb-4 p-4 border rounded">
+                  <h3 className="text-xl font-bold">{event.title}</h3>
+                  <p><strong>Hosting club(s):</strong> {event.host.map(h => h.name).join(', ')}</p>
+                  <p><strong>Event Name:</strong> {event.title}</p>
+                  <p><strong>Description:</strong> {event.description}</p>
+                  <p><strong>Start Date:</strong> {new Date(event.startTime).toLocaleString()}</p>
+                  <p><strong>End Date:</strong> {new Date(event.endTime).toLocaleString()}</p>
+                  <p><strong>Location:</strong> {event.location}</p>
+                  <p><strong>Event Photos:</strong> {event.image ? <img src={event.image.url} alt={event.title} className="w-32 h-32 object-cover" /> : 'No photos available'}</p>
+                  <p><strong>Event Cost:</strong> {event.cost ? `$${event.cost}` : 'Free'}</p>
+                  <p><strong>Event Tags:</strong> {event.tags.join(', ')}</p>
+                  <p><strong>Gender Restriction:</strong> {event.genderRestriction || 'None'}</p>
+                  <Form method="post" className="mt-2">
                     <input type="hidden" name="event_id" value={event.id} />
-                    <button type="submit" name="action_type" value="details">
-                      Event Details
-                    </button>
-                    <button type="submit" name="action_type" value="approve_event">
+                    <button type="submit" name="action_type" value="approve_event" className="mr-2 p-2 bg-green-500 text-white rounded">
                       Approve
                     </button>
-                    <button type="submit" name="action_type" value="decline_event">
+                    <button type="submit" name="action_type" value="decline_event" className="p-2 bg-red-500 text-white rounded">
                       Decline
                     </button>
                   </Form>
