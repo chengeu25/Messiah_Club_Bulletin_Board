@@ -19,7 +19,7 @@ const facultyEventApprovalloader: LoaderFunction = async ({ request }) => {
 
   try {
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/events?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&school_id=${encodeURIComponent(schoolId)}&user_id=${encodeURIComponent(userId)}&approved=false`,
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/events?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&school_id=${encodeURIComponent(schoolId)}&user_id=${encodeURIComponent(userId)}&approved=false`,
       {
         method: 'GET',
         credentials: 'include',

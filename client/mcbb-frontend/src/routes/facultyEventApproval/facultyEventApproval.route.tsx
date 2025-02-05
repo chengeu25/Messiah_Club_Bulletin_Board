@@ -50,10 +50,10 @@ const FacultyEventApproval = () => {
                     <button type="submit" name="action_type" value="details">
                       Event Details
                     </button>
-                    <button type="submit" name="action_type" value="approve">
+                    <button type="submit" name="action_type" value="approve_event">
                       Approve
                     </button>
-                    <button type="submit" name="action_type" value="decline">
+                    <button type="submit" name="action_type" value="decline_event">
                       Decline
                     </button>
                   </Form>

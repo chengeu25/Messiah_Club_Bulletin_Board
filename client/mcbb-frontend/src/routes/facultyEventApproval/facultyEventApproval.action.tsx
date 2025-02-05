@@ -9,8 +9,12 @@ export const facultyEventApprovalAction: ActionFunction = async ({ request }) =>
     return redirect(`/dashboard/event/${eventId}`);
   }
 
-  const response = await fetch(`/events/${eventId}/${actionType}`, {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/${actionType}`, {
     method: "POST",
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ event_id: eventId })
   });
 
   if (!response.ok) {
