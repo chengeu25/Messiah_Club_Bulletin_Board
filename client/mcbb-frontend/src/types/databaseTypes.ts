@@ -112,6 +112,7 @@ export interface ClubDetailType {
  * timing, location, hosting, and additional metadata.
  */
 export interface EventType {
+  images: boolean;
   genderRestriction: string;
   coHosts: any;
   cost: any;

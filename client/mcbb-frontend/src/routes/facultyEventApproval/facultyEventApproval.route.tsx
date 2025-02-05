@@ -1,6 +1,6 @@
 import { useLoaderData, Form, useSubmit } from 'react-router-dom';
 import { EventType, UserType } from '../../types/databaseTypes';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 /**
  * Faculty Event Approval component displaying unapproved events.
@@ -19,6 +19,10 @@ const FacultyEventApproval = () => {
     user: UserType;
   };
   const submit = useSubmit();
+
+  useEffect(() => {
+    console.log(events);
+  }, [events]);
 
   const groupedEvents = useMemo(() => {
     return (events || []).reduce((acc: { [key: string]: EventType[] }, event: EventType) => {
@@ -50,7 +54,9 @@ const FacultyEventApproval = () => {
                   <p><strong>Start Date:</strong> {new Date(event.startTime).toLocaleString()}</p>
                   <p><strong>End Date:</strong> {new Date(event.endTime).toLocaleString()}</p>
                   <p><strong>Location:</strong> {event.location}</p>
-                  <p><strong>Event Photos:</strong> {event.image ? <img src={event.image.url} alt={event.title} className="w-32 h-32 object-cover" /> : 'No photos available'}</p>
+                  <p><strong>Event Photos:</strong> {Array.isArray(event.images) && event.images.length > 0 ? event.images.map((img, index) => (
+                    <img key={index} src={`data:image/jpeg;base64,${img.image}`} alt={event.title} className="w-32 h-32 object-cover" />
+                  )) : 'No photos available'}</p>
                   <p><strong>Event Cost:</strong> {event.cost ? `$${event.cost}` : 'Free'}</p>
                   <p><strong>Event Tags:</strong> {event.tags.join(', ')}</p>
                   <p><strong>Gender Restriction:</strong> {event.genderRestriction || 'None'}</p>

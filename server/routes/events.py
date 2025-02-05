@@ -135,7 +135,8 @@ def get_events_by_date(
                             'rsvp': str or None,
                             'tags': [str],
                             'subscribed': bool,
-                            'image': str
+                            'image': str,
+                            'genderRestriction': str
                         }
                     ]
                 }
@@ -185,7 +186,8 @@ def get_events_by_date(
                         FROM event_photo
                         WHERE event_id = e.event_id
                         ORDER BY event_photo_id
-                        LIMIT 1) AS image_id
+                        LIMIT 1) AS image_id,
+                      e.gender_restriction
                 FROM event e
                 LEFT JOIN event_host eh
                     ON eh.event_id = e.event_id
@@ -279,6 +281,7 @@ def get_events_by_date(
                         ),
                         "id": x[14],
                     },
+                    "genderRestriction": x[15],
                 },
                 result,
             )
@@ -288,9 +291,77 @@ def get_events_by_date(
     except ValueError:
         return {"error": "Invalid date format", "status": 400}
     except Exception as e:
-        print(e)
-        return {"error": f"Failed to get events", "status": 500}
+        print(f"Error fetching events: {e}")
+        return {"error": "Failed to fetch events", "status": 500}
 
+def send_faculty_approval_email(event_id):
+    try:
+        cur = mysql.connection.cursor()
+        # Fetch event name
+        cur.execute("SELECT event_name FROM event WHERE event_id = %s", (event_id,))
+        event_name = cur.fetchone()[0]
+
+        # Fetch club admins
+        cur.execute(
+            """SELECT c.club_name, u.email FROM event_host eh
+               INNER JOIN club c ON c.club_id = eh.club_id
+               INNER JOIN club_admin ca ON ca.club_id = c.club_id
+               INNER JOIN users u ON u.email = ca.user_id
+               WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
+            (event_id,)
+        )
+        club_admins = cur.fetchall()
+        cur.close()
+
+        if not club_admins:
+            print(f"No club admins found for event ID {event_id}")
+            return
+
+        for club_name, email in club_admins:
+            subject = "Event Approved"
+            body = f"Dear {club_name} Admin,\n\nGood news! Your event '{event_name}' has been approved by the faculty.\n\nBest regards,\nSHARC Team"
+            send_email(email, subject, body)
+            print(f"Approval email sent to {email}")
+
+    except Exception as e:
+        print(f"Error sending approval email: {e}")
+
+def send_faculty_decline_email(event_id):
+    try:
+        cur = mysql.connection.cursor()
+        # Fetch event name
+        cur.execute("SELECT event_name FROM event WHERE event_id = %s", (event_id,))
+        event_name = cur.fetchone()[0]
+
+        # Fetch club admins
+        cur.execute(
+            """SELECT c.club_name, u.email FROM event_host eh
+               INNER JOIN club c ON c.club_id = eh.club_id
+               INNER JOIN club_admin ca ON ca.club_id = c.club_id
+               INNER JOIN users u ON u.email = ca.user_id
+               WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
+            (event_id,)
+        )
+        club_admins = cur.fetchall()
+        cur.close()
+
+        if not club_admins:
+            print(f"No club admins found for event ID {event_id}")
+            return
+
+        for club_name, email in club_admins:
+            subject = "Event Declined"
+            body = f"Dear {club_name} Admin,\n\nUnfortunately, your event '{event_name}' has been declined by the faculty.\n\nBest regards,\nSHARC Team"
+            send_email(email, subject, body)
+            print(f"Decline email sent to {email}")
+
+    except Exception as e:
+        print(f"Error sending decline email: {e}")
+        
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 
 @events_bp.route("/approve_event", methods=["POST"])
 def approve_event():
@@ -306,13 +377,18 @@ def approve_event():
         cur.execute("UPDATE event SET is_approved = 1 WHERE event_id = %s", (event_id,))
         mysql.connection.commit()
         cur.close()
+
+        # Send approval email
+        send_faculty_approval_email(event_id)
+
         return jsonify({"message": "Event approved successfully"}), 200
     except Exception as e:
+        logging.error(f"Error approving event: {e}")
         return jsonify({"error": str(e)}), 500
 
 @events_bp.route("/decline_event", methods=["POST"])
 def decline_event():
-    """ Decline an event by setting is_active to 0 """
+    """ Decline an event by setting is_approved to 0 and is_active to 0 """
     data = request.json
     event_id = data.get("event_id")
 
@@ -321,9 +397,13 @@ def decline_event():
 
     try:
         cur = mysql.connection.cursor()
-        cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
+        cur.execute("UPDATE event SET is_approved = 0, is_active = 0 WHERE event_id = %s", (event_id,))
         mysql.connection.commit()
         cur.close()
+
+        # Send decline email
+        send_faculty_decline_email(event_id)
+
         return jsonify({"message": "Event declined successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -340,6 +420,7 @@ def get_event(event_id):
     - User's RSVP status
     - Event tags
     - Event images
+    - Gender restriction
     Authentication is required to access this endpoint.
 
     Args:
@@ -365,7 +446,8 @@ def get_event(event_id):
                             "id": int,
                             "image": str (base64 encoded)
                         }
-                    ]
+                    ],
+                    "genderRestriction": str
                 }
             }, 200 status
         - On unauthorized access:
@@ -395,7 +477,7 @@ def get_event(event_id):
     user_id = session.get("user_id")
 
     cur.execute(
-        """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
+        """SELECT event_id, start_time, end_time, location, description, cost, event_name, gender_restriction FROM event 
             WHERE event_id = %s
                 AND is_active = 1
                 AND is_approved = 1
@@ -471,6 +553,7 @@ def get_event(event_id):
         "rsvp": "block" if result_3 == 0 else ("rsvp" if result_3 == 1 else None),
         "tags": result_4,
         "images": result_5,
+        "genderRestriction": result[7],
     }
     cur.close()
     return jsonify({"event": final_result}), 200
@@ -700,6 +783,7 @@ def get_events():
                         "cost": float,
                         "title": str,
                         "subscribed": bool,
+                        "genderRestriction": str
                     }
                 ]
             }, 200 status
@@ -724,7 +808,7 @@ def get_events():
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
     if not filter_query:
-        filter_query = ""
+        filter_query = "" 
     approved = (
         approved == "true" or approved == True or approved is None or approved == ""
     )
@@ -880,6 +964,7 @@ def send_approval_email(
         </ul>
          <p>Please approve the collaboration by clicking the link below:</p>
          <p><a href={approval_link}>{approval_link}</a></p>
+         <p>Best regards,<br>SHARC Team</p>
          """,
         True,
     )
@@ -1071,7 +1156,7 @@ def create_event():
 
     Authentication:
     - Requires user to be logged in
-    - User must be an admin for the club hosting the eent
+    - User must be an admin for the club hosting the event
 
     Request Form Parameters:
         clubId (int): ID of the club hosting the event
@@ -1276,6 +1361,24 @@ def create_event():
                 """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
                    VALUES (%s, %s, %s)""",
                 (event_id, image_data, filename),
+            )
+
+        # Fetch all club admin emails
+        cur.execute(
+            """SELECT user_id 
+               FROM club_admin 
+               WHERE club_id = %s
+                 AND is_active = 1""",
+            (club_id,),
+        )
+        admin_emails = [admin[0] for admin in cur.fetchall()]
+
+        # Send notification email to all club admins
+        for email in admin_emails:
+            send_email(
+                email,
+                "Event Pending Approval",
+                f"Dear '{club_name}' admin,\n\n Your event '{event_name}' is pending approval by faculty. You will hear back about the approval results soon.\n\nEvent Details:\nName: {event_name}\nDescription: {description}\nStart Date: {start_date}\nEnd Date: {end_date}\nLocation: {location} \n\n Best regards,\nSHARC Team",
             )
 
         mysql.connection.commit()
