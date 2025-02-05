@@ -15,9 +15,13 @@ from helper.send_email import send_email
 import pytz
 from dotenv import load_dotenv
 import os
+from flask_cors import CORS
 
 
 events_bp = Blueprint("events", __name__)
+
+# Apply CORS to this specific blueprint
+CORS(events_bp, supports_credentials=True)
 
 mail = None
 
@@ -286,6 +290,43 @@ def get_events_by_date(
     except Exception as e:
         print(e)
         return {"error": f"Failed to get events", "status": 500}
+
+
+@events_bp.route("/approve_event", methods=["POST"])
+def approve_event():
+    """ Approve an event by setting is_approved to 1 """
+    data = request.json
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return jsonify({"error": "Missing event_id"}), 400
+
+    try:
+        cur = mysql.connection.cursor()       
+        cur.execute("UPDATE event SET is_approved = 1 WHERE event_id = %s", (event_id,))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Event approved successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@events_bp.route("/decline_event", methods=["POST"])
+def decline_event():
+    """ Decline an event by setting is_active to 0 """
+    data = request.json
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return jsonify({"error": "Missing event_id"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Event declined successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @events_bp.route("/event/<event_id>", methods=["GET"])

@@ -83,6 +83,9 @@ import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.r
 import sendEmailAction from './routes/dashboard/club/SendEmailForm/SendEmail.action.tsx';
 import AboutUs from './routes/aboutus/aboutus.route.tsx';
 import ContactUs from './routes/contactus/contactus.route.tsx';
+import facultyEventApprovalloader from './routes/facultyEventApproval/facultyEventApproval.loader.tsx';
+import { facultyEventApprovalAction } from './routes/facultyEventApproval/facultyEventApproval.action.tsx';
+import FacultyEventApproval from './routes/facultyEventApproval/facultyEventApproval.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -182,6 +185,12 @@ const router = createBrowserRouter(
           element={<Clubs />}
           loader={clubsLoader}
           action={clubsAction}
+        />
+        <Route
+          path='facultyEventApproval'
+          element={<FacultyEventApproval />}
+          loader={facultyEventApprovalloader}
+          action={facultyEventApprovalAction}
         />
         <Route
           path='addeditinterestpage'

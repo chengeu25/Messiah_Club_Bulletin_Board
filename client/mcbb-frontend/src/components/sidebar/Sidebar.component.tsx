@@ -100,7 +100,7 @@ const Sidebar = () => {
         {
           text: 'Approvals',
           icon: <FaCheckCircle />,
-          route: '/dashboard/approveEvent'
+          route: '/dashboard/facultyEventApproval'
         }
       ]);
     }
