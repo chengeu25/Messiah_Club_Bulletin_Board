@@ -77,7 +77,7 @@ def send_verification_email(email, code):
     - Provides a simple email with the verification code
     """
     subject = "Your Verification Code"
-    body = f"Your new verification code is: {code}"
+    body = f"Your new verification code is: {code} \n\nPlease enter this code to verify your email address. \n\n Best Regards, \nSHARC Team"
     try:
         send_email(email, subject, body)
         return True
