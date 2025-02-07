@@ -1,14 +1,11 @@
 import base64
 from datetime import datetime, timedelta, timezone
-from flask import Blueprint, app, jsonify, logging, render_template, session, request
+from flask import Blueprint, jsonify, logging, session, request
 import jwt
-from jwt import ExpiredSignatureError, InvalidTokenError
-from flask_jwt_extended import jwt_required, get_jwt_identity
 import pytz
 from extensions import mysql
 from config import Config
 import json
-from werkzeug.utils import secure_filename
 from helper.check_user import get_user_session_info
 import traceback
 from helper.send_email import send_email
@@ -210,11 +207,14 @@ def get_events_by_date(
                     AND us.email = %s
                     AND us.is_active = 1
                     AND eh.event_id = e.event_id
+                LEFT JOIN users u
+                    ON u.email = %s
                 WHERE e.start_time BETWEEN %s AND %s
                     AND e.is_active = 1
                     AND e.is_approved = %s
                     AND e.school_id = %s
                     AND (r.is_yes = 1 OR %s <> 'Attending')
+                    AND ((e.gender_restriction IS NULL) OR (e.gender_restriction = u.gender))
                 GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
                 HAVING (is_subscribed = 1 OR (%s <> 'Hosted by Subscribed Clubs'))
                     AND ((is_subscribed <> 0 OR is_subscribed IS NULL) OR (%s <> 'Suggested'))
@@ -228,6 +228,7 @@ def get_events_by_date(
                                             AND et2.tag_id = ut.tag_id
                                     WHERE ut.user_id = %s))""",
             (
+                user_id,
                 user_id,
                 user_id,
                 start_date,
@@ -294,6 +295,7 @@ def get_events_by_date(
         print(f"Error fetching events: {e}")
         return {"error": "Failed to fetch events", "status": 500}
 
+
 def send_faculty_approval_email(event_id):
     try:
         cur = mysql.connection.cursor()
@@ -308,7 +310,7 @@ def send_faculty_approval_email(event_id):
                INNER JOIN club_admin ca ON ca.club_id = c.club_id
                INNER JOIN users u ON u.email = ca.user_id
                WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
-            (event_id,)
+            (event_id,),
         )
         club_admins = cur.fetchall()
         cur.close()
@@ -326,6 +328,7 @@ def send_faculty_approval_email(event_id):
     except Exception as e:
         print(f"Error sending approval email: {e}")
 
+
 def send_faculty_decline_email(event_id):
     try:
         cur = mysql.connection.cursor()
@@ -340,7 +343,7 @@ def send_faculty_decline_email(event_id):
                INNER JOIN club_admin ca ON ca.club_id = c.club_id
                INNER JOIN users u ON u.email = ca.user_id
                WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
-            (event_id,)
+            (event_id,),
         )
         club_admins = cur.fetchall()
         cur.close()
@@ -357,15 +360,17 @@ def send_faculty_decline_email(event_id):
 
     except Exception as e:
         print(f"Error sending decline email: {e}")
-        
+
+
 import logging
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 
+
 @events_bp.route("/approve_event", methods=["POST"])
 def approve_event():
-    """ Approve an event by setting is_approved to 1 """
+    """Approve an event by setting is_approved to 1"""
     data = request.json
     event_id = data.get("event_id")
 
@@ -373,7 +378,7 @@ def approve_event():
         return jsonify({"error": "Missing event_id"}), 400
 
     try:
-        cur = mysql.connection.cursor()       
+        cur = mysql.connection.cursor()
         cur.execute("UPDATE event SET is_approved = 1 WHERE event_id = %s", (event_id,))
         mysql.connection.commit()
         cur.close()
@@ -386,9 +391,10 @@ def approve_event():
         logging.error(f"Error approving event: {e}")
         return jsonify({"error": str(e)}), 500
 
+
 @events_bp.route("/decline_event", methods=["POST"])
 def decline_event():
-    """ Decline an event by setting is_approved to 0 and is_active to 0 """
+    """Decline an event by setting is_approved to 0 and is_active to 0"""
     data = request.json
     event_id = data.get("event_id")
 
@@ -397,7 +403,10 @@ def decline_event():
 
     try:
         cur = mysql.connection.cursor()
-        cur.execute("UPDATE event SET is_approved = 0, is_active = 0 WHERE event_id = %s", (event_id,))
+        cur.execute(
+            "UPDATE event SET is_approved = 0, is_active = 0 WHERE event_id = %s",
+            (event_id,),
+        )
         mysql.connection.commit()
         cur.close()
 
@@ -477,12 +486,15 @@ def get_event(event_id):
     user_id = session.get("user_id")
 
     cur.execute(
-        """SELECT event_id, start_time, end_time, location, description, cost, event_name, gender_restriction FROM event 
-            WHERE event_id = %s
-                AND is_active = 1
-                AND is_approved = 1
-                AND school_id = %s""",
-        (event_id, school_id),
+        """SELECT e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name, e.gender_restriction FROM event e
+            LEFT JOIN users u
+                ON u.email = %s
+            WHERE e.event_id = %s
+                AND e.is_active = 1
+                AND e.is_approved = 1
+                AND e.school_id = %s
+                AND (e.gender_restriction = u.gender OR e.gender_restriction IS NULL)""",
+        (user_id, event_id, school_id),
     )
     result = cur.fetchone()
     if result is None:
@@ -693,14 +705,17 @@ def get_club_events(club_id):
         """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
             INNER JOIN event_host eh
                 ON eh.event_id = e.event_id
+            LEFT JOIN users u
+                ON u.email = %s
             WHERE eh.club_id = %s
+                AND (e.gender_restriction IS NULL OR e.gender_restriction = u.gender)
                 AND e.is_active = 1
                 AND e.is_approved = 1
                 AND e.start_time >= %s
                 AND e.school_id = %s
                 AND eh.is_approved = 1
             LIMIT 10""",
-        (club_id, start_date, school_id),
+        (user_id, club_id, start_date, school_id),
     )
     result = cur.fetchall()
     cur.execute(
@@ -808,7 +823,7 @@ def get_events():
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
     if not filter_query:
-        filter_query = "" 
+        filter_query = ""
     approved = (
         approved == "true" or approved == True or approved is None or approved == ""
     )
@@ -1297,7 +1312,11 @@ def create_event():
                 description,
                 event_cost,
                 school_id,
-                gender_restriction,
+                (
+                    "M"
+                    if gender_restriction == "male"
+                    else ("F" if gender_restriction == "female" else None)
+                ),
             ),
         )
         event_id = cur.lastrowid
