@@ -15,7 +15,7 @@ export const facultyEventApprovalAction: ActionFunction = async ({ request }) =>
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ event_id: eventId })
-  });
+});
 
   if (!response.ok) {
     throw new Error(`Failed to ${actionType} event`);

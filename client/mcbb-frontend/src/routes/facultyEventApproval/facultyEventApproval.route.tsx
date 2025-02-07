@@ -21,7 +21,8 @@ const FacultyEventApproval = () => {
   const submit = useSubmit();
 
   useEffect(() => {
-    console.log(events);
+    // Log to inspect event images structure
+    console.log("Event Images:", events.map(event => event.images));
   }, [events]);
 
   const groupedEvents = useMemo(() => {
@@ -60,12 +61,26 @@ const FacultyEventApproval = () => {
                       <p className="mb-2"><strong>Gender Restriction:</strong> {event.genderRestriction || 'None'}</p>
                     </div>
                     <div className="md:w-1/3 md:pl-4">
-                      <p className="mb-2"><strong>Event Photos:</strong></p>
-                      <div className="flex flex-wrap">
-                        {Array.isArray(event.images) && event.images.length > 0 ? event.images.map((img, index) => (
-                          <img key={index} src={`data:image/jpeg;base64,${img.image}`} alt={event.title} className="w-32 h-32 object-cover m-1" />
-                        )) : <p>No photos available</p>}
-                      </div>
+                    <p className="mb-2"><strong>Event Photos:</strong></p>
+                    <div className="flex flex-wrap">
+                        {Array.isArray(event.images) && event.images.length > 0 ? (
+                        event.images.map((img, index) => {
+                            const [mimeType, base64String] = img.image.split(',');
+                            const imageSrc = `data:${mimeType};base64,${base64String}`;
+
+                            return (
+                            <img
+                                key={index}
+                                src={imageSrc}
+                                alt={event.title}
+                                className="w-32 h-32 object-cover m-1"
+                            />
+                            );
+                        })
+                        ) : (
+                        <p>No photos available</p>
+                        )}
+                    </div>
                     </div>
                   </div>
                   <div className="mt-4 flex justify-end">
