@@ -86,6 +86,8 @@ import ContactUs from './routes/contactus/contactus.route.tsx';
 import facultyEventApprovalloader from './routes/facultyEventApproval/facultyEventApproval.loader.tsx';
 import { facultyEventApprovalAction } from './routes/facultyEventApproval/facultyEventApproval.action.tsx';
 import FacultyEventApproval from './routes/facultyEventApproval/facultyEventApproval.route.tsx';
+import Image from './routes/dashboard/images/Image.route.tsx';
+import imageAction from './routes/dashboard/images/Image.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -209,6 +211,12 @@ const router = createBrowserRouter(
             loader={eventLoader}
             action={eventAction}
           />
+          <Route
+            path=':id/images/:imageId'
+            element={<Image />}
+            action={imageAction}
+            loader={eventLoader}
+          />
         </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
         <Route path='club'>
@@ -217,7 +225,14 @@ const router = createBrowserRouter(
             element={<Club />}
             loader={clubLoader}
             action={clubAction}
-          />
+          >
+            <Route
+              path='images/:imageId'
+              element={<Image />}
+              action={imageAction}
+              loader={clubLoader}
+            />
+          </Route>
           <Route
             path=':id/edit'
             element={<ClubForm />}
