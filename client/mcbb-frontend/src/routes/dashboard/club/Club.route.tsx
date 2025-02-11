@@ -3,7 +3,7 @@ import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
 import Event from '../../../components/dashboard/Event.component';
-import { useLoaderData, useNavigate } from 'react-router';
+import { Outlet, useLoaderData, useNavigate, useParams } from 'react-router';
 import {
   ClubAdminType,
   ClubDetailType,
@@ -16,6 +16,7 @@ import { Form, useSubmit } from 'react-router-dom';
 
 const Club = () => {
   const submit = useSubmit();
+  const { imageId } = useParams();
   const navigate = useNavigate();
   const { user, club, events } = useLoaderData() as {
     user: UserType;
@@ -91,6 +92,10 @@ const Club = () => {
               src={image.image}
               alt='Club Image'
               className='h-full object-contain rounded-lg'
+              tabIndex={0}
+              onClick={() =>
+                navigate(`/dashboard/club/${club.id}/images/${image.id}`)
+              }
             />
           ))}
         </div>
@@ -156,9 +161,13 @@ const Club = () => {
           </div>
         </Card>
       </div>
+      {imageId !== null && imageId !== '' && imageId !== undefined && (
+        <div className='w-full h-full absolute top-0 left-0 bg-black/50'>
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 };
 
 export default Club;
-

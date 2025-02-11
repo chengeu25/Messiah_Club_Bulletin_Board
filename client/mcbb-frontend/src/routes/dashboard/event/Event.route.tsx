@@ -3,7 +3,15 @@ import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
 import { RiAccountCircleLine } from 'react-icons/ri';
 import { FaDollarSign } from 'react-icons/fa6';
-import { Form, Link, useLoaderData, useSubmit } from 'react-router-dom';
+import {
+  Form,
+  Link,
+  Outlet,
+  useLoaderData,
+  useParams,
+  useSubmit,
+  useNavigate
+} from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import Input from '../../../components/formElements/Input.component';
 import Comment from '../../../components/forums/Comment.component';
@@ -44,6 +52,8 @@ const Event = () => {
     user: UserType;
   };
   const submit = useSubmit();
+  const { imageId } = useParams();
+  const navigate = useNavigate();
 
   if (!event) {
     return (
@@ -163,6 +173,10 @@ const Event = () => {
               src={`data:image/${prefix};base64,${base64Image}`}
               alt={event.title}
               className='w-auto h-full object-contain rounded-lg'
+              tabIndex={0}
+              onClick={() =>
+                navigate(`/dashboard/event/${event.id}/images/${image.id}`)
+              }
             />
           );
         })}
@@ -222,6 +236,11 @@ const Event = () => {
           lastModified={new Date()}
         />
       </div>
+      {imageId !== null && imageId !== '' && imageId !== undefined && (
+        <div className='w-full h-full absolute top-0 left-0 bg-black/50'>
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 };

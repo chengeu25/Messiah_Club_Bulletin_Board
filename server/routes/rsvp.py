@@ -83,6 +83,21 @@ def RSVP():
         if not user_exists:
             return jsonify({"error": "Invalid user_id"}), 400
 
+        # Block if gender restriction is invalid
+        cur.execute(
+            """SELECT COUNT(*) FROM event e
+                 LEFT JOIN users u ON u.email = %s
+                 WHERE e.event_id = %s 
+                    AND (e.gender_restriction IS NULL OR e.gender_restriction = u.gender)
+                    AND e.is_active = 1 
+                    AND e.is_approved = 1 
+                    AND e.school_id = %s""",
+            (user_id, event_id, session.get("school")),
+        )
+
+        if cur.fetchone()[0] == 0:
+            return jsonify({"error": "Gender restriction is invalid"}), 400
+
         if typeofRSVP == "block":
             # Insert or update the RSVP to set is_yes to False
             cur.execute(
