@@ -1,6 +1,8 @@
 import { useLoaderData, Form } from 'react-router-dom';
 import { EventType } from '../../types/databaseTypes';
 import { useMemo, useEffect } from 'react';
+import Button from '../../components/formElements/Button.component';
+import { CgDetailsMore } from 'react-icons/cg';
 
 /**
  * Faculty Event Approval component displaying unapproved events.
@@ -20,7 +22,7 @@ const FacultyEventApproval = () => {
 
   useEffect(() => {
     // Log to inspect event images structure
-    console.log("Event Images:", events.map(event => event.images));
+    console.log("Event Images:", events.map(event => event.image));
   }, [events]);
 
   const groupedEvents = useMemo(() => {
@@ -92,47 +94,44 @@ const FacultyEventApproval = () => {
                       </p>
                     </div>
                     <div className="md:w-1/3 md:pl-4">
-                    <p className="mb-2"><strong>Event Photos:</strong></p>
-                    <div className="flex flex-wrap">
-                        {Array.isArray(event.images) && event.images.length > 0 ? (
-                        event.images.map((img, index) => {
-                            const [mimeType, base64String] = img.image.split(',');
+                      <p className="mb-2"><strong>Event Photos:</strong></p>
+                      <div className="flex flex-wrap">
+                        {event.image && event.image.image ? (
+                          (() => {
+                            const [mimeType, base64String] = event.image.image.split(',');
                             const imageSrc = `data:${mimeType};base64,${base64String}`;
 
                             return (
-                            <img
-                                key={index}
+                              <img
                                 src={imageSrc}
                                 alt={event.title}
                                 className="w-32 h-32 object-cover m-1"
-                            />
+                              />
                             );
-                        })
+                          })()
                         ) : (
-                        <p>No photos available</p>
+                          <p>No photos available</p>
                         )}
-                    </div>
+                      </div>
                     </div>
                   </div>
                   <div className='mt-4 flex justify-end'>
                     <Form method='post' className='flex'>
                       <input type='hidden' name='event_id' value={event.id} />
-                      <button
+                      <Button
+                        text='Approve'
+                        className='mr-2 p-2 bg-green-500 text-white rounded hover:bg-green-600'
                         type='submit'
                         name='action_type'
                         value='approve_event'
-                        className='mr-2 p-2 bg-green-500 text-white rounded hover:bg-green-600'
-                      >
-                        Approve
-                      </button>
-                      <button
+                      />
+                      <Button
+                        text='Decline'
+                        className='p-2 bg-red-500 text-white rounded hover:bg-red-600'
                         type='submit'
                         name='action_type'
                         value='decline_event'
-                        className='p-2 bg-red-500 text-white rounded hover:bg-red-600'
-                      >
-                        Decline
-                      </button>
+                      />
                     </Form>
                   </div>
                 </li>

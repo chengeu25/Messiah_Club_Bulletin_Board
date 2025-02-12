@@ -296,6 +296,56 @@ def get_events_by_date(
         return {"error": "Failed to fetch events", "status": 500}
 
 
+@events_bp.route("/event-photos", methods=["GET"])
+def get_all_event_photos():
+    """
+    Retrieve all event photos.
+
+    This endpoint fetches all event photos from the database.
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "photos": [
+                    {
+                        "event_id": int,
+                        "photo_id": int,
+                        "image": str (base64 encoded),
+                        "image_prefix": str
+                    }
+                ]
+            }, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+    """
+    try:
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """SELECT event_id, event_photo_id, image, image_prefix FROM event_photo"""
+        )
+        result = cur.fetchall()
+        cur.close()
+
+        photos = [
+            {
+                "event_id": row[0],
+                "photo_id": row[1],
+                "image": base64.b64encode(row[2]).decode('utf-8'),
+                "image_prefix": row[3]
+            }
+            for row in result
+        ]
+
+        return jsonify({"photos": photos}), 200
+
+    except Exception as e:
+        print(f"Error fetching event photos: {e}")
+        return jsonify({"error": "Failed to fetch event photos"}), 500
+    
 def send_faculty_approval_email(event_id):
     try:
         cur = mysql.connection.cursor()
@@ -1392,12 +1442,38 @@ def create_event():
         )
         admin_emails = [admin[0] for admin in cur.fetchall()]
 
+        # Convert dates to local timezone and format them
+        local_tz = pytz.timezone("US/Eastern")
+        
+        # Parse the event start and end dates in UTC
+        start_date_obj = datetime.strptime(
+        start_date, "%Y-%m-%dT%H:%M:%S.%fZ"
+            ).replace(tzinfo=pytz.utc)
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=pytz.utc
+         )
+        
+        local_start_date = start_date_obj.astimezone(local_tz)
+        local_end_date = end_date_obj.astimezone(local_tz)
+        formatted_start_date = (
+            local_start_date.strftime("%Y-%m-%d %-I:%M%p")
+            .lower()
+            .replace("pm", "p.m.")
+            .replace("am", "a.m.")
+        )
+        formatted_end_date = (
+            local_end_date.strftime("%Y-%m-%d %-I:%M%p")
+            .lower()
+            .replace("pm", "p.m.")
+            .replace("am", "a.m.")
+        )
+
         # Send notification email to all club admins
         for email in admin_emails:
             send_email(
                 email,
                 "Event Pending Approval",
-                f"Dear '{club_name}' admin,\n\n Your event '{event_name}' is pending approval by faculty. You will hear back about the approval results soon.\n\nEvent Details:\nName: {event_name}\nDescription: {description}\nStart Date: {start_date}\nEnd Date: {end_date}\nLocation: {location} \n\n Best regards,\nSHARC Team",
+                f"Dear '{club_name}' admin,\n\n Your event '{event_name}' is pending approval by faculty. You will hear back about the approval results soon.\n\nEvent Details:\nName: {event_name}\nDescription: {description}\nStart Date: {formatted_start_date}\nEnd Date: {formatted_end_date}\nLocation: {location} \n\n Best regards,\nSHARC Team",
             )
 
         mysql.connection.commit()

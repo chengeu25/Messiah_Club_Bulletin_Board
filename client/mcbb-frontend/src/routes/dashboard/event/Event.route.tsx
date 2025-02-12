@@ -93,6 +93,8 @@ const Event = () => {
               name='action'
               value='cancel'
               text='Cancel Event'
+              className='bg-gray-500 text-white rounded hover:bg-red-500'
+
             />
           )}
           <input type='hidden' name='id' value={event.id} />

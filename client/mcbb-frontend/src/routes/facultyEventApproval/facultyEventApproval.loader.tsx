@@ -18,7 +18,7 @@ const facultyEventApprovalloader: LoaderFunction = async ({ request }) => {
   const userId = url.searchParams.get("user_id") || '';
 
   try {
-    const response = await fetch(
+    const eventsResponse = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/events/events?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}&school_id=${encodeURIComponent(schoolId)}&user_id=${encodeURIComponent(userId)}&approved=false`,
       {
         method: 'GET',
@@ -29,21 +29,55 @@ const facultyEventApprovalloader: LoaderFunction = async ({ request }) => {
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch unapproved events: ${response.statusText}`);
+    if (!eventsResponse.ok) {
+      throw new Error(`Failed to fetch unapproved events: ${eventsResponse.statusText}`);
     }
 
-    const contentType = response.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
+    const eventsContentType = eventsResponse.headers.get("content-type");
+    if (!eventsContentType || !eventsContentType.includes("application/json")) {
+      const text = await eventsResponse.text();
       console.error("Received non-JSON response from server:", text);
       throw new Error("Received non-JSON response from server");
     }
 
-    const data = await response.json();
-    return json({ user: user, events: data.events || [] }, { status: 200 });
+    const eventsData = await eventsResponse.json();
+
+    const photosResponse = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/event-photos`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!photosResponse.ok) {
+      throw new Error(`Failed to fetch event photos: ${photosResponse.statusText}`);
+    }
+
+    const photosContentType = photosResponse.headers.get("content-type");
+    if (!photosContentType || !photosContentType.includes("application/json")) {
+      const text = await photosResponse.text();
+      console.error("Received non-JSON response from server:", text);
+      throw new Error("Received non-JSON response from server");
+    }
+
+    const photosData = await photosResponse.json();
+
+    // Map photos to events
+    const eventsWithPhotos = eventsData.events.map((event: { id: any; }) => {
+      const eventPhotos = photosData.photos.filter((photo: { event_id: any; }) => photo.event_id === event.id);
+      return {
+        ...event,
+        photos: eventPhotos
+      };
+    });
+
+    return json({ user: user, events: eventsWithPhotos }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching unapproved events:", error);
+    console.error("Error fetching unapproved events or photos:", error);
     return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 };
