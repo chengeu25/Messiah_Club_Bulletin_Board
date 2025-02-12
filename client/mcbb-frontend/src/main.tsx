@@ -88,6 +88,9 @@ import { facultyEventApprovalAction } from './routes/facultyEventApproval/facult
 import FacultyEventApproval from './routes/facultyEventApproval/facultyEventApproval.route.tsx';
 import Image from './routes/dashboard/images/Image.route.tsx';
 import imageAction from './routes/dashboard/images/Image.action.tsx';
+import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
+import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
+import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -193,6 +196,12 @@ const router = createBrowserRouter(
           element={<FacultyEventApproval />}
           loader={facultyEventApprovalloader}
           action={facultyEventApprovalAction}
+        />
+        <Route
+          path='schoolEdit'
+          element={<SchoolEdit />}
+          loader={schoolEditloader}
+          action={schoolEditaction}
         />
         <Route
           path='addeditinterestpage'

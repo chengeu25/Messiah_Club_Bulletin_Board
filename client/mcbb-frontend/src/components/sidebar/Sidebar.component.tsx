@@ -5,7 +5,8 @@ import {
   FaUsers,
   FaUser,
   FaChalkboardTeacher,
-  FaCheckCircle
+  FaCheckCircle,
+  FaBuilding
 } from 'react-icons/fa';
 import { RiCompassDiscoverFill } from 'react-icons/ri';
 import checkUser from '../../helper/checkUser';
@@ -101,6 +102,11 @@ const Sidebar = () => {
           text: 'Approvals',
           icon: <FaCheckCircle />,
           route: '/dashboard/facultyEventApproval'
+        }, 
+        {
+          text: 'School',
+          icon: <FaBuilding />,
+          route: '/dashboard/schoolEdit'
         }
       ]);
     }
