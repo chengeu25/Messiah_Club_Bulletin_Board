@@ -4,7 +4,6 @@ from extensions import mysql
 
 school_bp = Blueprint("school", __name__)
 
-
 @school_bp.route("/", methods=["GET"])
 def get_school():
     """
