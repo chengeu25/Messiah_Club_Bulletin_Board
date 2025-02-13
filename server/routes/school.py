@@ -1,4 +1,3 @@
-# filepath: /Users/chengeu/Desktop/SHARC/Messiah_Club_Bulletin_Board/server/routes/school.py
 from flask import Blueprint, jsonify, session, request
 from extensions import mysql
 import base64
@@ -21,7 +20,7 @@ def get_school():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT email_domain, school_name, school_logo, school_color FROM school WHERE school_id = %s"
+        query = "SELECT school_name, school_logo, school_color FROM school WHERE school_id = %s"
         cursor.execute(query, (school_id,))
         school = cursor.fetchone()
         cursor.close()
@@ -30,13 +29,12 @@ def get_school():
             return jsonify({"error": "School not found"}), 404
 
         # Convert the school_logo to a base64-encoded string
-        school_logo_base64 = base64.b64encode(school[2]).decode('utf-8') if school[2] else None
+        school_logo_base64 = base64.b64encode(school[1]).decode('utf-8') if school[1] else None
 
         return jsonify({
-            "emailDomain": school[0],
-            "name": school[1],
+            "name": school[0],
             "logo": school_logo_base64,
-            "color": school[3],
+            "color": school[2],
             "id": school_id,
         }), 200
     except Exception as e:
@@ -54,7 +52,7 @@ def get_all_schools():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT school_id, school_name, email_domain, school_color FROM school"
+        query = "SELECT school_id, school_name, school_color FROM school"
         cursor.execute(query)
         schools = cursor.fetchall()
         cursor.close()
@@ -63,8 +61,7 @@ def get_all_schools():
             {
                 "id": school[0],
                 "name": school[1],
-                "emailDomain": school[2],
-                "color": school[3],
+                "color": school[2],
             }
             for school in schools
         ]
@@ -89,28 +86,26 @@ def update_school():
         name = data.get("name")
         color = data.get("color")
         logo = data.get("logo")
-        email_domain = data.get("emailDomain")
 
         # Log the values being passed to the query
         print(f"Updating school with ID {school_id}:")
         print(f"Name: {name}")
         print(f"Color: {color}")
         print(f"Logo: {logo}")
-        print(f"Email Domain: {email_domain}")
 
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cursor = mysql.connection.cursor()
         query = """
             UPDATE school
-            SET school_name = %s, school_color = %s, school_logo = %s, email_domain = %s
+            SET school_name = %s, school_color = %s, school_logo = %s
             WHERE school_id = %s
         """
         if logo:
             logo_data = logo.split(',')[1] if ',' in logo else logo
-            cursor.execute(query, (name, color, base64.b64decode(logo_data), email_domain, school_id))
+            cursor.execute(query, (name, color, base64.b64decode(logo_data), school_id))
         else:
-            cursor.execute(query, (name, color, None, email_domain, school_id))
+            cursor.execute(query, (name, color, None, school_id))
         mysql.connection.commit()
         cursor.close()
 

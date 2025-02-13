@@ -14,20 +14,17 @@ const SchoolEdit = () => {
   const [formState, setFormState] = useState({
     name: school.name || '',
     color: school.color?.replace(/^#/, '') || '000000', // Ensure valid HEX without '#'
-    logo: school.logo || '',
-    emailDomain: school.emailDomain || ''
+    logo: school.logo || ''
   });
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [emailDomainError, setEmailDomainError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setFormState({
       name: school.name || '',
       color: school.color?.replace(/^#/, '') || '000000',
-      logo: school.logo || '',
-      emailDomain: school.emailDomain || ''
+      logo: school.logo || ''
     });
   }, [school]);
 
@@ -41,18 +38,6 @@ const SchoolEdit = () => {
         console.log('Color Value:', hexValue); // Log the color value
         setFormState((prevState) => ({ ...prevState, color: hexValue }));
       }
-    } else if (name === 'emailDomain') {
-      // Validate email domain format
-      const emailDomainRegex = /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/;
-      if (!emailDomainRegex.test(value)) {
-        setEmailDomainError('Invalid email domain format. Example: example.com');
-      } else {
-        setEmailDomainError(null);
-      }
-      setFormState((prevState) => ({
-        ...prevState,
-        [name]: value
-      }));
     } else {
       setFormState((prevState) => ({
         ...prevState,
@@ -77,11 +62,6 @@ const SchoolEdit = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    if (emailDomainError) {
-      setErrorMessage('Please fix the errors before submitting.');
-      return;
-    }
 
     const confirmed = window.confirm('Are you sure you want to save the changes?');
     if (!confirmed) {
@@ -139,7 +119,7 @@ const SchoolEdit = () => {
           type='text'
           value={formState.name}
           onChange={handleChange}
-          required
+          filled={false}
         />
         <label className='block text-sm font-medium text-gray-700'>
           School Color
@@ -149,19 +129,7 @@ const SchoolEdit = () => {
           name='color'
           value={`#${formState.color}`} // Ensure valid HEX format
           onChange={handleChange}
-          required
         />
-        <Input
-          label='Email Domain'
-          name='emailDomain'
-          type='text'
-          value={formState.emailDomain}
-          onChange={handleChange}
-          required
-        />
-        {emailDomainError && (
-          <div className="text-red-600 text-sm">{emailDomainError}</div>
-        )}
         <label className='block text-sm font-medium text-gray-700'>
           School Logo
         </label>

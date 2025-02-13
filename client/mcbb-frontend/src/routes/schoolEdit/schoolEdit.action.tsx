@@ -1,3 +1,4 @@
+// filepath: /Users/chengeu/Desktop/SHARC/Messiah_Club_Bulletin_Board/client/mcbb-frontend/src/routes/schoolEdit/schoolEdit.action.tsx
 import { json, redirect, ActionFunction } from 'react-router-dom';
 
 /**
@@ -15,8 +16,7 @@ export const schoolEditaction: ActionFunction = async ({ request }) => {
   const schoolData = {
     name: formData.get('name'),
     color: (formData.get('color') as string | null)?.replace(/^#/, '') ?? '', // Remove '#' if present
-    logo: formData.get('logo'),
-    emailDomain: formData.get('emailDomain')
+    logo: formData.get('logo')
   };
 
   // Log the schoolData to the console
