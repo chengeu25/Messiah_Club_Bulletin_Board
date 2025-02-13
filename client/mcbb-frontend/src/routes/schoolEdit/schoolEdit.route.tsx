@@ -139,7 +139,7 @@ const SchoolEdit = () => {
           type='text'
           value={formState.name}
           onChange={handleChange}
-          required
+          filled={false}
         />
         <label className='block text-sm font-medium text-gray-700'>
           School Color
@@ -149,7 +149,6 @@ const SchoolEdit = () => {
           name='color'
           value={`#${formState.color}`} // Ensure valid HEX format
           onChange={handleChange}
-          required
         />
         <Input
           label='Email Domain'
@@ -157,7 +156,7 @@ const SchoolEdit = () => {
           type='text'
           value={formState.emailDomain}
           onChange={handleChange}
-          required
+          filled={false}
         />
         {emailDomainError && (
           <div className="text-red-600 text-sm">{emailDomainError}</div>
