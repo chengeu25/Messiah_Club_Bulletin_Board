@@ -541,7 +541,7 @@ def get_event(event_id):
                 ON u.email = %s
             WHERE e.event_id = %s
                 AND e.is_active = 1
-                AND e.is_approved = 1
+                AND (e.is_approved = 1 OR u.is_faculty = 1)
                 AND e.school_id = %s
                 AND (e.gender_restriction = u.gender OR e.gender_restriction IS NULL)""",
         (user_id, event_id, school_id),
