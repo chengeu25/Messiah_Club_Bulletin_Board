@@ -12,7 +12,11 @@ const schoolEditloader: LoaderFunction = async ({ request }) => {
   }
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school`);
+    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school`, {
+        method: 'GET',
+        credentials: 'include'
+    });
+
     if (!response.ok) {
       throw new Error('Failed to fetch school data');
     }

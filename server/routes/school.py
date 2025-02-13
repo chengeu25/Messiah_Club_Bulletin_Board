@@ -1,6 +1,7 @@
-from flask import Blueprint, jsonify, session
+# filepath: /Users/chengeu/Desktop/SHARC/Messiah_Club_Bulletin_Board/server/routes/school.py
+from flask import Blueprint, jsonify, session, request
 from extensions import mysql
-
+import base64
 
 school_bp = Blueprint("school", __name__)
 
@@ -8,46 +9,36 @@ school_bp = Blueprint("school", __name__)
 def get_school():
     """
     Retrieve detailed information about a specific school.
-
-    This endpoint fetches comprehensive school data based on the provided school identifier
-    from the session.
-
-    Returns:
-        JSON response with school details, including:
-        - name: Full name of the school
-        - location: Geographic location of the school
-        - type: Type of school (e.g., high school, college)
-        - additional metadata
-
-    Raises:
-        404 Error: If the school with the given ID is not found
-        500 Error: If there's a database connection or query error
     """
     try:
         school_id = session.get("school")
+        print(f"Retrieved school_id from session: {school_id}")
+
+        if not school_id:
+            return jsonify({"error": "School ID not found in session"}), 404
+
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
+
         cursor = mysql.connection.cursor()
         query = "SELECT email_domain, school_name, school_logo, school_color FROM school WHERE school_id = %s"
-        cursor.execute(query, (school_id if school_id else 0,))
+        cursor.execute(query, (school_id,))
         school = cursor.fetchone()
         cursor.close()
 
         if not school:
             return jsonify({"error": "School not found"}), 404
 
-        return (
-            jsonify(
-                {
-                    "emailDomain": school[0],
-                    "name": school[1],
-                    "logo": school[2],
-                    "color": school[3],
-                    "id": school_id,
-                }
-            ),
-            200,
-        )
+        # Convert the school_logo to a base64-encoded string
+        school_logo_base64 = base64.b64encode(school[2]).decode('utf-8') if school[2] else None
+
+        return jsonify({
+            "emailDomain": school[0],
+            "name": school[1],
+            "logo": school_logo_base64,
+            "color": school[3],
+            "id": school_id,
+        }), 200
     except Exception as e:
         print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
@@ -57,16 +48,6 @@ def get_school():
 def get_all_schools():
     """
     Retrieve a list of all schools with their IDs and names.
-
-    Returns:
-        JSON response containing a list of schools with:
-        - school_id: Unique identifier for each school
-        - name: Name of the school
-        - emailDomain: Email domain associated with the school
-        - color: Color associated with the school
-
-    Raises:
-        500 Error: If there's a database connection or query error
     """
     try:
         if not mysql.connection:
@@ -90,4 +71,50 @@ def get_all_schools():
 
         return jsonify(schools_list), 200
     except Exception as e:
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+
+@school_bp.route("/update", methods=["PUT"])
+def update_school():
+    """
+    Update detailed information about a specific school.
+    """
+    try:
+        school_id = session.get("school")
+        print(f"Retrieved school_id from session: {school_id}")
+        if not school_id:
+            return jsonify({"error": "School not found"}), 404
+
+        data = request.get_json()
+        name = data.get("name")
+        color = data.get("color")
+        logo = data.get("logo")
+        email_domain = data.get("emailDomain")
+
+        # Log the values being passed to the query
+        print(f"Updating school with ID {school_id}:")
+        print(f"Name: {name}")
+        print(f"Color: {color}")
+        print(f"Logo: {logo}")
+        print(f"Email Domain: {email_domain}")
+
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+        cursor = mysql.connection.cursor()
+        query = """
+            UPDATE school
+            SET school_name = %s, school_color = %s, school_logo = %s, email_domain = %s
+            WHERE school_id = %s
+        """
+        if logo:
+            logo_data = logo.split(',')[1] if ',' in logo else logo
+            cursor.execute(query, (name, color, base64.b64decode(logo_data), email_domain, school_id))
+        else:
+            cursor.execute(query, (name, color, None, email_domain, school_id))
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({"message": "School updated successfully"}), 200
+    except Exception as e:
+        print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500

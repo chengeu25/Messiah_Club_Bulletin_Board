@@ -7,29 +7,45 @@ import { json, redirect, ActionFunction } from 'react-router-dom';
  */
 export const schoolEditaction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
+  const actionType = formData.get('actionType');
+
+  // Log the actionType to the console
+  console.log('Action Type:', actionType);
+
   const schoolData = {
     name: formData.get('name'),
-    address: formData.get('address'),
-    contactEmail: formData.get('contactEmail')
+    color: (formData.get('color') as string | null)?.replace(/^#/, '') ?? '', // Remove '#' if present
+    logo: formData.get('logo'),
+    emailDomain: formData.get('emailDomain')
   };
 
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(schoolData)
-    });
+  // Log the schoolData to the console
+  console.log('School Data:', schoolData);
 
-    if (!response.ok) {
-      throw new Error('Failed to update school data');
+  if (actionType === 'submit') {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(schoolData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update school data');
+      }
+
+      return redirect('/dashboard/schoolEdit');
+    } catch (error) {
+      console.error('Error updating school data:', error);
+      return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
     }
-
-    return redirect('/dashboard/schoolEdit');
-  } catch (error) {
-    console.error('Error updating school data:', error);
-    return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
+
+  // Return null if actionType is not 'submit'
+  return null;
 };
 
+export default schoolEditaction;
