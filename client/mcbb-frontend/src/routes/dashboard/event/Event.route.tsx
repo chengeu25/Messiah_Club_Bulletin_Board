@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -54,6 +55,7 @@ const Event = () => {
   const submit = useSubmit();
   const { imageId } = useParams();
   const navigate = useNavigate();
+  const [message, setMessage] = useState<string | null>(null);
 
   if (!event) {
     return (
@@ -65,8 +67,48 @@ const Event = () => {
     );
   }
 
+  const handleApproval = async (action: string) => {
+    if (!confirm(`Are you sure you want to ${action} this event?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/${action}_event`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ event_id: event.id })
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setMessage(`Event ${action}d successfully`);
+      } else {
+        setMessage(`Failed to ${action} event: ${result.error}`);
+      }
+
+      navigate(0); // Reload the page to reflect the changes
+    } catch (error) {
+      console.error(`Error ${action}ing event:`, error);
+      if (error instanceof Error) {
+        setMessage(`Error ${action}ing event: ${error.message}`);
+      } else {
+        setMessage(`Error ${action}ing event`);
+      }
+    }
+  };
+
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
+      {/* Display success or failure message */}
+      {message && (
+        <div className={`p-4 rounded mb-4 ${message.includes('successfully') ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+          <strong>{message}</strong>
+        </div>
+      )}
+
       {/* Event title and RSVP section */}
       <Card
         color='gray-300'
@@ -75,7 +117,7 @@ const Event = () => {
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
 
-        {/* Cancel Event Button (first now) */}
+        {/* Cancel Event Button */}
         <Form
           onSubmit={(e) => {
             if (!confirm('Are you sure you want to cancel this event?')) {
@@ -94,13 +136,12 @@ const Event = () => {
               value='cancel'
               text='Cancel Event'
               className='bg-gray-500 text-white rounded hover:bg-red-500'
-
             />
           )}
           <input type='hidden' name='id' value={event.id} />
         </Form>
 
-        {/* RSVP Dropdown (second now) */}
+        {/* RSVP Dropdown */}
         <Form className='flex-shrink-0 flex'>
           <RSVPDropdown
             handleRSVPClick={(type) =>
@@ -113,6 +154,22 @@ const Event = () => {
           />
         </Form>
       </Card>
+
+      {/* Approve/Decline Buttons for Faculty */}
+      {user?.isFaculty && !event?.isApproved && (
+        <div className='flex gap-2 mt-4'>
+          <Button
+            text='Approve Event'
+            className='bg-green-500 text-white rounded hover:bg-green-600'
+            onClick={() => handleApproval('approve')}
+          />
+          <Button
+            text='Decline Event'
+            className='bg-red-500 text-white rounded hover:bg-red-600'
+            onClick={() => handleApproval('decline')}
+          />
+        </div>
+      )}
 
       {/* Event metadata section */}
       <div className='flex flex-col w-full gap-4 m-2'>

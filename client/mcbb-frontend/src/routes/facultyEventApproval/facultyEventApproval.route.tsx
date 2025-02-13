@@ -93,31 +93,17 @@ const FacultyEventApproval = () => {
                           : 'None'}
                       </p>
                     </div>
-                    <div className="md:w-1/3 md:pl-4">
-                      <p className="mb-2"><strong>Event Photos:</strong></p>
-                      <div className="flex flex-wrap">
-                        {event.image && event.image.image ? (
-                          (() => {
-                            const [mimeType, base64String] = event.image.image.split(',');
-                            const imageSrc = `data:${mimeType};base64,${base64String}`;
-
-                            return (
-                              <img
-                                src={imageSrc}
-                                alt={event.title}
-                                className="w-32 h-32 object-cover m-1"
-                              />
-                            );
-                          })()
-                        ) : (
-                          <p>No photos available</p>
-                        )}
-                      </div>
-                    </div>
                   </div>
                   <div className='mt-4 flex justify-end'>
                     <Form method='post' className='flex'>
                       <input type='hidden' name='event_id' value={event.id} />
+                      <Button
+                        text='Details'
+                        className='mr-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600'
+                        type='submit'
+                        name='action_type'
+                        value='details'
+                      />
                       <Button
                         text='Approve'
                         className='mr-2 p-2 bg-green-500 text-white rounded hover:bg-green-600'
