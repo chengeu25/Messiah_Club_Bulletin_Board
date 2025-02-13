@@ -55,7 +55,7 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
       );
     }
 
-    return redirect(`/dashboard/club/${clubId}`);
+    return redirect(`/dashboard/club/${clubId}?success=Event send for faculty approval`);
   } catch (error) {
     console.error('Error submitting event:', error);
     return redirect(

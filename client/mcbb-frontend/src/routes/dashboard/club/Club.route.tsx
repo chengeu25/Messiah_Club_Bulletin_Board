@@ -18,6 +18,7 @@ const Club = () => {
   const submit = useSubmit();
   const { imageId } = useParams();
   const navigate = useNavigate();
+  const successMessage = new URLSearchParams(window.location.search).get('success');
   const { user, club, events } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
@@ -42,6 +43,12 @@ const Club = () => {
 
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
+      {/* Display success message if it exists */}
+      {successMessage && (
+        <div className="bg-green-200 text-green-800 p-4 rounded mb-4">
+          <strong>Success:</strong> {successMessage}
+        </div>
+      )}
       <Card
         color='gray-300'
         padding={4}

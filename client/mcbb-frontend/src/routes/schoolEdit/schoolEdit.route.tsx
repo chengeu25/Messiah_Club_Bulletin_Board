@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLoaderData, Form } from 'react-router-dom';
+import { useLoaderData, Form, useNavigate } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import { SchoolType } from '../../types/databaseTypes';
@@ -10,6 +10,7 @@ import { SchoolType } from '../../types/databaseTypes';
  */
 const SchoolEdit = () => {
   const school = useLoaderData() as SchoolType;
+  const navigate = useNavigate();
   const [formState, setFormState] = useState({
     name: school.name || '',
     color: school.color?.replace(/^#/, '') || '000000', // Ensure valid HEX without '#'
@@ -18,6 +19,8 @@ const SchoolEdit = () => {
   });
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [emailDomainError, setEmailDomainError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     setFormState({
@@ -38,6 +41,18 @@ const SchoolEdit = () => {
         console.log('Color Value:', hexValue); // Log the color value
         setFormState((prevState) => ({ ...prevState, color: hexValue }));
       }
+    } else if (name === 'emailDomain') {
+      // Validate email domain format
+      const emailDomainRegex = /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/;
+      if (!emailDomainRegex.test(value)) {
+        setEmailDomainError('Invalid email domain format. Example: example.com');
+      } else {
+        setEmailDomainError(null);
+      }
+      setFormState((prevState) => ({
+        ...prevState,
+        [name]: value
+      }));
     } else {
       setFormState((prevState) => ({
         ...prevState,
@@ -60,6 +75,44 @@ const SchoolEdit = () => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (emailDomainError) {
+      setErrorMessage('Please fix the errors before submitting.');
+      return;
+    }
+
+    const confirmed = window.confirm('Are you sure you want to save the changes?');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school/update`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(formState)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update school data');
+      }
+
+      setSuccessMessage('Changes saved successfully!');
+      setTimeout(() => {
+        setSuccessMessage(null);
+        navigate('/dashboard/schoolEdit');
+      }, 2000);
+    } catch (error) {
+      console.error('Error updating school data:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
+    }
+  };
+
   return (
     <div className='container mx-auto p-4'>
       <h1 className='text-3xl font-bold mb-6'>Edit School Information</h1>
@@ -71,7 +124,14 @@ const SchoolEdit = () => {
         </div>
       )}
 
-      <Form method="post" className='flex flex-col gap-4'>
+      {/* Display success message if it exists */}
+      {successMessage && (
+        <div className="bg-green-200 text-green-800 p-4 rounded mb-4">
+          <strong>Success:</strong> {successMessage}
+        </div>
+      )}
+
+      <Form method="post" className='flex flex-col gap-4' onSubmit={handleSubmit}>
         <input type="hidden" name="actionType" value="submit" />
         <Input
           label='School Name'
@@ -99,6 +159,9 @@ const SchoolEdit = () => {
           onChange={handleChange}
           required
         />
+        {emailDomainError && (
+          <div className="text-red-600 text-sm">{emailDomainError}</div>
+        )}
         <label className='block text-sm font-medium text-gray-700'>
           School Logo
         </label>
