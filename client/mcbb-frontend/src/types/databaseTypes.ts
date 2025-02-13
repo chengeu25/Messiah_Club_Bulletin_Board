@@ -188,6 +188,8 @@ export interface EventDetailType {
   cost: number;
   /** RSVP status for the event */
   rsvp: string;
+  /** Boolean indicating whether the event has been approved */
+  isApproved: boolean;
 }
 
 /**

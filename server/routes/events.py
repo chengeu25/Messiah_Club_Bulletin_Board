@@ -334,8 +334,8 @@ def get_all_event_photos():
             {
                 "event_id": row[0],
                 "photo_id": row[1],
-                "image": base64.b64encode(row[2]).decode('utf-8'),
-                "image_prefix": row[3]
+                "image": base64.b64encode(row[2]).decode("utf-8"),
+                "image_prefix": row[3],
             }
             for row in result
         ]
@@ -345,7 +345,8 @@ def get_all_event_photos():
     except Exception as e:
         print(f"Error fetching event photos: {e}")
         return jsonify({"error": "Failed to fetch event photos"}), 500
-    
+
+
 def send_faculty_approval_email(event_id):
     try:
         cur = mysql.connection.cursor()
@@ -536,7 +537,7 @@ def get_event(event_id):
     user_id = session.get("user_id")
 
     cur.execute(
-        """SELECT e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name, e.gender_restriction FROM event e
+        """SELECT e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name, e.gender_restriction, e.is_approved FROM event e
             LEFT JOIN users u
                 ON u.email = %s
             WHERE e.event_id = %s
@@ -616,6 +617,7 @@ def get_event(event_id):
         "tags": result_4,
         "images": result_5,
         "genderRestriction": result[7],
+        "isApproved": result[8],
     }
     cur.close()
     return jsonify({"event": final_result}), 200
@@ -1444,15 +1446,15 @@ def create_event():
 
         # Convert dates to local timezone and format them
         local_tz = pytz.timezone("US/Eastern")
-        
+
         # Parse the event start and end dates in UTC
-        start_date_obj = datetime.strptime(
-        start_date, "%Y-%m-%dT%H:%M:%S.%fZ"
-            ).replace(tzinfo=pytz.utc)
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=pytz.utc
+        )
         end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
             tzinfo=pytz.utc
-         )
-        
+        )
+
         local_start_date = start_date_obj.astimezone(local_tz)
         local_end_date = end_date_obj.astimezone(local_tz)
         formatted_start_date = (
