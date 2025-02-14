@@ -99,7 +99,7 @@ const FacultyEventApproval = () => {
                         : 'None'}
                     </p>
                   </div>
-                  <div className='mt-4 md:mt-0 md:w-1/3 flex flex-col items-center'>
+                  <div className='mt-8 md:mt-8 md:w-1/3 flex flex-col items-center'>
                     <Form method='post' className='flex flex-col items-center w-full'>
                       <input type='hidden' name='event_id' value={event.id} />
                       <Button
