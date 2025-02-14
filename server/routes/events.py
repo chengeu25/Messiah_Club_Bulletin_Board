@@ -214,7 +214,9 @@ def get_events_by_date(
                     AND e.is_approved = %s
                     AND e.school_id = %s
                     AND (r.is_yes = 1 OR %s <> 'Attending')
-                    AND ((e.gender_restriction IS NULL) OR (e.gender_restriction = u.gender))
+                    AND ((e.gender_restriction IS NULL) 
+                        OR (e.gender_restriction = u.gender) 
+                        OR (u.is_faculty = 1 AND e.is_approved = 0))
                 GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
                 HAVING (is_subscribed = 1 OR (%s <> 'Hosted by Subscribed Clubs'))
                     AND ((is_subscribed <> 0 OR is_subscribed IS NULL) OR (%s <> 'Suggested'))
@@ -544,7 +546,9 @@ def get_event(event_id):
                 AND e.is_active = 1
                 AND (e.is_approved = 1 OR u.is_faculty = 1)
                 AND e.school_id = %s
-                AND (e.gender_restriction = u.gender OR e.gender_restriction IS NULL)""",
+                AND (e.gender_restriction = u.gender 
+                    OR e.gender_restriction IS NULL
+                    OR (e.is_approved = 0 AND u.is_faculty = 1))""",
         (user_id, event_id, school_id),
     )
     result = cur.fetchone()
@@ -1488,4 +1492,3 @@ def create_event():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
-    
