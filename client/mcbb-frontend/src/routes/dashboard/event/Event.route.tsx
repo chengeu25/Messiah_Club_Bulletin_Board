@@ -23,6 +23,7 @@ import {
 } from '../../../types/databaseTypes';
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
+import { ImManWoman } from 'react-icons/im';
 
 /**
  * Event details page component.
@@ -74,14 +75,17 @@ const Event = () => {
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/${action}_event`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ event_id: event.id })
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/events/${action}_event`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({ event_id: event.id })
+        }
+      );
 
       const result = await response.json();
       if (response.ok) {
@@ -108,7 +112,13 @@ const Event = () => {
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
       {/* Display success or failure message */}
       {message && (
-        <div className={`p-4 rounded mb-4 ${message.includes('successfully') ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+        <div
+          className={`p-4 rounded mb-4 ${
+            message.includes('successfully')
+              ? 'bg-green-200 text-green-800'
+              : 'bg-red-200 text-red-800'
+          }`}
+        >
           <strong>{message}</strong>
         </div>
       )}
@@ -162,8 +172,14 @@ const Event = () => {
       {/* Approve/Decline Buttons for Faculty */}
       {user?.isFaculty && !event?.isApproved && (
         <>
-          <h2 className='text-2xl font-bold text-left w-full'>Event Approval</h2>
-          <Card color='gray-300' padding={4} className='w-full flex gap-2 mt-4 justify-center'>
+          <h2 className='text-2xl font-bold text-left w-full'>
+            Event Approval
+          </h2>
+          <Card
+            color='gray-300'
+            padding={4}
+            className='w-full flex gap-2 mt-4 justify-center'
+          >
             <Button
               text=''
               className='bg-green-500 text-white rounded hover:bg-green-600 flex items-center px-4 py-2'
@@ -211,6 +227,14 @@ const Event = () => {
           <p className='flex flex-row gap-2 items-center'>
             <FaDollarSign size={24} /> <strong>Cost:</strong>{' '}
             {event?.cost ?? 'FREE'}
+          </p>
+          <p className='flex flex-row gap-2 items-center'>
+            <ImManWoman size={24} /> <strong>Gender Restriction:</strong>{' '}
+            {event?.genderRestriction === 'M'
+              ? 'Male'
+              : event?.genderRestriction === 'F'
+              ? 'Female'
+              : 'None'}
           </p>
         </Card>
       </div>

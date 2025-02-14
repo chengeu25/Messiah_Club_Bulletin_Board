@@ -190,6 +190,8 @@ export interface EventDetailType {
   rsvp: string;
   /** Boolean indicating whether the event has been approved */
   isApproved: boolean;
+  /** Gender restriction */
+  genderRestriction: string;
 }
 
 /**
