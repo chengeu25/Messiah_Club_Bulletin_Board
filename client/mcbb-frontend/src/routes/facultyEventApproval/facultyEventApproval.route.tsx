@@ -1,8 +1,9 @@
-import { useLoaderData, Form } from 'react-router-dom';
+import { useLoaderData, Form, useActionData } from 'react-router-dom';
 import { EventType } from '../../types/databaseTypes';
 import { useMemo, useEffect } from 'react';
 import Button from '../../components/formElements/Button.component';
 import { CgDetailsMore } from 'react-icons/cg';
+import { FaCheck, FaTimes } from 'react-icons/fa';
 
 /**
  * Faculty Event Approval component displaying unapproved events.
@@ -19,6 +20,7 @@ const FacultyEventApproval = () => {
   const { events } = useLoaderData() as {
     events: EventType[];
   };
+  const actionData = useActionData() as { success: boolean; message: string };
 
   useEffect(() => {
     // Log to inspect event images structure
@@ -42,6 +44,11 @@ const FacultyEventApproval = () => {
   return (
     <div className='container mx-auto p-4 h-screen overflow-y-auto'>
       <h1 className='text-3xl font-bold mb-6'>Pending Event Approvals</h1>
+      {actionData && (
+        <div className={`p-4 rounded mb-4 ${actionData.success ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+          <strong>{actionData.message}</strong>
+        </div>
+      )}
       {Object.keys(groupedEvents).length === 0 ? (
         <p className='text-gray-500'>No pending approvals at the moment.</p>
       ) : (
@@ -54,70 +61,74 @@ const FacultyEventApproval = () => {
               {groupedEvents[date].map((event) => (
                 <li
                   key={event.id}
-                  className='mb-6 p-6 border rounded-lg shadow-lg'
+                  className='mb-6 p-6 border rounded-lg shadow-lg bg-white flex flex-col md:flex-row justify-between'
                 >
-                  <div className='flex flex-col md:flex-row'>
-                    <div className='md:w-2/3'>
-                      <h3 className='text-xl font-bold mb-2'>{event.title}</h3>
-                      <p className='mb-2'>
-                        <strong>Hosting club(s):</strong>{' '}
-                        {event.host.map((h) => h.name).join(', ')}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Description:</strong> {event.description}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Start Date:</strong>{' '}
-                        {new Date(event.startTime).toLocaleString()}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>End Date:</strong>{' '}
-                        {new Date(event.endTime).toLocaleString()}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Location:</strong> {event.location}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Event Cost:</strong>{' '}
-                        {event.cost ? `$${event.cost}` : 'Free'}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Event Tags:</strong> {event.tags.join(', ')}
-                      </p>
-                      <p className='mb-2'>
-                        <strong>Gender Restriction:</strong>{' '}
-                        {event.genderRestriction === 'M'
-                          ? 'Male'
-                          : event.genderRestriction === 'F'
-                          ? 'Female'
-                          : 'None'}
-                      </p>
-                    </div>
+                  <div className='md:w-2/3'>
+                    <h3 className='text-xl font-bold mb-2'>{event.title}</h3>
+                    <p className='mb-2'>
+                      <strong>Hosting club(s):</strong>{' '}
+                      {event.host.map((h) => h.name).join(', ')}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Description:</strong> {event.description}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Start Date:</strong>{' '}
+                      {new Date(event.startTime).toLocaleString()}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>End Date:</strong>{' '}
+                      {new Date(event.endTime).toLocaleString()}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Location:</strong> {event.location}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Event Cost:</strong>{' '}
+                      {event.cost ? `$${event.cost}` : 'Free'}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Event Tags:</strong> {event.tags.join(', ')}
+                    </p>
+                    <p className='mb-2'>
+                      <strong>Gender Restriction:</strong>{' '}
+                      {event.genderRestriction === 'M'
+                        ? 'Male'
+                        : event.genderRestriction === 'F'
+                        ? 'Female'
+                        : 'None'}
+                    </p>
                   </div>
-                  <div className='mt-4 flex justify-end'>
-                    <Form method='post' className='flex'>
+                  <div className='mt-4 md:mt-0 md:w-1/3 flex flex-col items-center'>
+                    <Form method='post' className='flex flex-col items-center w-full'>
                       <input type='hidden' name='event_id' value={event.id} />
                       <Button
-                        text='Details'
-                        className='mr-2 p-2 bg-blue-500 text-white rounded hover:bg-blue-600'
+                        className='mb-2 p-4 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center w-full md:w-auto text-lg'
                         type='submit'
                         name='action_type'
                         value='details'
-                      />
+                      >
+                        <CgDetailsMore className='mr-2' />
+                        Details
+                      </Button>
                       <Button
-                        text='Approve'
-                        className='mr-2 p-2 bg-green-500 text-white rounded hover:bg-green-600'
+                        className='mb-2 p-4 bg-green-500 text-white rounded hover:bg-green-600 flex items-center w-full md:w-auto text-lg'
                         type='submit'
                         name='action_type'
                         value='approve_event'
-                      />
+                      >
+                        <FaCheck className='mr-2' />
+                        Approve
+                      </Button>
                       <Button
-                        text='Decline'
-                        className='p-2 bg-red-500 text-white rounded hover:bg-red-600'
+                        className='p-4 bg-red-500 text-white rounded hover:bg-red-600 flex items-center w-full md:w-auto text-lg'
                         type='submit'
                         name='action_type'
                         value='decline_event'
-                      />
+                      >
+                        <FaTimes className='mr-2' />
+                        Decline
+                      </Button>
                     </Form>
                   </div>
                 </li>

@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router-dom';
+import { ActionFunction, redirect, json } from 'react-router-dom';
 
 export const facultyEventApprovalAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
@@ -15,11 +15,12 @@ export const facultyEventApprovalAction: ActionFunction = async ({ request }) =>
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ event_id: eventId })
-});
+  });
 
   if (!response.ok) {
-    throw new Error(`Failed to ${actionType} event`);
+    const result = await response.json();
+    return json({ success: false, message: `Failed to ${actionType} event: ${result.error}` }, { status: response.status });
   }
 
-  return response.json();
+  return json({ success: true, message: `Event ${actionType}d successfully` });
 };

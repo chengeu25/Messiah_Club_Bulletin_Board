@@ -156,8 +156,9 @@ const Event = () => {
       </Card>
 
       {/* Approve/Decline Buttons for Faculty */}
+      <h2 className='text-2xl font-bold text-left w-full'>Event Approval</h2>
       {user?.isFaculty && !event?.isApproved && (
-        <div className='flex gap-2 mt-4'>
+        <Card color='gray-300' padding={4} className='w-full flex gap-2 mt-4'>
           <Button
             text='Approve Event'
             className='bg-green-500 text-white rounded hover:bg-green-600'
@@ -168,7 +169,7 @@ const Event = () => {
             className='bg-red-500 text-white rounded hover:bg-red-600'
             onClick={() => handleApproval('decline')}
           />
-        </div>
+        </Card>
       )}
 
       {/* Event metadata section */}
