@@ -124,6 +124,11 @@ const ClubEventForm = () => {
       formData.append('eventPhotos', photo);
     });
 
+    // Log form data for debugging
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
     // Submit the form data
     submit(formData, { method: 'post', encType: 'multipart/form-data' });
   };

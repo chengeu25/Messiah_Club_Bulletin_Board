@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
 import { RiAccountCircleLine } from 'react-icons/ri';
-import { FaDollarSign } from 'react-icons/fa6';
+import { FaDollarSign, FaCheck, FaTimes } from 'react-icons/fa';
 import {
   Form,
   Link,
@@ -67,6 +67,7 @@ const Event = () => {
     );
   }
 
+  // Function to handle event approval or decline
   const handleApproval = async (action: string) => {
     if (!confirm(`Are you sure you want to ${action} this event?`)) {
       return;
@@ -85,11 +86,14 @@ const Event = () => {
       const result = await response.json();
       if (response.ok) {
         setMessage(`Event ${action}d successfully`);
+        if (action === 'decline') {
+          navigate('/dashboard/facultyEventApproval');
+        } else {
+          navigate(0); // Reload the page to reflect the changes
+        }
       } else {
         setMessage(`Failed to ${action} event: ${result.error}`);
       }
-
-      navigate(0); // Reload the page to reflect the changes
     } catch (error) {
       console.error(`Error ${action}ing event:`, error);
       if (error instanceof Error) {
@@ -156,20 +160,28 @@ const Event = () => {
       </Card>
 
       {/* Approve/Decline Buttons for Faculty */}
-      <h2 className='text-2xl font-bold text-left w-full'>Event Approval</h2>
       {user?.isFaculty && !event?.isApproved && (
-        <Card color='gray-300' padding={4} className='w-full flex gap-2 mt-4'>
-          <Button
-            text='Approve Event'
-            className='bg-green-500 text-white rounded hover:bg-green-600'
-            onClick={() => handleApproval('approve')}
-          />
-          <Button
-            text='Decline Event'
-            className='bg-red-500 text-white rounded hover:bg-red-600'
-            onClick={() => handleApproval('decline')}
-          />
-        </Card>
+        <>
+          <h2 className='text-2xl font-bold text-left w-full'>Event Approval</h2>
+          <Card color='gray-300' padding={4} className='w-full flex gap-2 mt-4 justify-center'>
+            <Button
+              text=''
+              className='bg-green-500 text-white rounded hover:bg-green-600 flex items-center px-4 py-2'
+              onClick={() => handleApproval('approve')}
+            >
+              <FaCheck className='mr-2' />
+              Approve
+            </Button>
+            <Button
+              text=''
+              className='bg-red-500 text-white rounded hover:bg-red-600 flex items-center px-4 py-2'
+              onClick={() => handleApproval('decline')}
+            >
+              <FaTimes className='mr-2' />
+              Decline
+            </Button>
+          </Card>
+        </>
       )}
 
       {/* Event metadata section */}

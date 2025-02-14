@@ -1488,3 +1488,4 @@ def create_event():
     except Exception as e:
         print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
+    

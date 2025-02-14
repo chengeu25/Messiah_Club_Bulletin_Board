@@ -22,5 +22,5 @@ export const facultyEventApprovalAction: ActionFunction = async ({ request }) =>
     return json({ success: false, message: `Failed to ${actionType} event: ${result.error}` }, { status: response.status });
   }
 
-  return json({ success: true, message: `Event ${actionType}d successfully` });
+  return json({ success: true, message: `${actionType} successful` });
 };
