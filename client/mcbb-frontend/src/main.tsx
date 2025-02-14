@@ -91,6 +91,7 @@ import imageAction from './routes/dashboard/images/Image.action.tsx';
 import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
 import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
 import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
+import { DynamicLogo } from './components/ui/DynamicLogo.component.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -213,12 +214,23 @@ const router = createBrowserRouter(
           element={<Event />}
           loader={eventLoader}
           action={eventAction}
+          errorElement={
+            <div className='w-full h-full flex justify-center items-center'>
+              <p className='text-center flex items-center justify-center flex-col'>
+                <div className='w-[200px] h-[80px] invert'>
+                  <DynamicLogo />
+                </div>
+                Event not found or access not permitted
+              </p>
+            </div>
+          }
         >
           <Route
             path=':id'
             element={<Event />}
             loader={eventLoader}
             action={eventAction}
+            errorElement={<div>Event not found</div>}
           />
           <Route
             path=':id/images/:imageId'
