@@ -24,7 +24,10 @@ const FacultyEventApproval = () => {
 
   useEffect(() => {
     // Log to inspect event images structure
-    console.log("Event Images:", events.map(event => event.image));
+    console.log(
+      'Event Images:',
+      events.map((event) => event.image)
+    );
   }, [events]);
 
   const groupedEvents = useMemo(() => {
@@ -42,10 +45,16 @@ const FacultyEventApproval = () => {
   }, [events]);
 
   return (
-    <div className='container mx-auto p-4 h-screen overflow-y-auto'>
+    <div className='container mx-auto p-4 h-full overflow-y-auto'>
       <h1 className='text-3xl font-bold mb-6'>Pending Event Approvals</h1>
       {actionData && (
-        <div className={`p-4 rounded mb-4 ${actionData.success ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+        <div
+          className={`p-4 rounded mb-4 ${
+            actionData.success
+              ? 'bg-green-200 text-green-800'
+              : 'bg-red-200 text-red-800'
+          }`}
+        >
           <strong>{actionData.message}</strong>
         </div>
       )}
@@ -100,7 +109,10 @@ const FacultyEventApproval = () => {
                     </p>
                   </div>
                   <div className='mt-8 md:mt-8 md:w-1/3 flex flex-col items-center'>
-                    <Form method='post' className='flex flex-col items-center w-full'>
+                    <Form
+                      method='post'
+                      className='flex flex-col items-center w-full'
+                    >
                       <input type='hidden' name='event_id' value={event.id} />
                       <Button
                         className='mb-2 p-4 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center w-full md:w-auto text-lg'
