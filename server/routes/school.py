@@ -20,7 +20,7 @@ def get_school():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT school_name, school_logo, school_color FROM school WHERE school_id = %s"
+        query = "SELECT school_name, school_logo, school_color FROM school WHERE school_id = %s AND IS_APPROVED = 1"
         cursor.execute(query, (school_id,))
         school = cursor.fetchone()
         cursor.close()
@@ -52,7 +52,7 @@ def get_all_schools():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT school_id, school_name, school_color FROM school"
+        query = "SELECT school_id, school_name, school_color FROM school WHERE IS_APPROVED = 1"
         cursor.execute(query)
         schools = cursor.fetchall()
         cursor.close()
@@ -113,3 +113,46 @@ def update_school():
     except Exception as e:
         print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+    
+
+@school_bp.route("/add-school", methods=["POST"])
+def add_school():
+    """
+    Add a new school to the database.
+    """
+    try:
+        data = request.get_json()
+        name = data.get("name")
+        color = data.get("color")  # Hex code unchanged
+        email_domain = data.get("emailDomain")
+        logo = data.get("logo")  # Base64 string
+
+        # Validate required fields
+        if not name or not color or not email_domain:
+            return jsonify({"error": "All fields except logo are required."}), 400
+
+        # Decode Base64 logo if provided
+        logo_binary = None
+        if logo:
+            try:
+                logo_binary = base64.b64decode(logo.split(',')[1] if ',' in logo else logo)
+            except Exception as e:
+                print("Error decoding image:", e)
+                return jsonify({"error": "Invalid image format."}), 400
+
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cursor = mysql.connection.cursor()
+        query = """
+            INSERT INTO school (school_name, school_color, email_domain, school_logo)
+            VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(query, (name, color, email_domain, logo_binary))
+        mysql.connection.commit()
+        cursor.close()
+
+        return jsonify({"message": "School added successfully!"}), 201
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"error": "Database error: " + str(e)}), 500
