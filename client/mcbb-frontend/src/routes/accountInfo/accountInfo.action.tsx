@@ -34,11 +34,12 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
 
     if (updateRequest.ok) {
       return redirect(
-        '/accountInfo?message=' + 'Account%20info%20updated%20successfully'
+        '/dashboard/accountInfo?message=' +
+          'Account%20info%20updated%20successfully'
       );
     } else {
       const json = await updateRequest.json();
-      return redirect('/accountInfo?error=' + json.error);
+      return redirect('/dashboard/accountInfo?error=' + json.error);
     }
   } else {
     return redirect('/login');

@@ -53,7 +53,9 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
    * State to track the currently selected dropdown option
    * @type {OptionType | null}
    */
-  const [selectedOption, setSelectedOption] = useState<OptionType | null>(options[0]);
+  const [selectedOption, setSelectedOption] = useState<OptionType | null>(
+    options[0]
+  );
 
   /**
    * State to manage dropdown menu positioning
@@ -66,7 +68,7 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     right: string | number;
   }>({
     left: 'auto',
-    right: 0,
+    right: 0
   });
 
   /**
@@ -79,7 +81,7 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     // Check if the selected option is the user's name (desktop) or 'Me' (mobile)
     if (selected?.value === user?.name || selected?.value === 'Me') {
       // Navigate to the Edit User Info page
-      navigate('/accountInfo');  // You may adjust the route as needed
+      navigate('/dashboard/accountInfo'); // You may adjust the route as needed
     } else if (selected?.value === 'Log Out') {
       navigate('/logout');
     } else if (selected?.value === 'Edit Interests') {
@@ -131,28 +133,28 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
           label:
             window.innerWidth > 600
               ? (user as User)?.name && (user as User)?.name
-              : 'Me',  // For mobile, display 'Me'
+              : 'Me' // For mobile, display 'Me'
         },
         {
           value: 'Dashboard',
-          label: 'Dashboard',
+          label: 'Dashboard'
         },
         {
           value: 'Email Preferences',
-          label: 'Email Preferences',
+          label: 'Email Preferences'
         },
         {
           value: 'Edit Interests',
-          label: 'Edit Interests',
+          label: 'Edit Interests'
         },
         {
           value: 'Change Password',
-          label: 'Change Password',
+          label: 'Change Password'
         },
         {
           value: 'Log Out',
-          label: 'Log Out',
-        },
+          label: 'Log Out'
+        }
       ]);
     }
   };
@@ -179,12 +181,12 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
   }, [options]);
 
   return (
-    <div className="flex items-center justify-center">
+    <div className='flex items-center justify-center'>
       <Select<OptionType, false, GroupBase<OptionType>>
         options={options}
         onChange={handleUserDropdownChanged}
         value={selectedOption}
-        name="user"
+        name='user'
         styles={{
           ...selectStyles(location.pathname !== '/'),
           menu: (base) => ({
@@ -193,11 +195,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
               ? (selectStyles(location.pathname !== '/').menu as () => object)
               : () => ({}))(),
             ...menuPosition,
-            minWidth: '200px',
-          }),
+            minWidth: '200px'
+          })
         }}
         menuPortalTarget={document.body}
-        menuPosition="absolute"
+        menuPosition='absolute'
         onMenuOpen={handleMenuOpen}
       />
     </div>
@@ -205,4 +207,3 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
 };
 
 export default UserDropdown;
-
