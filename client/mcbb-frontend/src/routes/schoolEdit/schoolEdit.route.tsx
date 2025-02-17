@@ -34,7 +34,8 @@ const SchoolEdit = () => {
     // Ensure color is always a valid HEX format
     if (name === 'color') {
       const hexValue = value.replace(/^#/, ''); // Remove '#' if present
-      if (/^[0-9A-Fa-f]{6}$/.test(hexValue)) { // Ensure exactly 6 characters
+      if (/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
+        // Ensure exactly 6 characters
         console.log('Color Value:', hexValue); // Log the color value
         setFormState((prevState) => ({ ...prevState, color: hexValue }));
       }
@@ -63,20 +64,25 @@ const SchoolEdit = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const confirmed = window.confirm('Are you sure you want to save the changes?');
+    const confirmed = window.confirm(
+      'Are you sure you want to save the changes?'
+    );
     if (!confirmed) {
       return;
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(formState)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/school/update`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(formState)
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to update school data');
@@ -85,7 +91,7 @@ const SchoolEdit = () => {
       setSuccessMessage('Changes saved successfully!');
       setTimeout(() => {
         setSuccessMessage(null);
-        navigate('/dashboard/schoolEdit');
+        navigate('/dashboard/faculty/schoolEdit');
       }, 2000);
     } catch (error) {
       console.error('Error updating school data:', error);
@@ -99,20 +105,24 @@ const SchoolEdit = () => {
 
       {/* Display error message if it exists */}
       {errorMessage && (
-        <div className="bg-red-200 text-red-800 p-4 rounded mb-4">
+        <div className='bg-red-200 text-red-800 p-4 rounded mb-4'>
           <strong>Error:</strong> {errorMessage}
         </div>
       )}
 
       {/* Display success message if it exists */}
       {successMessage && (
-        <div className="bg-green-200 text-green-800 p-4 rounded mb-4">
+        <div className='bg-green-200 text-green-800 p-4 rounded mb-4'>
           <strong>Success:</strong> {successMessage}
         </div>
       )}
 
-      <Form method="post" className='flex flex-col gap-4' onSubmit={handleSubmit}>
-        <input type="hidden" name="actionType" value="submit" />
+      <Form
+        method='post'
+        className='flex flex-col gap-4'
+        onSubmit={handleSubmit}
+      >
+        <input type='hidden' name='actionType' value='submit' />
         <Input
           label='School Name'
           name='name'
@@ -147,7 +157,11 @@ const SchoolEdit = () => {
             className='w-32 h-32 object-cover mt-4'
           />
         )}
-        <Button text='Save Changes' type='submit' className='bg-blue-500 text-white rounded hover:bg-blue-600' />
+        <Button
+          text='Save Changes'
+          type='submit'
+          className='bg-blue-500 text-white rounded hover:bg-blue-600'
+        />
       </Form>
     </div>
   );

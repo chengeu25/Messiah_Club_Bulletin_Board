@@ -24,23 +24,29 @@ export const schoolEditaction: ActionFunction = async ({ request }) => {
 
   if (actionType === 'submit') {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school/update`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify(schoolData)
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/school/update`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify(schoolData)
+        }
+      );
 
       if (!response.ok) {
         throw new Error('Failed to update school data');
       }
 
-      return redirect('/dashboard/schoolEdit');
+      return redirect('/dashboard/faculty/schoolEdit');
     } catch (error) {
       console.error('Error updating school data:', error);
-      return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+      return json(
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        { status: 500 }
+      );
     }
   }
 

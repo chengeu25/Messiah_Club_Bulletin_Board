@@ -171,18 +171,6 @@ const router = createBrowserRouter(
           action={cohostApprovalAction}
         />
         <Route
-          path='assignFaculty'
-          element={<AssignFaculty />}
-          loader={assignFacultyLoader}
-          action={assignFacultyAction}
-        />
-        <Route
-          path='adminUserForm'
-          element={<AdminUserForm />}
-          loader={adminUserFormLoader}
-          action={adminUserFormAction}
-        />
-        <Route
           path='calendar'
           element={<Calendar />}
           loader={calendarLoader}
@@ -193,18 +181,6 @@ const router = createBrowserRouter(
           element={<Clubs />}
           loader={clubsLoader}
           action={clubsAction}
-        />
-        <Route
-          path='facultyEventApproval'
-          element={<FacultyEventApproval />}
-          loader={facultyEventApprovalloader}
-          action={facultyEventApprovalAction}
-        />
-        <Route
-          path='schoolEdit'
-          element={<SchoolEdit />}
-          loader={schoolEditloader}
-          action={schoolEditaction}
         />
         <Route
           path='addeditinterestpage'
@@ -278,6 +254,33 @@ const router = createBrowserRouter(
           />
         </Route>
 
+        <Route path='faculty'>
+          <Route
+            path='facultyEventApproval'
+            element={<FacultyEventApproval />}
+            loader={facultyEventApprovalloader}
+            action={facultyEventApprovalAction}
+          />
+          <Route
+            path='schoolEdit'
+            element={<SchoolEdit />}
+            loader={schoolEditloader}
+            action={schoolEditaction}
+          />
+          <Route
+            path='assignFaculty'
+            element={<AssignFaculty />}
+            loader={assignFacultyLoader}
+            action={assignFacultyAction}
+          />
+          <Route
+            path='adminUserForm'
+            element={<AdminUserForm />}
+            loader={adminUserFormLoader}
+            action={adminUserFormAction}
+          />
+        </Route>
+
         <Route
           path='emailPreferences'
           loader={emailPreferencesLoader}
@@ -304,9 +307,11 @@ const router = createBrowserRouter(
       />
       <Route path='aboutus' element={<AboutUs />} />
       <Route path='contactus' element={<ContactUs />} />{' '}
-
-      <Route path="/addSchool" element={<AddSchoolPage />} action={addSchoolsAction} />
-
+      <Route
+        path='/addSchool'
+        element={<AddSchoolPage />}
+        action={addSchoolsAction}
+      />
     </Route>
   )
 );

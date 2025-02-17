@@ -91,7 +91,7 @@ const Event = () => {
       if (response.ok) {
         setMessage(`Event ${action}d successfully`);
         if (action === 'decline') {
-          navigate('/dashboard/facultyEventApproval');
+          navigate('/dashboard/faculty/facultyEventApproval');
         } else {
           navigate(0); // Reload the page to reflect the changes
         }

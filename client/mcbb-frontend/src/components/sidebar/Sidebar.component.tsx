@@ -95,18 +95,22 @@ const Sidebar = () => {
         {
           text: 'Faculty',
           icon: <FaChalkboardTeacher />,
-          route: '/dashboard/assignFaculty'
+          route: '/dashboard/faculty/assignFaculty'
         },
-        { text: 'Users', icon: <FaUser />, route: '/dashboard/adminUserForm' },
+        {
+          text: 'Users',
+          icon: <FaUser />,
+          route: '/dashboard/faculty/adminUserForm'
+        },
         {
           text: 'Approvals',
           icon: <FaCheckCircle />,
-          route: '/dashboard/facultyEventApproval'
-        }, 
+          route: '/dashboard/faculty/facultyEventApproval'
+        },
         {
           text: 'School',
           icon: <FaBuilding />,
-          route: '/dashboard/schoolEdit'
+          route: '/dashboard/faculty/schoolEdit'
         }
       ]);
     }
