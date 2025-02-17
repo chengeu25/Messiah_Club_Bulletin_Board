@@ -990,7 +990,7 @@ def send_approval_email(
     - Sends the email using the send_email helper function
     """
     token = generate_approval_token(club_id, event_id)
-    approval_link = f"http://localhost:5173/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}&token={token}"
+    approval_link = f"{Config.API_URL_ROOT}/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}&token={token}"
 
     # Define the local timezone
     local_tz = pytz.timezone("US/Eastern")

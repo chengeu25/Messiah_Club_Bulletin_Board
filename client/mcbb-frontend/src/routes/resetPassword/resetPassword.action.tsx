@@ -31,7 +31,7 @@ const resetPasswordAction: ActionFunction = async ({ request }) => {
   const schoolId = formData.get('schoolId');
 
   // Send reset request to backend
-  await fetch('http://localhost:5173/api/resetPassword', {
+  await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/resetPassword`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

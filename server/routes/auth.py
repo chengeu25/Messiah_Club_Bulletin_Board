@@ -748,7 +748,7 @@ def forgot_password():
 
     # Create reset link
     reset_link = (
-        f"http://localhost:5173/ForgotPasswordToken?token={token}&schoolId={school_id}"
+        f"{Config.API_URL_ROOT}/ForgotPasswordToken?token={token}&schoolId={school_id}"
     )
 
     # Send email
@@ -868,7 +868,8 @@ def forgot_password_reset():
     session.pop("user_id", None)
     return jsonify({"message": "Password reset successful"}), 200
 
-@auth_bp.route('/account-info', methods=['POST'])
+
+@auth_bp.route("/account-info", methods=["POST"])
 def update_account_info():
     try:
         # Parse the input data
@@ -909,10 +910,7 @@ def update_account_info():
         cur = mysql.connection.cursor()
 
         # Check if the user exists by EMAIL
-        cur.execute(
-            "SELECT EMAIL FROM users WHERE EMAIL = %s",
-            (email,)
-        )
+        cur.execute("SELECT EMAIL FROM users WHERE EMAIL = %s", (email,))
         user = cur.fetchone()
 
         if not user:
@@ -921,7 +919,7 @@ def update_account_info():
         # Update the user's name and gender in the database
         cur.execute(
             "UPDATE users SET NAME = %s, gender = %s WHERE EMAIL = %s",
-            (new_name, gender, email)
+            (new_name, gender, email),
         )
         mysql.connection.commit()
 
@@ -929,16 +927,7 @@ def update_account_info():
 
     except Exception as e:
         print(f"Error occurred: {str(e)}")  # Debugging
-        return jsonify({"error": "An error occurred while updating your account info"}), 500
-
-
-
-
-
-
-
-
-
-
-
-
+        return (
+            jsonify({"error": "An error occurred while updating your account info"}),
+            500,
+        )

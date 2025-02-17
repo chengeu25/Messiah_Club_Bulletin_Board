@@ -25,6 +25,8 @@ class Config:
         SENDER_EMAIL (str): Email address used for sending system emails.
         SENDER_PASSWORD (str): Password for the sender email account.
         JWT_SECRET_KEY (str): Secret key for signing and verifying JWTs.
+        JWT_EXPIRATION (int): Expiration time for JWTs in seconds
+        API_URL_ROOT (str): Root URL for the API.
     """
 
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
@@ -50,3 +52,6 @@ class Config:
     JWT_EXPIRATION = int(
         os.getenv("JWT_EXPIRATION", 3600)
     )  # Default to 3600 if not set
+
+    # API configuration
+    API_URL_ROOT = os.getenv("API_URL_ROOT")
