@@ -92,6 +92,8 @@ import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
 import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
 import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
 import { DynamicLogo } from './components/ui/DynamicLogo.component.tsx';
+import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
+import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -302,6 +304,9 @@ const router = createBrowserRouter(
       />
       <Route path='aboutus' element={<AboutUs />} />
       <Route path='contactus' element={<ContactUs />} />{' '}
+
+      <Route path="/addSchool" element={<AddSchoolPage />} action={addSchoolsAction} />
+
     </Route>
   )
 );

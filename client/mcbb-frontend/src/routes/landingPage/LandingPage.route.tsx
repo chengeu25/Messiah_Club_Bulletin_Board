@@ -66,7 +66,16 @@ const LandingPage = () => {
             }}
             filled={true}
           />
+
+          {/* New "Add School" button */}
+          <Button
+            text='Add School'
+            className='p-4 mt-4'
+            onClick={() => navigate('/addSchool')}
+            filled={true}
+          />
         </div>
+
         {/* Features grid with image and text cards */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {/* Feature cards showcasing application capabilities */}
@@ -169,3 +178,4 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
+
