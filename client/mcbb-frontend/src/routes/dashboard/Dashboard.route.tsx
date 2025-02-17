@@ -1,5 +1,10 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from '../../components/sidebar/Sidebar.component';
+import { FaCalendar, FaUsers, FaChalkboardTeacher } from 'react-icons/fa';
+import { RiCompassDiscoverFill } from 'react-icons/ri';
+import { useEffect, useMemo, useState } from 'react';
+import checkUser from '../../helper/checkUser';
+import { UserType } from '../../types/databaseTypes';
 
 /**
  * Dashboard layout component that provides a responsive sidebar and content area.
@@ -13,11 +18,43 @@ import Sidebar from '../../components/sidebar/Sidebar.component';
  * @returns {React.ReactElement} Responsive dashboard layout with sidebar and content
  */
 const Dashboard = () => {
+  const [isFaculty, setIsFaculty] = useState(false);
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user = await checkUser();
+      if (!user) return;
+      if ((user as UserType)?.isFaculty) {
+        setIsFaculty(true);
+      }
+    };
+    fetchUserData();
+  });
+  const buttonList = useMemo(
+    () => [
+      {
+        text: 'Discover',
+        icon: <RiCompassDiscoverFill />,
+        route: '/dashboard/home'
+      },
+      { text: 'Calendar', icon: <FaCalendar />, route: '/dashboard/calendar' },
+      { text: 'Clubs', icon: <FaUsers />, route: '/dashboard/clubs' },
+      ...(isFaculty
+        ? [
+            {
+              text: 'Faculty',
+              icon: <FaChalkboardTeacher />,
+              route: '/dashboard/faculty'
+            }
+          ]
+        : [])
+    ],
+    [isFaculty]
+  );
   return (
     <div className='w-full h-full flex flex-col sm:flex-row overflow-hidden'>
       {/* Desktop Sidebar */}
       <aside className='hidden sm:flex flex-col h-full border-r-1 border-gray-100 shadow-md gap-2 p-2'>
-        <Sidebar />
+        <Sidebar buttonList={buttonList} />
       </aside>
 
       {/* Content flow */}
@@ -27,7 +64,7 @@ const Dashboard = () => {
 
       {/* Mobile Sidebar */}
       <div className='border-t-2 border-gray-100 shadow-md flex sm:hidden w-full gap-2 p-2 justify-center sticky bottom-0 bg-white'>
-        <Sidebar />
+        <Sidebar buttonList={buttonList} />
       </div>
     </div>
   );

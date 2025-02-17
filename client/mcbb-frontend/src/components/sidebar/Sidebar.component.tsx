@@ -1,16 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import SidebarButton from './SidebarButton.component';
-import {
-  FaCalendar,
-  FaUsers,
-  FaUser,
-  FaChalkboardTeacher,
-  FaCheckCircle,
-  FaBuilding
-} from 'react-icons/fa';
-import { RiCompassDiscoverFill } from 'react-icons/ri';
-import checkUser from '../../helper/checkUser';
-import { UserType as User } from '../../types/databaseTypes';
 
 /**
  * Represents the structure of a sidebar button
@@ -19,6 +8,7 @@ import { UserType as User } from '../../types/databaseTypes';
  * @property {string} text - The display text for the sidebar button
  * @property {React.ReactNode} icon - The icon component for the button
  * @property {string} route - The navigation route when the button is clicked
+ * @property {SidebarButtonConfig[]} buttonList - The list of buttons to display in the sidebar
  */
 interface SidebarButtonConfig {
   text: string;
@@ -43,79 +33,7 @@ interface SidebarButtonConfig {
  * - Integrates with checkUser helper to determine user type
  * - Renders SidebarButton components with icons and routes
  */
-const Sidebar = () => {
-  /**
-   * State to manage the list of sidebar buttons
-   * @type {SidebarButtonConfig[]}
-   */
-  const [buttonList, setButtonList] = useState<SidebarButtonConfig[]>([
-    {
-      text: 'Discover',
-      icon: <RiCompassDiscoverFill />,
-      route: '/dashboard/home'
-    },
-    { text: 'Calendar', icon: <FaCalendar />, route: '/dashboard/calendar' },
-    { text: 'Clubs', icon: <FaUsers />, route: '/dashboard/clubs' }
-  ]);
-
-  /**
-   * State to track whether the current user is a faculty member
-   * @type {boolean}
-   */
-  const [isFaculty, setIsFaculty] = useState(false);
-
-  /**
-   * Fetch and check user data to determine faculty status
-   * @effect
-   * @async
-   */
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const user = await checkUser();
-        if ((user as User).isFaculty) {
-          setIsFaculty(true);
-        }
-      } catch (error) {
-        console.error('Error checking user:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  /**
-   * Add faculty-specific button when user is confirmed as faculty
-   * @effect
-   */
-  useEffect(() => {
-    if (isFaculty) {
-      setButtonList((prevList) => [
-        ...prevList,
-        {
-          text: 'Faculty',
-          icon: <FaChalkboardTeacher />,
-          route: '/dashboard/faculty/assignFaculty'
-        },
-        {
-          text: 'Users',
-          icon: <FaUser />,
-          route: '/dashboard/faculty/adminUserForm'
-        },
-        {
-          text: 'Approvals',
-          icon: <FaCheckCircle />,
-          route: '/dashboard/faculty/facultyEventApproval'
-        },
-        {
-          text: 'School',
-          icon: <FaBuilding />,
-          route: '/dashboard/faculty/schoolEdit'
-        }
-      ]);
-    }
-  }, [isFaculty]);
-
+const Sidebar = ({ buttonList }: { buttonList: SidebarButtonConfig[] }) => {
   return (
     <>
       {buttonList.map((button) => (

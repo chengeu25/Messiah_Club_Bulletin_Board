@@ -94,6 +94,8 @@ import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
 import { DynamicLogo } from './components/ui/DynamicLogo.component.tsx';
 import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
 import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
+import Faculty from './routes/faculty/Faculty.route.tsx';
+import facultyLoader from './routes/faculty/Faculty.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -254,7 +256,7 @@ const router = createBrowserRouter(
           />
         </Route>
 
-        <Route path='faculty'>
+        <Route path='faculty' element={<Faculty />} loader={facultyLoader}>
           <Route
             path='facultyEventApproval'
             element={<FacultyEventApproval />}
