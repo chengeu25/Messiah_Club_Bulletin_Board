@@ -15,9 +15,6 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
   const name = formData.get('name');
   const gender = formData.get('gender');
 
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-
   const emailRequest = await checkUser();
   if (emailRequest) {
     const updateRequest = await fetch(
