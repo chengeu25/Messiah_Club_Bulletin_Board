@@ -13,7 +13,10 @@ const facultyEventApprovalloader: LoaderFunction = async ({ request }) => {
 
   const url = new URL(request.url);
   const startDate = url.searchParams.get("start_date") || new Date().toISOString();
-  const endDate = url.searchParams.get("end_date") || new Date(new Date().setDate(new Date().getDate() + 7)).toISOString();
+  let endDate = url.searchParams.get("end_date") || new Date(new Date().setDate(new Date().getDate() + 7)).toISOString();
+  const endDateObj = new Date(endDate);
+  endDateObj.setMonth(endDateObj.getMonth() + 6);
+  endDate = endDateObj.toISOString();
   const schoolId = url.searchParams.get("school_id") || '';
   const userId = url.searchParams.get("user_id") || '';
 
