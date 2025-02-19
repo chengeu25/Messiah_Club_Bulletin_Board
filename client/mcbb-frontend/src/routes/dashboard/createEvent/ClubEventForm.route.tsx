@@ -82,12 +82,16 @@ const ClubEventForm = () => {
     event.preventDefault();
     const errors: string[] = [];
 
+    const now = new Date();
+
     // Validation checks
     if (!eventName.trim()) errors.push('Event name is required.');
     if (!description.trim()) errors.push('Event description is required.');
     if (!startDate || !endDate) errors.push('Event dates are required.');
     if (startDate && endDate && startDate > endDate)
       errors.push('Start date must be before end date.');
+    if (startDate && startDate < now)
+      errors.push('Start date must be in the future.');
     if (!location.trim()) errors.push('Event location is required.');
     if (eventCost && isNaN(Number(eventCost)))
       errors.push('Event cost must be a valid number.');
