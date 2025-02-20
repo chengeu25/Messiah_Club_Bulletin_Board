@@ -226,7 +226,7 @@ const Event = () => {
           </p>
           <p className='flex flex-row gap-2 items-center'>
             <FaDollarSign size={24} /> <strong>Cost:</strong>{' '}
-            {event?.cost ?? 'FREE'}
+            {event?.cost ? `$${event.cost}` : 'FREE'}
           </p>
           <p className='flex flex-row gap-2 items-center'>
             <ImManWoman size={24} /> <strong>Gender Restriction:</strong>{' '}

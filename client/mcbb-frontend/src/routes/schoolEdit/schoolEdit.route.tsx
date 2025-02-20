@@ -31,20 +31,10 @@ const SchoolEdit = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
-    // Ensure color is always a valid HEX format
-    if (name === 'color') {
-      const hexValue = value.replace(/^#/, ''); // Remove '#' if present
-      if (/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
-        // Ensure exactly 6 characters
-        console.log('Color Value:', hexValue); // Log the color value
-        setFormState((prevState) => ({ ...prevState, color: hexValue }));
-      }
-    } else {
-      setFormState((prevState) => ({
-        ...prevState,
-        [name]: value
-      }));
-    }
+    setFormState((prevState) => ({
+      ...prevState,
+      [name]: value
+    }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,6 +53,13 @@ const SchoolEdit = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Validate color hex code
+    const hexValue = formState.color.replace(/^#/, ''); // Remove '#' if present
+    if (!/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
+      setErrorMessage('Invalid color hex code. Please enter a valid 6-character hex code.');
+      return;
+    }
 
     const confirmed = window.confirm(
       'Are you sure you want to save the changes?'
@@ -134,12 +131,23 @@ const SchoolEdit = () => {
         <label className='block text-sm font-medium text-gray-700'>
           School Color
         </label>
-        <input
-          type='color'
-          name='color'
-          value={`#${formState.color}`} // Ensure valid HEX format
-          onChange={handleChange}
-        />
+        <div className='flex flex-row gap-2 items-center'>
+          <input
+            type='color'
+            name='color'
+            value={`#${formState.color}`} // Ensure valid HEX format
+            onChange={handleChange}
+            className='w-16 h-10 p-0 border-none'
+          />
+          <input
+            type='text'
+            name='color'
+            value={formState.color} // Allow manual editing
+            onChange={handleChange}
+            className='block w-full text-sm text-gray-500 border border-gray-300 rounded-md p-2'
+            placeholder='#000000'
+          />
+        </div>
         <label className='block text-sm font-medium text-gray-700'>
           School Logo
         </label>
