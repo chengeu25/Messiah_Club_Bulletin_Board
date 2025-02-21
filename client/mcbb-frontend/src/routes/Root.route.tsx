@@ -9,7 +9,6 @@ import {
   Link,
   useLocation,
   useSearchParams,
-  useNavigation,
   useRevalidator
 } from 'react-router-dom';
 import Button from '../components/formElements/Button.component';
@@ -22,6 +21,8 @@ import SearchAndFilter from '../components/dashboard/SearchAndFilter.component';
 import setCSSVars from '../helper/setCSSVars';
 import { useSchool } from '../contexts/SchoolContext';
 import { DynamicLogo } from '../components/ui/DynamicLogo.component';
+import { useNotification } from '../contexts/NotificationContext';
+import Notifications from '../components/ui/Notifications';
 
 /**
  * Root component for the application's main layout and navigation.
@@ -58,9 +59,9 @@ const Root = () => {
   const revalidate = useRevalidator();
   const { currentSchool, setCurrentSchool } = useSchool();
   const navigate = useNavigate();
+  const { notifications, setNotifications } = useNotification();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
-  const navigation = useNavigation();
 
   // State management for search and filtering
   const selectedFilter = useMemo(() => prefs?.value, [prefs]);
@@ -136,14 +137,12 @@ const Root = () => {
     }
   }, [school, setCurrentSchool]);
 
-  useEffect(() => {
-    if (navigation.state === 'loading') {
-      // Optional: Add any additional logic when navigation is loading
-    }
-  }, [navigation.state]);
-
   return (
     <div className='w-screen h-[100dvh] flex flex-col relative bg-gray-100'>
+      <Notifications
+        notifications={notifications}
+        setNotifications={setNotifications}
+      />
       {/* Top Navigation Bar */}
       <nav
         className={`w-full h-20 sm:min-h-[10%] ${

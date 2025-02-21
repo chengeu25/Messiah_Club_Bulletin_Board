@@ -96,6 +96,7 @@ import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
 import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
 import Faculty from './routes/faculty/Faculty.route.tsx';
 import facultyLoader from './routes/faculty/Faculty.loader.tsx';
+import { NotificationProvider } from './contexts/NotificationContext.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -103,7 +104,9 @@ const router = createBrowserRouter(
       path='/'
       element={
         <SchoolProvider>
-          <Root />
+          <NotificationProvider>
+            <Root />
+          </NotificationProvider>
         </SchoolProvider>
       }
       loader={rootLoader}
