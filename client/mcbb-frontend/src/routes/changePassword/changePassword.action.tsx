@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json } from 'react-router';
 import checkUser from '../../helper/checkUser';
 
 /**
@@ -38,17 +38,32 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
       }
     );
 
-    // Go to login if password has been changed and change error message to say password has been reset
     if (loginRequest.ok) {
-      return redirect(
-        `/login/${schoolId}?message=Change%20password%20successful`
+      return json(
+        {
+          redirectTo: `/login/${schoolId}`,
+          message: 'Change password successful'
+        },
+        { status: 200 }
       );
     } else {
-      const json = await loginRequest.json();
-      return redirect('/changePassword?error=' + json.error);
+      const jsonResponse = await loginRequest.json();
+      return json(
+        {
+          redirectTo: '/changePassword',
+          error: jsonResponse.error
+        },
+        { status: 400 }
+      );
     }
   } else {
-    return redirect(`/login/${schoolId}?error=Not%20logged%20in`);
+    return json(
+      {
+        redirectTo: `/login/${schoolId}`,
+        error: 'Not logged in'
+      },
+      { status: 401 }
+    );
   }
 };
 

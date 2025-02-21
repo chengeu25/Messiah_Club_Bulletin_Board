@@ -11,6 +11,8 @@ import {
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
+import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * Calendar dashboard component for displaying and navigating events.
@@ -32,6 +34,8 @@ const Calendar = () => {
     events: EventType[];
     user: UserType;
   };
+
+  const { loading } = useLoading();
 
   /**
    * Calculates the starting date and number of days to display.
@@ -196,7 +200,9 @@ const Calendar = () => {
     };
   }, []);
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div
       id='calendar-container'
       className='relative w-full flex flex-col h-full'

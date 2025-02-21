@@ -59,7 +59,7 @@ const Root = () => {
   const revalidate = useRevalidator();
   const { currentSchool, setCurrentSchool } = useSchool();
   const navigate = useNavigate();
-  const { notifications, setNotifications } = useNotification();
+  const { notifications, deleteNotification } = useNotification();
   const location = useLocation();
   const [params, setParams] = useSearchParams();
 
@@ -141,7 +141,7 @@ const Root = () => {
     <div className='w-screen h-[100dvh] flex flex-col relative bg-gray-100'>
       <Notifications
         notifications={notifications}
-        setNotifications={setNotifications}
+        deleteNotification={deleteNotification}
       />
       {/* Top Navigation Bar */}
       <nav

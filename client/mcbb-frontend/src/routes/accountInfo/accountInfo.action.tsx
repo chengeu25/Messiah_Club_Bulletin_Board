@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 import checkUser from '../../helper/checkUser';
 
 /**
@@ -30,10 +30,7 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
     );
 
     if (updateRequest.ok) {
-      return redirect(
-        '/dashboard/accountInfo?message=' +
-          'Account%20info%20updated%20successfully'
-      );
+      return json({ message: 'Account info updated successfully!' });
     } else {
       const json = await updateRequest.json();
       return redirect('/dashboard/accountInfo?error=' + json.error);

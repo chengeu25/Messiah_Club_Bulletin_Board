@@ -4,6 +4,7 @@ import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
+import useLoading from '../../../hooks/useLoading';
 
 /**
  * Represents a faculty member's data structure.
@@ -37,6 +38,7 @@ const AssignFaculty = () => {
   const [canDelete, setCanDelete] = useState<boolean>(false);
   const [tableData, setTableData] = useState<FacultyData[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
+  const { loading, setLoading } = useLoading();
 
   /**
    * Fetches faculty data from the server on component mount.
@@ -51,6 +53,7 @@ const AssignFaculty = () => {
     setMessage(null);
     // Fetch data from the API
     const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `${
@@ -72,6 +75,7 @@ const AssignFaculty = () => {
         setError('Error fetching data from the server');
         console.error('Error fetching data:', error);
       }
+      setLoading(false);
     };
 
     fetchData();

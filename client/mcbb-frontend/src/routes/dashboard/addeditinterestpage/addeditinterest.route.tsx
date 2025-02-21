@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
+import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 /**
  * AddedInterest component for managing user interests.
@@ -18,11 +21,9 @@ const AddedInterest = () => {
   /** State to track the current interest name */
   const [interestName, setInterestName] = useState('');
 
-  /** State to manage error messages */
-  const [error, setError] = useState<string[]>([]);
+  const { loading, setLoading } = useLoading();
 
-  /** State to manage success messages */
-  const [successMessage, setSuccessMessage] = useState('');
+  const { addNotification } = useNotification();
 
   /**
    * Handles adding a new interest/tag.
@@ -41,11 +42,11 @@ const AddedInterest = () => {
     event: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     event.preventDefault();
-    setError([]);
-    setSuccessMessage('');
+    setLoading(true);
 
     if (!interestName.trim()) {
-      setError(['Interest name is required.']);
+      setLoading(false);
+      addNotification('Interest name is required.', 'error');
       return;
     }
 
@@ -67,13 +68,22 @@ const AddedInterest = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        setError([result.error || 'An unexpected error occurred.']);
+        setLoading(false);
+        addNotification(
+          result.error || 'An unexpected error occurred.',
+          'error'
+        );
       } else {
-        setSuccessMessage(result.message);
+        setLoading(false);
+        addNotification(result.message, 'success');
         setInterestName('');
       }
     } catch (err) {
-      setError(['Failed to connect to the server. Please try again later.']);
+      setLoading(false);
+      addNotification(
+        'Failed to connect to the server. Please try again later.',
+        'error'
+      );
       console.error('Error:', err);
     }
   };
@@ -91,11 +101,11 @@ const AddedInterest = () => {
    * @throws {Error} Handles network and server errors
    */
   const handleRemove = async (): Promise<void> => {
-    setError([]);
-    setSuccessMessage('');
+    setLoading(true);
 
     if (!interestName.trim()) {
-      setError(['Interest name is required.']);
+      setLoading(false);
+      addNotification('Interest name is required.', 'error');
       return;
     }
 
@@ -117,28 +127,31 @@ const AddedInterest = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        setError([result.error || 'An unexpected error occurred.']);
+        setLoading(false);
+        addNotification(
+          result.error || 'An unexpected error occurred.',
+          'error'
+        );
       } else {
-        setSuccessMessage(result.message);
+        setLoading(false);
+        addNotification(result.message, 'success');
         setInterestName('');
       }
     } catch (err) {
-      setError(['Failed to connect to the server. Please try again later.']);
+      setLoading(false);
+      addNotification(
+        'Failed to connect to the server. Please try again later.',
+        'error'
+      );
       console.error('Error:', err);
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-2xl font-bold text-center'>Add Interest</h1>
-      {error.length > 0 && (
-        <div className='text-red-500'>
-          {error.map((err, idx) => (
-            <div key={idx}>{err}</div>
-          ))}
-        </div>
-      )}
-      {successMessage && <div className='text-green-500'>{successMessage}</div>}
       <Input
         label='Interest Name:'
         name='interestName'
