@@ -86,7 +86,7 @@ const Home = () => {
               <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
             ))
         ) : (
-          <div className='text-2xl font-bold'>
+          <div className='text-2xl font-bold text-center'>
             No events this week that match the specified filters.
           </div>
         )}
