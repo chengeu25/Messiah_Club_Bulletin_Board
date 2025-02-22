@@ -4,6 +4,8 @@ import { useMemo, useEffect } from 'react';
 import Button from '../../components/formElements/Button.component';
 import { CgDetailsMore } from 'react-icons/cg';
 import { FaCheck, FaTimes } from 'react-icons/fa';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * Faculty Event Approval component displaying unapproved events.
@@ -20,6 +22,7 @@ const FacultyEventApproval = () => {
   const { events } = useLoaderData() as {
     events: EventType[];
   };
+  const { loading } = useLoading();
   const actionData = useActionData() as { success: boolean; message: string };
 
   useEffect(() => {
@@ -44,7 +47,9 @@ const FacultyEventApproval = () => {
     );
   }, [events]);
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className='container mx-auto p-4 h-full overflow-y-auto'>
       <h1 className='text-3xl font-bold mb-6'>Pending Event Approvals</h1>
       {actionData && (

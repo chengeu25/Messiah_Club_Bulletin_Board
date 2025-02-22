@@ -3,7 +3,7 @@ import { BiHome } from 'react-icons/bi';
 import Button from '../../../components/formElements/Button.component';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import DatePicker from 'react-datepicker';
-import { subtractDays } from '../../../helper/dateUtils';
+import { getDayName, subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import {
   eventPassesSearch,
@@ -12,7 +12,6 @@ import {
 import { EventType, UserType } from '../../../types/databaseTypes';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
 import useLoading from '../../../hooks/useLoading';
-import Loading from '../../../components/ui/Loading';
 
 /**
  * Calendar dashboard component for displaying and navigating events.
@@ -200,9 +199,7 @@ const Calendar = () => {
     };
   }, []);
 
-  return loading ? (
-    <Loading />
-  ) : (
+  return (
     <div
       id='calendar-container'
       className='relative w-full flex flex-col h-full'
@@ -241,16 +238,30 @@ const Calendar = () => {
         </div>
       </div>
       <div className='flex flex-row justify-center flex-1 items-center p-4 h-full'>
-        {eventsOnDaysDisplayed.map((day, index) => (
-          <div
-            key={index}
-            className={`flex flex-col flex-1 ${
-              index !== 0 && 'border-l-[1px]'
-            } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
-          >
-            <Day {...day} small={true} />
-          </div>
-        ))}
+        {loading
+          ? datesDisplayed.map((day, index) => (
+              <div
+                key={index}
+                className={`flex flex-col flex-1 ${
+                  index !== 0 && 'border-l-[1px]'
+                } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
+              >
+                <div className='text-xl font-bold flex flex-col'>
+                  {getDayName(day)}, {day.toLocaleDateString()}
+                </div>
+                Loading Events...
+              </div>
+            ))
+          : eventsOnDaysDisplayed.map((day, index) => (
+              <div
+                key={index}
+                className={`flex flex-col flex-1 ${
+                  index !== 0 && 'border-l-[1px]'
+                } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
+              >
+                <Day {...day} small={true} />
+              </div>
+            ))}
       </div>
     </div>
   );

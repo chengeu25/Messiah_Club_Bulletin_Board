@@ -8,6 +8,7 @@ import Club from '../../../components/dashboard/Club.component';
 import { ClubType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 import { clubPassesSearch } from '../../../helper/eventHelpers';
+import useLoading from '../../../hooks/useLoading';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
@@ -39,6 +40,8 @@ const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
   const [searchParams] = useSearchParams();
+
+  const { loading } = useLoading();
 
   /**
    * Handles form submission for club-related actions.
@@ -74,22 +77,26 @@ const Clubs = () => {
           <Button text='Create New Club' filled name='create' type='submit' />
         </Form>
       )}
-      {data.clubs
-        .filter((club) =>
-          clubPassesSearch(club, searchParams.get('search') ?? '')
-        )
-        .map((club) => (
-          <Club
-            key={club.name}
-            {...club}
-            editable={
-              data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
-            }
-            deletable={data.user.isFaculty}
-            onSubmit={(e) => handleSubmit(e, club.id)}
-          />
-        ))}
-      {data.user.isFaculty && data.inactiveClubs.length > 0 && (
+      {loading ? (
+        <div>Loading clubs...</div>
+      ) : (
+        data.clubs
+          .filter((club) =>
+            clubPassesSearch(club, searchParams.get('search') ?? '')
+          )
+          .map((club) => (
+            <Club
+              key={club.name}
+              {...club}
+              editable={
+                data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
+              }
+              deletable={data.user.isFaculty}
+              onSubmit={(e) => handleSubmit(e, club.id)}
+            />
+          ))
+      )}
+      {data.user.isFaculty && data.inactiveClubs.length > 0 && !loading && (
         <>
           <h2 className='text-2xl font-bold'>Inactive Clubs</h2>
           {data.inactiveClubs

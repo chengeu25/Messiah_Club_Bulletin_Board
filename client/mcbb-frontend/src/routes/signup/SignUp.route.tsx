@@ -15,6 +15,8 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import { SchoolType } from '../../types/databaseTypes';
 import { useSchool } from '../../contexts/SchoolContext';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * SignUp component for user registration.
@@ -52,6 +54,8 @@ const SignUp = () => {
     error: string;
   };
 
+  const { loading, setLoading } = useLoading();
+
   // State management for form validation and feedback
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -81,6 +85,7 @@ const SignUp = () => {
 
   // Initialize error message from action data
   useEffect(() => {
+    setLoading(false);
     if (actionData?.error) {
       setError(actionData?.error);
     }
@@ -94,6 +99,7 @@ const SignUp = () => {
    * @description Validates form inputs, checks CAPTCHA, and submits registration
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    setLoading(true);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
@@ -109,10 +115,12 @@ const SignUp = () => {
 
     // Validate password strength and matching
     if (!isPasswordStrong) {
+      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
+      setLoading(false);
       return;
     }
 
@@ -131,12 +139,14 @@ const SignUp = () => {
       !captchaResponse
     ) {
       setError('Please fill out all required');
+      setLoading(false);
       return;
     }
 
     // Validate school email domain
     if (formData.get('email') === null) {
       setError(`Please use your ${currentSchool?.name} email`);
+      setLoading(false);
       return;
     } else if (
       !(formData.get('email')! as string).endsWith(
@@ -144,6 +154,7 @@ const SignUp = () => {
       )
     ) {
       setError(`Please use your ${currentSchool?.name} email`);
+      setLoading(false);
       return;
     }
 
@@ -197,7 +208,9 @@ const SignUp = () => {
     setCaptchaResponse(value);
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
 

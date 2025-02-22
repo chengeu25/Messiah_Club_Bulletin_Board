@@ -3,6 +3,9 @@ import { useActionData, useSearchParams, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import { useNotification } from '../../contexts/NotificationContext';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * VerifyEmail component for email verification process.
@@ -36,21 +39,26 @@ const VerifyEmail = () => {
 
   // State management for error and success messages
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+
+  const { addNotification } = useNotification();
+  const { loading, setLoading } = useLoading();
 
   // Effect to handle form submission errors
   useEffect(() => {
+    setLoading(false);
     if (actionData?.error) {
       setError(actionData.error);
     }
     if (actionData?.message) {
-      setMessage(actionData.message);
+      addNotification(actionData.message, 'success');
     }
     if (searchParams.get('error')) {
-      setError(searchParams.get('error'));
+      const localError = searchParams.get('error');
+      if (localError !== null) addNotification(localError!, 'error');
     }
     if (searchParams.get('message')) {
-      setMessage(searchParams.get('message'));
+      const message = searchParams.get('message');
+      if (message !== null) addNotification(message!, 'success');
     }
   }, [actionData]);
 
@@ -65,6 +73,7 @@ const VerifyEmail = () => {
     // Reset previous errors
     setError(null);
     event.preventDefault();
+    setLoading(true);
 
     // Create form data
     const formData = new FormData(event.currentTarget);
@@ -79,6 +88,7 @@ const VerifyEmail = () => {
     }
     // Validate email verification code
     else if (action === 'verifyEmail' && formData.get('code') === '') {
+      setLoading(false);
       setError('Please enter a code.');
     }
     // Submit verification request
@@ -88,13 +98,14 @@ const VerifyEmail = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>2-Factor Authentication</h1>
 
       {/* Error and success messages */}
       {error && <div className='text-red-500'>{error}</div>}
-      {message && <p className='text-green-500'>{message}</p>}
 
       {/* Email verification code input */}
       <Input

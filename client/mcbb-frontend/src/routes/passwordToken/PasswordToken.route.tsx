@@ -3,6 +3,8 @@ import { useSubmit, useLocation, useNavigate } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * ForgotPasswordToken component for password reset token validation and password reset.
@@ -29,6 +31,7 @@ const ForgotPassswordToken = () => {
   const submit = useSubmit();
   const location = useLocation();
   const navigate = useNavigate();
+  const { loading, setLoading } = useLoading();
 
   // State management for form validation and messages
   const [error, setError] = useState<string | null>(null);
@@ -82,6 +85,7 @@ const ForgotPassswordToken = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     // Reset previous errors
     setError(null);
+    setLoading(true);
     event.preventDefault();
 
     // Create form data
@@ -96,13 +100,16 @@ const ForgotPassswordToken = () => {
     // Validate password inputs
     if (String(formData.get('newPassword')) === '') {
       setError('Please enter a new password');
+      setLoading(false);
     } else if (String(formData.get('confirmPassword')) === '') {
       setError('Please enter password again');
+      setLoading(false);
     } else if (
       String(formData.get('newPassword')) !==
       String(formData.get('confirmPassword'))
     ) {
       setError('Passwords do not match');
+      setLoading(false);
     } else {
       // Append token and submit form
       formData.append('action', action);
@@ -112,7 +119,9 @@ const ForgotPassswordToken = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Reset Password</h1>
 

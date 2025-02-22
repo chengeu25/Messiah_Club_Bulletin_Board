@@ -3,6 +3,9 @@ import { useLoaderData, Form, useNavigate } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import { SchoolType } from '../../types/databaseTypes';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * School Edit component to render the school edit form
@@ -17,8 +20,8 @@ const SchoolEdit = () => {
     logo: school.logo || ''
   });
 
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+  const { loading, setLoading } = useLoading();
 
   useEffect(() => {
     setFormState({
@@ -53,11 +56,15 @@ const SchoolEdit = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
 
     // Validate color hex code
     const hexValue = formState.color.replace(/^#/, ''); // Remove '#' if present
     if (!/^[0-9A-Fa-f]{6}$/.test(hexValue)) {
-      setErrorMessage('Invalid color hex code. Please enter a valid 6-character hex code.');
+      addNotification(
+        'Invalid color hex code. Please enter a valid 6-character hex code.',
+        'error'
+      );
       return;
     }
 
@@ -85,34 +92,24 @@ const SchoolEdit = () => {
         throw new Error('Failed to update school data');
       }
 
-      setSuccessMessage('Changes saved successfully!');
-      setTimeout(() => {
-        setSuccessMessage(null);
-        navigate('/dashboard/faculty/schoolEdit');
-      }, 2000);
+      addNotification('Changes saved successfully!', 'success');
+      navigate('/dashboard/faculty/schoolEdit');
     } catch (error) {
       console.error('Error updating school data:', error);
-      setErrorMessage(error instanceof Error ? error.message : 'Unknown error');
+      addNotification(
+        error instanceof Error ? error.message : 'Unknown error',
+        'error'
+      );
     }
+
+    setLoading(false);
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className='container mx-auto p-4'>
       <h1 className='text-3xl font-bold mb-6'>Edit School Information</h1>
-
-      {/* Display error message if it exists */}
-      {errorMessage && (
-        <div className='bg-red-200 text-red-800 p-4 rounded mb-4'>
-          <strong>Error:</strong> {errorMessage}
-        </div>
-      )}
-
-      {/* Display success message if it exists */}
-      {successMessage && (
-        <div className='bg-green-200 text-green-800 p-4 rounded mb-4'>
-          <strong>Success:</strong> {successMessage}
-        </div>
-      )}
 
       <Form
         method='post'

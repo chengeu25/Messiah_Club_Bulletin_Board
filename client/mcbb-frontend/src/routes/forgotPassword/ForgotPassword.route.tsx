@@ -3,6 +3,8 @@ import { useSubmit, useLocation } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * ForgotPassword component for initiating password reset process.
@@ -33,6 +35,8 @@ const ForgotPassword = () => {
   // State for managing errors and messages
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+
+  const { loading, setLoading } = useLoading();
 
   /**
    * Handles error and message updates from URL parameters.
@@ -78,6 +82,7 @@ const ForgotPassword = () => {
     // Reset previous errors
     setError(null);
     event.preventDefault();
+    setLoading(true);
 
     // Create form data
     const formData = new FormData(event.currentTarget);
@@ -88,6 +93,7 @@ const ForgotPassword = () => {
     // Validate email input
     if (formData.get('email') === '') {
       setError('Please enter an email address.');
+      setLoading(false);
     } else {
       // Submit form data
       formData.append('action', action);
@@ -95,7 +101,9 @@ const ForgotPassword = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Forgot Password?</h1>
 

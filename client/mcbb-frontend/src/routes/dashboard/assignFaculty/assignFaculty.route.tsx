@@ -5,6 +5,7 @@ import Button from '../../../components/formElements/Button.component';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
 import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * Represents a faculty member's data structure.
@@ -295,7 +296,9 @@ const AssignFaculty = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className='w-full h-full flex justify-center items-center'>
       <div className='flex w-full h-full sm:w-3/4 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>

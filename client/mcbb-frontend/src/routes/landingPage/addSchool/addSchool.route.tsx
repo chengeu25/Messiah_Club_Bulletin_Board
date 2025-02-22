@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
+import { useNotification } from '../../../contexts/NotificationContext';
+import useLoading from '../../../hooks/useLoading';
+import { add } from 'date-fns';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * AddSchoolPage component for adding a new school.
@@ -14,9 +18,8 @@ const AddSchoolPage = () => {
   const [emailDomain, setEmailDomain] = useState('');
   const [schoolLogo, setSchoolLogo] = useState<string | null>(null);
 
-  // Error and success messages
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+  const { loading, setLoading } = useLoading();
 
   /**
    * Handles file selection and converts image to Base64.
@@ -37,12 +40,12 @@ const AddSchoolPage = () => {
    */
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setSuccessMessage(null);
+
+    setLoading(true);
 
     // Basic validation
     if (!schoolName.trim() || !schoolColor.trim() || !emailDomain.trim()) {
-      setError('All fields except logo are required.');
+      addNotification('All fields except logo are required.', 'error');
       return;
     }
 
@@ -51,7 +54,7 @@ const AddSchoolPage = () => {
       name: schoolName,
       color: schoolColor, // Hex code handling unchanged
       emailDomain,
-      logo: schoolLogo || '', // Send Base64 string or empty string
+      logo: schoolLogo || '' // Send Base64 string or empty string
     };
 
     try {
@@ -61,7 +64,7 @@ const AddSchoolPage = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify(payload),
+          body: JSON.stringify(payload)
         }
       );
 
@@ -71,7 +74,7 @@ const AddSchoolPage = () => {
         throw new Error(result.error || 'An unexpected error occurred.');
       }
 
-      setSuccessMessage(result.message);
+      addNotification(result.message, 'success');
       setSchoolName('');
       setSchoolColor('');
       setEmailDomain('');
@@ -79,61 +82,73 @@ const AddSchoolPage = () => {
 
       setTimeout(() => navigate('/'), 2000); // Redirect after success
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to the server.');
+      addNotification(
+        err instanceof Error ? err.message : 'Failed to connect to the server.', // Error message
+        'error'
+      );
     }
+
+    setLoading(false);
   };
 
-  return (
-    <div className="bg-blue-900 p-8">
-      <h1 className="text-3xl text-white">Add a New School</h1>
-      <form onSubmit={handleSubmit} className="space-y-4 mt-6">
-        {error && <div className="text-red-500">{error}</div>}
-        {successMessage && <div className="text-green-500">{successMessage}</div>}
-
+  return loading ? (
+    <Loading />
+  ) : (
+    <div className='bg-blue-900 p-8'>
+      <h1 className='text-3xl text-white'>Add a New School</h1>
+      <form onSubmit={handleSubmit} className='space-y-4 mt-6'>
         <div>
-          <label className="text-white">School Name</label>
+          <label className='text-white'>School Name</label>
           <input
-            type="text"
+            type='text'
             value={schoolName}
             onChange={(e) => setSchoolName(e.target.value)}
-            className="w-full p-2"
+            className='w-full p-2'
             required
           />
         </div>
         <div>
-          <label className="text-white">School Color (Hex Code)</label>
+          <label className='text-white'>School Color (Hex Code)</label>
           <input
-            type="text"
+            type='text'
             value={schoolColor}
             onChange={(e) => setSchoolColor(e.target.value)}
-            className="w-full p-2"
+            className='w-full p-2'
             required
           />
         </div>
         <div>
-          <label className="text-white">Email Domain</label>
+          <label className='text-white'>Email Domain</label>
           <input
-            type="text"
+            type='text'
             value={emailDomain}
             onChange={(e) => setEmailDomain(e.target.value)}
-            className="w-full p-2"
+            className='w-full p-2'
             required
           />
         </div>
         <div>
-          <label className="text-white">School Logo (Optional)</label>
-          <input type="file" accept="image/*" onChange={handleFileChange} className="w-full p-2" />
-          {schoolLogo && <img src={schoolLogo} alt="Preview" className="w-32 h-32 mt-2" />}
+          <label className='text-white'>School Logo (Optional)</label>
+          <input
+            type='file'
+            accept='image/*'
+            onChange={handleFileChange}
+            className='w-full p-2'
+          />
+          {schoolLogo && (
+            <img src={schoolLogo} alt='Preview' className='w-32 h-32 mt-2' />
+          )}
         </div>
 
-        <Button type="submit" text="Add School" className="p-4 mt-4" filled={true} />
+        <Button
+          type='submit'
+          text='Add School'
+          className='p-4 mt-4'
+          filled={true}
+        />
       </form>
     </div>
   );
 };
 
 export default AddSchoolPage;
-
-
-
-

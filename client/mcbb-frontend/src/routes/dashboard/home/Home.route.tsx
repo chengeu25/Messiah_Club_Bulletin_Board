@@ -12,6 +12,7 @@ import {
   useLoaderData,
   useSearchParams
 } from 'react-router-dom';
+import useLoading from '../../../hooks/useLoading';
 
 /**
  * Home dashboard component displaying events for the current week.
@@ -32,6 +33,7 @@ const Home = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const { currentSchool } = useSchool();
+  const { loading } = useLoading();
 
   /**
    * Memoized function to filter events based on search query and user filters.
@@ -79,7 +81,9 @@ const Home = () => {
     <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-auto'>
       <h1 className='text-3xl font-bold'>This Week at {currentSchool?.name}</h1>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
-        {eventsOnDays.length > 0 ? (
+        {loading ? (
+          <div>Loading events...</div>
+        ) : eventsOnDays.length > 0 ? (
           eventsOnDays
             .sort((a, b) => a.date.getTime() - b.date.getTime())
             .map((day) => (

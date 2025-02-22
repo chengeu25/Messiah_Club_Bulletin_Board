@@ -8,6 +8,7 @@ import { useNavigation } from 'react-router-dom';
 const useLoading = () => {
   const navigation = useNavigation();
   const [loading, setLoading] = useState<boolean>(false);
+  const [debouncedLoading, setDebouncedLoading] = useState<boolean>(false);
 
   /**
    * Manages loading state based on navigation state.
@@ -16,16 +17,24 @@ const useLoading = () => {
    * @description Resets loading state when navigation is complete
    */
   useEffect(() => {
-    let timeoutId;
-    if (navigation.state === 'idle') {
-      timeoutId = setTimeout(() => setLoading(false), 250);
-    } else if (navigation.state === 'loading') {
-      clearTimeout(timeoutId);
+    if (navigation.state === 'loading') {
       setLoading(true);
+    } else if (navigation.state === 'idle') {
+      setLoading(false);
     }
   }, [navigation.state]);
 
-  return { loading, setLoading };
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedLoading(loading);
+    }, 200); // Adjust the debounce delay as needed
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [loading]);
+
+  return { loading: debouncedLoading, setLoading };
 };
 
 export default useLoading;

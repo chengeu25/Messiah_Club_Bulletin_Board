@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * EditInterests component for managing user interests.
@@ -27,7 +28,8 @@ const EditInterests: React.FC = () => {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  const [message, setMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+  const [isMounted, setIsMounted] = useState(false);
 
   /**
    * Fetch available and user's current interests on component mount.
@@ -71,11 +73,17 @@ const EditInterests: React.FC = () => {
       .catch((error) =>
         console.error('Error fetching selected interests:', error)
       );
+
+    setIsMounted(true);
   }, []);
 
+  const message = useMemo(() => searchParams.get('message'), [searchParams]);
+
   useEffect(() => {
-    setMessage(searchParams.get('message'));
-  }, [searchParams]);
+    if (message !== null && isMounted) {
+      addNotification(message, 'info');
+    }
+  }, [message, isMounted]);
 
   /**
    * Toggles interest selection in the selectedInterests state.
@@ -117,7 +125,7 @@ const EditInterests: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        alert(result.message);
+        addNotification('Interests updated successfully', 'success');
       } else {
         setError(result.error || 'An error occurred');
       }
@@ -145,11 +153,10 @@ const EditInterests: React.FC = () => {
           className='flex flex-col gap-4 w-full h-full'
         >
           <h1 className='text-3xl font-bold'>Edit Interests</h1>
-          {message && <p>{message}</p>}
           {error && <p className='text-red-500'>{error}</p>}
           <div
             className='flex flex-col gap-2 overflow-y-auto flex-grow'
-            style={{ maxHeight: '400px' }}  // Increased maxHeight for more interests
+            style={{ maxHeight: '400px' }} // Increased maxHeight for more interests
           >
             {allInterests.map((interest) => (
               <label
@@ -184,8 +191,7 @@ const EditInterests: React.FC = () => {
         </form>
       </div>
     </div>
-  );  
-  
+  );
 };
 
 export default EditInterests;
