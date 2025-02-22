@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -24,6 +23,8 @@ import {
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
 import { ImManWoman } from 'react-icons/im';
+import useLoading from '../../../hooks/useLoading';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 /**
  * Event details page component.
@@ -56,7 +57,8 @@ const Event = () => {
   const submit = useSubmit();
   const { imageId } = useParams();
   const navigate = useNavigate();
-  const [message, setMessage] = useState<string | null>(null);
+  const { loading, setLoading } = useLoading();
+  const { addNotification } = useNotification();
 
   if (!event) {
     return (
@@ -89,40 +91,27 @@ const Event = () => {
 
       const result = await response.json();
       if (response.ok) {
-        setMessage(`Event ${action}d successfully`);
+        addNotification(`Event ${action}d successfully`, 'success');
         if (action === 'decline') {
           navigate('/dashboard/faculty/facultyEventApproval');
         } else {
           navigate(0); // Reload the page to reflect the changes
         }
       } else {
-        setMessage(`Failed to ${action} event: ${result.error}`);
+        addNotification(`Failed to ${action} event: ${result.error}`, 'error');
       }
     } catch (error) {
       console.error(`Error ${action}ing event:`, error);
       if (error instanceof Error) {
-        setMessage(`Error ${action}ing event: ${error.message}`);
+        addNotification(`Error ${action}ing event: ${error.message}`, 'error');
       } else {
-        setMessage(`Error ${action}ing event`);
+        addNotification(`Error ${action}ing event`, 'error');
       }
     }
   };
 
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
-      {/* Display success or failure message */}
-      {message && (
-        <div
-          className={`p-4 rounded mb-4 ${
-            message.includes('successfully')
-              ? 'bg-green-200 text-green-800'
-              : 'bg-red-200 text-red-800'
-          }`}
-        >
-          <strong>{message}</strong>
-        </div>
-      )}
-
       {/* Event title and RSVP section */}
       <Card
         color='gray-300'
@@ -132,45 +121,50 @@ const Event = () => {
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
 
         {/* Cancel Event Button */}
-        <Form
-          onSubmit={(e) => {
-            if (!confirm('Are you sure you want to cancel this event?')) {
-              e.preventDefault(); // Prevent the form from submitting if the user cancels
-            }
-          }}
-          method='post'
-          className='flex-shrink-0'
-        >
-          {user?.clubAdmins?.some((adminClubId) =>
-            event.host.some((host) => host.id === adminClubId)
-          ) && (
-            <Button
-              type='submit'
-              name='action'
-              value='cancel'
-              text='Cancel Event'
-              className='bg-gray-500 text-white rounded hover:bg-red-500'
-            />
-          )}
-          <input type='hidden' name='id' value={event.id} />
-        </Form>
+        {!loading && (
+          <Form
+            onSubmit={(e) => {
+              if (!confirm('Are you sure you want to cancel this event?')) {
+                e.preventDefault(); // Prevent the form from submitting if the user cancels
+              }
+              setLoading(true);
+            }}
+            method='post'
+            className='flex-shrink-0'
+          >
+            {user?.clubAdmins?.some((adminClubId) =>
+              event.host.some((host) => host.id === adminClubId)
+            ) && (
+              <Button
+                type='submit'
+                name='action'
+                value='cancel'
+                text='Cancel Event'
+                className='bg-gray-500 text-white rounded hover:bg-red-500'
+              />
+            )}
+            <input type='hidden' name='id' value={event.id} />
+          </Form>
+        )}
 
         {/* RSVP Dropdown */}
-        <Form className='flex-shrink-0 flex'>
-          <RSVPDropdown
-            handleRSVPClick={(type) =>
-              submit(
-                { id: event.id, type: type, action: 'rsvp' },
-                { method: 'post' }
-              )
-            }
-            initialValue={event?.rsvp}
-          />
-        </Form>
+        {!loading && (
+          <Form className='flex-shrink-0 flex'>
+            <RSVPDropdown
+              handleRSVPClick={(type) =>
+                submit(
+                  { id: event.id, type: type, action: 'rsvp' },
+                  { method: 'post' }
+                )
+              }
+              initialValue={event?.rsvp}
+            />
+          </Form>
+        )}
       </Card>
 
       {/* Approve/Decline Buttons for Faculty */}
-      {user?.isFaculty && !event?.isApproved && (
+      {user?.isFaculty && !event?.isApproved && !loading && (
         <>
           <h2 className='text-2xl font-bold text-left w-full'>
             Event Approval

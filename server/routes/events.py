@@ -665,14 +665,21 @@ def cancel_event(event_id):
 
         # Query to get the event and organizer details
         cur.execute(
-            "SELECT event_name FROM event WHERE event_id = %s AND is_active = 1",  # CHANGE TO ORGANIZER ID
+            """SELECT e.event_name, r.user_id 
+                FROM event e
+                LEFT JOIN rsvp r
+                    ON e.event_id = r.event_id
+                WHERE e.event_id = %s 
+                    AND e.is_active = 1
+                    AND (r.is_active = 1 OR r.is_active IS NULL)
+                    AND (r.is_yes = 1 OR r.is_yes IS NULL)""",  # CHANGE TO ORGANIZER ID
             (event_id,),
         )
 
         # # Check if the execute call was successful
         print("Query executed successfully")
 
-        event = cur.fetchone()  # Fetch the first result
+        event = cur.fetchall()  # Fetch result
         if not event:
             cur.close()  # Don't forget to close the cursor
             print(f"Event with ID {event_id} not found")
@@ -683,6 +690,18 @@ def cancel_event(event_id):
 
         # Update the event status to inactive (cancel the event)
         cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
+
+        for rsvp in event:
+            cur.execute(
+                "UPDATE rsvp SET is_active = 0 WHERE event_id = %s AND user_id = %s",
+                (event_id, rsvp[1]),
+            )
+            if rsvp[1] is not None:
+                send_email(
+                    rsvp[1],
+                    f"{rsvp[0]} has been cancelled",
+                    f"Dear User,\n\nUnfortunately, the event {rsvp[0]} has been cancelled.\n\nBest regards,\nSHARC Team",
+                )
 
         # Check if the update was successful
         print(f"Event with ID {event_id} canceled successfully")
