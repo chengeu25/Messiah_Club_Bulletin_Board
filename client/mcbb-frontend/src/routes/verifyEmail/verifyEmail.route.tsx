@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useActionData, useSearchParams, useSubmit } from 'react-router-dom';
+import {
+  useActionData,
+  useLoaderData,
+  useSearchParams,
+  useSubmit
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -37,6 +42,10 @@ const VerifyEmail = () => {
     message: string | null;
   };
 
+  const loaderData = useLoaderData() as {
+    error?: string;
+  };
+
   // State management for error and success messages
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +70,12 @@ const VerifyEmail = () => {
       if (message !== null) addNotification(message!, 'success');
     }
   }, [actionData]);
+
+  useEffect(() => {
+    if (loaderData?.error) {
+      addNotification(loaderData?.error, 'error');
+    }
+  }, [loaderData]);
 
   /**
    * Handles form submission for email verification

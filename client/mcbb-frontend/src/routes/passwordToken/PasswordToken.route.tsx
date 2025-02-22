@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useSubmit, useLocation, useNavigate } from 'react-router-dom';
+import {
+  useSubmit,
+  useLocation,
+  useNavigate,
+  useActionData
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import useLoading from '../../hooks/useLoading';
 import Loading from '../../components/ui/Loading';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * ForgotPasswordToken component for password reset token validation and password reset.
@@ -32,48 +38,27 @@ const ForgotPassswordToken = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { loading, setLoading } = useLoading();
+  const actionData = useActionData() as {
+    error?: string;
+    message?: string;
+    redirectTo?: string;
+  };
+  const { addNotification } = useNotification();
 
   // State management for form validation and messages
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
 
-  /**
-   * Handles token validation and error/message display.
-   *
-   * @function useEffect
-   * @description Validates password reset token and manages error/message states
-   */
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-    const currentToken = searchParams.get('token');
-
-    if (newError || newMessage || !currentToken) {
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        searchParams.delete('message');
-      }
-
-      if (!currentToken) {
-        navigate('/forgotPasswordToken?error=' + (newError ?? ''));
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
+    if (actionData?.error) {
+      setError(actionData.error);
     }
-  }, [location.search, navigate]);
+    if (actionData?.message) {
+      addNotification(actionData.message, 'success');
+    }
+    if (actionData?.redirectTo) {
+      navigate(actionData.redirectTo);
+    }
+  }, [actionData]);
 
   /**
    * Handles password reset form submission.
@@ -127,9 +112,6 @@ const ForgotPassswordToken = () => {
 
       {/* Error message display */}
       {error && <div className='text-red-500'>{error}</div>}
-
-      {/* Success message display */}
-      {message && <div className='text-green-500'>{message}</div>}
 
       {/* New password input */}
       <Input

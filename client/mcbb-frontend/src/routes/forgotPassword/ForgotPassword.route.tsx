@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useSubmit, useLocation } from 'react-router-dom';
+import { useActionData, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import useLoading from '../../hooks/useLoading';
 import Loading from '../../components/ui/Loading';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * ForgotPassword component for initiating password reset process.
@@ -30,46 +31,28 @@ import Loading from '../../components/ui/Loading';
 const ForgotPassword = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
-  const location = useLocation();
 
   // State for managing errors and messages
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+
+  const actionData = useActionData() as {
+    error?: string;
+    message?: string;
+  };
+
+  const { addNotification } = useNotification();
 
   const { loading, setLoading } = useLoading();
 
-  /**
-   * Handles error and message updates from URL parameters.
-   *
-   * @function useEffect
-   * @description Checks URL for error or message parameters and updates state
-   */
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        searchParams.delete('error');
+    if (actionData) {
+      setLoading(false);
+      if (actionData?.message) addNotification(actionData?.message, 'success');
+      else if (actionData?.error) {
+        addNotification(actionData?.error, 'error');
       }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
     }
-  }, [location.search]);
+  }, [actionData]);
 
   /**
    * Handles form submission for password reset request.
@@ -109,9 +92,6 @@ const ForgotPassword = () => {
 
       {/* Error message display */}
       {error && <div className='text-red-500'>{error}</div>}
-
-      {/* Success message display */}
-      {message && <p className='text-green-500'>{message}</p>}
 
       {/* Email input */}
       <Input

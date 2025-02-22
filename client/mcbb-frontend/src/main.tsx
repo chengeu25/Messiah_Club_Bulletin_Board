@@ -38,8 +38,6 @@ import logoutLoader from './routes/logout/Logout.loader.tsx';
 import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
 import loginLoader from './routes/login/Login.loader.tsx';
 import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
-import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
-import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
 import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
@@ -144,11 +142,6 @@ const router = createBrowserRouter(
         element={<ChangePassword />}
         action={changePasswordAction}
         loader={changePasswordLoader}
-      />
-      <Route
-        path='resetPassword'
-        element={<ResetPassword />}
-        action={resetPasswordAction}
       />
       <Route path='forgotPasswordMessage' element={<ForgotPasswordMessage />} />
       <Route

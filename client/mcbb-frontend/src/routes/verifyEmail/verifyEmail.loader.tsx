@@ -1,6 +1,11 @@
 // verifyEmail.loader.tsx
 
-import { LoaderFunction, LoaderFunctionArgs, redirect } from 'react-router-dom';
+import {
+  json,
+  LoaderFunction,
+  LoaderFunctionArgs,
+  redirect
+} from 'react-router-dom';
 import checkUser from '../../helper/checkUser';
 import { UserType } from '../../types/databaseTypes';
 
@@ -43,10 +48,6 @@ const verifyEmailLoader: LoaderFunction = async ({
     return redirect(`/login?serviceTo=${serviceTo}`);
   }
 
-  // Parse URL search parameters
-  const url = new URL(request.url);
-  const searchParams = new URLSearchParams(url.search);
-
   // Check if user needs verification
   if (!user?.emailVerified) {
     // Automatically resend verification code
@@ -63,16 +64,11 @@ const verifyEmailLoader: LoaderFunction = async ({
     );
 
     // Handle response from code resend request
-    const json = await resp.json();
+    const jsonResp = await resp.json();
 
     if (!resp.ok) {
-      // Redirect with error if code resend fails
-      return redirect(
-        '/verifyEmail?error=' +
-          json.error +
-          '&serviceTo=' +
-          searchParams.get('serviceTo')
-      );
+      // Return error if code resend fails
+      return json({ error: jsonResp.error }, { status: resp.status });
     }
   }
 

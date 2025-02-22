@@ -16,7 +16,10 @@ import useLoading from '../../hooks/useLoading';
  */
 const AccountInfo = () => {
   const submit = useSubmit();
-  const actionData = useActionData() as { message: string } | null;
+  const actionData = useActionData() as {
+    message: string;
+    error: string;
+  } | null;
   const { addNotification } = useNotification();
   const { loading, setLoading } = useLoading();
 
@@ -40,7 +43,8 @@ const AccountInfo = () => {
   useEffect(() => {
     if (actionData) {
       setLoading(false);
-      addNotification(actionData?.message, 'success');
+      if (actionData?.message) addNotification(actionData?.message, 'success');
+      else if (actionData?.error) addNotification(actionData?.error, 'error');
     }
   }, [actionData]);
 

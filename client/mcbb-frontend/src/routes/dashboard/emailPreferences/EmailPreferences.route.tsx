@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useLoaderData, useLocation, useSubmit } from 'react-router-dom';
+import { useActionData, useLoaderData, useSubmit } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from '../../../components/formElements/Select.component';
+import { useNotification } from '../../../contexts/NotificationContext';
+import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
 
 /**
  * Interface representing the email preferences data returned by the loader
@@ -37,7 +40,9 @@ const EmailPreferences = () => {
     email_event_type: initialEventType
   } = useLoaderData() as EmailPreferencesData;
 
-  const location = useLocation();
+  const actionData = useActionData() as { error?: string; message?: string };
+  const { addNotification } = useNotification();
+  const { loading, setLoading } = useLoading();
 
   const [emailFrequency, setEmailFrequency] = useState(
     initialFrequency ?? 'Weekly'
@@ -46,8 +51,14 @@ const EmailPreferences = () => {
     initialEventType ?? 'Suggested'
   );
 
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+    if (actionData?.message) {
+      addNotification(actionData.message, 'success');
+    }
+  }, [actionData]);
 
   /**
    * Handles form submission by creating FormData and submitting
@@ -56,39 +67,18 @@ const EmailPreferences = () => {
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
     const formData = new FormData();
     formData.append('email_frequency', emailFrequency);
     formData.append('email_event_type', emailEventType);
     submit(formData, { method: 'post' });
   };
 
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      setError(newError);
-      setMessage(newMessage);
-
-      // Remove error and message params
-      searchParams.delete('error');
-      searchParams.delete('message');
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, [location.search]);
-
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>Email Preferences</h1>
-      {error && <p className='text-red-500'>{error}</p>}
-      {message && <p className='text-green-500'>{message}</p>}
       <Select
         options={['Weekly', 'Daily', 'Never']}
         label='Receive Updates About Events:'

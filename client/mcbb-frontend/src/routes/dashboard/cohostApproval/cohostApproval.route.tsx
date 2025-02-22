@@ -1,20 +1,23 @@
-import { useState } from 'react';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
+import Loading from '../../../components/ui/Loading';
+import { useNotification } from '../../../contexts/NotificationContext';
+import useLoading from '../../../hooks/useLoading';
 
 const CohostApproval = () => {
-  const [message, setMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+  const { loading, setLoading } = useLoading();
 
   const handleApproval = async (decision: 'approve' | 'decline') => {
-    setMessage(null); // Clear previous messages
-
+    setLoading(true);
     const urlParams = new URLSearchParams(window.location.search);
     const eventId = urlParams.get('eventId');
     const clubId = urlParams.get('clubId');
     const token = urlParams.get('token'); // Extract JWT token from URL
 
     if (!eventId || !clubId || !token) {
-      setMessage('Missing eventId, clubId, or token in URL.');
+      addNotification('Missing eventId, clubId, or token in URL.', 'error');
+      setLoading(false);
       return;
     }
 
@@ -35,13 +38,16 @@ const CohostApproval = () => {
 
     const data = await response.json();
     if (response.ok) {
-      setMessage(data.message); // Show success message
+      addNotification(data.message, 'success'); // Show success message
     } else {
-      setMessage(data.error || 'An error occurred.');
+      addNotification(data.message, 'error'); // Show error message
     }
+    setLoading(false);
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={async () => {}}>
       <h1 className='text-2xl font-bold mb-4'>Approve Collaboration?</h1>
 
@@ -57,10 +63,6 @@ const CohostApproval = () => {
           onClick={() => handleApproval('decline')}
         />
       </div>
-
-      {message && (
-        <p className='mt-4 text-lg font-semibold text-blue-600'>{message}</p>
-      )}
     </ResponsiveForm>
   );
 };

@@ -262,10 +262,11 @@ const Event = () => {
 
       {/* Event images */}
       <div className='flex flex-row w-full gap-4 overflow-x-auto min-h-48 mt-2'>
-        {event?.images?.map((image: ImageType) => {
+        {event?.images?.map((image: ImageType, index: number) => {
           const [prefix, base64Image] = image?.image?.split(',') ?? ['', ''];
           return (
             <img
+              key={index}
               src={`data:image/${prefix};base64,${base64Image}`}
               alt={event.title}
               className='w-auto h-full object-contain rounded-lg'

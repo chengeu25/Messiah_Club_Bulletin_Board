@@ -1,4 +1,9 @@
-import { useLoaderData, Form, useActionData } from 'react-router-dom';
+import {
+  useLoaderData,
+  Form,
+  useActionData,
+  useSubmit
+} from 'react-router-dom';
 import { EventType } from '../../types/databaseTypes';
 import { useMemo, useEffect } from 'react';
 import Button from '../../components/formElements/Button.component';
@@ -6,6 +11,7 @@ import { CgDetailsMore } from 'react-icons/cg';
 import { FaCheck, FaTimes } from 'react-icons/fa';
 import useLoading from '../../hooks/useLoading';
 import Loading from '../../components/ui/Loading';
+import { useNotification } from '../../contexts/NotificationContext';
 
 /**
  * Faculty Event Approval component displaying unapproved events.
@@ -24,14 +30,8 @@ const FacultyEventApproval = () => {
   };
   const { loading } = useLoading();
   const actionData = useActionData() as { success: boolean; message: string };
-
-  useEffect(() => {
-    // Log to inspect event images structure
-    console.log(
-      'Event Images:',
-      events.map((event) => event.image)
-    );
-  }, [events]);
+  const { addNotification } = useNotification();
+  const submit = useSubmit();
 
   const groupedEvents = useMemo(() => {
     return (events || []).reduce(
@@ -47,22 +47,46 @@ const FacultyEventApproval = () => {
     );
   }, [events]);
 
+  useEffect(() => {
+    if (actionData) {
+      addNotification(
+        actionData.message,
+        actionData.success ? 'success' : 'error'
+      );
+    }
+  }, [actionData]);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const submitter = (e.nativeEvent as SubmitEvent)
+      .submitter as HTMLButtonElement;
+    formData.append('action_type', submitter.value);
+
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
+    }
+
+    const action = formData.get('action_type') as
+      | 'details'
+      | 'approve_event'
+      | 'decline_event';
+    if (action === 'approve_event') {
+      addNotification('Approval request sent to server', 'info');
+      submit(formData, { method: 'post' });
+    } else if (action === 'decline_event') {
+      addNotification('Decline request sent to server', 'info');
+      submit(formData, { method: 'post' });
+    } else {
+      submit(formData, { method: 'post' });
+    }
+  };
+
   return loading ? (
     <Loading />
   ) : (
     <div className='container mx-auto p-4 h-full overflow-y-auto'>
       <h1 className='text-3xl font-bold mb-6'>Pending Event Approvals</h1>
-      {actionData && (
-        <div
-          className={`p-4 rounded mb-4 ${
-            actionData.success
-              ? 'bg-green-200 text-green-800'
-              : 'bg-red-200 text-red-800'
-          }`}
-        >
-          <strong>{actionData.message}</strong>
-        </div>
-      )}
       {Object.keys(groupedEvents).length === 0 ? (
         <p className='text-gray-500'>No pending approvals at the moment.</p>
       ) : (
@@ -117,6 +141,7 @@ const FacultyEventApproval = () => {
                     <Form
                       method='post'
                       className='flex flex-col items-center w-full'
+                      onSubmit={handleSubmit}
                     >
                       <input type='hidden' name='event_id' value={event.id} />
                       <Button

@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 
 const clubEventFormAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
@@ -48,19 +48,19 @@ const clubEventFormAction: ActionFunction = async ({ request }) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      return redirect(
-        `/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(
-          errorData.error
-        )}`
-      );
+      return json({ error: errorData.error }, { status: 400 });
     }
 
-    return redirect(`/dashboard/club/${clubId}?success=Event sent for faculty approval`);
+    return json(
+      {
+        message: 'Event submitted successfully',
+        redirectTo: `/dashboard/club/${clubId}`
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error submitting event:', error);
-    return redirect(
-      `/dashboard/club/${clubId}/newEvent?error=Unexpected error occurred`
-    );
+    return json({ error: 'Error submitting event' }, { status: 500 });
   }
 };
 

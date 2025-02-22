@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   useSubmit,
-  useSearchParams,
   useParams,
-  useLoaderData
+  useLoaderData,
+  useActionData,
+  useNavigate
 } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
@@ -13,10 +14,19 @@ import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from 'react-select';
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { ClubType } from '../../../types/databaseTypes';
+import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 const ClubEventForm = () => {
-  const [searchParams] = useSearchParams();
-  const serverError = searchParams.get('error'); // Retrieve "error" from query parameters
+  const { loading, setLoading } = useLoading();
+  const actionData = useActionData() as {
+    message?: string;
+    redirectTo?: string;
+    error?: string;
+  };
+  const { addNotification } = useNotification();
+  const navigate = useNavigate();
 
   const { clubs } = useLoaderData() as { clubs: ClubType[] };
   const { id: clubId } = useParams();
@@ -42,6 +52,21 @@ const ClubEventForm = () => {
     );
   }, [clubs]);
   const submit = useSubmit();
+
+  // If the action data is available, handle the message and redirect to the specified URL
+  useEffect(() => {
+    if (actionData) {
+      if (actionData?.error) {
+        addNotification(actionData.error, 'error');
+      }
+      if (actionData?.message) {
+        addNotification(actionData.message, 'success');
+      }
+      if (actionData?.redirectTo) {
+        navigate(actionData.redirectTo);
+      }
+    }
+  }, [actionData]);
 
   // Fetch tags from the API
   useEffect(() => {
@@ -80,6 +105,7 @@ const ClubEventForm = () => {
     event: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     event.preventDefault();
+    setLoading(true);
     const errors: string[] = [];
 
     const now = new Date();
@@ -101,6 +127,7 @@ const ClubEventForm = () => {
     // If there are validation errors, return early
     if (errors.length > 0) {
       setValidationErrors(errors);
+      setLoading(false);
       return;
     }
 
@@ -137,15 +164,11 @@ const ClubEventForm = () => {
     submit(formData, { method: 'post', encType: 'multipart/form-data' });
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit} encType='multipart/form-data'>
       <h1 className='text-2xl font-bold text-center'>Create Event</h1>
-
-      {serverError && (
-        <div className='bg-red-100 text-red-700 p-3 rounded mb-4'>
-          <strong>Error:</strong> {serverError}
-        </div>
-      )}
 
       {validationErrors.length > 0 && (
         <div className='text-red-500'>
@@ -278,7 +301,10 @@ const ClubEventForm = () => {
         />
       </div>
       <div className='mb-4'>
-        <label htmlFor='genderRestriction' className='block text-sm font-medium text-gray-700'>
+        <label
+          htmlFor='genderRestriction'
+          className='block text-sm font-medium text-gray-700'
+        >
           Gender Restriction
         </label>
         <select
