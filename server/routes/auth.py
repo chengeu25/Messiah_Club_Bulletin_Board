@@ -153,7 +153,7 @@ def verify_email():
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
 
-    # store verification code in session
+    # Retrieve the stored verification code from the session
     stored_session_code = session.get("verification_code")
 
     if stored_session_code == input_code:

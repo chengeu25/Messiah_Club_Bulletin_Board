@@ -3,6 +3,10 @@ from flask import session
 from extensions import mysql
 
 
+from datetime import datetime, timezone, timedelta
+from flask import session
+from extensions import mysql
+
 def get_user_session_info():
     """
     Retrieve the current user's session information.
@@ -58,7 +62,7 @@ def get_user_session_info():
     if (
         user_id is None
         or last_activity is None
-        or datetime.now(timezone.utc) - last_activity >= timedelta(minutes=15)
+        or datetime.now(timezone.utc) - last_activity >= timedelta(minutes=60)  # Extend session timeout to 60 minutes
     ):
         print("GET_USER_SESSION_INFO: Invalid session - clearing")
         session.clear()
