@@ -1,5 +1,6 @@
-from datetime import timedelta
-from flask import Flask
+from datetime import datetime, timedelta, timezone
+import os
+from flask import Flask, redirect, session, url_for
 from config import Config
 from extensions import mysql, cors
 from routes.auth import auth_bp
@@ -38,6 +39,18 @@ def create_app(config_class=Config):
     # Access JWT_EXPIRATION in your setup
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=Config.JWT_EXPIRATION)
 
+    def check_session_timeout():
+        if 'last_activity' in session:
+            now = datetime.now(timezone.utc)
+            last_activity = session['last_activity']
+            timeout_duration = timedelta(minutes=int(os.getenv("SESSION_TIMEOUT_MINUTES", 60)))  # Use environment variable for timeout duration
+            
+            if now - last_activity > timeout_duration:
+                session.clear()  # Clear the session to log out the user
+                return redirect(url_for('auth_bp.logout'))  # Redirect to logout route
+
+        session['last_activity'] = datetime.now(timezone.utc)  # Update last activity timestamp
+
     # CORS configuration
     cors.init_app(
         app,
@@ -73,6 +86,10 @@ def create_app(config_class=Config):
 
     # Start email scheduler
     start_email_scheduler()
+
+    @app.before_request
+    def before_request():
+        check_session_timeout()
 
     return app
 
