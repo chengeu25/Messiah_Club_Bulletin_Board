@@ -282,7 +282,7 @@ CREATE TABLE `tag` (
   `school_id` int DEFAULT NULL,
   PRIMARY KEY (`TAG_ID`),
   KEY `school_id` (`school_id`),
-  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`)
+  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `school` (`SCHOOL_ID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
