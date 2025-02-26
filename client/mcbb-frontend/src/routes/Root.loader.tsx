@@ -1,4 +1,4 @@
-import { json } from 'react-router';
+import { json, LoaderFunction } from 'react-router';
 import checkUser from '../helper/checkUser';
 import setCSSVars from '../helper/setCSSVars';
 
@@ -14,7 +14,7 @@ const getCurrentPageName = (pathname: string): string => {
     '/dashboard/clubs': 'clubs'
   };
 
-  return pageMapping[pathname] || 'home'; // Default to home if no match
+  return pageMapping[pathname] || 'none'; // Default to null if no match
 };
 
 /**
@@ -69,7 +69,7 @@ const fetchPagePreferences = async (page: string) => {
  * - Centralized authentication state management
  * - Page-specific preference retrieval
  */
-const rootLoader = async () => {
+const rootLoader: LoaderFunction = async ({ request }) => {
   // Check user authentication status
   const user = await checkUser();
 
@@ -78,24 +78,30 @@ const rootLoader = async () => {
     return json({ user: false, school: null, prefs: null }, { status: 200 });
   }
 
-  // Fetch school data
-  const schoolResp = await fetch(
-    `${import.meta.env.VITE_API_BASE_URL}/api/school/`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+  const url = new URL(request.url);
 
+  // Fetch school data
+  const schoolResp =
+    url.pathname === '/' || url.pathname === '' || url.pathname === '/logout'
+      ? null
+      : await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school/`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+  if (schoolResp === null) {
+    return json({ user, school: null, prefs: null }, { status: 200 });
+  }
   const school = schoolResp.ok ? await schoolResp.json() : null;
   setCSSVars(school?.color ?? '');
 
   // Determine current page and fetch preferences
-  const currentPage = getCurrentPageName(window.location.pathname);
-  const prefs = await fetchPagePreferences(currentPage);
+  const currentPage = getCurrentPageName(url.pathname);
+  const prefs =
+    currentPage === 'none' ? null : await fetchPagePreferences(currentPage);
 
   // Return comprehensive application state
   return json({ user, school, prefs }, { status: 200 });
