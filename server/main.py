@@ -47,7 +47,7 @@ def create_app(config_class=Config):
             
             if now - last_activity > timeout_duration:
                 session.clear()  # Clear the session to log out the user
-                return redirect(url_for('auth_bp.logout'))  # Redirect to logout route
+                return redirect(url_for('auth.logout'))  # Redirect to logout route
 
         session['last_activity'] = datetime.now(timezone.utc)  # Update last activity timestamp
 
