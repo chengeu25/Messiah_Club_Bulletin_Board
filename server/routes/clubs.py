@@ -66,12 +66,11 @@ def get_clubs():
 
         cur = mysql.connection.cursor()
 
+        # First query to fetch club details without club_logo
         cur.execute(
             """SELECT c.club_id, 
                     c.club_name, 
                     c.description, 
-                    c.club_logo, 
-                    c.logo_prefix, 
                     COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked,
                     GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ',') AS tags
                 FROM club c
@@ -98,7 +97,7 @@ def get_clubs():
                                     AND ut.tag_id IN (SELECT tag_id FROM club_tags WHERE club_id = c.club_id)
                             ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
                                     OR us.email IS NULL))))
-                GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
+                GROUP BY c.club_id, c.club_name, c.description, subscribed_or_blocked""",
             (
                 current_user["user_id"],
                 school,
@@ -109,31 +108,42 @@ def get_clubs():
                 current_user["user_id"],
             ),
         )
-        result = None
-        try:
-            result = cur.fetchall()
-            result = list(
-                map(
-                    lambda x: {
-                        "id": x[0],
-                        "name": x[1],
-                        "description": x[2],
-                        "image": (
-                            f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
-                            if x[3]
-                            else None
-                        ),
-                        "subscribed": True if (x[5] == 1 or x[5] == True) else False,
-                        "tags": x[6].split(",") if x[6] else [],
-                    },
-                    result,
-                )
-            )
-        except TypeError as e:
-            print(e)
-            result = None
-        if result is None:
+        clubs = cur.fetchall()
+
+        if not clubs:
             return jsonify({"error": "No clubs found"}), 404
+
+        # Fetch club logos separately
+        club_ids = [club[0] for club in clubs]
+        if club_ids:
+            format_strings = ",".join(["%s"] * len(club_ids))
+            cur.execute(
+                f"""SELECT club_id, club_logo, logo_prefix
+                    FROM club
+                    WHERE club_id IN ({format_strings})""",
+                tuple(club_ids),
+            )
+            logos = cur.fetchall()
+            logos_dict = {logo[0]: (logo[1], logo[2]) for logo in logos}
+        else:
+            logos_dict = {}
+
+        result = [
+            {
+                "id": club[0],
+                "name": club[1],
+                "description": club[2],
+                "image": (
+                    f"{logos_dict[club[0]][1]},{base64.b64encode(logos_dict[club[0]][0]).decode('utf-8')}"
+                    if club[0] in logos_dict and logos_dict[club[0]][0]
+                    else None
+                ),
+                "subscribed": True if (club[3] == 1 or club[3] == True) else False,
+                "tags": club[4].split(",") if club[4] else [],
+            }
+            for club in clubs
+        ]
+
         cur.close()
         return jsonify(result), 200
 
