@@ -3,15 +3,12 @@ import time
 from datetime import datetime, timezone, timedelta
 import schedule
 from collections import defaultdict
-import atexit
 
 from flask import current_app, Flask
 from extensions import mysql
 from helper.send_email import send_email
 from routes.events import get_events_by_date
 from config import Config
-
-stop_event = threading.Event()
 
 
 def filter_events(user, events):
@@ -248,53 +245,50 @@ def compose_event_email(events):
     return email_body
 
 
-def run_scheduler():
-    """
-    Run the email notification scheduler.
+class EmailScheduler:
+    def __init__(self):
+        self.stop_event = threading.Event()
+        self.scheduler_thread = None
 
-    This function sets up scheduled tasks for sending email notifications:
-    - Daily emails at 7 AM
-    - Weekly emails every Monday at 7 AM
+    def run_scheduler(self):
+        """
+        Run the email notification scheduler.
 
-    The scheduler runs continuously, checking and executing
-    pending scheduled tasks.
-    """
-    # Schedule daily emails at 7 AM
-    schedule.every().day.at("07:00").do(send_email_notifications)
+        This function sets up scheduled tasks for sending email notifications:
+        - Daily emails at 7 AM
+        - Weekly emails every Monday at 7 AM
 
-    # Schedule weekly emails every Monday at 7 AM
-    schedule.every().monday.at("07:00").do(send_email_notifications)
+        The scheduler runs continuously, checking and executing
+        pending scheduled tasks.
+        """
+        # Schedule daily emails at 7 AM
+        schedule.every().day.at("07:00").do(send_email_notifications)
 
-    while not stop_event.is_set():
-        schedule.run_pending()
-        time.sleep(1)
+        # Schedule weekly emails every Monday at 7 AM
+        schedule.every().monday.at("07:00").do(send_email_notifications)
 
+        while not self.stop_event.is_set():
+            schedule.run_pending()
+            time.sleep(1)
 
-def start_email_scheduler():
-    """
-    Start the email scheduler in a separate thread.
+    def start(self):
+        """
+        Start the email scheduler in a separate thread.
 
-    Creates and starts a daemon thread that runs the email notification
-    scheduler. The thread will continue running in the background,
-    executing scheduled email notification tasks.
+        Creates and starts a daemon thread that runs the email notification
+        scheduler. The thread will continue running in the background,
+        executing scheduled email notification tasks.
+        """
+        self.scheduler_thread = threading.Thread(target=self.run_scheduler)
+        self.scheduler_thread.daemon = (
+            True  # Allow the thread to be killed when the main program exits
+        )
+        self.scheduler_thread.start()
 
-    Returns:
-        threading.Thread: The scheduler thread
-    """
-    scheduler_thread = threading.Thread(target=run_scheduler)
-    scheduler_thread.daemon = (
-        True  # Allow the thread to be killed when the main program exits
-    )
-    scheduler_thread.start()
-    return scheduler_thread
-
-
-def stop_email_scheduler():
-    """
-    Stop the email scheduler by setting the stop event.
-    """
-    stop_event.set()
-
-
-# Register the stop_email_scheduler function to be called on program exit
-atexit.register(stop_email_scheduler)
+    def stop(self):
+        """
+        Stop the email scheduler by setting the stop event and joining the thread.
+        """
+        self.stop_event.set()
+        if self.scheduler_thread is not None:
+            self.scheduler_thread.join()

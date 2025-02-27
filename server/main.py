@@ -13,8 +13,10 @@ from routes.admintools import admintools_bp
 from routes.school import school_bp
 from routes.emails import emails_bp
 from routes.prefs import prefs_bp
-from jobs.email_notification_job import start_email_scheduler
+from jobs.email_notification_job import EmailScheduler
 from flask_jwt_extended import JWTManager
+import atexit
+import signal
 
 
 def create_app(config_class=Config):
@@ -40,16 +42,20 @@ def create_app(config_class=Config):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=Config.JWT_EXPIRATION)
 
     def check_session_timeout():
-        if 'last_activity' in session:
+        if "last_activity" in session:
             now = datetime.now(timezone.utc)
-            last_activity = session['last_activity']
-            timeout_duration = timedelta(minutes=int(os.getenv("SESSION_TIMEOUT_MINUTES", 60)))  # Use environment variable for timeout duration
-            
+            last_activity = session["last_activity"]
+            timeout_duration = timedelta(
+                minutes=int(os.getenv("SESSION_TIMEOUT_MINUTES", 60))
+            )  # Use environment variable for timeout duration
+
             if now - last_activity > timeout_duration:
                 session.clear()  # Clear the session to log out the user
-                return redirect(url_for('auth.logout'))  # Redirect to logout route
+                return redirect(url_for("auth.logout"))  # Redirect to logout route
 
-        session['last_activity'] = datetime.now(timezone.utc)  # Update last activity timestamp
+        session["last_activity"] = datetime.now(
+            timezone.utc
+        )  # Update last activity timestamp
 
     # CORS configuration
     cors.init_app(
@@ -85,7 +91,18 @@ def create_app(config_class=Config):
     app.register_blueprint(prefs_bp, url_prefix="/api/prefs")
 
     # Start email scheduler
-    start_email_scheduler()
+    email_scheduler = EmailScheduler()
+    email_scheduler.start()
+
+    # Register the stop method to be called on program exit
+    atexit.register(email_scheduler.stop)
+
+    # Handle SIGINT (Ctrl+C) to stop the scheduler gracefully
+    def handle_sigint(signum, frame):
+        email_scheduler.stop()
+        exit(0)
+
+    signal.signal(signal.SIGINT, handle_sigint)
 
     @app.before_request
     def before_request():
