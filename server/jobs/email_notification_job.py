@@ -3,12 +3,15 @@ import time
 from datetime import datetime, timezone, timedelta
 import schedule
 from collections import defaultdict
+import atexit
 
 from flask import current_app, Flask
 from extensions import mysql
 from helper.send_email import send_email
 from routes.events import get_events_by_date
 from config import Config
+
+stop_event = threading.Event()
 
 
 def filter_events(user, events):
@@ -262,7 +265,7 @@ def run_scheduler():
     # Schedule weekly emails every Monday at 7 AM
     schedule.every().monday.at("07:00").do(send_email_notifications)
 
-    while True:
+    while not stop_event.is_set():
         schedule.run_pending()
         time.sleep(1)
 
@@ -284,3 +287,14 @@ def start_email_scheduler():
     )
     scheduler_thread.start()
     return scheduler_thread
+
+
+def stop_email_scheduler():
+    """
+    Stop the email scheduler by setting the stop event.
+    """
+    stop_event.set()
+
+
+# Register the stop_email_scheduler function to be called on program exit
+atexit.register(stop_email_scheduler)
