@@ -122,9 +122,14 @@ const VerifyEmail = () => {
       {/* Error and success messages */}
       {error && <div className='text-red-500'>{error}</div>}
 
+      <p>
+        Within a minute, you will receive a code via email. If you don't see it,
+        check your spam or junk folder.
+      </p>
+
       {/* Email verification code input */}
       <Input
-        label='Enter the code sent to your email:'
+        label={'6-Character Code:'}
         name='code'
         type='text'
         placeholder='XXXXXX'
