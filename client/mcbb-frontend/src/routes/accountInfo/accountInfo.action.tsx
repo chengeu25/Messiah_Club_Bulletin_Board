@@ -16,6 +16,12 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
   const gender = formData.get('gender');
 
   const emailRequest = await checkUser();
+  if (emailRequest === false) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
+  if (!emailRequest?.emailVerified) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
   if (emailRequest) {
     const updateRequest = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/auth/account-info`,

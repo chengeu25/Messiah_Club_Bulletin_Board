@@ -2,18 +2,18 @@ import { UserType } from '../types/databaseTypes';
 
 /**
  * AuthSync provides a thread-safe, singleton-based mechanism for managing user authentication sessions.
- * 
+ *
  * @class AuthSync
- * @description 
+ * @description
  * - Ensures only one authentication operation can occur at a time
  * - Prevents race conditions in session management
  * - Provides centralized methods for checking and managing user sessions
- * 
+ *
  * @workflow
  * 1. Get singleton instance via getInstance()
  * 2. Use checkSession() to validate current session
  * 3. Use performLogout() to terminate session
- * 
+ *
  * @example
  * const authSync = AuthSync.getInstance();
  * const user = await authSync.checkSession();
@@ -31,7 +31,7 @@ export class AuthSync {
 
   /**
    * Retrieve the singleton instance of AuthSync
-   * 
+   *
    * @returns {AuthSync} The singleton AuthSync instance
    * @static
    */
@@ -44,7 +44,7 @@ export class AuthSync {
 
   /**
    * Execute an operation exclusively, preventing concurrent authentication requests
-   * 
+   *
    * @template T The return type of the operation
    * @param {() => Promise<T>} operation The authentication operation to run
    * @returns {Promise<T>} The result of the operation
@@ -71,11 +71,11 @@ export class AuthSync {
 
   /**
    * Check the current user session status
-   * 
-   * @returns {Promise<UserType | false>} 
+   *
+   * @returns {Promise<UserType | false>}
    * - User object if session is valid
    * - false if session is invalid or expired
-   * 
+   *
    * @description
    * - Sends a request to the backend to validate the current session
    * - Handles network errors and invalid session states
@@ -122,7 +122,7 @@ export class AuthSync {
 
   /**
    * Perform user logout
-   * 
+   *
    * @returns {Promise<void>}
    * @description
    * - Sends a logout request to the backend
@@ -143,19 +143,19 @@ export class AuthSync {
 
 /**
  * Check user authentication status with optional role-based access control
- * 
+ *
  * @param {Object} [options] Optional configuration for access control
  * @param {boolean} [options.requireFaculty] Require user to be faculty
  * @param {boolean} [options.requireDeleteFaculty] Require user to have delete faculty permissions
- * 
+ *
  * @returns {Promise<UserType | false>}
  * - User object if authenticated and meets role requirements
  * - false if not authenticated or role requirements not met
- * 
+ *
  * @example
  * // Check basic authentication
  * const user = await checkUser();
- * 
+ *
  * // Check faculty authentication
  * const facultyUser = await checkUser({ requireFaculty: true });
  */
@@ -164,7 +164,7 @@ const checkUser = async (
     requireFaculty?: boolean;
     requireDeleteFaculty?: boolean;
   } = {}
-): Promise<UserType | boolean> => {
+): Promise<UserType | false> => {
   const authSync = AuthSync.getInstance();
   const user = await authSync.checkSession();
 

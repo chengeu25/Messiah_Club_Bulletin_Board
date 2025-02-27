@@ -1,4 +1,4 @@
-import { ActionFunction, json } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 import checkUser from '../../helper/checkUser';
 
 /**
@@ -25,6 +25,12 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
   const schoolId = formData.get('schoolId');
 
   const emailRequest = await checkUser();
+  if (emailRequest === false) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
+  if (!emailRequest?.emailVerified) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
   if (emailRequest) {
     const loginRequest = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/auth/password-reset`,

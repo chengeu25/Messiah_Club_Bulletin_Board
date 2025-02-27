@@ -17,7 +17,7 @@ import checkUser from '../../helper/checkUser';
 const changePasswordLoader: LoaderFunction = async ({ request }) => {
   const user = await checkUser();
   const url = new URL(request.url);
-  if (user === false) {
+  if (user === false || user?.emailVerified === false) {
     return redirect('/login?serviceTo=' + url.pathname);
   }
   return json({ user: user }, { status: 200 });

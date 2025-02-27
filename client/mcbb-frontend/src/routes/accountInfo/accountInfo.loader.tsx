@@ -17,7 +17,7 @@ import checkUser from '../../helper/checkUser';
 const accountInfoLoader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
   const user = await checkUser();
-  if (user === false) {
+  if (user === false || user?.emailVerified === false) {
     return redirect('/login?serviceTo=' + url.pathname);
   }
   return json({ user: user }, { status: 200 });

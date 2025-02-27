@@ -28,6 +28,12 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
   const action = formData.get('action');
 
   const emailRequest = await checkUser();
+  if (emailRequest === false) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
+  if (!emailRequest?.emailVerified) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
   if (emailRequest) {
     const loginRequest = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-faculty`,

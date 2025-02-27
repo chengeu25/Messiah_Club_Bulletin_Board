@@ -7,15 +7,21 @@ const schoolEditloader: LoaderFunction = async ({ request }) => {
   if (user === false) {
     return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
+  if (user?.emailVerified === false) {
+    return redirect('/verifyEmail');
+  }
   if ((user as User).isFaculty === false) {
     return redirect('/dashboard/home');
   }
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/school`, {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/school`,
+      {
         method: 'GET',
         credentials: 'include'
-    });
+      }
+    );
 
     if (!response.ok) {
       throw new Error('Failed to fetch school data');
@@ -24,7 +30,10 @@ const schoolEditloader: LoaderFunction = async ({ request }) => {
     return json(schoolData);
   } catch (error) {
     console.error('Error fetching school data:', error);
-    return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+    return json(
+      { error: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 };
 
