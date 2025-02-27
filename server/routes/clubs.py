@@ -47,94 +47,99 @@ def get_clubs():
     Raises:
         TypeError: If there's an issue processing the database results
     """
-    filter_query = request.args.get("filter")
-    inactive_query = request.args.get("inactive")
-    filter_query = filter_query if filter_query else ""
-    inactive_query = "0" if inactive_query else "1"
-
-    # Check if user is authenticated
-    current_user = get_user_session_info()
-    if not current_user["user_id"]:
-        return jsonify({"error": "Unauthorized"}), 403
-
-    if not mysql.connection:
-        return jsonify({"error": "Database connection error"}), 500
-
-    # Get current school id
-    school = session.get("school")
-
-    cur = mysql.connection.cursor()
-
-    cur.execute(
-        """SELECT c.club_id, 
-                  c.club_name, 
-                  c.description, 
-                  c.club_logo, 
-                  c.logo_prefix, 
-                  COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked,
-                  GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ',') AS tags
-            FROM club c
-            LEFT JOIN user_subscription us
-                ON c.club_id = us.club_id
-                AND us.email = %s
-                AND us.is_active = 1
-            LEFT JOIN club_tags ct
-                ON c.club_id = ct.club_id
-            LEFT JOIN tag t
-                ON ct.tag_id = t.tag_id
-                AND t.school_id = %s
-            WHERE c.is_active = %s
-                AND c.school_id = %s
-                AND ((us.subscribed_or_blocked = 1 
-                        AND us.is_active = 1) 
-                    OR (%s <> 'Subscribed'))
-                AND (%s <> 'Suggested' 
-                    OR ((us.is_active = 1 
-                        AND us.subscribed_or_blocked = 1)
-                        OR (EXISTS (
-                            SELECT * FROM user_tags ut
-                            WHERE ut.user_id = %s
-                                AND ut.tag_id IN (SELECT tag_id FROM club_tags WHERE club_id = c.club_id)
-                        ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
-                                OR us.email IS NULL))))
-            GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
-        (
-            current_user["user_id"],
-            school,
-            inactive_query,
-            school,
-            filter_query,
-            filter_query,
-            current_user["user_id"],
-        ),
-    )
-    result = None
     try:
-        result = cur.fetchall()
-        result = list(
-            map(
-                lambda x: {
-                    "id": x[0],
-                    "name": x[1],
-                    "description": x[2],
-                    "image": (
-                        f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
-                        if x[3]
-                        else None
-                    ),
-                    "subscribed": True if (x[5] == 1 or x[5] == True) else False,
-                    "tags": x[6].split(",") if x[6] else [],
-                },
-                result,
-            )
+        filter_query = request.args.get("filter")
+        inactive_query = request.args.get("inactive")
+        filter_query = filter_query if filter_query else ""
+        inactive_query = "0" if inactive_query else "1"
+
+        # Check if user is authenticated
+        current_user = get_user_session_info()
+        if not current_user["user_id"]:
+            return jsonify({"error": "Unauthorized"}), 403
+
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        # Get current school id
+        school = session.get("school")
+
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            """SELECT c.club_id, 
+                    c.club_name, 
+                    c.description, 
+                    c.club_logo, 
+                    c.logo_prefix, 
+                    COALESCE(us.subscribed_or_blocked, 0) AS subscribed_or_blocked,
+                    GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ',') AS tags
+                FROM club c
+                LEFT JOIN user_subscription us
+                    ON c.club_id = us.club_id
+                    AND us.email = %s
+                    AND us.is_active = 1
+                LEFT JOIN club_tags ct
+                    ON c.club_id = ct.club_id
+                LEFT JOIN tag t
+                    ON ct.tag_id = t.tag_id
+                    AND t.school_id = %s
+                WHERE c.is_active = %s
+                    AND c.school_id = %s
+                    AND ((us.subscribed_or_blocked = 1 
+                            AND us.is_active = 1) 
+                        OR (%s <> 'Subscribed'))
+                    AND (%s <> 'Suggested' 
+                        OR ((us.is_active = 1 
+                            AND us.subscribed_or_blocked = 1)
+                            OR (EXISTS (
+                                SELECT * FROM user_tags ut
+                                WHERE ut.user_id = %s
+                                    AND ut.tag_id IN (SELECT tag_id FROM club_tags WHERE club_id = c.club_id)
+                            ) AND (NOT (us.is_active = 1 AND us.subscribed_or_blocked = 0)
+                                    OR us.email IS NULL))))
+                GROUP BY c.club_id, c.club_name, c.description, c.club_logo, c.logo_prefix, subscribed_or_blocked""",
+            (
+                current_user["user_id"],
+                school,
+                inactive_query,
+                school,
+                filter_query,
+                filter_query,
+                current_user["user_id"],
+            ),
         )
-    except TypeError as e:
-        print(e)
         result = None
-    if result is None:
-        return jsonify({"error": "No clubs found"}), 404
-    cur.close()
-    return jsonify(result), 200
+        try:
+            result = cur.fetchall()
+            result = list(
+                map(
+                    lambda x: {
+                        "id": x[0],
+                        "name": x[1],
+                        "description": x[2],
+                        "image": (
+                            f"{x[4]},{base64.b64encode(x[3]).decode('utf-8')}"
+                            if x[3]
+                            else None
+                        ),
+                        "subscribed": True if (x[5] == 1 or x[5] == True) else False,
+                        "tags": x[6].split(",") if x[6] else [],
+                    },
+                    result,
+                )
+            )
+        except TypeError as e:
+            print(e)
+            result = None
+        if result is None:
+            return jsonify({"error": "No clubs found"}), 404
+        cur.close()
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
 
 
 @clubs_bp.route("/club/<club_id>", methods=["GET"])
