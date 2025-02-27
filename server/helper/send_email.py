@@ -60,10 +60,8 @@ def send_email(to_email, subject, body, html=False):
             <h1 style="margin: 0; font-size: 18px;">{subject}</h1>
         </div>
         <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
-            {body if html else body.replace(chr(10), '<br>')}
-        </div>
-        <div>
-        To manage email preferences or unsubscribe, click <a href="{Config.API_URL_ROOT}/dashboard/emailPreferences">here</a>.
+            {body if html else body.replace(chr(10), '<br>')}<br><br>
+            To manage email preferences or unsubscribe, click <a href="{Config.API_URL_ROOT}/dashboard/emailPreferences">here</a>.
         </div>
     </div>
     """
