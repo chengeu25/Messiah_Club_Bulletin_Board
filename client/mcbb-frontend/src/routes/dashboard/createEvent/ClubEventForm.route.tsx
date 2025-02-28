@@ -164,6 +164,10 @@ const ClubEventForm = () => {
     submit(formData, { method: 'post', encType: 'multipart/form-data' });
   };
 
+  const handleCancel = () => {
+    navigate(`/dashboard/club/${clubId}`);
+  };
+
   return loading ? (
     <Loading />
   ) : (
@@ -321,7 +325,7 @@ const ClubEventForm = () => {
       </div>
       <div className='flex flex-row gap-2'>
         <Button text='Submit' type='submit' filled name='submit' />
-        <Button text='Cancel' filled={false} type='reset' name='cancel' />
+        <Button text='Cancel' filled={false} type='button' name='cancel' onClick={handleCancel} />
       </div>
     </ResponsiveForm>
   );
