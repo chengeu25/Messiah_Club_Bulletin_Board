@@ -1,4 +1,4 @@
-import { useLoaderData, useLocation } from 'react-router-dom';
+import { useActionData, useLoaderData, useLocation } from 'react-router-dom';
 import Input from '../../../../components/formElements/Input.component';
 import {
   ClubAdminType,
@@ -16,6 +16,7 @@ import { OptionType } from '../../../../components/formElements/Select.styles';
 import { useSchool } from '../../../../contexts/SchoolContext';
 import useLoading from '../../../../hooks/useLoading';
 import Loading from '../../../../components/ui/Loading';
+import { useNotification } from '../../../../contexts/NotificationContext';
 
 interface LoaderData {
   user: UserType;
@@ -30,8 +31,10 @@ const ClubForm = () => {
   const submit = useSubmit();
   const location = useLocation();
   const data = useLoaderData() as LoaderData | null;
+  const actionData = useActionData() as { error: string; id: string };
   const { user, club, tagsAvailable } = data || {};
   const { currentSchool } = useSchool();
+  const { addNotification } = useNotification();
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
@@ -47,6 +50,12 @@ const ClubForm = () => {
   const [highestAdminId, setHighestAdminId] = useState<number>(0);
 
   const { loading, setLoading } = useLoading();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+  }, [actionData]);
 
   /**
    * Adds a new admin to the list of admins.
