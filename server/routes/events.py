@@ -785,3 +785,144 @@ def create_event():
 
     except Exception as e:
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
+
+
+def sort_comments(comments):
+    # Convert list to dictionary for quick lookup
+    comment_dict = {comment["comment_id"]: comment for comment in comments}
+
+    # Initialize dictionary of comment children
+    comment_tree = {comment["comment_id"]: [] for comment in comments}
+
+    # Organize comments into tree structure
+    root_comments = []
+    for comment in comments:
+        parent_id = comment["parent"]
+        if parent_id is None:  # Top-level comment
+            root_comments.append(comment)
+        else:
+            if parent_id in comment_tree:
+                comment_tree[parent_id].append(comment)
+    
+    # Flatten the tree into a sorted list
+    def flatten_tree(comments):
+        sorted_list = []
+        for comment in comments:
+            sorted_list.append(comment)  # Add parent first
+            sorted_list.extend(flatten_tree(comment_tree[comment["comment_id"]]))  # Add replies
+        return sorted_list
+
+    return flatten_tree(root_comments)
+
+
+@events_bp.route("/get-comments/<event_id>", methods=["GET"])
+def get_comments(event_id):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute(
+            """select comment_id, user_id, is_flagged, is_deleted, content, posted_timestamp, parent, indent_level
+                FROM comments
+                WHERE event_id = %s""",
+            (event_id,),
+        )
+        result = cur.fetchall()
+
+        # Convert result to list of dictionairies
+        comment_list = [
+            {
+                "comment_id": comment[0],
+                "user_id": comment[1],
+                "is_flagged": comment[2],
+                "is_deleted": comment[3],
+                "content": comment[4],
+                "posted_timestamp": comment[5],
+                "parent": comment[6],
+                "indent_level": comment[7]
+            }
+            for comment in result
+        ]
+        return jsonify(sort_comments(comment_list)), 200
+    
+    except Exception as e:
+        print(f"Error getting comments: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()
+
+
+@events_bp.route("/post-comment", methods=["POST"])
+def post_comment():
+    cur = None
+    try:
+        # Check if the user is logged in
+        user_id = session.get("user_id")
+        school_id = session.get("school")
+
+        if not user_id:
+            return jsonify({"error": "User not logged in"}), 401
+    
+        data = request.json
+        print(data)
+
+        # Establish database connection
+        conn = mysql.connection
+        cur = conn.cursor()
+
+        # Query to add comment
+        cur.execute(
+            """INSERT INTO comments
+                (event_id, user_id, content) VALUES (%s, %s, %s)""",
+            (data['event_id'], user_id, data['comment'])
+        )
+        conn.commit()
+
+        #comment_list = get_comments(data['event_id'])
+        #print(comment_list)
+
+        #return jsonify(comment_list), 200
+
+        return jsonify({"message": "Comment added successfully"}), 200
+
+    except Exception as e:
+        print(f"Error adding comment: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()
+
+@events_bp.route("/post-sub-comment", methods=["POST"])
+def post_sub_comment():
+    cur = None
+    try:
+        # Check if the user is logged in
+        user_id = session.get("user_id")
+        school_id = session.get("school")
+
+        if not user_id:
+            return jsonify({"error": "User not logged in"}), 401
+        
+        data = request.json
+        print(data)
+
+        # Establish database connection
+        conn = mysql.connection
+        cur = conn.cursor()
+
+        # Query to add comment
+        cur.execute(
+            """INSERT INTO comments
+                (event_id, user_id, content, parent, indent_level) values
+                (%s, %s, %s, %s, %s)""",
+                (data['event_id'], user_id, data['comment'], data['parent_id'], data['indent_level'])
+        )
+        conn.commit()
+
+        return jsonify({"message": "Comment added successfully"}), 200
+    
+    except Exception as e:
+        print(f"Error adding comment: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()

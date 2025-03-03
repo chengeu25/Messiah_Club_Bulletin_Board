@@ -55,8 +55,24 @@ const eventLoader: LoaderFunction = async ({ params }) => {
   const eventJson = await response.json();
   const event = eventJson?.event;
 
+  const commentResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/events/get-comments/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  // Handle comment fetch response
+  if (!commentResponse.ok) { 
+    throw new Error('Failed to fetch comments');
+  }
+
+  const commentJson = await commentResponse.json();
+  const comments = commentJson?.comments;
+
   // Return user and event data
-  return json({ user, event }, { status: 200 });
+  return json({ user, event, comments }, { status: 200 });
 };
 
 export default eventLoader;

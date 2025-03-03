@@ -26,7 +26,12 @@ const eventAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');
   const id = formData.get('id');
-
+  const comment = formData.get('comment');
+  const commentId = formData.get('commentId');
+  const parentId = formData.get('parentId');
+  const eventId = formData.get('eventId');
+  const indentLevel = formData.get('indentLevel');
+  
   // Handle RSVP action
   if (action === 'rsvp') {
     const type = formData.get('type');
@@ -49,6 +54,67 @@ const eventAction: ActionFunction = async ({ request }) => {
       return null;
     }
     return redirect(`/dashboard/event/${id}`);
+  }
+  
+  if (action === 'comment') {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/events/post-comment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            event_id: id,
+            comment: comment,
+            comment_id: commentId
+          })
+        }
+      );
+      if (!response.ok) {
+        alert(
+          `Something went wrong, comment not sent. Error: ${response.statusText}`
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error(error);
+      return redirect(`/dashboard/event/${id}`);
+    }
+    return redirect(`/dashboard/event/${id}`);
+  }
+
+  if (action === 'subComment') {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/events/post-sub-comment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            event_id: eventId,
+            comment: comment,
+            parent_id: parentId,
+            indent_level: indentLevel
+          })
+        }
+      );
+      if (!response.ok) {
+        alert(
+          `Something went wrong, comment not sent. Error: ${response.statusText}`
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error(error);
+      return redirect(`/dashboard/event/${eventId}`);
+    }
+    return redirect(`/dashboard/event/${eventId}`);
   }
   return null;
 };

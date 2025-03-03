@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -10,6 +12,9 @@ import Comment from '../../../components/forums/Comment.component';
 import { EventDetailType, ImageType } from '../../../types/databaseTypes';
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
+import checkUser from '../../../helper/checkUser';
+import { UserType as User } from '../../../types/databaseTypes';
+import { useSchool } from '../../../contexts/SchoolContext';
 
 /**
  * Event details page component.
@@ -33,11 +38,238 @@ import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.comp
  * - Responsive design with card-based layout
  * - Placeholder comment section
  */
-const Event = () => {
-  // Retrieve event details from loader
-  const { event } = useLoaderData() as { event: EventDetailType };
-  const submit = useSubmit();
 
+
+const Event = () => {
+  const submit = useSubmit();
+  const location = useLocation();
+  const { event } = useLoaderData() as { event: EventDetailType };
+  const { currentSchool } = useSchool();
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [commentData, setCommentData] = useState<any[] | null>([]);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [commentInput, setCommentInput] = useState("");
+
+  const eventID = event.id;
+
+  const fetchComment = async () => {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL
+        }/api/events/get-comments/${eventID}`,
+        {
+          method: 'GET',
+          credentials: 'include'
+        }
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      const commentData = await response.json();
+      setCommentData(commentData);
+      await fetchComment();
+      // console.log('commentData afterwards: ', commentData);
+
+    } catch (error) {
+      setError('Failed to fetch comments');
+      console.error('Error fetching comments: ', error);
+    }
+  };
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const newError = searchParams.get('error');
+    const newMessage = searchParams.get('message');
+
+    if (newError || newMessage) {
+      if (newError) {
+        setError(decodeURIComponent(newError));
+        searchParams.delete('error');
+      }
+
+      if (newMessage) {
+        setMessage(decodeURIComponent(newMessage));
+        searchParams.delete('message');
+      }
+
+      // Update URL without triggering page reload
+      const newUrl = searchParams.toString()
+        ? `${location.pathname}?${searchParams.toString()}`
+        : location.pathname;
+      
+      window.history.replaceState({}, document.title, newUrl);
+    }
+  }, [location.search]);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = await checkUser();
+        setUserEmail((user as User).email);
+      } catch (error) {
+        console.error('Error checking user:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    setError(null);
+    setMessage(null);
+    // Fetch comment data from the API
+    /*const fetchComment = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL
+          }/api/events/get-comments/${eventID}`,
+          {
+            method: 'GET',
+            credentials: 'include'
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch comments');
+        }
+        const commentData = await response.json();
+        setCommentData(commentData);
+        
+      } catch (error) {
+        setError('Failed to fetch comments');
+        console.error('Error fetching comments: ', error);
+      }
+    };*/
+  
+    fetchComment();
+  }, []);
+
+  const handleSubmitComment = async (event: React.FormEvent<HTMLFormElement>) => {
+    setError(null);
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const comment = formData.get('comment')?.toString() || '';
+    const action = (
+      (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
+    ).name;
+
+    if (comment === '') {
+      return;
+    } else {
+      formData.append('schoolId', currentSchool?.id?.toString() ?? '');
+      formData.append('action', action);
+      //console.log("path name: ", location);
+      //console.log("form data: ", formData);
+      submit(
+        { id: eventID, comment: comment, action: 'comment' },
+        { method: 'POST' }
+      )
+    }
+
+    setCommentInput("");
+
+    //console.log('commentData: ', commentData);
+    // Update the comment section with new comments dynamically
+    /*const fetchComment = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL
+          }/api/events/get-comments/${eventID}`,
+          {
+            method: 'GET',
+            credentials: 'include'
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch comments');
+        }
+        const commentData = await response.json();
+        setCommentData(commentData);
+        await fetchComment();
+        console.log('commentData afterwards: ', commentData);
+        
+      } catch (error) {
+        setError('Failed to fetch comments');
+        console.error('Error fetching comments: ', error);
+      }
+    };*/
+
+    fetchComment();
+  };
+
+  const handleSubmitSubComment = async (
+    event: React.FormEvent<HTMLFormElement>,
+    item: {
+      comment_id: String,
+      indent_level: number,
+      event_id: number,
+      commentInput: string
+    }
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const comment = formData.get('comment')?.toString() || '';
+    const action = (
+      (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
+    ).name;
+    const indent = (item.indent_level ?? 0);
+
+    if (comment === '') {
+      return;
+    } else {
+      formData.append('action', action);
+      formData.append('parentId', item.comment_id.toString());
+      formData.append('eventId', eventID.toString());
+      formData.append('indentLevel', indent.toString());
+    }
+
+    submit(
+      {
+        comment: comment,
+        parentId: item.comment_id.toString(),
+        eventId: eventID,
+        action: 'subComment',
+        indentLevel: (indent + 1).toString()
+      },
+      {method: 'POST'}
+    )
+
+    item.commentInput = "";
+    setCommentInput("");
+
+    fetchComment();
+  };
+  /**
+     * Handles URL-based error and success messages.
+     *
+     * @function
+     * @description Updates error and success messages from URL parameters
+     */
+    useEffect(() => {
+      const searchParams = new URLSearchParams(location.search);
+      const newError = searchParams.get('error');
+      const newMessage = searchParams.get('message');
+  
+      if (newError || newMessage) {
+        if (newError) {
+          setError(decodeURIComponent(newError));
+          searchParams.delete('error');
+        }
+  
+        if (newMessage) {
+          setMessage(decodeURIComponent(newMessage));
+          searchParams.delete('message');
+        }
+  
+        // Update URL without triggering a page reload
+        const newUrl = searchParams.toString()
+          ? `${location.pathname}?${searchParams.toString()}`
+          : location.pathname;
+  
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    }, [location.search]);
+  
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-2'>
       {/* Event title and RSVP section */}
@@ -48,6 +280,8 @@ const Event = () => {
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
         <Form className='flex-shrink-0 flex'>
+          {error && <div className='text-red-500'>{error}</div>}
+          {message && <p className='text-green-500'>{message}</p>}
           <RSVPDropdown
             handleRSVPClick={(type) =>
               submit(
@@ -129,55 +363,49 @@ const Event = () => {
       <hr className='border-2 border-black w-full mt-2' />
       <h1 className='text-3xl font-bold text-left w-full'>Discuss</h1>
       <div className='flex flex-row w-full gap-2 items-center'>
-        <Input
-          label='Add a Comment: '
-          placeholder='Comment'
-          name='comment'
-          type='text'
-          filled={false}
-          labelOnSameLine
-        />
-        <div className='flex-shrink-0'>
-          <Button text='Comment' filled={true} className='w-auto' />
-        </div>
+        <Form onSubmit={handleSubmitComment} className='flex flex-col gap-2 w-full'>
+          <Input
+            label='Add a Comment: '
+            placeholder='Comment'
+            name='comment'
+            type='text'
+            filled={false}
+            value={commentInput}
+            onChange={(e) => setCommentInput((e.target as HTMLInputElement).value)}
+            labelOnSameLine
+          />
+          <div className='flex-shrink-0'>
+            <Button
+              text='Comment'
+              type='submit'
+              filled={true}
+              className='w-auto' />
+          </div>
+        </Form>
       </div>
 
-      {/* Placeholder comments */}
+      {/* Rendered comments */}
       <div className='w-full flex flex-col align-left gap-2'>
-        <Comment
-          creator='User'
-          content='Comment Lorem ipsum dolor sit amet, consectetur adipiscing
-          elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-          aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-          laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.'
-          lastModified={new Date()}
-        />
-        <Comment
-          creator='User'
-          content='Comment Lorem ipsum dolor sit amet, consectetur adipiscing
-          elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-          aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-          laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.'
-          lastModified={new Date()}
-          indentLevel={1}
-        />
-        <Comment
-          creator='User'
-          content='Comment Lorem ipsum dolor sit amet, consectetur adipiscing
-          elit, sed do eiusmod tempor incididunt ut labore et dolore magna
-          aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
-          laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
-          in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla
-          pariatur. Excepteur sint occaecat cupidatat non proident, sunt in
-          culpa qui officia deserunt mollit anim id est laborum.'
-          lastModified={new Date()}
-        />
+        {commentData && commentData.length > 0 ? (
+          commentData.map((item, index) => (
+            <Form key={index} onSubmit={(e) => handleSubmitSubComment(e, item)} className='flex flex-col gap-2 w-full'>
+              <Comment
+                creator={item.user_id}
+                content={item.content}
+                lastModified={new Date(item.posted_timestamp)}
+                commentId={item.comment_id}
+                indentLevel={item.indent_level}
+                commentInput={item.commentInput}
+                onChange={(e) => setCommentInput((e.target as HTMLInputElement).value)}
+                submitHandler={(e) => handleSubmitSubComment(e, item)}
+              />
+            </Form>
+          ))
+        ) : (
+            <div>
+             No comments yet
+            </div>
+        )}
       </div>
     </div>
   );
