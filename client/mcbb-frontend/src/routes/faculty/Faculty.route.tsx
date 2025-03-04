@@ -6,6 +6,7 @@ import {
 } from 'react-icons/fa';
 import Sidebar from '../../components/sidebar/Sidebar.component';
 import { Outlet } from 'react-router';
+import { IoIosDocument } from 'react-icons/io';
 
 const Faculty = () => {
   const buttonList = [
@@ -28,6 +29,11 @@ const Faculty = () => {
       text: 'School',
       icon: <FaBuilding />,
       route: '/dashboard/faculty/schoolEdit'
+    },
+    {
+      text: 'Reports',
+      icon: <IoIosDocument />,
+      route: '/dashboard/faculty/reports'
     }
   ];
 

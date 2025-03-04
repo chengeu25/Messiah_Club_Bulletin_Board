@@ -18,6 +18,12 @@ import { ActionFunction, redirect } from 'react-router-dom';
  *    - Send RSVP request to backend
  *    - Handle response and potential errors
  *    - Redirect to event details page
+ * 3. If action is cancel:
+ *    - Send cancel request to backend
+ *    - Handle response and potential errors
+ *    - Redirect to event details page
+ * 4. If action is reports:
+ *    - Redirect to event reports page
  *
  * @throws {Error} Displays an alert if RSVP request fails
  */
@@ -69,6 +75,11 @@ const eventAction: ActionFunction = async ({ request }) => {
     }
 
     return redirect('/dashboard/clubs');
+  }
+
+  // Handle reports action
+  if (action === 'reports') {
+    return redirect(`/dashboard/event/${id}/reports`);
   }
 
   return null;

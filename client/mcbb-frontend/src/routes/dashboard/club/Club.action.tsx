@@ -14,6 +14,7 @@ import { ActionFunction, json, redirect } from 'react-router';
  * 2. Managing event RSVP
  * 3. Viewing event details
  * 4. Managing club subscriptions
+ * 5. Getting reports
  *
  * @workflow
  * 1. Extract action type and related data from form submission
@@ -82,6 +83,15 @@ const clubAction: ActionFunction = async ({ request }) => {
       return json({ error: 'Missing eventId' }, { status: 400 });
     }
     return redirect(`/dashboard/event/${eventId}`);
+  }
+
+  // Handle report actions
+  if (action === 'getReport') {
+    if (!clubId) {
+      console.error("Missing clubId for 'report' action");
+      return json({ error: 'Missing clubId' }, { status: 400 });
+    }
+    return redirect(`/dashboard/club/${clubId}/reports`);
   }
 
   // Handle club subscription actions

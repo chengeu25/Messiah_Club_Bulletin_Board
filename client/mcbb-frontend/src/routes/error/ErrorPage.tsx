@@ -40,13 +40,13 @@ const ErrorPage = () => {
       </h1>
 
       {/* Navigation and support instructions */}
-      <p>
+      <div>
         Please try again or{' '}
         <Link to='/' className='underline'>
           click here
         </Link>{' '}
         to go back to the homepage.
-      </p>
+      </div>
     </div>
   );
 };

@@ -95,6 +95,11 @@ import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.ts
 import Faculty from './routes/faculty/Faculty.route.tsx';
 import facultyLoader from './routes/faculty/Faculty.loader.tsx';
 import { NotificationProvider } from './contexts/NotificationContext.tsx';
+import Reports from './routes/dashboard/reports/Reports.route.tsx';
+import clubReportsLoader from './routes/dashboard/reports/ClubReports.loader.tsx';
+import facultyReportsLoader from './routes/dashboard/reports/SchoolWideReports.loader.tsx';
+import eventReportsLoader from './routes/dashboard/reports/EventReports.loader.tsx';
+import userReportsLoader from './routes/dashboard/reports/UserReports.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -186,18 +191,20 @@ const router = createBrowserRouter(
           action={addInterestAction}
         />
         <Route
+          path='userReports/:id'
+          element={<Reports />}
+          loader={userReportsLoader}
+        />
+        <Route
           path='event'
-          element={<Event />}
-          loader={eventLoader}
-          action={eventAction}
           errorElement={
             <div className='w-full h-full flex justify-center items-center'>
-              <p className='text-center flex items-center justify-center flex-col'>
+              <div className='text-center flex items-center justify-center flex-col'>
                 <div className='w-[200px] h-[80px] invert'>
                   <DynamicLogo />
                 </div>
                 Event not found or access not permitted
-              </p>
+              </div>
             </div>
           }
         >
@@ -207,12 +214,18 @@ const router = createBrowserRouter(
             loader={eventLoader}
             action={eventAction}
             errorElement={<div>Event not found</div>}
-          />
+          >
+            <Route
+              path='images/:imageId'
+              element={<Image />}
+              action={imageAction}
+              loader={eventLoader}
+            />
+          </Route>
           <Route
-            path=':id/images/:imageId'
-            element={<Image />}
-            action={imageAction}
-            loader={eventLoader}
+            path=':id/reports'
+            element={<Reports />}
+            loader={eventReportsLoader}
           />
         </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
@@ -245,6 +258,12 @@ const router = createBrowserRouter(
           />
 
           <Route
+            path=':id/reports'
+            element={<Reports />}
+            loader={clubReportsLoader}
+          />
+
+          <Route
             path='new'
             element={<ClubForm />}
             action={clubFormAction}
@@ -253,6 +272,11 @@ const router = createBrowserRouter(
         </Route>
 
         <Route path='faculty' element={<Faculty />} loader={facultyLoader}>
+          <Route
+            path='reports'
+            element={<Reports />}
+            loader={facultyReportsLoader}
+          />
           <Route
             path='facultyEventApproval'
             element={<FacultyEventApproval />}

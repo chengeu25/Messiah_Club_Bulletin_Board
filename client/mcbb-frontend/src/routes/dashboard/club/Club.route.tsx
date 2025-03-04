@@ -1,9 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
 import Event from '../../../components/dashboard/Event.component';
-import { Outlet, useLoaderData, useNavigate, useParams } from 'react-router';
+import {
+  Outlet,
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useActionData
+} from 'react-router';
 import {
   ClubAdminType,
   ClubDetailType,
@@ -13,6 +19,7 @@ import {
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 const Club = () => {
   const submit = useSubmit();
@@ -26,6 +33,10 @@ const Club = () => {
     club: ClubDetailType;
     events: EventType[];
   };
+  const actionData = useActionData() as {
+    error: string;
+  };
+  const { addNotification } = useNotification();
 
   const isSubscribed = useMemo(() => club?.isSubscribed ?? false, [club]);
   const isBlocked = useMemo(() => club?.isBlocked ?? false, [club]);
@@ -42,6 +53,12 @@ const Club = () => {
 
     submit(formData, { method: 'post' });
   };
+
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+  }, [actionData]);
 
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
@@ -61,13 +78,19 @@ const Club = () => {
           onSubmit={handleSubmit}
           className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
-          {user?.clubAdmins?.includes(club?.id) && (
+          {(user?.clubAdmins?.includes(club?.id) || user.isFaculty) && (
             <>
               <Button
                 type='submit'
                 text='New Event'
                 filled={true}
                 name='newEvent'
+              />
+              <Button
+                type='submit'
+                text='Reports'
+                filled={true}
+                name='getReport'
               />
               <Button
                 onClick={() => navigate(`/club/${club.id}/sendEmail`)}

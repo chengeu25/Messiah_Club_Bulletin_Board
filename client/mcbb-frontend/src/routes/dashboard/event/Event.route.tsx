@@ -122,29 +122,47 @@ const Event = () => {
 
         {/* Cancel Event Button */}
         {!loading && (
-          <Form
-            onSubmit={(e) => {
-              if (!confirm('Are you sure you want to cancel this event?')) {
-                e.preventDefault(); // Prevent the form from submitting if the user cancels
-              }
-              setLoading(true);
-            }}
-            method='post'
-            className='flex-shrink-0'
-          >
-            {user?.clubAdmins?.some((adminClubId) =>
-              event.host.some((host) => host.id === adminClubId)
-            ) && (
-              <Button
-                type='submit'
-                name='action'
-                value='cancel'
-                text='Cancel Event'
-                className='bg-gray-500 text-white rounded hover:bg-red-500'
-              />
-            )}
-            <input type='hidden' name='id' value={event.id} />
-          </Form>
+          <>
+            <Form
+              onSubmit={(e) => {
+                if (!confirm('Are you sure you want to cancel this event?')) {
+                  e.preventDefault(); // Prevent the form from submitting if the user cancels
+                }
+                setLoading(true);
+              }}
+              method='post'
+              className='flex-shrink-0'
+            >
+              {(user.isFaculty ||
+                user?.clubAdmins?.some((adminClubId) =>
+                  event.host.some((host) => host.id === adminClubId)
+                )) && (
+                <Button
+                  type='submit'
+                  name='action'
+                  value='cancel'
+                  text='Cancel Event'
+                  className='bg-gray-500 text-white rounded hover:bg-red-500 text-nowrap'
+                />
+              )}
+              <input type='hidden' name='id' value={event.id} />
+            </Form>
+            <Form method='post'>
+              {(user.isFaculty ||
+                user?.clubAdmins?.some((adminClubId) =>
+                  event.host.some((host) => host.id === adminClubId)
+                )) && (
+                <Button
+                  type='submit'
+                  name='action'
+                  value='reports'
+                  text='Reports'
+                  className='bg-gray-500 text-white rounded text-nowrap'
+                />
+              )}
+              <input type='hidden' name='id' value={event.id} />
+            </Form>
+          </>
         )}
 
         {/* RSVP Dropdown */}

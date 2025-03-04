@@ -3,7 +3,8 @@ import {
   useLoaderData,
   useSearchParams,
   useFetcher,
-  useSubmit
+  useSubmit,
+  useNavigate
 } from 'react-router-dom';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Input from '../../../components/formElements/Input.component';
@@ -62,6 +63,7 @@ export const AdminUserForm = () => {
   } | null>(null);
   const updateNameFetcher = useFetcher();
   const { addNotification } = useNotification();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setTableUsers(users);
@@ -239,6 +241,13 @@ export const AdminUserForm = () => {
                               )
                             }
                             filled={false}
+                          />
+                          <Button
+                            text={'Reports'}
+                            filled={false}
+                            onClick={() =>
+                              navigate(`/dashboard/userReports/${user.email}`)
+                            }
                           />
                         </>
                       )}
