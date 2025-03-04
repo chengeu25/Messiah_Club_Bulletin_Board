@@ -68,9 +68,12 @@ const LandingPage = () => {
           />
 
           {/* New "Add School" button */}
+          <p className='font-italic text-gray-300 text-xl'>
+            Want to use SHARC for your school?
+          </p>
           <Button
             text='Add School'
-            className='p-4 mt-4'
+            className='p-4'
             onClick={() => navigate('/addSchool')}
             filled={true}
           />
@@ -178,4 +181,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import { useNotification } from '../../../contexts/NotificationContext';
 import useLoading from '../../../hooks/useLoading';
-import { add } from 'date-fns';
 import Loading from '../../../components/ui/Loading';
 
 /**
@@ -74,7 +73,10 @@ const AddSchoolPage = () => {
         throw new Error(result.error || 'An unexpected error occurred.');
       }
 
-      addNotification(result.message, 'success');
+      addNotification(
+        'Your school has been added, pending approval by the system admin.',
+        'success'
+      );
       setSchoolName('');
       setSchoolColor('');
       setEmailDomain('');
