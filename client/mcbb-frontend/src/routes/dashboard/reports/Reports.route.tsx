@@ -1,18 +1,20 @@
 import { useLoaderData, Form, useActionData } from 'react-router-dom';
 import Select from '../../../components/formElements/Select.component';
-import { Report } from '../../../reports';
 import Button from '../../../components/formElements/Button.component';
 import { downloadCSV, downloadPDF } from '../../../helper/reportDownloaders';
 import { useState } from 'react';
 
 const Reports: React.FC = () => {
-  const { reports } = useLoaderData() as { reports: Report[] };
+  const { reports, category } = useLoaderData() as {
+    reports: string[];
+    category: string;
+  };
   const actionData = useActionData() as {
     error?: string;
     report?: string[][];
     columns?: string[];
   } | null;
-  const [reportName, setReportName] = useState<string>(reports[0].name);
+  const [reportName, setReportName] = useState<string>(reports[0]);
 
   return (
     <div className='flex flex-col items-center w-full h-full p-5 relative'>
@@ -20,15 +22,15 @@ const Reports: React.FC = () => {
         <div className='report'></div>
         <Select
           label='Report'
-          options={reports?.map((report) => report.name)}
-          name='report'
+          options={reports}
+          name='name'
           filled={false}
           onChange={(e) => {
-            console.log('Selected report name:', e!.target.value);
             setReportName(e!.target.value);
           }}
           value={reportName}
         />
+        <input type='hidden' name='category' value={category} />
         <Button text='Generate Report' type='submit' />
         {actionData?.report !== undefined && actionData?.report !== null && (
           <div className='flex flex-row gap-2'>

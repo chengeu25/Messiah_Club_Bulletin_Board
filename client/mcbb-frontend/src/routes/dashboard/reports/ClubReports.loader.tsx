@@ -1,7 +1,6 @@
 import { LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
 import { UserType } from '../../../types/databaseTypes';
-import REPORTS from '../../../reports';
 
 const clubReportsLoader: LoaderFunction = async ({ request, params }) => {
   const user = await checkUser();
@@ -18,9 +17,23 @@ const clubReportsLoader: LoaderFunction = async ({ request, params }) => {
   ) {
     return redirect('/dashboard/home');
   }
-  const reports = REPORTS.SCHOOL_WIDE;
+  const resp = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/reports/names/CLUB`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  if (!resp.ok) {
+    return redirect('/dashboard/home');
+  }
+  const reports = await resp.json();
   return {
-    reports
+    reports: reports.names,
+    category: 'CLUB'
   };
 };
 

@@ -1,6 +1,5 @@
 import { LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
-import REPORTS from '../../../reports';
 import { EventDetailType, UserType } from '../../../types/databaseTypes';
 
 const eventReportsLoader: LoaderFunction = async ({ request, params }) => {
@@ -35,9 +34,23 @@ const eventReportsLoader: LoaderFunction = async ({ request, params }) => {
   ) {
     return redirect('/dashboard/home');
   }
-  const reports = REPORTS.EVENT;
+  const resp = await fetch(
+    `${import.meta.env.VITE_API_BASE_URL}/api/reports/names/EVENT`,
+    {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
+  if (!resp.ok) {
+    return redirect('/dashboard/home');
+  }
+  const reports = await resp.json();
   return {
-    reports
+    reports: reports.names,
+    category: 'EVENT'
   };
 };
 
