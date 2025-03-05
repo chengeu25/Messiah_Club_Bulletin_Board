@@ -1,21 +1,41 @@
+/**
+ * Interface representing a report.
+ * @property {string} name - The name of the report
+ * @property {string} query - The SQL query used to generate the report
+ * @property {string[]} queryParams - The query parameters for the report
+ */
 export interface Report {
   name: string;
   query: string;
   queryParams: string[];
 }
 
+/**
+ * Interface representing the structure of the report object.
+ * @property {Report[]} SCHOOL_WIDE - School-wide faculty-generated reports
+ * @property {Report[]} CLUB - Reports for a specific club
+ * @property {Report[]} USER - Reports for a specific user
+ * @property {Report[]} EVENT - Reports for a specific event
+ */
 interface ReportObject {
+  /** School-wide faculty-generated reports */
   SCHOOL_WIDE: Report[];
+  /** Reports for a specific club */
   CLUB: Report[];
+  /** Reports for a specific user */
   USER: Report[];
+  /** Reports for a specific event */
   EVENT: Report[];
 }
 
+/**
+ * Constant containing the predefined reports.
+ */
 const REPORTS: ReportObject = {
   SCHOOL_WIDE: [
     {
       name: 'User Activity Summary',
-      query: /*sql*/`
+      query: /*sql*/ `
         WITH rsvp_counts AS (
           SELECT 
             user_id, 
