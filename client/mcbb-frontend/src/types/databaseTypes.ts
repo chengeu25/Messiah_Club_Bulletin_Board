@@ -207,7 +207,7 @@ export interface SchoolType {
   emailDomain: string;
   /** The name of the school */
   name: string;
-  /** URL or path to the school's logo */
+  /** base64 encoded logo */
   logo: string;
   /** The preferred color for the school */
   color: string;

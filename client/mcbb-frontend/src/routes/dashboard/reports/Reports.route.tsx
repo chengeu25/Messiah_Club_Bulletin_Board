@@ -3,6 +3,7 @@ import Select from '../../../components/formElements/Select.component';
 import Button from '../../../components/formElements/Button.component';
 import { downloadCSV, downloadPDF } from '../../../helper/reportDownloaders';
 import { useState } from 'react';
+import { useSchool } from '../../../contexts/SchoolContext';
 
 const Reports: React.FC = () => {
   const { reports, category } = useLoaderData() as {
@@ -15,6 +16,7 @@ const Reports: React.FC = () => {
     columns?: string[];
   } | null;
   const [reportName, setReportName] = useState<string>(reports[0]);
+  const { currentSchool } = useSchool();
 
   return (
     <div className='flex flex-col items-center w-full h-full p-5 relative'>
@@ -45,7 +47,12 @@ const Reports: React.FC = () => {
               text='Download Report as PDF'
               type='button'
               onClick={() =>
-                downloadPDF(reportName, actionData.columns!, actionData.report!)
+                downloadPDF(
+                  reportName,
+                  actionData.columns!,
+                  actionData.report!,
+                  currentSchool?.logo
+                )
               }
             />
           </div>

@@ -4,6 +4,7 @@ import base64
 
 school_bp = Blueprint("school", __name__)
 
+
 @school_bp.route("/", methods=["GET"])
 def get_school():
     """
@@ -20,7 +21,7 @@ def get_school():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT school_name, school_logo, school_color FROM school WHERE school_id = %s AND IS_APPROVED = 1"
+        query = "SELECT school_name, school_logo, school_color, logo_prefix FROM school WHERE school_id = %s AND IS_APPROVED = 1"
         cursor.execute(query, (school_id,))
         school = cursor.fetchone()
         cursor.close()
@@ -29,14 +30,23 @@ def get_school():
             return jsonify({"error": "School not found"}), 404
 
         # Convert the school_logo to a base64-encoded string
-        school_logo_base64 = base64.b64encode(school[1]).decode('utf-8') if school[1] else None
+        school_logo_base64 = (
+            school[3] + "," + base64.b64encode(school[1]).decode("utf-8")
+            if school[1]
+            else None
+        )
 
-        return jsonify({
-            "name": school[0],
-            "logo": school_logo_base64,
-            "color": school[2],
-            "id": school_id,
-        }), 200
+        return (
+            jsonify(
+                {
+                    "name": school[0],
+                    "logo": school_logo_base64,
+                    "color": school[2],
+                    "id": school_id,
+                }
+            ),
+            200,
+        )
     except Exception as e:
         print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
@@ -87,25 +97,35 @@ def update_school():
         color = data.get("color")
         logo = data.get("logo")
 
-        # Log the values being passed to the query
-        print(f"Updating school with ID {school_id}:")
-        print(f"Name: {name}")
-        print(f"Color: {color}")
-        print(f"Logo: {logo}")
-
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cursor = mysql.connection.cursor()
         query = """
             UPDATE school
-            SET school_name = %s, school_color = %s, school_logo = %s
+            SET school_name = %s, school_color = %s, school_logo = %s, logo_prefix = %s
             WHERE school_id = %s
         """
         if logo:
-            logo_data = logo.split(',')[1] if ',' in logo else logo
-            cursor.execute(query, (name, color, base64.b64decode(logo_data), school_id))
+            logo_data = logo.split(",")[1] if "," in logo else logo
+            logo_prefix = logo.split(",")[0] if "," in logo else None
+
+            # Ensure proper padding for base64 string
+            missing_padding = len(logo_data) % 4
+            if missing_padding:
+                logo_data += "=" * (4 - missing_padding)
+
+            cursor.execute(
+                query,
+                (
+                    name,
+                    color,
+                    base64.b64decode(logo_data),
+                    logo_prefix,
+                    school_id,
+                ),
+            )
         else:
-            cursor.execute(query, (name, color, None, school_id))
+            cursor.execute(query, (name, color, None, None, school_id))
         mysql.connection.commit()
         cursor.close()
 
@@ -113,7 +133,7 @@ def update_school():
     except Exception as e:
         print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
-    
+
 
 @school_bp.route("/add-school", methods=["POST"])
 def add_school():
@@ -133,9 +153,14 @@ def add_school():
 
         # Decode Base64 logo if provided
         logo_binary = None
+        logo_prefix = None
+
         if logo:
             try:
-                logo_binary = base64.b64decode(logo.split(',')[1] if ',' in logo else logo)
+                logo_binary = base64.b64decode(
+                    logo.split(",")[1] if "," in logo else logo
+                )
+                logo_prefix = logo.split(",")[0] if "," in logo else None
             except Exception as e:
                 print("Error decoding image:", e)
                 return jsonify({"error": "Invalid image format."}), 400
@@ -145,10 +170,10 @@ def add_school():
 
         cursor = mysql.connection.cursor()
         query = """
-            INSERT INTO school (school_name, school_color, email_domain, school_logo)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO school (school_name, school_color, email_domain, school_logo, school_prefix)
+            VALUES (%s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (name, color, email_domain, logo_binary))
+        cursor.execute(query, (name, color, email_domain, logo_binary, logo_prefix))
         mysql.connection.commit()
         cursor.close()
 
