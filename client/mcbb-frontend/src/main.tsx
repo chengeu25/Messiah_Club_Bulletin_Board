@@ -100,6 +100,10 @@ import clubReportsLoader from './routes/dashboard/reports/ClubReports.loader.tsx
 import facultyReportsLoader from './routes/dashboard/reports/SchoolWideReports.loader.tsx';
 import eventReportsLoader from './routes/dashboard/reports/EventReports.loader.tsx';
 import userReportsLoader from './routes/dashboard/reports/UserReports.loader.tsx';
+import userReportsAction from './routes/dashboard/reports/UserReports.action.tsx';
+import clubReportsAction from './routes/dashboard/reports/ClubReports.action.tsx';
+import eventReportsAction from './routes/dashboard/reports/EventReports.action.tsx';
+import schoolWideReportsAction from './routes/dashboard/reports/SchoolWideReports.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -194,6 +198,7 @@ const router = createBrowserRouter(
           path='userReports/:id'
           element={<Reports />}
           loader={userReportsLoader}
+          action={userReportsAction}
         />
         <Route
           path='event'
@@ -226,6 +231,7 @@ const router = createBrowserRouter(
             path=':id/reports'
             element={<Reports />}
             loader={eventReportsLoader}
+            action={eventReportsAction}
           />
         </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
@@ -261,6 +267,7 @@ const router = createBrowserRouter(
             path=':id/reports'
             element={<Reports />}
             loader={clubReportsLoader}
+            action={clubReportsAction}
           />
 
           <Route
@@ -276,6 +283,7 @@ const router = createBrowserRouter(
             path='reports'
             element={<Reports />}
             loader={facultyReportsLoader}
+            action={schoolWideReportsAction}
           />
           <Route
             path='facultyEventApproval'

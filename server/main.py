@@ -13,10 +13,13 @@ from routes.admintools import admintools_bp
 from routes.school import school_bp
 from routes.emails import emails_bp
 from routes.prefs import prefs_bp
+from routes.reports import reports_bp
 from jobs.email_notification_job import EmailScheduler
 from flask_jwt_extended import JWTManager
+from flask.signals import appcontext_tearing_down
 import atexit
 import signal
+from flask_mysqldb import MySQLdb
 
 
 def create_app(config_class=Config):
@@ -89,24 +92,33 @@ def create_app(config_class=Config):
     app.register_blueprint(school_bp, url_prefix="/api/school")
     app.register_blueprint(emails_bp, url_prefix="/api/emails")
     app.register_blueprint(prefs_bp, url_prefix="/api/prefs")
+    app.register_blueprint(reports_bp, url_prefix="/api/reports")
 
     # Start email scheduler
     email_scheduler = EmailScheduler()
     email_scheduler.start()
-
-    # Register the stop method to be called on program exit
-    atexit.register(email_scheduler.stop)
 
     # Handle SIGINT (Ctrl+C) to stop the scheduler gracefully
     def handle_sigint(signum, frame):
         email_scheduler.stop()
         exit(0)
 
+    # Register the stop method to be called on program exit
+    atexit.register(lambda: handle_sigint(None, None))
+
     signal.signal(signal.SIGINT, handle_sigint)
 
     @app.before_request
     def before_request():
         check_session_timeout()
+
+    @appcontext_tearing_down.connect_via(app)
+    def close_mysql_connection(sender, **extra):
+        try:
+            if mysql.connection:
+                mysql.connection.close()
+        except MySQLdb.OperationalError:
+            pass
 
     return app
 

@@ -1,13 +1,27 @@
 /**
+ * Type representing the access control level required to view a report.
+ */
+type AccessControl = 'Club Admin' | 'Faculty';
+
+/**
+ * Type representing a query parameter.
+ * School will be replaced by the current school ID in the report generator on the backend
+ * ID will be replaced by the id of the user, club, or event the report is being generated for
+ */
+type QueryParam = 'School' | 'ID';
+
+/**
  * Interface representing a report.
  * @property {string} name - The name of the report
  * @property {string} query - The SQL query used to generate the report
- * @property {string[]} queryParams - The query parameters for the report
+ * @property {QueryParam[]} queryParams - The query parameters for the report
+ * @property {AccessControl} accessControl - The access control level required to view the report
  */
 export interface Report {
   name: string;
   query: string;
-  queryParams: string[];
+  queryParams: QueryParam[];
+  accessControl: AccessControl;
 }
 
 /**
@@ -72,10 +86,10 @@ const REPORTS: ReportObject = {
         LEFT JOIN rsvp_counts r ON u.email = r.user_id
         LEFT JOIN subscription_counts us ON u.email = us.email
         LEFT JOIN tag_groups t ON u.email = t.user_id
-        WHERE u.email = %s
-          AND u.school_id = %s
+        WHERE u.school_id = %s
         GROUP BY u.email, u.name;`,
-      queryParams: ['email', 'school_id']
+      queryParams: ['School'],
+      accessControl: 'Faculty'
     }
   ],
   CLUB: [],
