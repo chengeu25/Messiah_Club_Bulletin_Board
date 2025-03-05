@@ -67,7 +67,44 @@ REPORTS: ReportObject = {
             """,
             "queryParams": ["School"],
             "accessControl": "Faculty",
-        }
+        },
+        {
+            "name": "Subscriptions and RSVPs by Tag",
+            "query": """
+                WITH rsvp_counts AS
+                (
+                SELECT
+                    et.tag_id,
+                    COUNT(DISTINCT r.rsvp_id) AS rsvp_count
+                FROM rsvp r
+                JOIN event_tags et ON r.event_id = et.event_id
+                WHERE r.is_yes = 1
+                    AND r.is_active = 1
+                GROUP BY et.tag_id
+                ), club_counts AS
+                (
+                SELECT
+                    ct.tag_id,
+                    COUNT(DISTINCT us.subscription_id) AS club_count
+                FROM user_subscription us
+                JOIN club_tags ct ON us.club_id = ct.club_id
+                WHERE us.is_active = 1
+                    AND us.subscribed_or_blocked = 1
+                GROUP BY ct.tag_id
+                )
+                SELECT 
+                    t.tag_name, 
+                    COALESCE(rc.rsvp_count, 0) AS events_rsvpd, 
+                    COALESCE(cc.club_count, 0) AS clubs_subscribed
+                FROM tag t
+                LEFT JOIN rsvp_counts rc ON t.tag_id = rc.tag_id
+                LEFT JOIN club_counts cc ON t.tag_id = cc.tag_id
+                WHERE t.school_id = %s
+                GROUP BY t.tag_name, rc.rsvp_count, cc.club_count;
+            """,
+            "queryParams": ["School"],
+            "accessControl": "Faculty",
+        },
     ],
     "CLUB": [],
     "USER": [
@@ -86,7 +123,25 @@ REPORTS: ReportObject = {
             "accessControl": "Faculty",
         },
     ],
-    "EVENT": [],
+    "EVENT": [
+        {
+            "name": "Users RSVPd",
+            "query": """
+            SELECT 
+                e.event_name,
+                u.email,
+                u.name
+            FROM rsvp r
+            INNER JOIN users u ON r.user_id = u.email
+            INNER JOIN event e ON r.event_id = e.event_id
+            WHERE r.event_id = %s
+                AND r.is_active = 1
+                AND r.is_yes = 1;
+        """,
+            "queryParams": ["ID"],
+            "accessControl": "Faculty",
+        }
+    ],
 }
 
 reports_bp = Blueprint("reports", __name__)
