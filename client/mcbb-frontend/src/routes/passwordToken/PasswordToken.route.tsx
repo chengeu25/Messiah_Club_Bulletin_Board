@@ -11,6 +11,7 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import useLoading from '../../hooks/useLoading';
 import Loading from '../../components/ui/Loading';
 import { useNotification } from '../../contexts/NotificationContext';
+import passwordStrongOrNah from '../../helper/passwordstrength';
 
 /**
  * ForgotPasswordToken component for password reset token validation and password reset.
@@ -94,6 +95,11 @@ const ForgotPassswordToken = () => {
       String(formData.get('confirmPassword'))
     ) {
       setError('Passwords do not match');
+      setLoading(false);
+    } else if (!passwordStrongOrNah(String(formData.get('newPassword')))) {
+      setError(
+        'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, one number, and one special character (!@#$%^&*)'
+      );
       setLoading(false);
     } else {
       // Append token and submit form
