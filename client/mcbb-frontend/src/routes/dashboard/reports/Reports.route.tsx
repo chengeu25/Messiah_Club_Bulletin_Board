@@ -2,7 +2,8 @@ import { useLoaderData, Form, useActionData } from 'react-router-dom';
 import Select from '../../../components/formElements/Select.component';
 import { Report } from '../../../reports';
 import Button from '../../../components/formElements/Button.component';
-import { downloadCSV } from '../../../helper/reportDownloaders';
+import { downloadCSV, downloadPDF } from '../../../helper/reportDownloaders';
+import { useState } from 'react';
 
 const Reports: React.FC = () => {
   const { reports } = useLoaderData() as { reports: Report[] };
@@ -11,6 +12,7 @@ const Reports: React.FC = () => {
     report?: string[][];
     columns?: string[];
   } | null;
+  const [reportName, setReportName] = useState<string>(reports[0].name);
 
   return (
     <div className='flex flex-col items-center w-full h-full p-5 relative'>
@@ -21,14 +23,30 @@ const Reports: React.FC = () => {
           options={reports?.map((report) => report.name)}
           name='report'
           filled={false}
+          onChange={(e) => {
+            console.log('Selected report name:', e!.target.value);
+            setReportName(e!.target.value);
+          }}
+          value={reportName}
         />
         <Button text='Generate Report' type='submit' />
         {actionData?.report !== undefined && actionData?.report !== null && (
-          <Button
-            text='Download Report as CSV'
-            type='button'
-            onClick={() => downloadCSV(actionData.columns!, actionData.report!)}
-          />
+          <div className='flex flex-row gap-2'>
+            <Button
+              text='Download Report as CSV'
+              type='button'
+              onClick={() =>
+                downloadCSV(actionData.columns!, actionData.report!)
+              }
+            />
+            <Button
+              text='Download Report as PDF'
+              type='button'
+              onClick={() =>
+                downloadPDF(reportName, actionData.columns!, actionData.report!)
+              }
+            />
+          </div>
         )}
       </Form>
       {actionData?.report !== undefined && actionData?.report !== null && (
