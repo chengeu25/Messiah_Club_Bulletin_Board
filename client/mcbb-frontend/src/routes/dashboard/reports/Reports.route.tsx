@@ -2,8 +2,9 @@ import { useLoaderData, Form, useActionData } from 'react-router-dom';
 import Select from '../../../components/formElements/Select.component';
 import Button from '../../../components/formElements/Button.component';
 import { downloadCSV, downloadPDF } from '../../../helper/reportDownloaders';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSchool } from '../../../contexts/SchoolContext';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 const Reports: React.FC = () => {
   const { reports, category } = useLoaderData() as {
@@ -17,6 +18,13 @@ const Reports: React.FC = () => {
   } | null;
   const [reportName, setReportName] = useState<string>(reports[0]);
   const { currentSchool } = useSchool();
+  const { addNotification } = useNotification();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+  }, [actionData]);
 
   return (
     <div className='flex flex-col items-center w-full h-full p-5 relative'>

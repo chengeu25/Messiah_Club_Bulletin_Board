@@ -70,7 +70,22 @@ REPORTS: ReportObject = {
         }
     ],
     "CLUB": [],
-    "USER": [],
+    "USER": [
+        {
+            "name": "User Subscription History",
+            "query": """
+            SELECT 
+                email, 
+                club_id, 
+                subscribed_or_blocked, 
+                is_active
+            FROM user_subscription
+            WHERE email = %s;
+        """,
+            "queryParams": ["ID"],
+            "accessControl": "Faculty",
+        },
+    ],
     "EVENT": [],
 }
 
@@ -145,6 +160,7 @@ def get_report():
         report = cursor.fetchall()
         column_titles = [desc[0] for desc in cursor.description]
     except Exception as e:
+        print(e)
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
     # Close the cursor and connection
