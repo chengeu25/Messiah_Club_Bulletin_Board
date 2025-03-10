@@ -163,6 +163,7 @@ def verify_email():
         )  # Function that updates EMAIL_VERIFIED field
 
         if update_success:
+            session.pop("verification_code", None)
             return jsonify({"message": "Email verified successfully"}), 200
         else:
             return jsonify({"error": "Failed to update verification status"}), 500
