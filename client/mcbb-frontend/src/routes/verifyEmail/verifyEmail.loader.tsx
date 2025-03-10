@@ -59,7 +59,7 @@ const verifyEmailLoader: LoaderFunction = async ({
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ email: user.email }) // Assumes checkUser returns user email
+        body: JSON.stringify({ email: user.email, forceResend: false }) // Assumes checkUser returns user email
       }
     );
 

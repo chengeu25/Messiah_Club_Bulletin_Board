@@ -76,7 +76,7 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ email }) //(no need to send email in the body)
+        body: JSON.stringify({ email, forceResend: true }) //(no need to send email in the body)
       }
     );
 

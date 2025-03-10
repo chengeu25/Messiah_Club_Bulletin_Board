@@ -178,6 +178,12 @@ def resend_code():
     This endpoint generates a new 6-character verification code,
     updates the session, and sends a new verification email.
 
+    Expected JSON payload:
+    {
+        "email": str  # User's email address,
+        "forceResend": bool  # Optional, defaults to False, whether to force resend
+    }
+
     Returns:
         JSON response:
         - On successful code resend:
@@ -195,19 +201,22 @@ def resend_code():
     # get email from session
     email = session.get("user_id")
 
-    # Generate a new verification code
-    new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    if session.get("verification_code") is None or request.json.get("forceResend"):
+        # Generate a new verification code
+        new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-    # Update the verification code in the database
-    session["verification_code"] = new_code
+        # Update the verification code in the database
+        session["verification_code"] = new_code
 
-    # Send the new verification code to the user's email
-    verified = send_verification_email(email, new_code)
+        # Send the new verification code to the user's email
+        verified = send_verification_email(email, new_code)
 
-    if not verified:
-        return jsonify({"error": "Failed to send verification code"}), 500
+        if not verified:
+            return jsonify({"error": "Failed to send verification code"}), 500
 
-    return jsonify({"message": "Verification code resent"}), 200
+        return jsonify({"message": "Verification code resent"}), 200
+    else:
+        return jsonify({"message": "Verification code already sent"}), 200
 
 
 @auth_bp.route("/check-user-cookie", methods=["GET"])
