@@ -10,6 +10,8 @@ import { OptionType } from '../components/formElements/Select.styles';
 export interface UserType {
   /** The full name of the user */
   name: string;
+  /** Gender of the user */
+  gender: string;
   /** The user's email address, used as a unique identifier */
   email: string;
   /** Indicates whether the user's email has been verified */

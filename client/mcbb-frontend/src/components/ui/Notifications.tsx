@@ -15,7 +15,7 @@ const Notifications = ({
   deleteNotification: (id: string) => void;
 }) => (
   <div
-    className={`fixed top-4 w-screen flex flex-col items-center gap-4 z-[1000]`}
+    className={`fixed top-4 left-1/2 transform -translate-x-1/2 w-[90dvw] sm:w-[60dvw] lg:w-[600px] flex flex-col items-center gap-4 z-[1000]`}
   >
     {notifications.map(({ type, message, id }) => (
       <div

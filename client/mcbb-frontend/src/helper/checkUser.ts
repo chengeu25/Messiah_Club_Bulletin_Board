@@ -112,7 +112,8 @@ export class AuthSync {
           isFaculty: json.isFaculty === 1 ? true : false,
           canDeleteFaculty: json.canDeleteFaculty === 1 ? true : false,
           clubAdmins: json.clubAdmins,
-          tags: json.tags
+          tags: json.tags,
+          gender: json.gender
         };
       } catch {
         return false;

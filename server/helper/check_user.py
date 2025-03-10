@@ -82,7 +82,7 @@ def get_user_session_info():
     try:
         # Fetch user details
         cur.execute(
-            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned, gender
                 FROM users 
                 WHERE email = %s
                     AND is_active = 1
@@ -139,6 +139,7 @@ def get_user_session_info():
             "canDeleteFaculty": result[4],
             "clubAdmins": club_admins,
             "tags": tags,
+            "gender": result[6],
         }
 
     except Exception as e:

@@ -138,7 +138,7 @@ const Root = () => {
   }, [school, setCurrentSchool]);
 
   return (
-    <div className='w-screen h-[100dvh] flex flex-col relative bg-gray-100'>
+    <div className='h-[100dvh] flex flex-col relative bg-gray-100'>
       <Notifications
         notifications={notifications}
         deleteNotification={deleteNotification}

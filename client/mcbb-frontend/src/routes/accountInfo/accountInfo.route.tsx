@@ -1,10 +1,16 @@
 import React, { useEffect } from 'react';
-import { Form, useActionData, useSubmit } from 'react-router-dom';
+import {
+  Form,
+  useActionData,
+  useLoaderData,
+  useSubmit
+} from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import { useNotification } from '../../contexts/NotificationContext';
 import Loading from '../../components/ui/Loading';
 import useLoading from '../../hooks/useLoading';
+import { UserType } from '../../types/databaseTypes';
 
 /**
  * AccountInfo component for updating user account name and gender.
@@ -22,6 +28,7 @@ const AccountInfo = () => {
   } | null;
   const { addNotification } = useNotification();
   const { loading, setLoading } = useLoading();
+  const { user } = useLoaderData() as { user: UserType };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -61,6 +68,7 @@ const AccountInfo = () => {
             name='name'
             type='text'
             placeholder='Full Name'
+            defaultValue={user?.name || ''}
             filled={false}
           />
 
@@ -68,7 +76,15 @@ const AccountInfo = () => {
             <label className='text-lg'>Gender:</label>
             <select
               name='gender'
-              defaultValue=''
+              defaultValue={
+                user?.gender
+                  ? user?.gender === 'M'
+                    ? 'male'
+                    : user?.gender === 'F'
+                    ? 'female'
+                    : 'other'
+                  : ''
+              }
               className='p-2 border border-gray-300 rounded'
             >
               <option value='' disabled>
