@@ -111,14 +111,14 @@ REPORTS: ReportObject = {
         {
             "name": "User Subscription History",
             "query": """
-            SELECT 
-                email, 
-                club_id, 
-                subscribed_or_blocked, 
-                is_active
-            FROM user_subscription
-            WHERE email = %s;
-        """,
+                SELECT 
+                    email, 
+                    club_id, 
+                    subscribed_or_blocked, 
+                    is_active
+                FROM user_subscription
+                WHERE email = %s;
+            """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
         },
@@ -127,17 +127,17 @@ REPORTS: ReportObject = {
         {
             "name": "Users RSVPd",
             "query": """
-            SELECT 
-                e.event_name,
-                u.email,
-                u.name
-            FROM rsvp r
-            INNER JOIN users u ON r.user_id = u.email
-            INNER JOIN event e ON r.event_id = e.event_id
-            WHERE r.event_id = %s
-                AND r.is_active = 1
-                AND r.is_yes = 1;
-        """,
+                SELECT 
+                    e.event_name,
+                    u.email,
+                    u.name
+                FROM rsvp r
+                INNER JOIN users u ON r.user_id = u.email
+                INNER JOIN event e ON r.event_id = e.event_id
+                WHERE r.event_id = %s
+                    AND r.is_active = 1
+                    AND r.is_yes = 1;
+            """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
         }
