@@ -101,6 +101,10 @@ const ClubEventForm = () => {
     }
   };
 
+  const handleRemovePhoto = (index: number) => {
+    setEventPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
@@ -254,8 +258,15 @@ const ClubEventForm = () => {
             <p className='text-sm font-semibold'>Selected Photos:</p>
             <ul>
               {eventPhotos.map((photo, idx) => (
-                <li key={idx} className='text-sm text-gray-700'>
+                <li key={idx} className='text-sm text-gray-700 flex items-center'>
                   {photo.name}
+                  <button
+                    type='button'
+                    onClick={() => handleRemovePhoto(idx)}
+                    className='ml-2 text-red-500'
+                  >
+                    Remove
+                  </button>
                 </li>
               ))}
             </ul>

@@ -74,7 +74,7 @@ const eventAction: ActionFunction = async ({ request }) => {
       return null;
     }
 
-    return redirect('/dashboard/clubs');
+    return redirect('/dashboard/home');
   }
 
   // Handle reports action
