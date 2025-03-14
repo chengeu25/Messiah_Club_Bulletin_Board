@@ -4,7 +4,8 @@ from helper.check_user import get_user_session_info
 from typing import List, Literal, TypedDict
 
 AccessControl = Literal["Club Admin", "Faculty"]
-QueryParam = Literal["School", "ID", "Year", "UserID"]
+QueryParam = Literal["School", "ID"]
+
 
 class Report(TypedDict):
     name: str
@@ -12,11 +13,13 @@ class Report(TypedDict):
     queryParams: List[QueryParam]
     accessControl: AccessControl
 
+
 class ReportObject(TypedDict):
     SCHOOL_WIDE: List[Report]
     CLUB: List[Report]
     USER: List[Report]
     EVENT: List[Report]
+
 
 REPORTS: ReportObject = {
     "SCHOOL_WIDE": [
@@ -137,7 +140,7 @@ REPORTS: ReportObject = {
                 FROM comments c
                 WHERE c.user_id = %s;
             """,
-            "queryParams": ["UserID"],
+            "queryParams": ["ID"],
             "accessControl": "Faculty",
         },
     ],
@@ -181,6 +184,7 @@ REPORTS: ReportObject = {
 
 reports_bp = Blueprint("reports", __name__)
 
+
 def resolve_params(params, id):
     return_val = []
     for param in params:
@@ -188,13 +192,10 @@ def resolve_params(params, id):
             return_val.append(id)
         elif param == "School":
             return_val.append(session.get("school"))
-        elif param == "Year":
-            return_val.append(id)
-        elif param == "UserID":
-            return_val.append(id)
         else:
             return_val.append(param)
     return return_val
+
 
 @reports_bp.route("/", methods=["POST"])
 def get_report():
@@ -260,6 +261,7 @@ def get_report():
 
     # Return the report data as JSON
     return jsonify({"report": report, "columns": column_titles}), 200
+
 
 @reports_bp.route("/names/<category>", methods=["GET"])
 def get_report_names(category):
