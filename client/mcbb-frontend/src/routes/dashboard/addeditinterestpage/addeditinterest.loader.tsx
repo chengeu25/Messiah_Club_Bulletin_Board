@@ -19,11 +19,15 @@ import { UserType as User } from '../../../types/databaseTypes';
  * 3. Redirect to email verification if email is not verified
  * 4. (Placeholder for future interest data fetching)
  */
-const AddedInterestLoader: LoaderFunction = async () => {
+const AddedInterestLoader: LoaderFunction = async ({ request }) => {
+  const url = new URL(request.url);
   // Check user authentication
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + url.pathname);
+  }
+  if ((user as User).isFaculty === false) {
+    return redirect('/dashboard/home');
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

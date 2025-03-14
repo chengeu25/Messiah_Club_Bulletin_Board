@@ -1,15 +1,31 @@
 import base64
-from datetime import datetime
-from flask import Blueprint, jsonify, session, request
+from datetime import datetime, timedelta, timezone
+from flask import Blueprint, jsonify, logging, session, request
+import jwt
 import pytz
 from extensions import mysql
 from config import Config
 import json
-from werkzeug.utils import secure_filename
 from helper.check_user import get_user_session_info
+import traceback
+from helper.send_email import send_email
+import pytz
+from dotenv import load_dotenv
+import os
+from flask_cors import CORS
 
 
 events_bp = Blueprint("events", __name__)
+
+# Apply CORS to this specific blueprint
+CORS(events_bp, supports_credentials=True)
+
+mail = None
+
+# Load environment variables from .env file
+load_dotenv()
+
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 
 # Check if the file is allowed based on its extension
@@ -78,7 +94,9 @@ def get_club_id(cur, club_name):
         raise ValueError("Club not found")
 
 
-def get_events_by_date(cur, start_date, end_date, school_id, user_id):
+def get_events_by_date(
+    cur, start_date, end_date, school_id, user_id, filter_query="", approved=True
+):
     """
     Retrieve events within a specified date range for a specific school.
 
@@ -91,6 +109,11 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
         end_date (str): ISO 8601 formatted end date to retrieve events until
         school_id (int): Unique identifier of the school to filter events
         user_id (int): Unique identifier of the user
+        filter_query (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
+        approved (bool): Optional flag to filter events by approval status (default: True)
 
     Returns:
         dict: A dictionary containing:
@@ -109,6 +132,8 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
                             'rsvp': str or None,
                             'tags': [str],
                             'subscribed': bool,
+                            'image': str,
+                            'genderRestriction': str
                         }
                     ]
                 }
@@ -128,77 +153,100 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
         start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
         end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
         cur.execute(
-            """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-                WHERE start_time BETWEEN %s AND %s
-                    AND is_active = 1
-                    AND is_approved = 1
-                    AND school_id = %s""",
-            (start_date, end_date, school_id),
+            """SELECT e.event_id,
+                      e.start_time, 
+                      e.end_time, 
+                      e.location, 
+                      e.description, 
+                      e.cost, 
+                      e.event_name,
+                      GROUP_CONCAT(DISTINCT eh.club_id SEPARATOR ','),
+                      GROUP_CONCAT(DISTINCT c.club_name SEPARATOR ','),
+                      r.is_yes,
+                      GROUP_CONCAT(DISTINCT t.tag_name SEPARATOR ','),
+                      CASE 
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 1 THEN 1 ELSE 0 END) = 1 THEN 1
+                        WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
+                        ELSE NULL
+                      END AS is_subscribed,
+                      (SELECT image_prefix
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_prefix,
+                      (SELECT image
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image,
+                      (SELECT event_photo_id
+                        FROM event_photo
+                        WHERE event_id = e.event_id
+                        ORDER BY event_photo_id
+                        LIMIT 1) AS image_id,
+                      e.gender_restriction
+                FROM event e
+                LEFT JOIN event_host eh
+                    ON eh.event_id = e.event_id
+                    AND eh.is_approved = 1
+                LEFT JOIN club c
+                    ON c.club_id = eh.club_id
+                    AND c.is_active = 1
+                LEFT JOIN rsvp r
+                    ON r.event_id = e.event_id
+                    AND r.user_id = %s
+                    AND r.is_active = 1
+                LEFT JOIN event_tags et
+                    ON et.event_id = e.event_id
+                LEFT JOIN tag t
+                    ON t.tag_id = et.tag_id
+                LEFT JOIN event_photo ep
+                    ON ep.event_id = e.event_id
+                LEFT JOIN user_subscription us
+                    ON us.club_id = eh.club_id
+                    AND us.email = %s
+                    AND us.is_active = 1
+                    AND eh.event_id = e.event_id
+                LEFT JOIN users u
+                    ON u.email = %s
+                WHERE e.start_time BETWEEN %s AND %s
+                    AND e.is_active = 1
+                    AND e.is_approved = %s
+                    AND e.school_id = %s
+                    AND (r.is_yes = 1 OR %s <> 'Attending')
+                    AND ((e.gender_restriction IS NULL) 
+                        OR (e.gender_restriction = u.gender) 
+                        OR (u.is_faculty = 1))
+                GROUP BY e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name
+                HAVING (is_subscribed = 1 OR (%s <> 'Hosted by Subscribed Clubs'))
+                    AND ((is_subscribed <> 0 OR is_subscribed IS NULL) OR (%s <> 'Suggested'))
+                    AND (is_subscribed = 1
+                            OR %s <> 'Suggested'
+                            OR r.is_yes = 1
+                            OR EXISTS
+                                (SELECT * FROM user_tags ut
+                                    INNER JOIN event_tags et2
+                                        ON et2.event_id = e.event_id
+                                            AND et2.tag_id = ut.tag_id
+                                    WHERE ut.user_id = %s))""",
+            (
+                user_id,
+                user_id,
+                user_id,
+                start_date,
+                end_date,
+                approved,
+                school_id,
+                filter_query,
+                filter_query,
+                filter_query,
+                filter_query,
+                user_id,
+            ),
         )
         result = cur.fetchall()
         if result is None:
             return {"error": "No events found", "status": 404}
-        cur.execute(
-            """SELECT c.club_name, eh.event_id, c.club_id FROM event_host eh
-                    INNER JOIN club c ON c.club_id = eh.club_id
-                    WHERE c.is_active = 1
-                        AND c.school_id = %s""",
-            (school_id,),
-        )
-        result_2 = cur.fetchall()
-        result_2 = list(
-            map(lambda x: {"club": x[0], "club_id": x[2], "event": x[1]}, result_2)
-        )
-        cur.execute(
-            """SELECT r.event_id, r.is_yes FROM rsvp r
-                    INNER JOIN event e 
-                        ON e.event_id = r.event_id
-                    WHERE r.user_id = %s
-                        AND e.is_active = 1
-                        AND e.is_approved = 1
-                        AND r.is_active = 1
-                        AND e.school_id = %s""",
-            (user_id, school_id),
-        )
-        result_3 = cur.fetchall()
-        result_3 = list(map(lambda x: {"event": x[0], "type": x[1]}, result_3))
-        cur.execute(
-            """SELECT et.event_id, t.tag_name FROM tag t
-                    INNER JOIN event_tags et
-                        ON t.tag_id = et.tag_id"""
-        )
-        result_4 = cur.fetchall()
-        result_4 = list(
-            map(
-                lambda x: {"event": x[0], "tag": x[1]},
-                result_4,
-            )
-        )
-        cur.execute(
-            """SELECT eh.event_id, ( 
-                SELECT COUNT(*) FROM user_subscription us 
-                    INNER JOIN event_host eh2 
-                        ON us.club_id = eh2.club_id
-                    WHERE us.email = %s
-                        AND eh2.event_id = eh.event_id
-                        AND us.is_active = 1
-                        AND us.subscribed_or_blocked = 1
-                ) > 0 AS is_subscribed 
-                FROM event_host eh
-                INNER JOIN event e 
-                    ON e.event_id = eh.event_id
-                WHERE e.is_active = 1
-                    AND e.is_approved = 1
-                    AND e.school_id = %s""",
-            (user_id, school_id),
-        )
-        result_5 = cur.fetchall()
-        result_5 = list(
-            map(
-                lambda x: {"event": x[0], "subscribed": x[1]},
-                result_5,
-            )
-        )
         final_result = list(
             map(
                 lambda x: {
@@ -217,44 +265,26 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
                     "description": x[4],
                     "cost": x[5],
                     "title": x[6],
-                    "host": list(
-                        map(
-                            lambda y: {"name": y["club"], "id": y["club_id"]},
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_2,
-                                )
-                            ),
+                    "host": [
+                        {"id": id_val, "name": name_val}
+                        for id_val, name_val in zip(
+                            [] if x[7] is None else x[7].split(","),
+                            [] if x[8] is None else x[8].split(","),
                         )
-                    ),
-                    "rsvp": next(
-                        (
-                            ("block" if item["type"] == 0 else "rsvp")
-                            for item in result_3
-                            if item["event"] == x[0]
+                    ],
+                    "rsvp": "" if x[9] is None else ("rsvp" if x[9] else "block"),
+                    "tags": [] if x[10] is None else x[10].split(","),
+                    "subscribed": True if x[11] == 1 else False,
+                    "blocked": True if x[11] == 0 else False,
+                    "image": {
+                        "image": (
+                            f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}"
+                            if (x[12] is not None and x[13] is not None)
+                            else None
                         ),
-                        None,
-                    ),
-                    "tags": list(
-                        map(
-                            lambda y: y["tag"],
-                            list(
-                                filter(
-                                    lambda y: y["event"] == x[0],
-                                    result_4,
-                                )
-                            ),
-                        )
-                    ),
-                    "subscribed": next(
-                        (
-                            item["subscribed"]
-                            for item in result_5
-                            if item["event"] == x[0]
-                        ),
-                        False,
-                    ),
+                        "id": x[14],
+                    },
+                    "genderRestriction": x[15],
                 },
                 result,
             )
@@ -264,8 +294,181 @@ def get_events_by_date(cur, start_date, end_date, school_id, user_id):
     except ValueError:
         return {"error": "Invalid date format", "status": 400}
     except Exception as e:
-        print(e)
-        return {"error": f"Failed to get events", "status": 500}
+        print(f"Error fetching events: {e}")
+        return {"error": "Failed to fetch events", "status": 500}
+
+
+@events_bp.route("/event-photos", methods=["GET"])
+def get_all_event_photos():
+    """
+    Retrieve all event photos.
+
+    This endpoint fetches all event photos from the database.
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "photos": [
+                    {
+                        "event_id": int,
+                        "photo_id": int,
+                        "image": str (base64 encoded),
+                        "image_prefix": str
+                    }
+                ]
+            }, 200 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+    """
+    try:
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """SELECT event_id, event_photo_id, image, image_prefix FROM event_photo"""
+        )
+        result = cur.fetchall()
+        cur.close()
+
+        photos = [
+            {
+                "event_id": row[0],
+                "photo_id": row[1],
+                "image": base64.b64encode(row[2]).decode("utf-8"),
+                "image_prefix": row[3],
+            }
+            for row in result
+        ]
+
+        return jsonify({"photos": photos}), 200
+
+    except Exception as e:
+        print(f"Error fetching event photos: {e}")
+        return jsonify({"error": "Failed to fetch event photos"}), 500
+
+
+def send_faculty_approval_email(event_id):
+    try:
+        cur = mysql.connection.cursor()
+        # Fetch event name
+        cur.execute("SELECT event_name FROM event WHERE event_id = %s", (event_id,))
+        event_name = cur.fetchone()[0]
+
+        # Fetch club admins
+        cur.execute(
+            """SELECT c.club_name, u.email FROM event_host eh
+               INNER JOIN club c ON c.club_id = eh.club_id
+               INNER JOIN club_admin ca ON ca.club_id = c.club_id
+               INNER JOIN users u ON u.email = ca.user_id
+               WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
+            (event_id,),
+        )
+        club_admins = cur.fetchall()
+        cur.close()
+
+        if not club_admins:
+            print(f"No club admins found for event ID {event_id}")
+            return
+
+        for club_name, email in club_admins:
+            subject = "Event Approved"
+            body = f"Dear {club_name} Admin,\n\nGood news! Your event '{event_name}' has been approved by the faculty.\n\nBest regards,\nSHARC Team"
+            send_email(email, subject, body)
+            print(f"Approval email sent to {email}")
+
+    except Exception as e:
+        print(f"Error sending approval email: {e}")
+
+
+def send_faculty_decline_email(event_id):
+    try:
+        cur = mysql.connection.cursor()
+        # Fetch event name
+        cur.execute("SELECT event_name FROM event WHERE event_id = %s", (event_id,))
+        event_name = cur.fetchone()[0]
+
+        # Fetch club admins
+        cur.execute(
+            """SELECT c.club_name, u.email FROM event_host eh
+               INNER JOIN club c ON c.club_id = eh.club_id
+               INNER JOIN club_admin ca ON ca.club_id = c.club_id
+               INNER JOIN users u ON u.email = ca.user_id
+               WHERE eh.event_id = %s AND c.is_active = 1 AND eh.is_approved = 1""",
+            (event_id,),
+        )
+        club_admins = cur.fetchall()
+        cur.close()
+
+        if not club_admins:
+            print(f"No club admins found for event ID {event_id}")
+            return
+
+        for club_name, email in club_admins:
+            subject = "Event Declined"
+            body = f"Dear {club_name} Admin,\n\nUnfortunately, your event '{event_name}' has been declined by the faculty.\n\nBest regards,\nSHARC Team"
+            send_email(email, subject, body)
+            print(f"Decline email sent to {email}")
+
+    except Exception as e:
+        print(f"Error sending decline email: {e}")
+
+
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+
+@events_bp.route("/approve_event", methods=["POST"])
+def approve_event():
+    """Approve an event by setting is_approved to 1"""
+    data = request.json
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return jsonify({"error": "Missing event_id"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("UPDATE event SET is_approved = 1 WHERE event_id = %s", (event_id,))
+        mysql.connection.commit()
+        cur.close()
+
+        # Send approval email
+        send_faculty_approval_email(event_id)
+
+        return jsonify({"message": "Event approved successfully"}), 200
+    except Exception as e:
+        logging.error(f"Error approving event: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@events_bp.route("/decline_event", methods=["POST"])
+def decline_event():
+    """Decline an event by setting is_approved to 0 and is_active to 0"""
+    data = request.json
+    event_id = data.get("event_id")
+
+    if not event_id:
+        return jsonify({"error": "Missing event_id"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            "UPDATE event SET is_approved = 0, is_active = 0 WHERE event_id = %s",
+            (event_id,),
+        )
+        mysql.connection.commit()
+        cur.close()
+
+        # Send decline email
+        send_faculty_decline_email(event_id)
+
+        return jsonify({"message": "Event declined successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @events_bp.route("/event/<event_id>", methods=["GET"])
@@ -279,6 +482,7 @@ def get_event(event_id):
     - User's RSVP status
     - Event tags
     - Event images
+    - Gender restriction
     Authentication is required to access this endpoint.
 
     Args:
@@ -304,7 +508,8 @@ def get_event(event_id):
                             "id": int,
                             "image": str (base64 encoded)
                         }
-                    ]
+                    ],
+                    "genderRestriction": str
                 }
             }, 200 status
         - On unauthorized access:
@@ -334,12 +539,17 @@ def get_event(event_id):
     user_id = session.get("user_id")
 
     cur.execute(
-        """SELECT event_id, start_time, end_time, location, description, cost, event_name FROM event 
-            WHERE event_id = %s
-                AND is_active = 1
-                AND is_approved = 1
-                AND school_id = %s""",
-        (event_id, school_id),
+        """SELECT e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name, e.gender_restriction, e.is_approved FROM event e
+            LEFT JOIN users u
+                ON u.email = %s
+            WHERE e.event_id = %s
+                AND e.is_active = 1
+                AND (e.is_approved = 1 OR u.is_faculty = 1)
+                AND e.school_id = %s
+                AND (e.gender_restriction = u.gender 
+                    OR e.gender_restriction IS NULL
+                    OR u.is_faculty = 1)""",
+        (user_id, event_id, school_id),
     )
     result = cur.fetchone()
     if result is None:
@@ -351,7 +561,8 @@ def get_event(event_id):
                     ON c.club_id = eh.club_id
                 WHERE eh.event_id = %s
                     AND c.is_active = 1
-                    AND c.school_id = %s""",
+                    AND c.school_id = %s
+                    AND eh.is_approved = 1""",
         (event_id, school_id),
     )
     result_2 = list(map(lambda x: {"name": x[0], "id": x[1]}, cur.fetchall()))
@@ -409,9 +620,103 @@ def get_event(event_id):
         "rsvp": "block" if result_3 == 0 else ("rsvp" if result_3 == 1 else None),
         "tags": result_4,
         "images": result_5,
+        "genderRestriction": result[7],
+        "isApproved": result[8],
     }
     cur.close()
     return jsonify({"event": final_result}), 200
+
+
+@events_bp.route("/event/<int:event_id>/cancel", methods=["POST", "DELETE"])
+def cancel_event(event_id):
+    try:
+        user = get_user_session_info()
+        # Fetch user information (assuming session contains user info)
+        user_id = user["user_id"]
+        if not user_id:
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Get event details to verify if the user is the organizer
+        cur = mysql.connection.cursor()
+
+        cur.execute(
+            """SELECT u.email, ca.club_id, eh.event_id FROM users u
+                    INNER JOIN club_admin ca
+                        ON u.email = ca.user_id
+                    INNER JOIN event_host eh
+                        ON ca.club_id = eh.club_id
+                    WHERE u.email = %s
+                        AND u.is_active = 1
+                        AND eh.is_approved = 1
+                        AND eh.event_id = %s""",
+            (user_id, event_id),
+        )
+
+        result = cur.fetchone()
+        if not result:
+            cur.close()
+            print(
+                f"User with ID {user_id} is not the organizer of event with ID {event_id}"
+            )
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Log the event_id being passed
+        print(f"Canceling event with ID: {event_id}")
+
+        # Query to get the event and organizer details
+        cur.execute(
+            """SELECT e.event_name, r.user_id 
+                FROM event e
+                LEFT JOIN rsvp r
+                    ON e.event_id = r.event_id
+                WHERE e.event_id = %s 
+                    AND e.is_active = 1
+                    AND (r.is_active = 1 OR r.is_active IS NULL)
+                    AND (r.is_yes = 1 OR r.is_yes IS NULL)""",  # CHANGE TO ORGANIZER ID
+            (event_id,),
+        )
+
+        # # Check if the execute call was successful
+        print("Query executed successfully")
+
+        event = cur.fetchall()  # Fetch result
+        if not event:
+            cur.close()  # Don't forget to close the cursor
+            print(f"Event with ID {event_id} not found")
+            return jsonify({"error": "Event not found"}), 404
+
+        # Log event details for debugging
+        print(f"Event found: {event}")
+
+        # Update the event status to inactive (cancel the event)
+        cur.execute("UPDATE event SET is_active = 0 WHERE event_id = %s", (event_id,))
+
+        for rsvp in event:
+            cur.execute(
+                "UPDATE rsvp SET is_active = 0 WHERE event_id = %s AND user_id = %s",
+                (event_id, rsvp[1]),
+            )
+            if rsvp[1] is not None:
+                send_email(
+                    rsvp[1],
+                    f"{rsvp[0]} has been cancelled",
+                    f"Dear User,\n\nUnfortunately, the event {rsvp[0]} has been cancelled.\n\nBest regards,\nSHARC Team",
+                )
+
+        # Check if the update was successful
+        print(f"Event with ID {event_id} canceled successfully")
+
+        mysql.connection.commit()
+
+        # Close the cursor
+        cur.close()
+
+        return jsonify({"message": "Event successfully canceled"}), 200
+
+    except Exception as e:
+        # Log the error message with more details
+        print(f"Error canceling event: {e}")
+        return jsonify({"error": "Failed to cancel event"}), 500
 
 
 @events_bp.route("/club-events/<club_id>", methods=["GET"])
@@ -475,13 +780,17 @@ def get_club_events(club_id):
         """SELECT e.event_id, e.start_time, e.end_time, e.event_name FROM event e
             INNER JOIN event_host eh
                 ON eh.event_id = e.event_id
+            LEFT JOIN users u
+                ON u.email = %s
             WHERE eh.club_id = %s
+                AND (e.gender_restriction IS NULL OR e.gender_restriction = u.gender)
                 AND e.is_active = 1
                 AND e.is_approved = 1
                 AND e.start_time >= %s
                 AND e.school_id = %s
+                AND eh.is_approved = 1
             LIMIT 10""",
-        (club_id, start_date, school_id),
+        (user_id, club_id, start_date, school_id),
     )
     result = cur.fetchall()
     cur.execute(
@@ -495,7 +804,8 @@ def get_club_events(club_id):
                     AND e.is_approved = 1
                     AND r.is_active = 1
                     AND e.school_id = %s
-                    AND eh.club_id = %s""",
+                    AND eh.club_id = %s
+                    AND eh.is_approved = 1""",
         (user_id, school_id, club_id),
     )
     result_2 = cur.fetchall()
@@ -543,6 +853,11 @@ def get_events():
     Query Parameters:
         start_date (str): ISO format start date for event range
         end_date (str): ISO format end date for event range
+        filter (str): Optional filter query to further refine event retrieval
+            - 'Hosted by Subscribed Clubs' for events from clubs the user is subscribed to
+            - 'Attending' for events the user has RSVP'd to
+            - 'Suggested' for events that share tags with the user
+        approved (bool): Optional flag to filter events by approval status (default: True)
 
     Returns:
         JSON response:
@@ -558,6 +873,7 @@ def get_events():
                         "cost": float,
                         "title": str,
                         "subscribed": bool,
+                        "genderRestriction": str
                     }
                 ]
             }, 200 status
@@ -577,20 +893,347 @@ def get_events():
 
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    filter_query = request.args.get("filter")
+    approved = request.args.get("approved")
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
+    if not filter_query:
+        filter_query = ""
+    approved = (
+        approved == "true" or approved == True or approved is None or approved == ""
+    )
 
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
     cur = mysql.connection.cursor()
 
     result = get_events_by_date(
-        cur, start_date, end_date, school_id, current_user["user_id"]
+        cur,
+        start_date,
+        end_date,
+        school_id,
+        current_user["user_id"],
+        filter_query,
+        approved,
     )
     cur.close()
     if "error" in result:
         return jsonify(result["error"]), result.get("status", 500)
     return jsonify(result), 200
+
+
+def validate_jwt(token):
+    """
+    Validate a JWT token for approving an event.
+
+    Args:
+        token (str): Encoded JWT token.
+
+    Returns:
+        dict: Decoded payload if the token is valid, None otherwise.
+    """
+    try:
+        print(f"Decoding Token: {token}")  # Debugging: Print the token before decoding
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        print(f"Decoded Payload: {payload}")  # Debugging: Print the decoded payload
+        return payload, None
+    except jwt.ExpiredSignatureError:
+        print("JWT Validation Error: Token has expired")
+        return None, "Token has expired"
+    except jwt.InvalidTokenError as e:
+        print(f"JWT Validation Error: {str(e)}")  # Print actual error message
+        return None, "Invalid token"
+    except Exception as e:
+        print(f"Unexpected Error: {str(e)}")  # Catch any unexpected errors
+        return None, "Unexpected token error"
+
+
+@events_bp.route("/api/validate_token", methods=["GET"])
+def validate_token():
+    token = request.args.get("token")
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    validation_result = validate_jwt(token)
+    if isinstance(validation_result, tuple):  # If validation fails
+        return jsonify(validation_result[0]), validation_result[1]
+
+    return jsonify({"message": "Token is valid", "data": validation_result})
+
+
+def generate_approval_token(club_id, event_id):
+    """
+    Generates a JWT token for approving an event.
+
+    Args:
+        club_id (int): ID of the club.
+        event_id (int): ID of the event.
+
+    Returns:
+        str: Encoded JWT token.
+    """
+    payload = {
+        "club_id": club_id,
+        "event_id": event_id,
+        "exp": datetime.now(timezone.utc) + timedelta(seconds=Config.JWT_EXPIRATION),
+    }
+    return jwt.encode(payload, Config.JWT_SECRET_KEY, algorithm="HS256")
+
+
+def send_approval_email(
+    email,
+    club_id,
+    event_id,
+    club_name,
+    cohost_name,
+    event_name,
+    event_description,
+    event_start_date,
+    event_end_date,
+    event_location,
+):
+    """
+    Send an approval email to the specified email address.
+
+    Args:
+        email (str): The recipient's email address.
+        club_id (int): ID of the club hosting the event.
+        event_id (int): ID of the event.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Behavior:
+    - Generates a JWT token for the collaboration approval
+    - Constructs the approval link using the token
+    - Sends the email using the send_email helper function
+    """
+    token = generate_approval_token(club_id, event_id)
+    approval_link = f"{Config.API_URL_ROOT}/dashboard/CohostApproval?eventId={event_id}&clubId={club_id}&token={token}"
+
+    # Define the local timezone
+    local_tz = pytz.timezone("US/Eastern")
+
+    # Parse the event start and end dates in UTC
+    start_date_obj = datetime.strptime(
+        event_start_date, "%Y-%m-%dT%H:%M:%S.%fZ"
+    ).replace(tzinfo=pytz.utc)
+    end_date_obj = datetime.strptime(event_end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+        tzinfo=pytz.utc
+    )
+
+    # Convert the dates to the local timezone
+    local_start_date = start_date_obj.astimezone(local_tz)
+    local_end_date = end_date_obj.astimezone(local_tz)
+
+    # Format the dates to the desired format
+    formatted_start_date = (
+        local_start_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
+    formatted_end_date = (
+        local_end_date.strftime("%Y-%m-%d %-I:%M%p")
+        .lower()
+        .replace("pm", "p.m.")
+        .replace("am", "a.m.")
+    )
+
+    send_email(
+        email,
+        "Event Collaboration Approval Required",
+        f"""<li>{cohost_name} has been invited to co-host an event with {club_name}.</li>
+         <p> Event Details: </p>
+         <ul>
+            <li>Event Name: {event_name}</li>
+            <li>Event Description: {event_description}</li>
+            <li>Event Start Date: {formatted_start_date}</li>
+            <li>Event End Date: {formatted_end_date}</li>
+            <li>Event Location: {event_location}</li>
+        </ul>
+         <p>Please approve the collaboration by clicking the link below:</p>
+         <p><a href={approval_link}>{approval_link}</a></p>
+         <p>Best regards,<br>SHARC Team</p>
+         """,
+        True,
+    )
+
+
+def send_decline_email(event_id):
+    """
+    Send a decline email to the club admin.
+
+    Args:
+        event_id (int): ID of the event.
+
+    Returns:
+        bool: True if the email was sent successfully, False otherwise.
+
+    Behavior:
+    - Fetches the club admin email and event name from the database
+    - Sends the email using the send_email helper function
+    """
+    cur = mysql.connection.cursor()
+    cur.execute(
+        """SELECT u.email, e.event_name FROM users u
+            INNER JOIN club_admin ca ON u.email = ca.user_id
+            INNER JOIN event_host eh ON ca.club_id = eh.club_id
+            INNER JOIN event e ON eh.event_id = e.event_id
+            WHERE eh.event_id = %s""",
+        (event_id,),
+    )
+    result = cur.fetchone()
+    email = result[0]
+    event_name = result[1]
+
+    send_email(
+        email,
+        "Event Collaboration Declined",
+        f"Your collaboration request for the event '{event_name}' has been declined.",
+        True,
+    )
+
+    cur.close()
+
+
+@events_bp.route("/approve-collaboration", methods=["POST"])
+def approve_collaboration():
+    """
+    Approve a collaboration for a specific event.
+
+    This endpoint approves a collaboration by setting the `is_approved` flag to true
+    for the specified club and event.
+
+    Request JSON Parameters:
+        eventId (int): ID of the event.
+        clubId (int): ID of the club.
+
+    Returns:
+        JSON response:
+        - On successful approval:
+            {"message": "Collaboration approved successfully!"}, 200 status
+        - On invalid or missing parameters:
+            {"error": "Invalid or missing parameters"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update collaboration approval: <error_message>"}, 500 status
+    """
+    token = request.headers.get("Authorization")
+
+    if not token:
+        return jsonify({"error": "Missing token"}), 403
+
+    if token.startswith("Bearer "):
+        token = token.split(" ")[1]  # Remove "Bearer " prefix
+
+    payload, error = validate_jwt(token)
+
+    if error:
+        print(f"JWT Validation Error: {error}")
+        return jsonify({"error": error}), 403
+
+    event_id = request.json.get("eventId")
+    club_id = request.json.get("clubId")
+
+    print(
+        f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}"
+    )
+    print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
+
+    if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
+        print("Error: Token payload does not match request data")
+        return jsonify({"error": "Invalid event or club ID"}), 403
+
+    if not event_id or not club_id:
+        return jsonify({"error": "Invalid or missing parameters"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """UPDATE event_host SET is_approved = true
+               WHERE event_id = %s AND club_id = %s""",
+            (event_id, club_id),
+        )
+        mysql.connection.commit()
+        cur.close()
+        return jsonify({"message": "Collaboration approved successfully!"}), 200
+
+    except Exception as e:
+        return (
+            jsonify({"error": f"Failed to update collaboration approval: {str(e)}"}),
+            500,
+        )
+
+
+@events_bp.route("/decline-collaboration", methods=["POST"])
+def decline_collaboration():
+    """
+    Decline a collaboration for a specific event.
+
+    This endpoint declines a collaboration by setting the `is_active` flag to false
+    for the specified event and sends a notification email to the club admin.
+
+    Request JSON Parameters:
+        eventId (int): ID of the event.
+
+    Returns:
+        JSON response:
+        - On successful decline:
+            {"message": "Collaboration declined successfully!"}, 200 status
+        - On invalid or missing parameters:
+            {"error": "Invalid or missing parameters"}, 400 status
+        - On database update failure:
+            {"error": "Failed to update collaboration decline: <error_message>"}, 500 status
+    """
+    token = request.headers.get("Authorization")
+
+    if not token:
+        return jsonify({"error": "Missing token"}), 403
+
+    if token.startswith("Bearer "):
+        token = token.split(" ")[1]  # Remove "Bearer " prefix
+
+    payload, error = validate_jwt(token)
+
+    if error:
+        print(f"JWT Validation Error: {error}")
+        return jsonify({"error": error}), 403
+
+    event_id = request.json.get("eventId")
+    club_id = request.json.get("clubId")
+
+    print(
+        f"Event ID from JWT: {payload['event_id']}, Event ID from request: {event_id}"
+    )
+    print(f"Club ID from JWT: {payload['club_id']}, Club ID from request: {club_id}")
+
+    if int(event_id) != payload["event_id"] or int(club_id) != payload["club_id"]:
+        print("Error: Token payload does not match request data")
+        return jsonify({"error": "Invalid event or club ID"}), 403
+
+    if not event_id or not club_id:
+        return jsonify({"error": "Invalid or missing parameters"}), 400
+
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute(
+            """UPDATE event SET is_active = 0
+               WHERE event_id = %s""",
+            (event_id,),
+        )
+        mysql.connection.commit()
+        cur.close()
+
+        # Send notification email to club admin
+        send_decline_email(event_id)
+
+        return jsonify({"message": "Collaboration declined successfully!"}), 200
+
+    except Exception as e:
+        return (
+            jsonify({"error": f"Failed to update collaboration decline: {str(e)}"}),
+            500,
+        )
 
 
 @events_bp.route("/new-event", methods=["POST"])
@@ -603,10 +1246,10 @@ def create_event():
 
     Authentication:
     - Requires user to be logged in
-    - User must have appropriate permissions to create an event
+    - User must be an admin for the club hosting the event
 
     Request Form Parameters:
-        clubName (str): Name of the hosting club
+        clubId (int): ID of the club hosting the event
         eventName (str): Title of the event
         description (str): Detailed description of the event
         startDate (str): ISO 8601 formatted start date and time (UTC)
@@ -614,21 +1257,26 @@ def create_event():
         location (str): Physical or virtual location of the event
         eventCost (float, optional): Cost to attend the event
         tags (str, optional): JSON array of tag IDs associated with the event
+        coHosts (str, optional): JSON array of co-host IDs
         eventPhotos (file[], optional): List of image files to attach to the event
 
     Returns:
         JSON response:
+
         - On successful event creation:
             {
                 "message": "Event created successfully",
                 "event_id": int
             }, 201 status
+
         - On authentication failure:
             {"error": "User not logged in"}, 401 status
+
         - On validation failure:
             {"error": "Missing required fields"}, 400 status
             {"error": "Invalid event cost value"}, 400 status
             {"error": "Invalid tags format, should be a JSON array"}, 400 status
+
         - On database or server error:
             {"error": "Failed to create event"}, 500 status
 
@@ -648,87 +1296,89 @@ def create_event():
     - Validates file types for uploaded photos
     - Sanitizes input data to prevent injection
     """
-    # Check if the user is logged in
-    user_id = session.get("user_id")
+    current_user = get_user_session_info()
+    user_id = current_user["user_id"]
     school_id = session.get("school")
 
     if not user_id:
         return jsonify({"error": "User not logged in"}), 401
 
-    # Get the event data from the request
-    club_name = request.form.get("clubName")
+    # Get event data from the request
+    club_id = request.form.get("clubId")
     event_name = request.form.get("eventName")
     description = request.form.get("description")
     start_date = request.form.get("startDate")
     end_date = request.form.get("endDate")
     location = request.form.get("location")
     event_cost = request.form.get("eventCost")
-    tags = request.form.get("tags")  # This should be a JSON string (e.g., "[1, 2, 3]")
+    co_hosts = request.form.get("coHosts")
+    tags = request.form.get("tags")
+    gender_restriction = request.form.get("genderRestriction")
 
-    if tags:
-        try:
-            # Convert the tags string into a list of integers
-            tags = json.loads(
-                tags
-            )  # This will handle strings like "[1, 2, 3]" as a Python list
-        except json.JSONDecodeError:
-            return (
-                jsonify({"error": "Invalid tags format, should be a JSON array"}),
-                400,
-            )
-    else:
-        tags = []
+    if gender_restriction not in ["male", "female", "none"]:
+        return jsonify({"error": "Invalid gender restriction"}), 400
 
-    # Validate the data
-    if (
-        not event_name
-        or not description
-        or not start_date
-        or not end_date
-        or not location
-    ):
-        return jsonify({"error": "Missing required fields"}), 400
-
-    # Validate event cost (set to None if empty or invalid)
+    # Validate club_id
+    if not club_id or club_id == "undefined":
+        return jsonify({"error": "Invalid club ID"}), 400
     try:
-        if event_cost:
-            event_cost = float(event_cost)  # Try to convert the cost to a float
-        else:
-            event_cost = None  # If no cost is provided, set it to None (nullable)
+        club_id = int(club_id)
+    except ValueError:
+        return jsonify({"error": "Invalid club ID format"}), 400
+
+    # Process optional fields
+    tags = json.loads(tags) if tags else []
+    co_hosts = json.loads(co_hosts) if co_hosts else []
+
+    # Validate required fields
+    if not all([event_name, description, start_date, end_date, location]):
+        return jsonify({"error": "Missing required fields"}), 400
+    try:
+        event_cost = float(event_cost) if event_cost else None
     except ValueError:
         return jsonify({"error": "Invalid event cost value"}), 400
 
     # Handle file uploads
-    event_photos = request.files.getlist("eventPhotos[]")
+    event_photos = request.files.getlist("eventPhotos")
     saved_photos = []
-
     for photo in event_photos:
-        if photo and allowed_file(photo.filename) and photo.filename is not None:
-            filename = secure_filename(photo.filename)
-            image_data = photo.read()  # Read the image file into binary data
-            saved_photos.append((image_data, filename))  # Store image data and filename
+        if photo and allowed_file(photo.filename):
+            # Reset file pointer before reading
+            photo.seek(0)
+            saved_photos.append((photo.read(), photo.content_type))
 
     try:
-        # Updated date parsing logic
+        # Parse dates
         try:
-            # Handle ISO 8601 with milliseconds and 'Z' for UTC
             start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ")
             end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            try:
-                # Fallback if no milliseconds are present
-                start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
-                end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
-            except ValueError as e:
-                return jsonify({"error": f"Invalid date format: {str(e)}"}), 400
+            start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%SZ")
+            end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%SZ")
 
-        # Insert the event into the database
         if not mysql.connection:
             return jsonify({"error": "Database connection error"}), 500
         cur = mysql.connection.cursor()
+
+        # Fetch the club name
+        cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (club_id,))
+        club_data = cur.fetchone()
+        if not club_data:
+            return jsonify({"error": "Club not found"}), 400
+        club_name = club_data[0]
+
+        # Check if user is an admin for the club
         cur.execute(
-            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            """SELECT * FROM club_admin WHERE club_id = %s AND user_id = %s""",
+            (club_id, user_id),
+        )
+        if not cur.fetchone():
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Insert the event
+        cur.execute(
+            """INSERT INTO event (event_name, start_time, end_time, location, description, cost, school_id, is_approved, is_active, gender_restriction)
+               VALUES (%s, %s, %s, %s, %s, %s, %s, 0, 1, %s)""",
             (
                 event_name,
                 start_date_obj,
@@ -737,53 +1387,129 @@ def create_event():
                 description,
                 event_cost,
                 school_id,
+                (
+                    "M"
+                    if gender_restriction == "male"
+                    else ("F" if gender_restriction == "female" else None)
+                ),
             ),
         )
-        event_id = cur.lastrowid  # Get the ID of the newly created event
+        event_id = cur.lastrowid
 
-        # Optional: Associate tags with the event
+        # Add tags
         for tag in tags:
-            try:
-                tag_id = int(tag)  # Ensure tag is an integer
-                cur.execute(
-                    """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
-                    (event_id, tag_id),
-                )
-            except ValueError:
-                return jsonify({"error": f"Invalid tag format: {tag}"}), 400
-            except Exception as e:
-                return jsonify({"error": f"Failed to insert tag: {str(e)}"}), 500
+            cur.execute(
+                """INSERT INTO event_tags (event_id, tag_id) VALUES (%s, %s)""",
+                (event_id, int(tag)),
+            )
 
-        # insert club_id and event_id into event_host table**
-        club_id = get_club_id(cur, club_name)
-
+        # Add the main host
         cur.execute(
-            """INSERT INTO event_host (club_id, event_id) VALUES (%s, %s)""",
+            """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, true)""",
             (club_id, event_id),
         )
 
-        # Save photos into the database as blobs and store the file names
-        for image_data, filename in saved_photos:
-            try:
-                image_prefix = filename  # You can store the filename as the prefix
+        # Process multiple co-hosts
+        cohost_names = []
+        for co_host in co_hosts:
+            cur.execute("""SELECT club_name FROM club WHERE club_id = %s""", (co_host,))
+            cohost_data = cur.fetchone()
+            if cohost_data:
+                cohost_names.append(cohost_data[0])
+
+                # Add co-host to event with pending approval
                 cur.execute(
-                    """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
-                    VALUES (%s, %s, %s)""",
-                    (event_id, image_data, image_prefix),
+                    """INSERT INTO event_host (club_id, event_id, is_approved) VALUES (%s, %s, false)""",
+                    (co_host, event_id),
                 )
-            except Exception as e:
-                return jsonify({"error": f"Failed to insert photo: {str(e)}"}), 500
 
-        mysql.connection.commit()  # Commit the transaction
+                # Fetch co-host email
+                cur.execute(
+                    """SELECT user_id 
+                        FROM club_admin 
+                        WHERE club_id = %s
+                            AND is_active = 1""",
+                    (co_host,),
+                )
+                co_host_data = cur.fetchall()
+                if co_host_data:
+                    co_host_email = list(
+                        emails[0] for emails in co_host_data
+                    )  # USER_ID is the email
+                    send_approval_email(
+                        co_host_email,
+                        co_host,
+                        event_id,
+                        club_name,
+                        cohost_data[0],  # Use fetched co-host name
+                        event_name,
+                        description,
+                        start_date,
+                        end_date,
+                        location,
+                    )
+
+        # Save photos
+        for image_data, filename in saved_photos:
+            cur.execute(
+                """INSERT INTO event_photo (event_id, IMAGE, IMAGE_PREFIX) 
+                   VALUES (%s, %s, %s)""",
+                (event_id, image_data, filename),
+            )
+
+        # Fetch all club admin emails
+        cur.execute(
+            """SELECT user_id 
+               FROM club_admin 
+               WHERE club_id = %s
+                 AND is_active = 1""",
+            (club_id,),
+        )
+        admin_emails = [admin[0] for admin in cur.fetchall()]
+
+        # Convert dates to local timezone and format them
+        local_tz = pytz.timezone("US/Eastern")
+
+        # Parse the event start and end dates in UTC
+        start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=pytz.utc
+        )
+        end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%fZ").replace(
+            tzinfo=pytz.utc
+        )
+
+        local_start_date = start_date_obj.astimezone(local_tz)
+        local_end_date = end_date_obj.astimezone(local_tz)
+        formatted_start_date = (
+            local_start_date.strftime("%Y-%m-%d %-I:%M%p")
+            .lower()
+            .replace("pm", "p.m.")
+            .replace("am", "a.m.")
+        )
+        formatted_end_date = (
+            local_end_date.strftime("%Y-%m-%d %-I:%M%p")
+            .lower()
+            .replace("pm", "p.m.")
+            .replace("am", "a.m.")
+        )
+
+        # Send notification email to all club admins
+        for email in admin_emails:
+            send_email(
+                email,
+                "Event Pending Approval",
+                f"Dear '{club_name}' admin,\n\n Your event '{event_name}' is pending approval by faculty. You will hear back about the approval results soon.\n\nEvent Details:\nName: {event_name}\nDescription: {description}\nStart Date: {formatted_start_date}\nEnd Date: {formatted_end_date}\nLocation: {location} \n\n Best regards,\nSHARC Team",
+            )
+
+        mysql.connection.commit()
         cur.close()
-
-        # Return a success response
         return (
             jsonify({"message": "Event created successfully", "event_id": event_id}),
             201,
         )
 
     except Exception as e:
+        print(traceback.format_exc())
         return jsonify({"error": f"Failed to create event: {str(e)}"}), 500
 
 

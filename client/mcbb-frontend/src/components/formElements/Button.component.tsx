@@ -1,5 +1,6 @@
 import generateStyleClasses from './styleGenerator';
 import { useLocation } from 'react-router-dom';
+import React from 'react';
 
 /**
  * Represents the properties for the Button component
@@ -11,9 +12,11 @@ import { useLocation } from 'react-router-dom';
  * @property {boolean} [filled=true] - Determines if the button is filled or outlined
  * @property {'button' | 'submit' | 'reset' | undefined} [type='button'] - The type of button
  * @property {string} [name] - Optional name attribute for the button
+ * @property {string} [value] - Optional value attribute for the button
  * @property {string} [className] - Additional CSS classes to apply to the button
  * @property {boolean} [disabled] - Disables the button if true
  * @property {boolean} [grow=true] - Determines if the button should grow to fill available space
+ * @property {React.ReactNode} [children] - Optional children to render inside the button
  */
 interface ButtonProps {
   text?: string;
@@ -22,9 +25,11 @@ interface ButtonProps {
   filled?: boolean;
   type?: 'button' | 'submit' | 'reset' | undefined;
   name?: string;
+  value?: string;
   className?: string;
   disabled?: boolean;
   grow?: boolean;
+  children?: React.ReactNode;
 }
 
 /**
@@ -48,10 +53,12 @@ const Button = ({
   onClick,
   type = 'button',
   name,
+  value,
   filled = true,
   className,
   disabled = false,
-  grow = true
+  grow = true,
+  children
 }: ButtonProps) => {
   const location = useLocation();
 
@@ -68,9 +75,11 @@ const Button = ({
       onClick={onClick}
       type={type}
       name={name}
+      value={value}
     >
       {text}
       {icon}
+      {children}
     </button>
   );
 };

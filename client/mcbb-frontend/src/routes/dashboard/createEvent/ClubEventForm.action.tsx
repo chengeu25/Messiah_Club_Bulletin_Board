@@ -1,9 +1,9 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 
-const clubEventFormAction: ActionFunction = async ({ request, params }) => {
+const clubEventFormAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const action = formData.get('action');
-  const clubName = formData.get('clubName') as string;
+  const clubId = formData.get('clubId') as string;
   const eventName = formData.get('eventName') as string;
   const description = formData.get('description') as string;
   const startDate = formData.get('startDate') as string;
@@ -13,15 +13,19 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
   const tags = formData.get('tags')
     ? JSON.parse(formData.get('tags') as string)
     : [];
-  const eventPhotos = formData.getAll('eventPhotos[]');
+  const cohosts = formData.get('cohosts')
+    ? JSON.parse(formData.get('cohosts') as string)
+    : [];
+  const eventPhotos = formData.getAll('eventPhotos');
+  const genderRestriction = formData.get('genderRestriction') as string;
 
   if (action === 'cancel') {
-    return redirect('/dashboard/clubs');
+    return redirect(`/dashboard/club/${clubId}`);
   }
 
   try {
     const data = new FormData();
-    data.append('clubName', clubName);
+    data.append('clubId', clubId);
     data.append('eventName', eventName);
     data.append('description', description);
     data.append('startDate', startDate);
@@ -29,7 +33,9 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
     data.append('location', location);
     data.append('eventCost', eventCost);
     data.append('tags', JSON.stringify(tags));
-    eventPhotos.forEach((photo) => formData.append('eventPhotos[]', photo));
+    data.append('coHosts', JSON.stringify(cohosts));
+    data.append('genderRestriction', genderRestriction);
+    eventPhotos.forEach((photo) => data.append('eventPhotos', photo));
 
     const response = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/events/new-event`,
@@ -42,18 +48,19 @@ const clubEventFormAction: ActionFunction = async ({ request, params }) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      const { clubId } = params; // Retrieve clubId from params
-      return redirect(
-        `/dashboard/club/${clubId}/newEvent?error=${encodeURIComponent(
-          errorData.error
-        )}`
-      );
+      return json({ error: errorData.error }, { status: 400 });
     }
 
-    return redirect('/dashboard/clubs');
+    return json(
+      {
+        message: 'Event submitted successfully',
+        redirectTo: `/dashboard/club/${clubId}`
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error('Error submitting event:', error);
-    return redirect('/dashboard/club/new?error=Unexpected error occurred');
+    return json({ error: 'Error submitting event' }, { status: 500 });
   }
 };
 

@@ -1,8 +1,7 @@
 import Day from '../../../components/dashboard/Day.component';
 import { useSchool } from '../../../contexts/SchoolContext';
 import {
-  passesFilter,
-  passesSearch,
+  eventPassesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
@@ -13,6 +12,7 @@ import {
   useLoaderData,
   useSearchParams
 } from 'react-router-dom';
+import useLoading from '../../../hooks/useLoading';
 
 /**
  * Home dashboard component displaying events for the current week.
@@ -26,13 +26,14 @@ import {
  * @returns {React.ReactElement} Rendered home dashboard with events
  */
 const Home = () => {
-  const { user, events } = useLoaderData() as {
+  const { events } = useLoaderData() as {
     events: EventType[];
     user: UserType;
   };
   const submit = useSubmit();
   const [params] = useSearchParams();
   const { currentSchool } = useSchool();
+  const { loading } = useLoading();
 
   /**
    * Memoized function to filter events based on search query and user filters.
@@ -48,10 +49,8 @@ const Home = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter(
-        (event: EventType) =>
-          passesSearch(event, params.get('search') ?? '') &&
-          passesFilter(event, user, params.get('filter') ?? '')
+      events.filter((event: EventType) =>
+        eventPassesSearch(event, params.get('search') ?? '')
       ),
     [events, params]
   );
@@ -79,17 +78,19 @@ const Home = () => {
   );
 
   return (
-    <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-scroll'>
+    <div className='flex flex-col p-4 sm:px-[15%] items-center w-full h-full overflow-y-auto'>
       <h1 className='text-3xl font-bold'>This Week at {currentSchool?.name}</h1>
       <Form className='flex flex-col gap-4 flex-1 w-full'>
-        {eventsOnDays.length > 0 ? (
+        {loading ? (
+          <div>Loading events...</div>
+        ) : eventsOnDays.length > 0 ? (
           eventsOnDays
             .sort((a, b) => a.date.getTime() - b.date.getTime())
             .map((day) => (
               <Day {...day} key={day.date.getTime()} /> // Ensure to add a unique key prop
             ))
         ) : (
-          <div className='text-2xl font-bold'>
+          <div className='text-2xl font-bold text-center'>
             No events this week that match the specified filters.
           </div>
         )}

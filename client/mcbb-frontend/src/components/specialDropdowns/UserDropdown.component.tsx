@@ -78,7 +78,11 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
    * @description Navigates to different routes based on selected option
    */
   const handleUserDropdownChanged = (selected: OptionType | null) => {
-    if (selected?.value === 'Log Out') {
+    // Check if the selected option is the user's name (desktop) or 'Me' (mobile)
+    if (selected?.value === user?.name || selected?.value === 'Me') {
+      // Navigate to the Edit User Info page
+      navigate('/dashboard/accountInfo'); // You may adjust the route as needed
+    } else if (selected?.value === 'Log Out') {
       navigate('/logout');
     } else if (selected?.value === 'Edit Interests') {
       navigate('/editinterest');
@@ -89,6 +93,8 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
     } else if (selected?.value === 'Email Preferences') {
       navigate('dashboard/emailPreferences');
     }
+
+    // Reset selected option to the default
     setSelectedOption(options[0]);
   };
 
@@ -127,7 +133,7 @@ const UserDropdown = ({ user }: UserDropdownProps) => {
           label:
             window.innerWidth > 600
               ? (user as User)?.name && (user as User)?.name
-              : 'Me'
+              : 'Me' // For mobile, display 'Me'
         },
         {
           value: 'Dashboard',

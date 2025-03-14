@@ -38,8 +38,6 @@ import logoutLoader from './routes/logout/Logout.loader.tsx';
 import verifyEmailLoader from './routes/verifyEmail/verifyEmail.loader.tsx';
 import loginLoader from './routes/login/Login.loader.tsx';
 import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
-import ResetPassword from './routes/resetPassword/resetPassword.route.tsx';
-import resetPasswordAction from './routes/resetPassword/resetPassword.action.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
 import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
@@ -73,6 +71,36 @@ import adminUserFormAction from './routes/dashboard/adminUserForm/adminUserForm.
 import emailPreferencesLoader from './routes/dashboard/emailPreferences/EmailPreferences.loader.tsx';
 import emailPreferencesAction from './routes/dashboard/emailPreferences/EmailPreferences.action.tsx';
 import EmailPreferences from './routes/dashboard/emailPreferences/EmailPreferences.route.tsx';
+import AccountInfo from './routes/accountInfo/accountInfo.route.tsx';
+import accountInfoAction from './routes/accountInfo/accountInfo.action.tsx';
+import accountInfoLoader from './routes/accountInfo/accountInfo.loader.tsx';
+import cohostApprovalLoader from './routes/dashboard/cohostApproval/cohostApproval.loader.tsx';
+import CohostApproval from './routes/dashboard/cohostApproval/cohostApproval.route.tsx';
+import { cohostApprovalAction } from './routes/dashboard/cohostApproval/cohostApproval.action.tsx';
+import SendEmailForm from './routes/dashboard/club/SendEmailForm/SendEmailForm.route.tsx';
+import sendEmailAction from './routes/dashboard/club/SendEmailForm/SendEmail.action.tsx';
+import AboutUs from './routes/aboutus/aboutus.route.tsx';
+import ContactUs from './routes/contactus/contactus.route.tsx';
+import facultyEventApprovalloader from './routes/facultyEventApproval/facultyEventApproval.loader.tsx';
+import { facultyEventApprovalAction } from './routes/facultyEventApproval/facultyEventApproval.action.tsx';
+import FacultyEventApproval from './routes/facultyEventApproval/facultyEventApproval.route.tsx';
+import Image from './routes/dashboard/images/Image.route.tsx';
+import imageAction from './routes/dashboard/images/Image.action.tsx';
+import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
+import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
+import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
+import { DynamicLogo } from './components/ui/DynamicLogo.component.tsx';
+import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
+import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
+import Faculty from './routes/faculty/Faculty.route.tsx';
+import facultyLoader from './routes/faculty/Faculty.loader.tsx';
+import { NotificationProvider } from './contexts/NotificationContext.tsx';
+import Reports from './routes/dashboard/reports/Reports.route.tsx';
+import clubReportsLoader from './routes/dashboard/reports/ClubReports.loader.tsx';
+import facultyReportsLoader from './routes/dashboard/reports/SchoolWideReports.loader.tsx';
+import eventReportsLoader from './routes/dashboard/reports/EventReports.loader.tsx';
+import userReportsLoader from './routes/dashboard/reports/UserReports.loader.tsx';
+import reportsAction from './routes/dashboard/reports/Reports.action.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -80,13 +108,15 @@ const router = createBrowserRouter(
       path='/'
       element={
         <SchoolProvider>
-          <Root />
+          <NotificationProvider>
+            <Root />
+          </NotificationProvider>
         </SchoolProvider>
       }
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
-      <Route path='/' element={<LandingPage />} />
+      <Route index element={<LandingPage />} />
       <Route path='login' element={<LoginRedirector />}>
         <Route
           path=':schoolId'
@@ -119,11 +149,6 @@ const router = createBrowserRouter(
         action={changePasswordAction}
         loader={changePasswordLoader}
       />
-      <Route
-        path='resetPassword'
-        element={<ResetPassword />}
-        action={resetPasswordAction}
-      />
       <Route path='forgotPasswordMessage' element={<ForgotPasswordMessage />} />
       <Route
         path='forgotPasswordToken'
@@ -144,16 +169,10 @@ const router = createBrowserRouter(
           action={homeAction}
         />
         <Route
-          path='assignFaculty'
-          element={<AssignFaculty />}
-          loader={assignFacultyLoader}
-          action={assignFacultyAction}
-        />
-        <Route
-          path='adminUserForm'
-          element={<AdminUserForm />}
-          loader={adminUserFormLoader}
-          action={adminUserFormAction}
+          path='cohostApproval'
+          element={<CohostApproval />}
+          loader={cohostApprovalLoader}
+          action={cohostApprovalAction}
         />
         <Route
           path='calendar'
@@ -173,16 +192,43 @@ const router = createBrowserRouter(
           action={addInterestAction}
         />
         <Route
+          path='userReports/:id'
+          element={<Reports />}
+          loader={userReportsLoader}
+          action={reportsAction}
+        />
+        <Route
           path='event'
-          element={<Event />}
-          loader={eventLoader}
-          action={eventAction}
+          errorElement={
+            <div className='w-full h-full flex justify-center items-center'>
+              <div className='text-center flex items-center justify-center flex-col'>
+                <div className='w-[200px] h-[80px] invert'>
+                  <DynamicLogo />
+                </div>
+                Event not found or access not permitted
+              </div>
+            </div>
+          }
         >
           <Route
             path=':id'
             element={<Event />}
             loader={eventLoader}
             action={eventAction}
+            errorElement={<div>Event not found</div>}
+          >
+            <Route
+              path='images/:imageId'
+              element={<Image />}
+              action={imageAction}
+              loader={eventLoader}
+            />
+          </Route>
+          <Route
+            path=':id/reports'
+            element={<Reports />}
+            loader={eventReportsLoader}
+            action={reportsAction}
           />
         </Route>
         <Route path='club' element={<Club />} loader={clubLoader} />
@@ -192,7 +238,14 @@ const router = createBrowserRouter(
             element={<Club />}
             loader={clubLoader}
             action={clubAction}
-          />
+          >
+            <Route
+              path='images/:imageId'
+              element={<Image />}
+              action={imageAction}
+              loader={clubLoader}
+            />
+          </Route>
           <Route
             path=':id/edit'
             element={<ClubForm />}
@@ -208,10 +261,50 @@ const router = createBrowserRouter(
           />
 
           <Route
+            path=':id/reports'
+            element={<Reports />}
+            loader={clubReportsLoader}
+            action={reportsAction}
+          />
+
+          <Route
             path='new'
             element={<ClubForm />}
             action={clubFormAction}
             loader={clubFormLoader}
+          />
+        </Route>
+
+        <Route path='faculty' element={<Faculty />} loader={facultyLoader}>
+          <Route
+            path='reports'
+            element={<Reports />}
+            loader={facultyReportsLoader}
+            action={reportsAction}
+          />
+          <Route
+            path='facultyEventApproval'
+            element={<FacultyEventApproval />}
+            loader={facultyEventApprovalloader}
+            action={facultyEventApprovalAction}
+          />
+          <Route
+            path='schoolEdit'
+            element={<SchoolEdit />}
+            loader={schoolEditloader}
+            action={schoolEditaction}
+          />
+          <Route
+            path='assignFaculty'
+            element={<AssignFaculty />}
+            loader={assignFacultyLoader}
+            action={assignFacultyAction}
+          />
+          <Route
+            path='adminUserForm'
+            element={<AdminUserForm />}
+            loader={adminUserFormLoader}
+            action={adminUserFormAction}
           />
         </Route>
 
@@ -221,12 +314,30 @@ const router = createBrowserRouter(
           action={emailPreferencesAction}
           element={<EmailPreferences />}
         />
+        <Route
+          path={'accountInfo'} // '/account-info' (or whatever the path is)
+          element={<AccountInfo />} // This is the AccountInfo component to render
+          loader={accountInfoLoader} // Loader function to fetch user data
+          action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+        />
       </Route>
       <Route
         path='editinterest'
         element={<EditInterest />}
         action={EditInterestsAction}
         loader={EditInterestLoader}
+      />
+      <Route
+        path='/club/:clubId/sendEmail'
+        element={<SendEmailForm />}
+        action={sendEmailAction}
+      />
+      <Route path='aboutus' element={<AboutUs />} />
+      <Route path='contactus' element={<ContactUs />} />{' '}
+      <Route
+        path='/addSchool'
+        element={<AddSchoolPage />}
+        action={addSchoolsAction}
       />
     </Route>
   )

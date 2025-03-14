@@ -162,7 +162,11 @@ const RSVPDropdown = ({ handleRSVPClick, initialValue }: RSVPDropdownProps) => {
       defaultValue={{ value: '', label: 'RSVP' }}
       value={selectedRSVP}
       styles={selectStyles}
-      onChange={(e) => (e !== null ? onRSVP(e.value) : null)}
+      onChange={(e) =>
+        e !== null
+          ? onRSVP(typeof e.value === 'string' ? e.value : e.value.toString())
+          : null
+      }
       menuPortalTarget={document.body}
     />
   );

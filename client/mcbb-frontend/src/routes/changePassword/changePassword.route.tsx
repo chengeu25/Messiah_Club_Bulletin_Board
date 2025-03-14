@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useSubmit, useLocation } from 'react-router-dom';
+import { Form, useSubmit, useActionData, useNavigate } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import passwordStrongOrNah from '../../helper/passwordstrength';
 import { useSchool } from '../../contexts/SchoolContext';
+import { useNotification } from '../../contexts/NotificationContext';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * ChangePassword component for updating user account password.
@@ -18,72 +21,35 @@ import { useSchool } from '../../contexts/SchoolContext';
  */
 const ChangePassword = () => {
   const submit = useSubmit();
-  const location = useLocation();
+  const navigate = useNavigate();
   const { currentSchool } = useSchool();
+  const { addNotification } = useNotification();
+  const actionData = useActionData() as {
+    error?: string;
+    message?: string;
+    redirectTo?: string;
+  };
 
-  /**
-   * State variable to manage and display error messages during password change process.
-   *
-   * @type {[string | null, React.Dispatch<React.SetStateAction<string | null>>]}
-   * @description Stores error messages related to form validation or submission errors.
-   * Null when no error is present, string when an error occurs.
-   */
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * State variable to manage and display success messages after password change.
-   *
-   * @type {[string | null, React.Dispatch<React.SetStateAction<string | null>>]}
-   * @description Stores success messages after successful password change.
-   * Null when no message is present, string when a success message is available.
-   */
   const [message, setMessage] = useState<string | null>(null);
+  const { loading, setLoading } = useLoading();
 
-  /**
-   * Handles displaying error or success messages from URL parameters.
-   *
-   * @function
-   * @description Checks URL search parameters for error or success messages
-   * and updates the component's state accordingly when the page loads or reloads
-   */
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        setError(decodeURIComponent(newError));
-        searchParams.delete('error');
+    if (actionData) {
+      setLoading(false);
+      if (actionData.error) {
+        setError(actionData.error);
+        addNotification(actionData.error, 'error');
+      } else if (actionData.message) {
+        setMessage(actionData.message);
+        addNotification(actionData.message, 'success');
       }
-
-      if (newMessage) {
-        setMessage(decodeURIComponent(newMessage));
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
+      if (actionData?.redirectTo) navigate(actionData?.redirectTo);
     }
-  }, [location.search]);
+  }, [actionData]);
 
-  /**
-   * Validates and submits the password change form.
-   *
-   * @function handleSubmit
-   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   *
-   * @description Performs client-side validation before submitting:
-   * - Checks all fields are filled
-   * - Verifies new passwords match
-   * - Validates password strength
-   * - Submits form if all validations pass
-   */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    setLoading(true);
     setError(null);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -95,10 +61,13 @@ const ChangePassword = () => {
       formData.get('npwd') === '' ||
       formData.get('cnpwd') === ''
     ) {
+      setLoading(false);
       setError('Please fill out all fields.');
     } else if (formData.get('npwd') !== formData.get('cnpwd')) {
+      setLoading(false);
       setError('Passwords do not match.');
     } else if (!passwordStrongOrNah(formData.get('npwd') as string)) {
+      setLoading(false);
       setError(
         'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)'
       );
@@ -109,7 +78,9 @@ const ChangePassword = () => {
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className='w-full h-full flex justify-center items-center bg-gray-100'>
       <div className='flex w-full h-full sm:w-1/2 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>

@@ -8,7 +8,9 @@ from helper.send_email import send_email
 import requests
 from config import Config
 import jwt
+from flask_cors import CORS
 from helper.check_user import get_user_session_info
+
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -75,7 +77,7 @@ def send_verification_email(email, code):
     - Provides a simple email with the verification code
     """
     subject = "Your Verification Code"
-    body = f"Your new verification code is: {code}"
+    body = f"Your new verification code is: {code} \n\nPlease enter this code to verify your email address. \n\n Best Regards, \nSHARC Team"
     try:
         send_email(email, subject, body)
         return True
@@ -151,7 +153,7 @@ def verify_email():
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
 
-    # store verification code in session
+    # Retrieve the stored verification code from the session
     stored_session_code = session.get("verification_code")
 
     if stored_session_code == input_code:
@@ -161,6 +163,7 @@ def verify_email():
         )  # Function that updates EMAIL_VERIFIED field
 
         if update_success:
+            session.pop("verification_code", None)
             return jsonify({"message": "Email verified successfully"}), 200
         else:
             return jsonify({"error": "Failed to update verification status"}), 500
@@ -175,6 +178,12 @@ def resend_code():
 
     This endpoint generates a new 6-character verification code,
     updates the session, and sends a new verification email.
+
+    Expected JSON payload:
+    {
+        "email": str  # User's email address,
+        "forceResend": bool  # Optional, defaults to False, whether to force resend
+    }
 
     Returns:
         JSON response:
@@ -193,19 +202,22 @@ def resend_code():
     # get email from session
     email = session.get("user_id")
 
-    # Generate a new verification code
-    new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    if session.get("verification_code") is None or request.json.get("forceResend"):
+        # Generate a new verification code
+        new_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-    # Update the verification code in the database
-    session["verification_code"] = new_code
+        # Update the verification code in the database
+        session["verification_code"] = new_code
 
-    # Send the new verification code to the user's email
-    verified = send_verification_email(email, new_code)
+        # Send the new verification code to the user's email
+        verified = send_verification_email(email, new_code)
 
-    if not verified:
-        return jsonify({"error": "Failed to send verification code"}), 500
+        if not verified:
+            return jsonify({"error": "Failed to send verification code"}), 500
 
-    return jsonify({"message": "Verification code resent"}), 200
+        return jsonify({"message": "Verification code resent"}), 200
+    else:
+        return jsonify({"message": "Verification code already sent"}), 200
 
 
 @auth_bp.route("/check-user-cookie", methods=["GET"])
@@ -746,7 +758,7 @@ def forgot_password():
 
     # Create reset link
     reset_link = (
-        f"http://localhost:5173/ForgotPasswordToken?token={token}&schoolId={school_id}"
+        f"{Config.API_URL_ROOT}/ForgotPasswordToken?token={token}&schoolId={school_id}"
     )
 
     # Send email
@@ -865,3 +877,67 @@ def forgot_password_reset():
     cur.close()
     session.pop("user_id", None)
     return jsonify({"message": "Password reset successful"}), 200
+
+
+@auth_bp.route("/account-info", methods=["POST"])
+def update_account_info():
+    try:
+        # Parse the input data
+        data = request.get_json()
+        print(f"Received request data: {data}")
+
+        if not data:
+            return jsonify({"error": "No data was provided"}), 400
+
+        # Validate name
+        new_name = data.get("name")
+        if not new_name:
+            return jsonify({"error": "New name is required"}), 400
+
+        # Map gender to the expected format
+        gender_input = data.get("gender")
+        gender_map = {"male": "M", "female": "F", "other": "O"}
+        gender = gender_map.get(gender_input.lower())
+        if not gender:
+            return jsonify({"error": "Invalid gender value"}), 400
+
+        # Retrieve the current user from session
+        current_user = get_user_session_info()
+        print(f"Current user session info: {current_user}")
+
+        # Validate session data
+        if not current_user or "user_id" not in current_user:
+            print(f"Invalid session data: {current_user}")
+            return jsonify({"error": "User session is invalid or expired"}), 401
+
+        # Map user_id to email
+        email = current_user["user_id"]
+
+        # Database connection
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cur = mysql.connection.cursor()
+
+        # Check if the user exists by EMAIL
+        cur.execute("SELECT EMAIL FROM users WHERE EMAIL = %s", (email,))
+        user = cur.fetchone()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Update the user's name and gender in the database
+        cur.execute(
+            "UPDATE users SET NAME = %s, gender = %s WHERE EMAIL = %s",
+            (new_name, gender, email),
+        )
+        mysql.connection.commit()
+
+        return jsonify({"message": "Account info updated successfully"}), 200
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")  # Debugging
+        return (
+            jsonify({"error": "An error occurred while updating your account info"}),
+            500,
+        )

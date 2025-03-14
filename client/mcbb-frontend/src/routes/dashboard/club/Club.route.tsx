@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Card from '../../../components/ui/Card';
 import Button from '../../../components/formElements/Button.component';
 import Officer from '../../../components/clubDetails/Officer';
 import Event from '../../../components/dashboard/Event.component';
-import { useLoaderData } from 'react-router';
+import {
+  Outlet,
+  useLoaderData,
+  useNavigate,
+  useParams,
+  useActionData
+} from 'react-router';
 import {
   ClubAdminType,
   ClubDetailType,
@@ -13,66 +19,28 @@ import {
 } from '../../../types/databaseTypes';
 import { OptionType } from '../../../components/formElements/Select.styles';
 import { Form, useSubmit } from 'react-router-dom';
-import checkSubscription from '../../../helper/checkSubscription';
+import { useNotification } from '../../../contexts/NotificationContext';
 
-/**
- * Club details page component for displaying comprehensive club information.
- *
- * @component
- * @description Renders a detailed view of a club, including:
- * - Club name and description
- * - Subscription toggle
- * - Club images
- * - Club tags
- * - Club officers
- * - Upcoming events
- *
- * @returns {React.ReactElement} Detailed club information page
- */
 const Club = () => {
   const submit = useSubmit();
+  const { imageId } = useParams();
+  const navigate = useNavigate();
+  const successMessage = new URLSearchParams(window.location.search).get(
+    'success'
+  );
   const { user, club, events } = useLoaderData() as {
     user: UserType;
     club: ClubDetailType;
     events: EventType[];
   };
+  const actionData = useActionData() as {
+    error: string;
+  };
+  const { addNotification } = useNotification();
 
-  /**
-   * State to track user's subscription status for the club.
-   *
-   * @type {[boolean, React.Dispatch<React.SetStateAction<boolean>>]}
-   * @description Manages whether the current user is subscribed to the club
-   */
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const isSubscribed = useMemo(() => club?.isSubscribed ?? false, [club]);
+  const isBlocked = useMemo(() => club?.isBlocked ?? false, [club]);
 
-  /**
-   * Fetches and updates the user's subscription status when component mounts.
-   *
-   * @function
-   * @description Checks if the user is subscribed to the club using their email
-   * - Updates isSubscribed state based on subscription check
-   * - Only runs if both user email and club ID are available
-   */
-  useEffect(() => {
-    const getSubscriptionStatus = async () => {
-      setIsSubscribed(await checkSubscription(user.email, club.id));
-    };
-
-    if (user?.email && club?.id) getSubscriptionStatus();
-  }, [user?.email, club?.id]);
-
-  /**
-   * Handles form submission for subscription and event creation actions.
-   *
-   * @function handleSubmit
-   * @param {React.FormEvent<HTMLFormElement>} event - Form submission event
-   *
-   * @description Processes club-related actions:
-   * - Prevents default form submission
-   * - Determines action type (subscribe/unsubscribe/new event)
-   * - Updates local subscription state
-   * - Submits form data to backend
-   */
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -83,18 +51,23 @@ const Club = () => {
     formData.append('action', action);
     formData.append('userId', user.email);
 
-    // Update UI state based on the action
-    if (action === 'subscribe') {
-      setIsSubscribed(true);
-    } else if (action === 'unsubscribe') {
-      setIsSubscribed(false);
-    }
-
     submit(formData, { method: 'post' });
   };
 
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+  }, [actionData]);
+
   return (
-    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-scroll gap-4'>
+    <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
+      {/* Display success message if it exists */}
+      {successMessage && (
+        <div className='bg-green-200 text-green-800 p-4 rounded mb-4'>
+          <strong>Success:</strong> {successMessage}
+        </div>
+      )}
       <Card
         color='gray-300'
         padding={4}
@@ -105,18 +78,37 @@ const Club = () => {
           onSubmit={handleSubmit}
           className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
-          {user?.clubAdmins?.includes(club?.id) && (
-            <Button
-              type='submit'
-              text='New Event'
-              filled={true}
-              name='newEvent'
-            />
+          {(user?.clubAdmins?.includes(club?.id) || user.isFaculty) && (
+            <>
+              <Button
+                type='submit'
+                text='New Event'
+                filled={true}
+                name='newEvent'
+              />
+              <Button
+                type='submit'
+                text='Reports'
+                filled={true}
+                name='getReport'
+              />
+              <Button
+                onClick={() => navigate(`/club/${club.id}/sendEmail`)}
+                text='Send Email'
+                filled={true}
+              />
+            </>
           )}
           <Button
             type='submit'
             text={isSubscribed ? 'Unsubscribe' : 'Subscribe'}
             name={isSubscribed ? 'unsubscribe' : 'subscribe'}
+            filled={true}
+          />
+          <Button
+            type='submit'
+            text={isBlocked ? 'Allow Suggestions' : "Don't Suggest"}
+            name={isBlocked ? 'unblock' : 'block'}
             filled={true}
           />
         </Form>
@@ -132,6 +124,10 @@ const Club = () => {
               src={image.image}
               alt='Club Image'
               className='h-full object-contain rounded-lg'
+              tabIndex={0}
+              onClick={() =>
+                navigate(`/dashboard/club/${club.id}/images/${image.id}`)
+              }
             />
           ))}
         </div>
@@ -157,7 +153,7 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Club Officers</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
+          <div className='overflow-y-auto h-full flex gap-2 flex-col'>
             {club.admins.map((officer: ClubAdminType, index: number) => (
               <Officer key={index} {...officer} />
             ))}
@@ -169,7 +165,7 @@ const Club = () => {
           className='w-full h-full flex-col gap-2'
         >
           <h1 className='text-xl font-bold'>Upcoming Events</h1>
-          <div className='overflow-y-scroll h-full flex gap-2 flex-col'>
+          <div className='overflow-y-auto h-full flex gap-2 flex-col'>
             {events.map((event: EventType, index: number) => (
               <Event
                 key={index}
@@ -197,6 +193,11 @@ const Club = () => {
           </div>
         </Card>
       </div>
+      {imageId !== null && imageId !== '' && imageId !== undefined && (
+        <div className='w-full h-full absolute top-0 left-0 bg-black/50'>
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 };

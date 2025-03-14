@@ -2,23 +2,29 @@ import { ActionFunction, redirect } from 'react-router-dom';
 
 /**
  * Action handler for event-related interactions.
- * 
+ *
  * @function eventAction
  * @param {Object} context - Action function context
  * @param {Request} context.request - The form submission request
- * 
+ *
  * @returns {Promise<Response | null>} Redirect response or null
- * 
+ *
  * @description Handles event-related actions:
  * 1. RSVP (Respond to event invitation)
- * 
+ *
  * @workflow
  * 1. Extract action type and event ID from form data
  * 2. If action is RSVP:
  *    - Send RSVP request to backend
  *    - Handle response and potential errors
  *    - Redirect to event details page
- * 
+ * 3. If action is cancel:
+ *    - Send cancel request to backend
+ *    - Handle response and potential errors
+ *    - Redirect to event details page
+ * 4. If action is reports:
+ *    - Redirect to event reports page
+ *
  * @throws {Error} Displays an alert if RSVP request fails
  */
 const eventAction: ActionFunction = async ({ request }) => {
@@ -31,12 +37,14 @@ const eventAction: ActionFunction = async ({ request }) => {
   const parentId = formData.get('parentId');
   const eventId = formData.get('eventId');
   const indentLevel = formData.get('indentLevel');
-  
+
   // Handle RSVP action
   if (action === 'rsvp') {
     const type = formData.get('type');
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/rsvp/rsvp?event_id=${id}&type=${type}`,
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/rsvp/rsvp?event_id=${id}&type=${type}`,
       {
         method: 'POST',
         headers: {
@@ -51,11 +59,11 @@ const eventAction: ActionFunction = async ({ request }) => {
       alert(
         `Something went wrong, RSVP not sent. Error: ${response.statusText}`
       );
-      return null;
+      return redirect(`/dashboard/event/${id}`);
     }
     return redirect(`/dashboard/event/${id}`);
   }
-  
+
   if (action === 'comment') {
     try {
       const response = await fetch(
@@ -116,6 +124,30 @@ const eventAction: ActionFunction = async ({ request }) => {
     }
     return redirect(`/dashboard/event/${eventId}`);
   }
+
+  // Handle cancel action
+  if (action === 'cancel') {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/event/${id}/cancel`,
+      {
+        method: 'DELETE',
+        credentials: 'include'
+      }
+    );
+
+    if (!response.ok) {
+      alert(`Failed to cancel the event: ${response.statusText}`);
+      return null;
+    }
+
+    return redirect('/dashboard/home');
+  }
+
+  // Handle reports action
+  if (action === 'reports') {
+    return redirect(`/dashboard/event/${id}/reports`);
+  }
+
   return null;
 };
 

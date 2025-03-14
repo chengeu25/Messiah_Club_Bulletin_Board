@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Form, useLocation } from 'react-router-dom';
+import { Form } from 'react-router-dom';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import checkUser from '../../../helper/checkUser';
 import { UserType as User } from '../../../types/databaseTypes';
+import useLoading from '../../../hooks/useLoading';
+import Loading from '../../../components/ui/Loading';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 /**
  * Represents a faculty member's data structure.
@@ -31,12 +34,12 @@ type FacultyData = {
  * @returns {React.ReactElement} Rendered faculty assignment dashboard
  */
 const AssignFaculty = () => {
-  const location = useLocation();
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [canDelete, setCanDelete] = useState<boolean>(false);
   const [tableData, setTableData] = useState<FacultyData[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
+  const { loading, setLoading } = useLoading();
+  const { addNotification } = useNotification();
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Fetches faculty data from the server on component mount.
@@ -47,10 +50,9 @@ const AssignFaculty = () => {
    * @throws {Error} Throws an error if data fetching fails
    */
   useEffect(() => {
-    setError(null);
-    setMessage(null);
     // Fetch data from the API
     const fetchData = async () => {
+      setLoading(true);
       try {
         const response = await fetch(
           `${
@@ -69,44 +71,13 @@ const AssignFaculty = () => {
         setEmailList(emails);
         setTableData(data); // Update state with fetched data
       } catch (error) {
-        setError('Error fetching data from the server');
-        console.error('Error fetching data:', error);
+        addNotification('Failed to fetch data', 'error');
       }
+      setLoading(false);
     };
 
     fetchData();
   }, []); // Empty dependency array ensures it runs only once when the component mounts
-
-  /**
-   * Handles URL-based error and success messages.
-   *
-   * @function
-   * @description Updates error and success messages from URL parameters
-   */
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        setError(decodeURIComponent(newError));
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        setMessage(decodeURIComponent(newMessage));
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, [location.search]);
 
   /**
    * Checks user's permission to delete faculty.
@@ -145,7 +116,6 @@ const AssignFaculty = () => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); // Prevent page reload.
     setError(null); // Reset error messages.
-    setMessage(null); // Reset success messages.
 
     const formData = new FormData(event.currentTarget);
     const email = formData.get('userEmail')?.toString() || '';
@@ -161,7 +131,7 @@ const AssignFaculty = () => {
 
     // Check if the email already exists in the emailList
     if (emailList.includes(email)) {
-      setError('This email is already assigned as faculty.');
+      addNotification('User is already a faculty member', 'error');
       return;
     }
 
@@ -204,11 +174,11 @@ const AssignFaculty = () => {
       setEmailList((prev) => [...prev, payload.email]);
 
       // Show success message
-      setMessage('Faculty member successfully assigned!');
+      addNotification('Faculty assigned successfully!', 'success');
       (event.target as HTMLFormElement).reset(); // Clear the form fields.
     } catch (error) {
       console.error('Error during submission:', error);
-      setError('Failed to assign faculty. Please try again.');
+      addNotification('Failed to assign faculty. Please try again.', 'error');
     }
   };
 
@@ -251,7 +221,10 @@ const AssignFaculty = () => {
       );
     } catch (error) {
       console.error(error);
-      setError('Failed to assign deletion abilities. Please try again.');
+      addNotification(
+        'Failed to assign deletion abilities. Please try again.',
+        'error'
+      );
     }
   };
 
@@ -287,17 +260,18 @@ const AssignFaculty = () => {
       setEmailList((prev) => prev.filter((email) => email !== item.email));
     } catch (error) {
       console.error(error);
-      setError('Failed to remove faculty. Please try again.');
+      addNotification('Failed to remove faculty. Please try again.', 'error');
     }
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <div className='w-full h-full flex justify-center items-center'>
       <div className='flex w-full h-full sm:w-3/4 sm:h-auto sm:min-h-[50%] justify-center items-start shadow-md rounded-lg p-5 bg-white'>
         <Form onSubmit={handleSubmit} className='flex flex-col gap-2 w-full'>
           <h1 className='text-3xl font-bold'>Assign Faculty Users</h1>
           {error && <div className='text-red-500'>{error}</div>}
-          {message && <p className='text-green-500'>{message}</p>}
           <Input
             label='Enter user email:'
             name='userEmail'

@@ -3,12 +3,14 @@ import {
   useLoaderData,
   useSearchParams,
   useFetcher,
-  useSubmit
+  useSubmit,
+  useNavigate
 } from 'react-router-dom';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Input from '../../../components/formElements/Input.component';
 import Button from '../../../components/formElements/Button.component';
 import { UserType } from '../../../types/databaseTypes';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 type LoaderData = {
   user: UserType;
@@ -60,7 +62,8 @@ export const AdminUserForm = () => {
     name: string;
   } | null>(null);
   const updateNameFetcher = useFetcher();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { addNotification } = useNotification();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setTableUsers(users);
@@ -71,7 +74,7 @@ export const AdminUserForm = () => {
     if (toggleStatusFetcher.data) {
       if (toggleStatusFetcher.data.error) {
         // Set error message if there's an error
-        setErrorMessage(toggleStatusFetcher.data.error);
+        addNotification(toggleStatusFetcher.data.error, 'error');
       } else if (toggleStatusFetcher.data.email) {
         // Update local state to reflect status changes
         setTableUsers((currentUsers) =>
@@ -85,8 +88,6 @@ export const AdminUserForm = () => {
               : user
           )
         );
-        // Clear any previous error messages
-        setErrorMessage(null);
       }
     }
   }, [toggleStatusFetcher.data]);
@@ -142,17 +143,6 @@ export const AdminUserForm = () => {
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold mb-4'>Admin User Management</h1>
       <div className='w-full h-full flex flex-col gap-4'>
-        {errorMessage && (
-          <div className='text-red-500 mb-4'>
-            {errorMessage}
-            <button
-              onClick={() => setErrorMessage(null)}
-              className='ml-2 text-gray-500 hover:text-gray-700'
-            >
-              ✕
-            </button>
-          </div>
-        )}
         <div className='flex flex-row gap-2'>
           <Input
             label='Search Usernames'
@@ -251,6 +241,13 @@ export const AdminUserForm = () => {
                               )
                             }
                             filled={false}
+                          />
+                          <Button
+                            text={'Reports'}
+                            filled={false}
+                            onClick={() =>
+                              navigate(`/dashboard/userReports/${user.email}`)
+                            }
                           />
                         </>
                       )}

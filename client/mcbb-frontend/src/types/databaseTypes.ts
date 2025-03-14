@@ -10,6 +10,8 @@ import { OptionType } from '../components/formElements/Select.styles';
 export interface UserType {
   /** The full name of the user */
   name: string;
+  /** Gender of the user */
+  gender: string;
   /** The user's email address, used as a unique identifier */
   email: string;
   /** Indicates whether the user's email has been verified */
@@ -69,6 +71,7 @@ export interface ClubAdminType {
  * @description Provides a way to reference and store images with a unique identifier.
  */
 export interface ImageType {
+  url: string | undefined;
   /** Unique identifier for the image */
   id: number;
   /** URL or path to the image */
@@ -97,6 +100,10 @@ export interface ClubDetailType {
   images: ImageType[];
   /** Optional list of tags associated with the club */
   tags?: OptionType[];
+  /** Boolean indicating whether the user is subscribed to the club */
+  isSubscribed?: boolean;
+  /** Boolean indicating whether the user has blocked the club */
+  isBlocked?: boolean;
 }
 
 /**
@@ -107,6 +114,10 @@ export interface ClubDetailType {
  * timing, location, hosting, and additional metadata.
  */
 export interface EventType {
+  images: boolean;
+  genderRestriction: string;
+  coHosts: any;
+  cost: any;
   /** Unique identifier for the event */
   id: number;
   /** The title or name of the event */
@@ -114,7 +125,7 @@ export interface EventType {
   /** A description of the event */
   description: string;
   /** URL or path to the event's representative image */
-  image: string;
+  image: ImageType;
   /** The start time of the event */
   startTime: Date;
   /** The end time of the event */
@@ -125,12 +136,12 @@ export interface EventType {
   host: EventHostType[];
   /** List of tags associated with the event */
   tags: string[];
-  /** List of images associated with the event */
-  images: ImageType[];
   /** RSVP status for the event (e.g., 'rsvp', 'block') */
   rsvp: string;
   /** Indicates whether the event is from a subscribed club */
   subscribed: boolean;
+  /** Indicates whether the event is from a blocked club */
+  blocked: boolean;
 }
 
 /**
@@ -154,6 +165,7 @@ export interface EventHostType {
  * such as cost and RSVP status.
  */
 export interface EventDetailType {
+  isOrganizer: any;
   /** Unique identifier for the event */
   id: number;
   /** The title or name of the event */
@@ -178,6 +190,10 @@ export interface EventDetailType {
   cost: number;
   /** RSVP status for the event */
   rsvp: string;
+  /** Boolean indicating whether the event has been approved */
+  isApproved: boolean;
+  /** Gender restriction */
+  genderRestriction: string;
 }
 
 /**
@@ -193,7 +209,7 @@ export interface SchoolType {
   emailDomain: string;
   /** The name of the school */
   name: string;
-  /** URL or path to the school's logo */
+  /** base64 encoded logo */
   logo: string;
   /** The preferred color for the school */
   color: string;

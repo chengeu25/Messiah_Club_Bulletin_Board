@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
+from flask_cors import CORS
 from extensions import mysql
 from helper.check_user import get_user_session_info
-
 emails_bp = Blueprint("emails", __name__)
 
 
@@ -106,3 +106,4 @@ def get_email_preferences():
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
+    

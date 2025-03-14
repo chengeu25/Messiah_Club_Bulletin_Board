@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json } from 'react-router';
 
 /**
  * Action handler for processing password reset token and resetting password.
@@ -37,7 +37,7 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     // Validate token presence
     if (!token) {
       console.error('Token is missing from the parameters.');
-      return redirect(`/login/${schoolId}?error=Token%20missing`);
+      return json({ error: 'Token is missing from the parameters.' }, 400);
     }
 
     // Send password reset request to backend
@@ -56,9 +56,10 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
     // Handle password reset response
     if (loginRequest.ok) {
       // Successful password reset
-      return redirect(
-        `/login/${schoolId}?message=Password%20reset%20successful`
-      );
+      return json({
+        message: 'Password reset successfully',
+        redirectTo: `/login/${schoolId}`
+      });
     } else {
       // Handle error response
       let errorMessage = 'an error has occured';
@@ -77,14 +78,11 @@ const ForgotPasswordTokenAction: ActionFunction = async ({ request }) => {
       }
 
       // Redirect with error message
-      return redirect(
-        `/forgotPasswordToken?error=${encodeURIComponent(errorMessage)}`
-      );
+      return json({ error: errorMessage }, 400);
     }
   } catch (error) {
     // Handle unexpected errors
     console.error('An unexpected error occurred:', error);
-    return redirect('/login?error=Unexpected%20error');
   }
 };
 

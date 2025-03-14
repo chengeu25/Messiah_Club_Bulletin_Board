@@ -9,7 +9,7 @@ class Config:
     Configuration class for the Messiah Club Bulletin Board application.
 
     This class manages environment-specific configuration settings for the application,
-    loading sensitive information from environment variables and setting up 
+    loading sensitive information from environment variables and setting up
     database, upload, and email configurations.
 
     Attributes:
@@ -24,7 +24,11 @@ class Config:
         ALLOWED_EXTENSIONS (set): Set of allowed file extensions for uploads.
         SENDER_EMAIL (str): Email address used for sending system emails.
         SENDER_PASSWORD (str): Password for the sender email account.
+        JWT_SECRET_KEY (str): Secret key for signing and verifying JWTs.
+        JWT_EXPIRATION (int): Expiration time for JWTs in seconds
+        API_URL_ROOT (str): Root URL for the API.
     """
+
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
     RECAPTCHA_SECRET_KEY = os.getenv("RECAPTCHA_SECRET_KEY")
 
@@ -37,8 +41,17 @@ class Config:
 
     # Upload configuration
     UPLOAD_FOLDER = "uploads/"
-    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif"}
+    ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "heic"}
 
     # Email configuration
     SENDER_EMAIL = os.getenv("SENDER_EMAIL")
     SENDER_PASSWORD = os.getenv("SENDER_PASSWORD")
+
+    # JWT configuration
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")  # Load from environment variables
+    JWT_EXPIRATION = int(
+        os.getenv("JWT_EXPIRATION", 3600)
+    )  # Default to 3600 if not set
+
+    # API configuration
+    API_URL_ROOT = os.getenv("API_URL_ROOT")

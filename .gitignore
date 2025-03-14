@@ -1,5 +1,5 @@
 server/venv
 **/.DS_Store
 server/.env
-.vscode/*
 **/__pycache__
+db/create_tables_full.sql

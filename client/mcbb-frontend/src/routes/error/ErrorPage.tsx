@@ -26,7 +26,7 @@ const ErrorPage = () => {
   const errorMessage = useRouteError();
 
   return (
-    <div className='h-screen w-screen foreground-filled flex flex-col justify-center items-center text-white'>
+    <div className='h-[100dvh] w-screen foreground-filled flex flex-col justify-center items-center text-white'>
       {/* Application logo with homepage link */}
       <Link to='/'>
         <img src={logo} className='w-[400px]' alt='logo' />
@@ -40,13 +40,13 @@ const ErrorPage = () => {
       </h1>
 
       {/* Navigation and support instructions */}
-      <p>
+      <div>
         Please try again or{' '}
         <Link to='/' className='underline'>
           click here
         </Link>{' '}
         to go back to the homepage.
-      </p>
+      </div>
     </div>
   );
 };

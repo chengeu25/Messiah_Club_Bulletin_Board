@@ -2,25 +2,26 @@ import { ActionFunction, json, redirect } from 'react-router';
 
 /**
  * Action handler for club-related interactions.
- * 
+ *
  * @function clubAction
  * @param {Object} context - Action function context
  * @param {Request} context.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirect or JSON response based on action type
- * 
+ *
  * @description Handles various club and event-related actions:
  * 1. Creating new events
  * 2. Managing event RSVP
  * 3. Viewing event details
  * 4. Managing club subscriptions
- * 
+ * 5. Getting reports
+ *
  * @workflow
  * 1. Extract action type and related data from form submission
  * 2. Validate required parameters
  * 3. Execute appropriate backend request
  * 4. Return response or redirect
- * 
+ *
  * @throws {Error} Returns JSON error response for invalid or failed actions
  */
 const clubAction: ActionFunction = async ({ request }) => {
@@ -52,7 +53,9 @@ const clubAction: ActionFunction = async ({ request }) => {
       return json({ error: 'Missing type' }, { status: 400 });
     }
     const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/api/rsvp/rsvp?event_id=${eventId}&type=${type}`,
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/rsvp/rsvp?event_id=${eventId}&type=${type}`,
       {
         method: 'POST',
         headers: {
@@ -82,12 +85,22 @@ const clubAction: ActionFunction = async ({ request }) => {
     return redirect(`/dashboard/event/${eventId}`);
   }
 
-  // Handle club subscription actions
-  if (action === 'subscribe' || action === 'unsubscribe') {
-    console.log('Action:', action);
-    console.log('Club ID:', clubId);
-    console.log('User ID:', userId);
+  // Handle report actions
+  if (action === 'getReport') {
+    if (!clubId) {
+      console.error("Missing clubId for 'report' action");
+      return json({ error: 'Missing clubId' }, { status: 400 });
+    }
+    return redirect(`/dashboard/club/${clubId}/reports`);
+  }
 
+  // Handle club subscription actions
+  if (
+    action === 'subscribe' ||
+    action === 'unsubscribe' ||
+    action === 'block' ||
+    action === 'unblock'
+  ) {
     // Validate required fields
     if (!clubId || !userId) {
       console.error('Missing required fields for subscription:', {
@@ -100,7 +113,9 @@ const clubAction: ActionFunction = async ({ request }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/subscriptions/subscribe?user_id=${userId}`,
+        `${
+          import.meta.env.VITE_API_BASE_URL
+        }/api/subscriptions/subscribe?user_id=${userId}`,
         {
           method: 'POST',
           credentials: 'include',

@@ -28,11 +28,12 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   // Parse URL and search parameters
   const url = new URL(request.url);
   const searchParams = new URLSearchParams(url.search);
+  const filterParam = url.searchParams.get('filter') || '';
 
   // Authenticate and verify user
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + url.pathname);
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
@@ -59,7 +60,7 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
       new Date(startingDate).toISOString()
     )}&end_date=${encodeURIComponent(
       subtractDays(new Date(startingDate), -numDays).toISOString()
-    )}`,
+    )}&filter=${encodeURIComponent(filterParam)}`,
     {
       method: 'GET',
       credentials: 'include',

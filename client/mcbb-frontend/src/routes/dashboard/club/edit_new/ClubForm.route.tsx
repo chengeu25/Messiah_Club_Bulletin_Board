@@ -1,4 +1,4 @@
-import { useLoaderData, useLocation } from 'react-router-dom';
+import { useActionData, useLoaderData, useLocation } from 'react-router-dom';
 import Input from '../../../../components/formElements/Input.component';
 import {
   ClubAdminType,
@@ -14,6 +14,9 @@ import { useSubmit } from 'react-router-dom';
 import Select from 'react-select';
 import { OptionType } from '../../../../components/formElements/Select.styles';
 import { useSchool } from '../../../../contexts/SchoolContext';
+import useLoading from '../../../../hooks/useLoading';
+import Loading from '../../../../components/ui/Loading';
+import { useNotification } from '../../../../contexts/NotificationContext';
 
 interface LoaderData {
   user: UserType;
@@ -28,8 +31,10 @@ const ClubForm = () => {
   const submit = useSubmit();
   const location = useLocation();
   const data = useLoaderData() as LoaderData | null;
+  const actionData = useActionData() as { error: string; id: string };
   const { user, club, tagsAvailable } = data || {};
   const { currentSchool } = useSchool();
+  const { addNotification } = useNotification();
 
   const [error, setError] = useState<string[]>([]);
   const [newAdminError, setNewAdminError] = useState<string>('');
@@ -43,6 +48,14 @@ const ClubForm = () => {
   const [image, setImage] = useState<string>('');
   const [highestImageId, setHighestImageId] = useState<number>(0);
   const [highestAdminId, setHighestAdminId] = useState<number>(0);
+
+  const { loading, setLoading } = useLoading();
+
+  useEffect(() => {
+    if (actionData?.error) {
+      addNotification(actionData.error, 'error');
+    }
+  }, [actionData]);
 
   /**
    * Adds a new admin to the list of admins.
@@ -202,6 +215,7 @@ const ClubForm = () => {
    * @param event - The form submission event.
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    setLoading(true);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const action = (
@@ -231,6 +245,7 @@ const ClubForm = () => {
       // Don't submit if form validation fails
       if (newErrors.length > 0 || adminErrors.length > 0) {
         setError(newErrors);
+        setLoading(false);
         return;
       }
 
@@ -252,21 +267,28 @@ const ClubForm = () => {
           currentSchool?.emailDomain ?? ''
         )
       ) {
+        setLoading(false);
         return;
       }
       addAdmin(formData.get('admins-new') as string);
       setNewAdmin('');
+      setLoading(false);
     } else if (action.startsWith('remove-admin-')) {
       removeAdmin(parseInt(action.split('-')[2]));
+      setLoading(false);
     } else if (action === 'add-image') {
       if (!(formData.get('images-new') as File)?.type.startsWith('image/')) {
+        setLoading(false);
         return;
       }
       addImage(formData.get('images-new') as File);
+      setLoading(false);
     } else if (action.startsWith('remove-image-')) {
       removeImage(parseInt(action.split('-')[2]));
+      setLoading(false);
     } else if (action === 'set-logo') {
       setLogo(formData.get('image') as File);
+      setLoading(false);
     } else if (action === 'cancel') {
       formData.append('action', action);
       submit(formData, { method: 'post' });
@@ -315,7 +337,9 @@ const ClubForm = () => {
     );
   }, [images, admins]);
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold'>{club ? 'Update' : 'Create'} Club</h1>
       {error && (

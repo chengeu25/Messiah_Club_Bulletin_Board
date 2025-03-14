@@ -1,20 +1,20 @@
-import { ActionFunction, redirect } from 'react-router';
+import { ActionFunction, json, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
 
 /**
  * Action handler for faculty assignment interactions.
- * 
+ *
  * @function assignFacultyAction
  * @param {Object} args - Action function arguments from React Router
  * @param {Request} args.request - The form submission request
- * 
+ *
  * @returns {Promise<Response>} Redirects to assign faculty page with success or error message
- * 
+ *
  * @description Handles faculty assignment process:
  * 1. Validates user authentication
  * 2. Sends faculty assignment request to backend
  * 3. Redirects with appropriate message
- * 
+ *
  * @workflow
  * 1. Extract form data (email, delete permissions)
  * 2. Check user authentication
@@ -28,6 +28,12 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
   const action = formData.get('action');
 
   const emailRequest = await checkUser();
+  if (emailRequest === false) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
+  if (!emailRequest?.emailVerified) {
+    return redirect('/login?serviceTo=/dashboard/accountInfo');
+  }
   if (emailRequest) {
     const loginRequest = await fetch(
       `${import.meta.env.VITE_API_BASE_URL}/api/admintools/assign-faculty`,
@@ -42,15 +48,13 @@ const assignFacultyAction: ActionFunction = async ({ request }) => {
     );
 
     if (loginRequest.ok) {
-      return redirect(
-        '/dashboard/assignFaculty?message=' + 'assigned%20faculty'
-      );
+      return json({ message: 'Faculty assigned successfully!' });
     } else {
-      const json = await loginRequest.json();
-      return redirect('/dashboard/assignFaculty?error=' + json.error);
+      const jsonResp = await loginRequest.json();
+      return json({ error: jsonResp.error }, { status: loginRequest.status });
     }
   } else {
-    return redirect('/login?error' + 'Not%20logged%20in');
+    return redirect('/login');
   }
 };
 

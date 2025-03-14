@@ -3,15 +3,15 @@ import { BiHome } from 'react-icons/bi';
 import Button from '../../../components/formElements/Button.component';
 import { IoChevronBack, IoChevronForward } from 'react-icons/io5';
 import DatePicker from 'react-datepicker';
-import { subtractDays } from '../../../helper/dateUtils';
+import { getDayName, subtractDays } from '../../../helper/dateUtils';
 import { useLoaderData, useSearchParams, useSubmit } from 'react-router-dom';
 import {
-  passesFilter,
-  passesSearch,
+  eventPassesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
 import { EventType, UserType } from '../../../types/databaseTypes';
 import Day, { DayProps } from '../../../components/dashboard/Day.component';
+import useLoading from '../../../hooks/useLoading';
 
 /**
  * Calendar dashboard component for displaying and navigating events.
@@ -29,10 +29,12 @@ const Calendar = () => {
   const submit = useSubmit();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { events, user } = useLoaderData() as {
+  const { events } = useLoaderData() as {
     events: EventType[];
     user: UserType;
   };
+
+  const { loading } = useLoading();
 
   /**
    * Calculates the starting date and number of days to display.
@@ -113,10 +115,8 @@ const Calendar = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter(
-        (event) =>
-          passesSearch(event, searchParams.get('search') ?? '') &&
-          passesFilter(event, user, searchParams.get('filter') ?? '')
+      events.filter((event) =>
+        eventPassesSearch(event, searchParams.get('search') ?? '')
       ),
     [events, searchParams]
   );
@@ -238,16 +238,30 @@ const Calendar = () => {
         </div>
       </div>
       <div className='flex flex-row justify-center flex-1 items-center p-4 h-full'>
-        {eventsOnDaysDisplayed.map((day, index) => (
-          <div
-            key={index}
-            className={`flex flex-col flex-1 ${
-              index !== 0 && 'border-l-[1px]'
-            } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
-          >
-            <Day {...day} small={true} />
-          </div>
-        ))}
+        {loading
+          ? datesDisplayed.map((day, index) => (
+              <div
+                key={index}
+                className={`flex flex-col flex-1 ${
+                  index !== 0 && 'border-l-[1px]'
+                } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
+              >
+                <div className='text-xl font-bold flex flex-col'>
+                  {getDayName(day)}, {day.toLocaleDateString()}
+                </div>
+                Loading Events...
+              </div>
+            ))
+          : eventsOnDaysDisplayed.map((day, index) => (
+              <div
+                key={index}
+                className={`flex flex-col flex-1 ${
+                  index !== 0 && 'border-l-[1px]'
+                } p-4 foreground-outlined h-full justify-start gap-y-4 overflow-y-auto relative`}
+              >
+                <Day {...day} small={true} />
+              </div>
+            ))}
       </div>
     </div>
   );

@@ -24,10 +24,13 @@ import checkUser from '../../../helper/checkUser';
  * - Graceful error handling
  * - Provides default preferences if fetch fails
  */
-const emailPreferencesLoader: LoaderFunction = async () => {
+const emailPreferencesLoader: LoaderFunction = async ({ request }) => {
   const user = await checkUser();
   if (user === false) {
-    return redirect('/login');
+    return redirect('/login?serviceTo=' + new URL(request.url).pathname);
+  }
+  if (user?.emailVerified === false) {
+    return redirect('/verifyEmail');
   }
 
   try {

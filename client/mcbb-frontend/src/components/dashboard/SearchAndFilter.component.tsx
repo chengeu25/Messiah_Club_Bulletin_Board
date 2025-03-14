@@ -119,7 +119,7 @@ const SearchAndFilter = ({
       {/* Conditional rendering for mobile view */}
       {isSearchVisible && (
         <div
-          className='md:hidden w-screen h-screen bg-black bg-opacity-50 fixed top-0 left-0 z-[999] p-5'
+          className='md:hidden w-screen h-[100dvh] bg-black bg-opacity-50 fixed top-0 left-0 z-[999] p-5'
           onClick={toggleSearch}
         >
           <span onClick={(e) => e.stopPropagation()}>
@@ -139,7 +139,7 @@ const SearchAndFilter = ({
       )}
       {isSelectVisible && (
         <div
-          className='md:hidden w-screen h-screen bg-black bg-opacity-50 fixed top-0 left-0 z-[999] p-5'
+          className='md:hidden w-screen h-[100dvh] bg-black bg-opacity-50 fixed top-0 left-0 z-[999] p-5'
           onClick={toggleSelect}
         >
           <span onClick={(e) => e.stopPropagation()}>

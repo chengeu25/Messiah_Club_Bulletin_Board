@@ -8,7 +8,7 @@ import { StylesConfig, GroupBase } from 'react-select';
  * @property {string} label - The display text for the option
  */
 export interface OptionType {
-  value: string;
+  value: string | number;
   label: string;
 }
 

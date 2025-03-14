@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Flask",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/main.py",
+      "console": "integratedTerminal",
+      "env": {
+        "FLASK_APP": "main.py",
+        "FLASK_ENV": "development"
+      },
+      "python": "${workspaceFolder}/server/venv/bin/python",
+      "justMyCode": true,
+      "django": true
+    },
+    {
+      "name": "Vite Frontend",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "cwd": "${workspaceFolder}/client/mcbb-frontend"
+    }
+  ]
+}

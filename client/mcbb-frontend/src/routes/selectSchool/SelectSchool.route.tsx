@@ -28,7 +28,7 @@ const SelectSchool = () => {
   }
 
   return (
-    <div className='flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4'>
+    <div className='flex flex-col items-center justify-center min-h-[100dvh] bg-gray-100 p-4'>
       <div className='w-full max-w-md bg-white rounded-lg shadow-md p-6'>
         <h1 className='text-2xl font-bold mb-4 text-center'>
           Select Your School

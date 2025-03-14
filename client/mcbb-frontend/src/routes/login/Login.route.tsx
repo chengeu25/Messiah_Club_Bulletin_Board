@@ -1,10 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   useSubmit,
-  useLocation,
   useLoaderData,
-  useNavigation,
-  useParams
+  useParams,
+  useActionData,
+  useSearchParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -12,6 +12,7 @@ import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import Loading from '../../components/ui/Loading';
 import { SchoolType } from '../../types/databaseTypes';
 import { useSchool } from '../../contexts/SchoolContext';
+import useLoading from '../../hooks/useLoading';
 
 /**
  * Login component for user authentication and account management.
@@ -38,20 +39,20 @@ import { useSchool } from '../../contexts/SchoolContext';
 const Login = () => {
   // Form submission and routing hooks
   const submit = useSubmit();
-  const navigation = useNavigation();
-  const location = useLocation();
   const { schoolId } = useParams();
   const { userId, schools } = useLoaderData() as {
     userId: string;
     schools: SchoolType[];
   };
+  const actionData = useActionData();
+  const [searchParams] = useSearchParams();
 
   // State management for form and authentication
   const [error, setError] = useState<string | null>(null);
   const [email, setEmail] = useState<string>('');
   const [message, setMessage] = useState<string | null>(null);
   const [remember, setRemember] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { loading, setLoading } = useLoading();
   const { currentSchool, setCurrentSchool } = useSchool();
 
   // School input state management
@@ -62,58 +63,23 @@ const Login = () => {
     }
   }, [schools, schoolId, setCurrentSchool]);
 
+  // Set error if it exists
+  useEffect(() => {
+    const lActionData = actionData as { error: string };
+    if (lActionData?.error) {
+      setError(lActionData.error);
+    }
+  }, [actionData]);
+
+  useEffect(() => {
+    setMessage(searchParams.get('message'));
+  }, [searchParams.get('message')]);
+
   // Email validation using memoized computation
   const emailIsValid = useMemo(
     () => email.endsWith(currentSchool?.emailDomain ?? ''),
     [email, currentSchool?.emailDomain]
   );
-
-  /**
-   * Handles URL parameters for error and message display.
-   *
-   * @function useEffect
-   * @description Updates error and message states based on URL parameters
-   */
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        setIsLoading(false); // Reset loading state when error is present
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        setIsLoading(false); // Reset loading state when message is present
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, [location.search]);
-
-  /**
-   * Manages loading state based on navigation state.
-   *
-   * @function useEffect
-   * @description Resets loading state when navigation is complete
-   */
-  useEffect(() => {
-    if (navigation.state === 'idle') {
-      setIsLoading(false);
-    }
-  }, [navigation.state]);
 
   /**
    * Populates email and remember me state from loader data.
@@ -137,7 +103,7 @@ const Login = () => {
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoading(true);
+    setLoading(true);
     setMessage(null);
     setError(null); // Reset error state at the start of submission
     const formData = new FormData(event.currentTarget);
@@ -158,11 +124,11 @@ const Login = () => {
       } else {
         if (formData.get('email') === '') {
           setError('Please enter an email address.');
-          setIsLoading(false); // Reset loading state for validation error
+          setLoading(false); // Reset loading state for validation error
           return;
         } else if (formData.get('password') === '') {
           setError('Please enter a password.');
-          setIsLoading(false); // Reset loading state for validation error
+          setLoading(false); // Reset loading state for validation error
           return;
         } else {
           formData.append('action', action);
@@ -173,7 +139,7 @@ const Login = () => {
     } catch (error) {
       console.error('Login submission error:', error);
       setError('An unexpected error occurred.');
-      setIsLoading(false); // Reset loading state for unexpected errors
+      setLoading(false); // Reset loading state for unexpected errors
     }
   };
 
@@ -189,7 +155,7 @@ const Login = () => {
   };
 
   // Render loading state or login form
-  return isLoading ? (
+  return loading ? (
     <Loading />
   ) : (
     <ResponsiveForm onSubmit={handleSubmit}>

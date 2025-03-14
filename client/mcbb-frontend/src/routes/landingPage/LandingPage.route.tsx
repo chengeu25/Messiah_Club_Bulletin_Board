@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 import home1 from '../../../assets/home1.jpg';
 import home2 from '../../../assets/home2.jpg';
@@ -66,7 +66,19 @@ const LandingPage = () => {
             }}
             filled={true}
           />
+
+          {/* New "Add School" button */}
+          <p className='font-italic text-gray-300 text-xl'>
+            Want to use SHARC for your school?
+          </p>
+          <Button
+            text='Add School'
+            className='p-4'
+            onClick={() => navigate('/addSchool')}
+            filled={true}
+          />
         </div>
+
         {/* Features grid with image and text cards */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {/* Feature cards showcasing application capabilities */}
@@ -154,8 +166,13 @@ const LandingPage = () => {
         <hr className='w-full border-white border-1' />
         <div className='flex flex-col md:flex-row gap-2 w-full'>
           <ul className='flex flex-col gap-2 w-full'>
-            <li>About Us</li>
-            <li>Contact Us</li>
+            <li>
+              {' '}
+              <Link to='/aboutus'> About Us </Link>{' '}
+            </li>
+            <li>
+              <Link to='/contactus'> Contact Us </Link>
+            </li>
           </ul>
         </div>
       </footer>

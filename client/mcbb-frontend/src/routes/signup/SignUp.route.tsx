@@ -4,7 +4,8 @@ import {
   Link,
   useLoaderData,
   useParams,
-  useLocation
+  useActionData,
+  useSearchParams
 } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
@@ -14,6 +15,8 @@ import ReCAPTCHA from 'react-google-recaptcha';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
 import { SchoolType } from '../../types/databaseTypes';
 import { useSchool } from '../../contexts/SchoolContext';
+import useLoading from '../../hooks/useLoading';
+import Loading from '../../components/ui/Loading';
 
 /**
  * SignUp component for user registration.
@@ -41,12 +44,17 @@ const SignUp = () => {
   // Form submission hook
   const submit = useSubmit();
   const { schoolId } = useParams();
-  const location = useLocation();
 
   // Get schools from loader
   const { schools } = useLoaderData() as {
     schools: SchoolType[];
   };
+
+  const actionData = useActionData() as {
+    error: string;
+  };
+
+  const { loading, setLoading } = useLoading();
 
   // State management for form validation and feedback
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +70,12 @@ const SignUp = () => {
   // School input state management
   const { currentSchool, setCurrentSchool } = useSchool();
 
+  // Set message
+  const [searchParams] = useSearchParams();
+  useEffect(() => {
+    setMessage(searchParams.get('message'));
+  });
+
   // Initialize selected school from schools list if not set
   useEffect(() => {
     if (schools.length > 0) {
@@ -69,38 +83,13 @@ const SignUp = () => {
     }
   }, [schools, schoolId, setCurrentSchool]);
 
-  /**
-   * Side effect to handle URL parameters for error and success messages
-   *
-   * @effect
-   * @description Parses and sets error or success messages from URL parameters
-   */
+  // Initialize error message from action data
   useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        const decodedError = decodeURIComponent(newError);
-        setError(decodedError);
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        const decodedMessage = decodeURIComponent(newMessage);
-        setMessage(decodedMessage);
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
+    setLoading(false);
+    if (actionData?.error) {
+      setError(actionData?.error);
     }
-  }, [location.search]);
+  }, [actionData]);
 
   /**
    * Handles form submission with comprehensive validation
@@ -110,6 +99,7 @@ const SignUp = () => {
    * @description Validates form inputs, checks CAPTCHA, and submits registration
    */
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    setLoading(true);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
 
@@ -125,10 +115,12 @@ const SignUp = () => {
 
     // Validate password strength and matching
     if (!isPasswordStrong) {
+      setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
+      setLoading(false);
       return;
     }
 
@@ -147,12 +139,14 @@ const SignUp = () => {
       !captchaResponse
     ) {
       setError('Please fill out all required');
+      setLoading(false);
       return;
     }
 
     // Validate school email domain
     if (formData.get('email') === null) {
       setError(`Please use your ${currentSchool?.name} email`);
+      setLoading(false);
       return;
     } else if (
       !(formData.get('email')! as string).endsWith(
@@ -160,6 +154,7 @@ const SignUp = () => {
       )
     ) {
       setError(`Please use your ${currentSchool?.name} email`);
+      setLoading(false);
       return;
     }
 
@@ -213,7 +208,9 @@ const SignUp = () => {
     setCaptchaResponse(value);
   };
 
-  return (
+  return loading ? (
+    <Loading />
+  ) : (
     <ResponsiveForm onSubmit={handleSubmit}>
       <h1 className='text-3xl font-bold mb-5'>Sign Up</h1>
 
