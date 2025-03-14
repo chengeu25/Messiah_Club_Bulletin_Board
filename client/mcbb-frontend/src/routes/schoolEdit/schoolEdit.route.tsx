@@ -36,7 +36,7 @@ const SchoolEdit = () => {
 
     setFormState((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: name === 'color' ? value.replace(/^#/, '') : value // Remove '#' if present
     }));
   };
 
@@ -65,6 +65,7 @@ const SchoolEdit = () => {
         'Invalid color hex code. Please enter a valid 6-character hex code.',
         'error'
       );
+      setLoading(false);
       return;
     }
 
@@ -72,6 +73,7 @@ const SchoolEdit = () => {
       'Are you sure you want to save the changes?'
     );
     if (!confirmed) {
+      setLoading(false);
       return;
     }
 
@@ -84,7 +86,10 @@ const SchoolEdit = () => {
             'Content-Type': 'application/json'
           },
           credentials: 'include',
-          body: JSON.stringify(formState)
+          body: JSON.stringify({
+            ...formState,
+            color: hexValue // Ensure the color is in the correct format without '#'
+          })
         }
       );
 
@@ -142,7 +147,7 @@ const SchoolEdit = () => {
             value={formState.color} // Allow manual editing
             onChange={handleChange}
             className='block w-full text-sm text-gray-500 border border-gray-300 rounded-md p-2'
-            placeholder='#000000'
+            placeholder='000000'
           />
         </div>
         <label className='block text-sm font-medium text-gray-700'>
