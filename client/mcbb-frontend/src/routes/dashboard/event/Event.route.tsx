@@ -117,8 +117,6 @@ const Event = () => {
 
   const location = useLocation();
   const { currentSchool } = useSchool();
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [commentData, setCommentData] = useState<any[] | null>([]);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [commentInput, setCommentInput] = useState('');
@@ -144,7 +142,7 @@ const Event = () => {
       await fetchComment();
       // console.log('commentData afterwards: ', commentData);
     } catch (error) {
-      setError('Failed to fetch comments');
+      addNotification('Failed to fetch comments', 'error');
       console.error('Error fetching comments: ', error);
     }
   };
@@ -156,12 +154,12 @@ const Event = () => {
 
     if (newError || newMessage) {
       if (newError) {
-        setError(decodeURIComponent(newError));
+        addNotification(decodeURIComponent(newError), 'error');
         searchParams.delete('error');
       }
 
       if (newMessage) {
-        setMessage(decodeURIComponent(newMessage));
+        addNotification(decodeURIComponent(newMessage), 'info');
         searchParams.delete('message');
       }
 
@@ -188,38 +186,12 @@ const Event = () => {
   }, []);
 
   useEffect(() => {
-    setError(null);
-    setMessage(null);
-    // Fetch comment data from the API
-    /*const fetchComment = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL
-          }/api/events/get-comments/${eventID}`,
-          {
-            method: 'GET',
-            credentials: 'include'
-          }
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch comments');
-        }
-        const commentData = await response.json();
-        setCommentData(commentData);
-        
-      } catch (error) {
-        setError('Failed to fetch comments');
-        console.error('Error fetching comments: ', error);
-      }
-    };*/
-
     fetchComment();
   }, []);
 
   const handleSubmitComment = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
-    setError(null);
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const comment = formData.get('comment')?.toString() || '';
@@ -313,36 +285,6 @@ const Event = () => {
 
     fetchComment();
   };
-  /**
-   * Handles URL-based error and success messages.
-   *
-   * @function
-   * @description Updates error and success messages from URL parameters
-   */
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    const newError = searchParams.get('error');
-    const newMessage = searchParams.get('message');
-
-    if (newError || newMessage) {
-      if (newError) {
-        setError(decodeURIComponent(newError));
-        searchParams.delete('error');
-      }
-
-      if (newMessage) {
-        setMessage(decodeURIComponent(newMessage));
-        searchParams.delete('message');
-      }
-
-      // Update URL without triggering a page reload
-      const newUrl = searchParams.toString()
-        ? `${location.pathname}?${searchParams.toString()}`
-        : location.pathname;
-
-      window.history.replaceState({}, document.title, newUrl);
-    }
-  }, [location.search]);
 
   return (
     <div className='flex flex-col p-4 sm:px-[5%] lg:px-[10%] items-center w-full h-full overflow-y-auto gap-4'>
@@ -353,19 +295,6 @@ const Event = () => {
         className='w-full flex gap-2 relative flex-row justify-between items-center'
       >
         <h1 className='font-bold text-4xl flex-grow'>{event?.title}</h1>
-        <Form className='flex-shrink-0 flex'>
-          {error && <div className='text-red-500'>{error}</div>}
-          {message && <p className='text-green-500'>{message}</p>}
-          <RSVPDropdown
-            handleRSVPClick={(type) =>
-              submit(
-                { id: event.id, type: type, action: 'rsvp' },
-                { method: 'post' }
-              )
-            }
-            initialValue={event?.rsvp}
-          />
-        </Form>
 
         {/* Cancel Event Button */}
         {!loading && (
