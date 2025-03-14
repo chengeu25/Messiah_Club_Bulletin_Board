@@ -94,11 +94,89 @@ const ClubEventForm = () => {
       .catch((error) => console.error('Error fetching tags:', error));
   }, []);
 
+  /**
+   * Resizes an image to a maximum width and height.
+   * @param dataUrl - The data URL of the image to resize.
+   * @param maxWidth - The maximum width of the resized image.
+   * @param maxHeight - The maximum height of the resized image.
+   * @returns A promise that resolves to the resized image data URL.
+   */
+  const resizeImage = async (
+    dataUrl: string,
+    maxWidth: number,
+    maxHeight: number
+  ) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.src = dataUrl;
+
+      img.onload = () => {
+        // Create a canvas to resize the image
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Calculate the new dimensions
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
+
+        // Set the canvas dimensions
+        canvas.width = width;
+        canvas.height = height;
+
+        // Draw the image on the canvas
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        // Convert the canvas to a data URL
+        const resizedImage = canvas.toDataURL('image/jpeg');
+        resolve(resizedImage);
+      };
+
+      img.onerror = (error) => {
+        reject(error);
+      };
+    });
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      setEventPhotos((prevPhotos) => [...prevPhotos, ...selectedFiles]);
+      selectedFiles.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          try {
+            const resizedImage = await resizeImage(
+              reader.result as string,
+              1000,
+              1000
+            );
+            const blob = await (await fetch(resizedImage as string)).blob();
+            const compressedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+            });
+            setEventPhotos((prevPhotos) => [...prevPhotos, compressedFile]);
+          } catch (e) {
+            console.error(e);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setEventPhotos((prevPhotos) => prevPhotos.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (
@@ -254,8 +332,15 @@ const ClubEventForm = () => {
             <p className='text-sm font-semibold'>Selected Photos:</p>
             <ul>
               {eventPhotos.map((photo, idx) => (
-                <li key={idx} className='text-sm text-gray-700'>
+                <li key={idx} className='text-sm text-gray-700 flex items-center'>
                   {photo.name}
+                  <button
+                    type='button'
+                    onClick={() => handleRemovePhoto(idx)}
+                    className='ml-2 text-red-500'
+                  >
+                    Remove
+                  </button>
                 </li>
               ))}
             </ul>

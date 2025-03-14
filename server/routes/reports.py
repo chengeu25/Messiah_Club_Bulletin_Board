@@ -4,8 +4,7 @@ from helper.check_user import get_user_session_info
 from typing import List, Literal, TypedDict
 
 AccessControl = Literal["Club Admin", "Faculty"]
-QueryParam = Literal["School", "ID"]
-
+QueryParam = Literal["School", "ID", "Year", "UserID"]
 
 class Report(TypedDict):
     name: str
@@ -13,13 +12,11 @@ class Report(TypedDict):
     queryParams: List[QueryParam]
     accessControl: AccessControl
 
-
 class ReportObject(TypedDict):
     SCHOOL_WIDE: List[Report]
     CLUB: List[Report]
     USER: List[Report]
     EVENT: List[Report]
-
 
 REPORTS: ReportObject = {
     "SCHOOL_WIDE": [
@@ -105,6 +102,44 @@ REPORTS: ReportObject = {
             "queryParams": ["School"],
             "accessControl": "Faculty",
         },
+        {
+            "name": "Frequency of Tag Use",
+            "query": """
+                SELECT 
+                    t.tag_name, 
+                    COUNT(ut.user_id) AS usage_count
+                FROM user_tags ut
+                JOIN tag t ON ut.tag_id = t.tag_id
+                WHERE t.school_id = %s
+                GROUP BY t.tag_name;
+            """,
+            "queryParams": ["School"],
+            "accessControl": "Faculty",
+        },
+        {
+            "name": "Clubs Created in a Given Year",
+            "query": """
+                SELECT 
+                    c.club_name, 
+                    c.creation_date
+                FROM club c
+                WHERE c.school_id = %s;
+            """,
+            "queryParams": ["School"],
+            "accessControl": "Faculty",
+        },
+        {
+            "name": "List of Comments Created by a Given User",
+            "query": """
+                SELECT 
+                    c.comment_text, 
+                    c.creation_date
+                FROM comments c
+                WHERE c.user_id = %s;
+            """,
+            "queryParams": ["UserID"],
+            "accessControl": "Faculty",
+        },
     ],
     "CLUB": [],
     "USER": [
@@ -146,7 +181,6 @@ REPORTS: ReportObject = {
 
 reports_bp = Blueprint("reports", __name__)
 
-
 def resolve_params(params, id):
     return_val = []
     for param in params:
@@ -154,10 +188,13 @@ def resolve_params(params, id):
             return_val.append(id)
         elif param == "School":
             return_val.append(session.get("school"))
+        elif param == "Year":
+            return_val.append(id)
+        elif param == "UserID":
+            return_val.append(id)
         else:
             return_val.append(param)
     return return_val
-
 
 @reports_bp.route("/", methods=["POST"])
 def get_report():
@@ -223,7 +260,6 @@ def get_report():
 
     # Return the report data as JSON
     return jsonify({"report": report, "columns": column_titles}), 200
-
 
 @reports_bp.route("/names/<category>", methods=["GET"])
 def get_report_names(category):
