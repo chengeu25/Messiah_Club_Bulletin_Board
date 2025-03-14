@@ -172,7 +172,7 @@ const Event = () => {
   const handleSubmitSubComment = async (
     event: React.FormEvent<HTMLFormElement>,
     item: {
-      comment_id: String;
+      comment_id: string;
       indent_level: number;
       event_id: number;
       commentInput: string;
@@ -207,7 +207,24 @@ const Event = () => {
     );
 
     item.commentInput = '';
+    setCommentInputs((prev) => ({
+      ...prev,
+      [item.comment_id]: ''
+    }));
     setCommentInput('');
+  };
+
+  // State to manage individual comment inputs
+  const [commentInputs, setCommentInputs] = useState<{ [key: string]: string }>(
+    {}
+  );
+
+  // Function to handle comment input change
+  const handleCommentInputChange = (commentId: string, value: string) => {
+    setCommentInputs((prev) => ({
+      ...prev,
+      [commentId]: value
+    }));
   };
 
   return (
@@ -407,7 +424,7 @@ const Event = () => {
             filled={false}
             value={commentInput}
             onChange={(e) =>
-              setCommentInput((e.target as HTMLInputElement).value)
+              setCommentInput((e.target as HTMLInputElement).value ?? '')
             }
             labelOnSameLine
           />
@@ -435,13 +452,14 @@ const Event = () => {
                 creator={item.user_id}
                 content={item.content}
                 lastModified={new Date(item.posted_timestamp)}
-                commentId={item.comment_id}
                 indentLevel={item.indent_level}
-                commentInput={item.commentInput}
+                commentInput={commentInputs[item.comment_id] || ''} // Ensure commentInput is always defined
                 onChange={(e) =>
-                  setCommentInput((e.target as HTMLInputElement).value)
+                  handleCommentInputChange(
+                    item.comment_id,
+                    (e.target as HTMLInputElement).value
+                  )
                 }
-                submitHandler={(e) => handleSubmitSubComment(e, item)}
               />
             </Form>
           ))
