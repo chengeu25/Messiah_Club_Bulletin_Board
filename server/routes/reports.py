@@ -108,19 +108,48 @@ REPORTS: ReportObject = {
         {
             "name": "Frequency of Tag Use",
             "query": """
+                WITH user_tag_counts AS (
+                    SELECT 
+                        t.tag_name, 
+                        COUNT(ut.user_id) AS usage_count
+                    FROM user_tags ut
+                    JOIN tag t ON ut.tag_id = t.tag_id
+                    WHERE t.school_id = %s
+                    GROUP BY t.tag_name
+                ),
+                club_tag_counts AS (
+                    SELECT 
+                        t.tag_name, 
+                        COUNT(ct.club_id) AS usage_count
+                    FROM club_tags ct
+                    JOIN tag t ON ct.tag_id = t.tag_id
+                    WHERE t.school_id = %s
+                    GROUP BY t.tag_name
+                ),
+                event_tag_counts AS (
+                    SELECT 
+                        t.tag_name, 
+                        COUNT(et.event_id) AS usage_count
+                    FROM event_tags et
+                    JOIN tag t ON et.tag_id = t.tag_id
+                    WHERE t.school_id = %s
+                    GROUP BY t.tag_name
+                )
                 SELECT 
                     t.tag_name, 
-                    COUNT(ut.user_id) AS usage_count
-                FROM user_tags ut
-                JOIN tag t ON ut.tag_id = t.tag_id
+                    COALESCE(utc.usage_count, 0) + COALESCE(ctc.usage_count, 0) + COALESCE(etc.usage_count, 0) AS total_usage_count
+                FROM tag t
+                LEFT JOIN user_tag_counts utc ON t.tag_name = utc.tag_name
+                LEFT JOIN club_tag_counts ctc ON t.tag_name = ctc.tag_name
+                LEFT JOIN event_tag_counts etc ON t.tag_name = etc.tag_name
                 WHERE t.school_id = %s
                 GROUP BY t.tag_name;
             """,
-            "queryParams": ["School"],
+            "queryParams": ["School", "School", "School", "School"],
             "accessControl": "Faculty",
         },
         {
-            "name": "Clubs Created in a Given Year",
+            "name": "Clubs Created This Year",
             "query": """
                 SELECT 
                     c.club_name, 
