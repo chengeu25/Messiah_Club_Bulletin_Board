@@ -24,8 +24,6 @@ import {
 } from '../../../types/databaseTypes';
 import { format } from 'date-fns';
 import RSVPDropdown from '../../../components/specialDropdowns/RSVPDropdown.component';
-import checkUser from '../../../helper/checkUser';
-import { UserType as User } from '../../../types/databaseTypes';
 import { useSchool } from '../../../contexts/SchoolContext';
 import { ImManWoman } from 'react-icons/im';
 import useLoading from '../../../hooks/useLoading';
@@ -55,9 +53,10 @@ import { useNotification } from '../../../contexts/NotificationContext';
  */
 const Event = () => {
   // Retrieve event details from loader
-  const { event, user } = useLoaderData() as {
+  const { event, user, comments } = useLoaderData() as {
     event: EventDetailType;
     user: UserType;
+    comments: any[];
   };
   const submit = useSubmit();
   const { imageId } = useParams();
@@ -117,35 +116,9 @@ const Event = () => {
 
   const location = useLocation();
   const { currentSchool } = useSchool();
-  const [commentData, setCommentData] = useState<any[] | null>([]);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [commentInput, setCommentInput] = useState('');
 
   const eventID = event.id;
-
-  const fetchComment = async () => {
-    try {
-      const response = await fetch(
-        `${
-          import.meta.env.VITE_API_BASE_URL
-        }/api/events/get-comments/${eventID}`,
-        {
-          method: 'GET',
-          credentials: 'include'
-        }
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch comments');
-      }
-      const commentData = await response.json();
-      setCommentData(commentData);
-      await fetchComment();
-      // console.log('commentData afterwards: ', commentData);
-    } catch (error) {
-      addNotification('Failed to fetch comments', 'error');
-      console.error('Error fetching comments: ', error);
-    }
-  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -172,23 +145,6 @@ const Event = () => {
     }
   }, [location.search]);
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const user = await checkUser();
-        setUserEmail((user as User).email);
-      } catch (error) {
-        console.error('Error checking user:', error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  useEffect(() => {
-    fetchComment();
-  }, []);
-
   const handleSubmitComment = async (
     event: React.FormEvent<HTMLFormElement>
   ) => {
@@ -204,8 +160,6 @@ const Event = () => {
     } else {
       formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
-      //console.log("path name: ", location);
-      //console.log("form data: ", formData);
       submit(
         { id: eventID, comment: comment, action: 'comment' },
         { method: 'POST' }
@@ -213,34 +167,6 @@ const Event = () => {
     }
 
     setCommentInput('');
-
-    //console.log('commentData: ', commentData);
-    // Update the comment section with new comments dynamically
-    /*const fetchComment = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL
-          }/api/events/get-comments/${eventID}`,
-          {
-            method: 'GET',
-            credentials: 'include'
-          }
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch comments');
-        }
-        const commentData = await response.json();
-        setCommentData(commentData);
-        await fetchComment();
-        console.log('commentData afterwards: ', commentData);
-        
-      } catch (error) {
-        setError('Failed to fetch comments');
-        console.error('Error fetching comments: ', error);
-      }
-    };*/
-
-    fetchComment();
   };
 
   const handleSubmitSubComment = async (
@@ -282,8 +208,6 @@ const Event = () => {
 
     item.commentInput = '';
     setCommentInput('');
-
-    fetchComment();
   };
 
   return (
@@ -500,8 +424,8 @@ const Event = () => {
 
       {/* Rendered comments */}
       <div className='w-full flex flex-col align-left gap-2'>
-        {commentData && commentData.length > 0 ? (
-          commentData.map((item, index) => (
+        {comments && comments.length > 0 ? (
+          comments.map((item, index) => (
             <Form
               key={index}
               onSubmit={(e) => handleSubmitSubComment(e, item)}
