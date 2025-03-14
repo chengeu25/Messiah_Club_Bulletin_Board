@@ -1529,13 +1529,15 @@ def sort_comments(comments):
         else:
             if parent_id in comment_tree:
                 comment_tree[parent_id].append(comment)
-    
+
     # Flatten the tree into a sorted list
     def flatten_tree(comments):
         sorted_list = []
         for comment in comments:
             sorted_list.append(comment)  # Add parent first
-            sorted_list.extend(flatten_tree(comment_tree[comment["comment_id"]]))  # Add replies
+            sorted_list.extend(
+                flatten_tree(comment_tree[comment["comment_id"]])
+            )  # Add replies
         return sorted_list
 
     return flatten_tree(root_comments)
@@ -1543,6 +1545,9 @@ def sort_comments(comments):
 
 @events_bp.route("/get-comments/<event_id>", methods=["GET"])
 def get_comments(event_id):
+    user = get_user_session_info()
+    if not user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
     cur = mysql.connection.cursor()
     try:
         cur.execute(
@@ -1563,12 +1568,12 @@ def get_comments(event_id):
                 "content": comment[4],
                 "posted_timestamp": comment[5],
                 "parent": comment[6],
-                "indent_level": comment[7]
+                "indent_level": comment[7],
             }
             for comment in result
         ]
         return jsonify(sort_comments(comment_list)), 200
-    
+
     except Exception as e:
         print(f"Error getting comments: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
@@ -1587,7 +1592,7 @@ def post_comment():
 
         if not user_id:
             return jsonify({"error": "User not logged in"}), 401
-    
+
         data = request.json
         print(data)
 
@@ -1599,14 +1604,14 @@ def post_comment():
         cur.execute(
             """INSERT INTO comments
                 (event_id, user_id, content) VALUES (%s, %s, %s)""",
-            (data['event_id'], user_id, data['comment'])
+            (data["event_id"], user_id, data["comment"]),
         )
         conn.commit()
 
-        #comment_list = get_comments(data['event_id'])
-        #print(comment_list)
+        # comment_list = get_comments(data['event_id'])
+        # print(comment_list)
 
-        #return jsonify(comment_list), 200
+        # return jsonify(comment_list), 200
 
         return jsonify({"message": "Comment added successfully"}), 200
 
@@ -1616,6 +1621,7 @@ def post_comment():
     finally:
         if cur is not None:
             cur.close()
+
 
 @events_bp.route("/post-sub-comment", methods=["POST"])
 def post_sub_comment():
@@ -1627,7 +1633,7 @@ def post_sub_comment():
 
         if not user_id:
             return jsonify({"error": "User not logged in"}), 401
-        
+
         data = request.json
         print(data)
 
@@ -1640,12 +1646,18 @@ def post_sub_comment():
             """INSERT INTO comments
                 (event_id, user_id, content, parent, indent_level) values
                 (%s, %s, %s, %s, %s)""",
-                (data['event_id'], user_id, data['comment'], data['parent_id'], data['indent_level'])
+            (
+                data["event_id"],
+                user_id,
+                data["comment"],
+                data["parent_id"],
+                data["indent_level"],
+            ),
         )
         conn.commit()
 
         return jsonify({"message": "Comment added successfully"}), 200
-    
+
     except Exception as e:
         print(f"Error adding comment: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
