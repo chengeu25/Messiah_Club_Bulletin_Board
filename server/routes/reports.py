@@ -173,7 +173,42 @@ REPORTS: ReportObject = {
             "accessControl": "Faculty",
         },
     ],
-    "CLUB": [],
+    "CLUB": [
+            {
+            "name": "List of Club Subscribers",
+            "query": """
+                SELECT 
+                    u.email, 
+                    u.name
+                FROM user_subscription us
+                JOIN users u ON us.email = u.email
+                WHERE us.club_id = %s
+                    AND us.is_active = 1
+                    AND us.subscribed_or_blocked = 1;
+            """,
+            "queryParams": ["ID"],
+            "accessControl": "Club Admin"
+        },
+        {
+            "name": "Club Events and RSVPs",
+            "query": """
+                SELECT 
+                    e.event_name, 
+                    e.start_time AS event_date,
+                    COUNT(r.rsvp_id) AS total_rsvps
+                FROM event e
+                JOIN event_tags et ON e.event_id = et.event_id
+                JOIN club_tags ct ON et.tag_id = ct.tag_id
+                LEFT JOIN rsvp r ON e.event_id = r.event_id 
+                    AND r.is_active = 1 
+                    AND r.is_yes = 1
+                WHERE ct.club_id = %s  -- Filtering only by the specific club ID
+                GROUP BY e.event_id, e.event_name, e.start_time;
+            """,
+            "queryParams": ["ID"],  
+            "accessControl": "Club Admin"
+        }
+    ],
     "USER": [
         {
             "name": "User Subscription History",
