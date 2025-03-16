@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 9.2.0, for macos15.2 (arm64)
 --
--- Host: localhost    Database: SHARC
+-- Host: localhost    Database: sharc
 -- ------------------------------------------------------
 -- Server version	9.0.1
 
@@ -31,6 +31,7 @@ CREATE TABLE `club` (
   `SCHOOL_ID` int DEFAULT NULL,
   `CLUB_LOGO` mediumblob,
   `LOGO_PREFIX` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `creation_date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`CLUB_ID`),
   KEY `FK_SCHOOL_SCHOOL_ID_idx` (`SCHOOL_ID`),
   CONSTRAINT `FK_CLUB_SCHOOL_ID` FOREIGN KEY (`SCHOOL_ID`) REFERENCES `school` (`SCHOOL_ID`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -125,12 +126,13 @@ CREATE TABLE `comments` (
   `content` mediumtext COLLATE utf8mb4_general_ci,
   `posted_timestamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `parent` int DEFAULT NULL,
+  `indent_level` int DEFAULT NULL,
   PRIMARY KEY (`comment_id`),
   KEY `event_id` (`event_id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `event` (`EVENT_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `comments_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`EMAIL`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -155,7 +157,7 @@ CREATE TABLE `event` (
   PRIMARY KEY (`EVENT_ID`),
   KEY `SCHOOL_ID_idx` (`SCHOOL_ID`),
   CONSTRAINT `FK_EVENT_SCHOOL_ID` FOREIGN KEY (`SCHOOL_ID`) REFERENCES `school` (`SCHOOL_ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -175,7 +177,7 @@ CREATE TABLE `event_host` (
   KEY `FK_EVENT_HOST_EVENT_ID_idx` (`EVENT_ID`),
   CONSTRAINT `FK_EVENT_HOST_CLUB_ID` FOREIGN KEY (`CLUB_ID`) REFERENCES `club` (`CLUB_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `FK_EVENT_HOST_EVENT_ID` FOREIGN KEY (`EVENT_ID`) REFERENCES `event` (`EVENT_ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=92 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -193,7 +195,7 @@ CREATE TABLE `event_photo` (
   PRIMARY KEY (`EVENT_PHOTO_ID`),
   KEY `FK_EVENT_PHOTO_EVENT_ID_idx` (`EVENT_ID`),
   CONSTRAINT `FK_EVENT_PHOTO_EVENT_ID` FOREIGN KEY (`EVENT_ID`) REFERENCES `event` (`EVENT_ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -248,7 +250,7 @@ CREATE TABLE `rsvp` (
   KEY `FK_RSVP_EVENT_ID_idx` (`EVENT_ID`),
   CONSTRAINT `FK_RSVP_EVENT_ID` FOREIGN KEY (`EVENT_ID`) REFERENCES `event` (`EVENT_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `FK_RSVP_USER_ID` FOREIGN KEY (`USER_ID`) REFERENCES `users` (`EMAIL`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -265,8 +267,9 @@ CREATE TABLE `school` (
   `SCHOOL_LOGO` mediumblob,
   `EMAIL_DOMAIN` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
   `is_approved` tinyint(1) DEFAULT '0',
+  `logo_prefix` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`SCHOOL_ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -282,7 +285,7 @@ CREATE TABLE `tag` (
   `school_id` int DEFAULT NULL,
   PRIMARY KEY (`TAG_ID`),
   KEY `school_id` (`school_id`),
-  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `school` (`SCHOOL_ID`)
+  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -321,7 +324,7 @@ CREATE TABLE `user_tags` (
   PRIMARY KEY (`USER_TAG_ID`),
   KEY `FK_USER_TAGS_TAG_ID_idx` (`TAG_ID`),
   CONSTRAINT `FK_USER_TAGS_TAG_ID` FOREIGN KEY (`TAG_ID`) REFERENCES `tag` (`TAG_ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -365,4 +368,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-02-25 21:42:40
+-- Dump completed on 2025-03-16 15:48:12
