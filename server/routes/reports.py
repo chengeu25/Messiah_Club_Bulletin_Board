@@ -232,7 +232,7 @@ REPORTS: ReportObject = {
             LEFT JOIN rsvp r ON e.event_id = r.event_id
             LEFT JOIN user_subscription us ON c.club_id = us.club_id
             WHERE t.school_id = %s
-            OREDER BY t.tag_id, ct.club_id;
+            ORDER BY t.tag_name, c.club_name;
             """,
             "queryParams": ["School"],
             "accessControl": "Faculty",
