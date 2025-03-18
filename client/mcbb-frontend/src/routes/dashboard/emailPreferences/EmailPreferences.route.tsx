@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useActionData, useLoaderData, useSubmit } from 'react-router-dom';
+import {
+  Link,
+  useActionData,
+  useLoaderData,
+  useSubmit
+} from 'react-router-dom';
 import Button from '../../../components/formElements/Button.component';
 import ResponsiveForm from '../../../components/formElements/ResponsiveForm';
 import Select from '../../../components/formElements/Select.component';
@@ -97,6 +102,12 @@ const EmailPreferences = () => {
           setEmailEventType(e?.target?.value ?? 'Suggested')
         }
       />
+      <p>
+        If you would like to stop receiving emails from a certain club, go to
+        the <Link to='/dashboard/clubs'>club list page</Link>, filter by
+        subscribed and unsubscribe from the clubs you do not want to receive
+        emails about.
+      </p>
       <Button type='submit' text='Save Preferences' />
     </ResponsiveForm>
   );
