@@ -1,10 +1,9 @@
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 import smtplib
 import os
-import base64
 from config import Config
+from bs4 import BeautifulSoup
 
 # Hardcoded logo path and email template
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "..", "assets", "logo.png")
@@ -43,31 +42,39 @@ def send_email(to_email, subject, body, html=False):
     if sender_password is None or sender_email is None:
         return False
 
-    msg = MIMEMultipart()
+    msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = sender_email
     msg["To"] = to_email
 
-    # Prepare logo
-    with open(LOGO_PATH, "rb") as logo_file:
-        logo_data = base64.b64encode(logo_file.read()).decode("utf-8")
+    msg.add_header(
+        "List-Unsubscribe", f"<{Config.API_URL_ROOT}/dashboard/emailPreferences>"
+    )
 
     # Email template with blue bar, logo, and light gray background
     email_template = f"""
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f0f0f0; border-radius: 8px; overflow: hidden;">
-        <div style="background-color: #172554; color: white; padding: 15px; display: flex; align-items: center;">
-            <img src="data:image/png;base64,{logo_data}" alt="Logo" style="max-height: 50px; margin-right: 15px;">
-            <h1 style="margin: 0; font-size: 18px;">{subject}</h1>
-        </div>
-        <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
-            {body if html else body.replace(chr(10), '<br>')}<br><br>
-            To manage email preferences or unsubscribe, click <a href="{Config.API_URL_ROOT}/dashboard/emailPreferences">here</a>.
-        </div>
-    </div>
+    <html>
+        <body>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f0f0f0; border-radius: 8px; overflow: hidden;">
+                <div style="background-color: #172554; color: white; padding: 15px; display: flex; align-items: center;">
+                    <img src="{Config.API_URL_ROOT}/logo.png" alt="Logo" style="max-height: 50px; margin-right: 15px;">
+                    <h1 style="margin: 0; font-size: 18px;">{subject}</h1>
+                </div>
+                <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
+                    {body if html else body.replace(chr(10), '<br>')}<br><br>
+                    To manage email preferences or unsubscribe, click <a href="{Config.API_URL_ROOT}/dashboard/emailPreferences">here</a>.
+                </div>
+            </div>
+        </body>
+    </html>
     """
 
-    # Attach HTML part
+    # Attach message parts
     html_part = MIMEText(email_template, "html")
+    soup = BeautifulSoup(body, "html.parser")
+    plain_text = soup.get_text()
+    text_part = MIMEText(plain_text, "plain")
+    msg.attach(text_part)
     msg.attach(html_part)
 
     try:

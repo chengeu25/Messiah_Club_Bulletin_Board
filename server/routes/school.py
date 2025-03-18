@@ -170,7 +170,7 @@ def add_school():
 
         cursor = mysql.connection.cursor()
         query = """
-            INSERT INTO school (school_name, school_color, email_domain, school_logo, school_prefix)
+            INSERT INTO school (school_name, school_color, email_domain, school_logo, logo_prefix)
             VALUES (%s, %s, %s, %s, %s)
         """
         cursor.execute(query, (name, color, email_domain, logo_binary, logo_prefix))
