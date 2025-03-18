@@ -203,7 +203,7 @@ REPORTS: ReportObject = {
                     count(eh.event_id) as Events,
                     count(distinct us.subscription_id) as Subscriptions,
                     count(r.rsvp_id) as RSVPs
-                FROM suser_subscription us
+                FROM user_subscription us
                 JOIN club c on us.club_id = c.club_id
                 JOIN event_host eh on c.club_id = eh.club_id
                 LEFT JOIN rsvp r on eh.event_id = r.event_id
@@ -276,7 +276,7 @@ REPORTS: ReportObject = {
                     is_active,
                     is_yes
                 FROM rsvp
-                where email = %s;
+                WHERE user_id = %s;
             """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
