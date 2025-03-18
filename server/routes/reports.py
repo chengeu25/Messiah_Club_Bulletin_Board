@@ -69,6 +69,31 @@ REPORTS: ReportObject = {
             "accessControl": "Faculty",
         },
         {
+            "name": "RSVPs and Subscriptions for Clubs by Tag",
+            "query": """
+            SELECT
+            DISTINCT t.tag_name AS Tag,
+            c.club_name AS "Club Name",
+                (SELECT COUNT(rsvp_id)
+                FROM rsvp
+                WHERE event_id = e.event_id) AS "Number of RSVPS",
+                (SELECT COUNT(subscription_id)
+                FROM user_subscription
+                WHERE club_id = c.club_id) AS "Number of Subscriptions"
+            FROM tag t
+            JOIN club_tags ct ON t.tag_id - ct.tag_id
+            JOIN club c ON ct.club_id = c.club_id
+            LEFT JOIN event_host eh ON c.club_id = eh.club_id
+            LEFT JOIN event e ON eh.event_id = e.event_id
+            LEFT JOIN rsvp r ON e.event_id = r.event_id
+            LEFT JOIN user_subscription us ON c.club_id = us.club_id
+            WHERE t.school_id = %s
+            ORDER BY t.tag_name, c.club_name;
+            """,
+            "queryParams": ["School"],
+            "accessControl": "Faculty",
+        },
+        {
             "name": "Subscriptions and RSVPs by Tag",
             "query": """
                 WITH rsvp_counts AS
@@ -210,31 +235,6 @@ REPORTS: ReportObject = {
                 WHERE c.club_id = %s;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Faculty",
-        },
-        {
-            "name": "RSVPs and Subscriptions for Clubs by Tag",
-            "query": """
-            SELECT
-            DISTINCT t.tag_name AS Tag,
-            c.club_name AS "Club Name",
-                (SELECT COUNT(rsvp_id)
-                FROM rsvp
-                WHERE event_id = e.event_id) AS "Number of RSVPS",
-                (SELECT COUNT(subscription_id)
-                FROM user_subscription
-                WHERE club_id = c.club_id) AS "Number of Subscriptions"
-            FROM tag t
-            JOIN club_tags ct ON t.tag_id - ct.tag_id
-            JOIN club c ON ct.club_id = c.club_id
-            LEFT JOIN event_host eh ON c.club_id = eh.club_id
-            LEFT JOIN event e ON eh.event_id = e.event_id
-            LEFT JOIN rsvp r ON e.event_id = r.event_id
-            LEFT JOIN user_subscription us ON c.club_id = us.club_id
-            WHERE t.school_id = %s
-            ORDER BY t.tag_name, c.club_name;
-            """,
-            "queryParams": ["School"],
             "accessControl": "Faculty",
         },
     ],
