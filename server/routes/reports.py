@@ -6,20 +6,17 @@ from typing import List, Literal, TypedDict
 AccessControl = Literal["Club Admin", "Faculty"]
 QueryParam = Literal["School", "ID"]
 
-
 class Report(TypedDict):
     name: str
     query: str
     queryParams: List[QueryParam]
     accessControl: AccessControl
 
-
 class ReportObject(TypedDict):
     SCHOOL_WIDE: List[Report]
     CLUB: List[Report]
     USER: List[Report]
     EVENT: List[Report]
-
 
 REPORTS: ReportObject = {
     "SCHOOL_WIDE": [
@@ -160,20 +157,43 @@ REPORTS: ReportObject = {
             "queryParams": ["School"],
             "accessControl": "Faculty",
         },
+    ],
+    "CLUB": [
         {
-            "name": "List of Comments Created by a Given User",
+            "name": "List of Club Subscribers",
             "query": """
                 SELECT 
-                    c.comment_text, 
-                    c.creation_date
-                FROM comments c
-                WHERE c.user_id = %s;
+                    u.email, 
+                    u.name
+                FROM user_subscription us
+                JOIN users u ON us.email = u.email
+                WHERE us.club_id = %s
+                    AND us.is_active = 1
+                    AND us.subscribed_or_blocked = 1;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Faculty",
+            "accessControl": "Club Admin"
         },
+        {
+            "name": "Club Events and RSVPs",
+            "query": """
+                SELECT 
+                    e.event_name, 
+                    e.start_time AS event_date,
+                    COUNT(r.rsvp_id) AS total_rsvps
+                FROM event e
+                JOIN event_tags et ON e.event_id = et.event_id
+                JOIN club_tags ct ON et.tag_id = ct.tag_id
+                LEFT JOIN rsvp r ON e.event_id = r.event_id 
+                    AND r.is_active = 1 
+                    AND r.is_yes = 1
+                WHERE ct.club_id = %s  -- Filtering only by the specific club ID
+                GROUP BY e.event_id, e.event_name, e.start_time;
+            """,
+            "queryParams": ["ID"],  
+            "accessControl": "Club Admin"
+        }
     ],
-    "CLUB": [],
     "USER": [
         {
             "name": "User Subscription History",
@@ -185,6 +205,20 @@ REPORTS: ReportObject = {
                     is_active
                 FROM user_subscription
                 WHERE email = %s;
+            """,
+            "queryParams": ["ID"],
+            "accessControl": "Faculty",
+        },
+        {
+            "name": "List of Comments Created by a Given User",
+            "query": """
+                SELECT 
+                    u.name AS user_name,
+                    c.content, 
+                    c.posted_timestamp
+                FROM comments c
+                JOIN users u ON c.user_id = u.email
+                WHERE c.user_id = %s;
             """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
@@ -213,7 +247,6 @@ REPORTS: ReportObject = {
 
 reports_bp = Blueprint("reports", __name__)
 
-
 def resolve_params(params, id):
     return_val = []
     for param in params:
@@ -224,7 +257,6 @@ def resolve_params(params, id):
         else:
             return_val.append(param)
     return return_val
-
 
 @reports_bp.route("/", methods=["POST"])
 def get_report():
@@ -290,7 +322,6 @@ def get_report():
 
     # Return the report data as JSON
     return jsonify({"report": report, "columns": column_titles}), 200
-
 
 @reports_bp.route("/names/<category>", methods=["GET"])
 def get_report_names(category):
