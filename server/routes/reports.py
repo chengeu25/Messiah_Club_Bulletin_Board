@@ -6,17 +6,20 @@ from typing import List, Literal, TypedDict
 AccessControl = Literal["Club Admin", "Faculty"]
 QueryParam = Literal["School", "ID"]
 
+
 class Report(TypedDict):
     name: str
     query: str
     queryParams: List[QueryParam]
     accessControl: AccessControl
 
+
 class ReportObject(TypedDict):
     SCHOOL_WIDE: List[Report]
     CLUB: List[Report]
     USER: List[Report]
     EVENT: List[Report]
+
 
 REPORTS: ReportObject = {
     "SCHOOL_WIDE": [
@@ -172,7 +175,7 @@ REPORTS: ReportObject = {
                     AND us.subscribed_or_blocked = 1;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Club Admin"
+            "accessControl": "Club Admin",
         },
         {
             "name": "Club Events and RSVPs",
@@ -190,8 +193,8 @@ REPORTS: ReportObject = {
                 WHERE ct.club_id = %s  -- Filtering only by the specific club ID
                 GROUP BY e.event_id, e.event_name, e.start_time;
             """,
-            "queryParams": ["ID"],  
-            "accessControl": "Club Admin"
+            "queryParams": ["ID"],
+            "accessControl": "Club Admin",
         },
         {
             "name": "Number of Events, Subscriptions, and RSVPs",
@@ -207,11 +210,11 @@ REPORTS: ReportObject = {
                 WHERE c.club_id = %s;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Faculty"
+            "accessControl": "Faculty",
         },
         {
             "name": "RSVPs and Subscriptions for Clubs by Tag",
-            "query":"""
+            "query": """
             SELECT
             DISTINCT t.tag_name AS Tag,
             c.club_name AS "Club Name",
@@ -231,9 +234,9 @@ REPORTS: ReportObject = {
             WHERE t.school_id = %s
             OREDER BY t.tag_id, ct.club_id;
             """,
-            "queryParams": ["SCHOOL"],
-            "accessControl": "Faculty"
-        }
+            "queryParams": ["School"],
+            "accessControl": "Faculty",
+        },
     ],
     "USER": [
         {
@@ -276,7 +279,7 @@ REPORTS: ReportObject = {
                 where email = %s;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Faculty"
+            "accessControl": "Faculty",
         },
     ],
     "EVENT": [
@@ -302,6 +305,7 @@ REPORTS: ReportObject = {
 
 reports_bp = Blueprint("reports", __name__)
 
+
 def resolve_params(params, id):
     return_val = []
     for param in params:
@@ -312,6 +316,7 @@ def resolve_params(params, id):
         else:
             return_val.append(param)
     return return_val
+
 
 @reports_bp.route("/", methods=["POST"])
 def get_report():
@@ -377,6 +382,7 @@ def get_report():
 
     # Return the report data as JSON
     return jsonify({"report": report, "columns": column_titles}), 200
+
 
 @reports_bp.route("/names/<category>", methods=["GET"])
 def get_report_names(category):
