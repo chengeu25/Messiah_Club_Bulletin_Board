@@ -30,6 +30,7 @@ const EditInterests: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { addNotification } = useNotification();
   const [isMounted, setIsMounted] = useState(false);
+  const [isFaculty, setIsFaculty] = useState<boolean>(false); // Add state for user role
 
   /**
    * Fetch available and user's current interests on component mount.
@@ -38,6 +39,27 @@ const EditInterests: React.FC = () => {
    * @description Retrieves all interests and user's selected interests
    */
   useEffect(() => {
+    // Fetch user role
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admintools/user/role`, {
+      credentials: 'include'
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log('User role data:', data); // Debugging log
+        if (data.role) {
+          setIsFaculty(data.role === 'faculty');
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching user role:', error);
+        setError('Failed to fetch user role');
+      });
+
     // Fetch all available interests
     fetch(
       `${
@@ -180,13 +202,15 @@ const EditInterests: React.FC = () => {
             >
               Save Changes
             </button>
-            <button
-              className='foreground-filled-focusable text-white py-4 flex-1 ml-2 rounded-lg'
-              type='button'
-              onClick={handleRedirect}
-            >
-              Go to Add Interest Page
-            </button>
+            {isFaculty && ( // Conditionally render the button
+              <button
+                className='foreground-filled-focusable text-white py-4 flex-1 ml-2 rounded-lg'
+                type='button'
+                onClick={handleRedirect}
+              >
+                Go to Add Interest Page
+              </button>
+            )}
           </div>
         </form>
       </div>
