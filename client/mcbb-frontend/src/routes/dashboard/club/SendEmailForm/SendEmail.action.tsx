@@ -1,4 +1,4 @@
-import { ActionFunction, json, redirect } from 'react-router-dom';
+import { ActionFunction, redirect } from 'react-router-dom';
 
 const sendEmailAction: ActionFunction = async ({ request }) => {
   let formData: FormData;
@@ -11,7 +11,9 @@ const sendEmailAction: ActionFunction = async ({ request }) => {
     const message = formData.get('message') as string;
 
     if (!clubId || !subject || !message) {
-      return redirect(`/dashboard/club/${clubId}?error=All fields are required.`);
+      return redirect(
+        `/dashboard/club/${clubId}?error=All fields are required.`
+      );
     }
 
     const response = await fetch(
@@ -20,21 +22,29 @@ const sendEmailAction: ActionFunction = async ({ request }) => {
         method: 'POST',
         credentials: 'include',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ subject, message }),
+        body: JSON.stringify({ subject, message })
       }
     );
 
     if (response.ok) {
-      return redirect(`/dashboard/club/${clubId}?success=Email sent successfully.`);
+      return redirect(
+        `/dashboard/club/${clubId}?success=Email sent successfully.`
+      );
     } else {
       const errorData = await response.json();
-      return redirect(`/dashboard/club/${clubId}?error=${encodeURIComponent(errorData.message || 'Failed to send email.')}`);
+      return redirect(
+        `/dashboard/club/${clubId}?error=${encodeURIComponent(
+          errorData.message || 'Failed to send email.'
+        )}`
+      );
     }
   } catch (error) {
     console.error('Error sending email:', error);
-    return redirect(`/dashboard/club/${fallbackClubId}?error=Something went wrong. Please try again later.`);
+    return redirect(
+      `/dashboard/club/${fallbackClubId}?error=Something went wrong. Please try again later.`
+    );
   }
 };
 
