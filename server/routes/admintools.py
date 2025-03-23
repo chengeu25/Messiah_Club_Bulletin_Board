@@ -4,6 +4,41 @@ from helper.check_user import get_user_session_info
 
 admintools_bp = Blueprint("admintools", __name__)
 
+@admintools_bp.route("/user/role", methods=["GET"])
+def get_user_role():
+    """
+    Retrieve the role of the current user.
+
+    This endpoint fetches the role of the currently logged-in user.
+
+    Returns:
+        JSON response:
+        - On successful retrieval:
+            {
+                "role": str
+            }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
+        - On unexpected error:
+            {"error": "An unexpected error occurred"}, 500 status
+    """
+    try:
+        # Get current user session information
+        current_user = get_user_session_info()
+        if not current_user:
+            return jsonify({"error": "Unauthorized"}), 403
+
+        # Determine the user's role
+        role = "faculty" if current_user.get("isFaculty") else "student"
+
+        # Return the user's role
+        return jsonify({"role": role}), 200
+
+    except Exception as e:
+        # Log the actual error for debugging
+        print(f"Error fetching user role: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
 
 @admintools_bp.route("/assign-faculty", methods=["POST"])
 def assign_faculty():
