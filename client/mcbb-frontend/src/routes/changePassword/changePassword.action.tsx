@@ -40,7 +40,11 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ oldPassword, newPassword, emailRequest })
+        body: JSON.stringify({
+          oldPassword,
+          newPassword,
+          emailRequest: emailRequest.email
+        })
       }
     );
 

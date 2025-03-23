@@ -654,6 +654,8 @@ def reset_password():
 
     cur = mysql.connection.cursor()
 
+    print(data["emailRequest"])
+
     # Retrieve the hashed passwords from the database
     cur.execute(
         """SELECT pwd1, pwd2, pwd3, email_verified
@@ -671,6 +673,7 @@ def reset_password():
     # Verify the provided current password against the hashed password
     hashed_password = result[0]
     if not check_password_hash(hashed_password, data["oldPassword"]):
+        print("Invalid current password")
         return jsonify({"error": "Authentication failed"}), 401
 
     # Check if email is verified
