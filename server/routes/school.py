@@ -62,7 +62,7 @@ def get_all_schools():
             return jsonify({"error": "Database connection error"}), 500
 
         cursor = mysql.connection.cursor()
-        query = "SELECT school_id, school_name, school_color FROM school WHERE IS_APPROVED = 1"
+        query = "SELECT school_id, school_name, school_color, email_domain FROM school WHERE IS_APPROVED = 1"
         cursor.execute(query)
         schools = cursor.fetchall()
         cursor.close()
@@ -72,6 +72,7 @@ def get_all_schools():
                 "id": school[0],
                 "name": school[1],
                 "color": school[2],
+                "emailDomain": school[3],
             }
             for school in schools
         ]
