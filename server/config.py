@@ -57,4 +57,4 @@ class Config:
     API_URL_ROOT = os.getenv("API_URL_ROOT")
 
     # Session timeout
-    SESSION_TIMEOUT = os.getenv("SESSION_TIMEOUT_MINUTES", 60)
+    SESSION_TIMEOUT = int(os.getenv("SESSION_TIMEOUT_MINUTES", 60))
