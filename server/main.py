@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 import os
 from flask import Flask, redirect, session, url_for
 from config import Config
-from extensions import mysql, cors
+from extensions import mysql, cors, limiter
 from routes.auth import auth_bp
 from routes.clubs import clubs_bp
 from routes.events import events_bp
@@ -80,6 +80,9 @@ def create_app(config_class=Config):
             }
         },
     )
+
+    # Rate limiting
+    limiter.init_app(app)
 
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/api/auth")

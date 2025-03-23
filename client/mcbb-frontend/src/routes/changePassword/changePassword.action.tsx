@@ -53,6 +53,17 @@ const changePasswordAction: ActionFunction = async ({ request }) => {
         { status: 200 }
       );
     } else {
+      if (loginRequest.status === 429) {
+        return json(
+          {
+            redirectTo: `/changePassword`,
+            error: 'Too many requests'
+          },
+          {
+            status: 429
+          }
+        );
+      }
       const jsonResponse = await loginRequest.json();
       return json(
         {

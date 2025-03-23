@@ -59,17 +59,26 @@ const loginAction: ActionFunction = async ({ request }) => {
       return redirect(
         '/verifyEmail?serviceTo=' + searchParams.get('serviceTo') || ''
       );
-    }
-    // Check if login failed because email is not verified
-    else {
-      const jsonResp = await loginResponse.json();
+    } else {
+      // If too many login attempts
+      if (loginResponse.status === 429) {
+        return json(
+          { error: 'Too many login attempts. Please try again later.' },
+          { status: 429 }
+        );
+      }
+      // Check if login failed because email is not verified
+      const jsonResp = await loginResponse?.json();
       if (jsonResp?.error === 'Email not verified') {
         return redirect(
           '/verifyEmail?serviceTo=' + searchParams.get('serviceTo') || ''
         );
       }
-      // Redirect with error message for other login failures
-      return json({ error: jsonResp.error }, { status: 400 });
+      // Return error message for other login failures
+      return json(
+        { error: jsonResp?.error ?? 'Unknown Error' },
+        { status: 400 }
+      );
     }
   }
 

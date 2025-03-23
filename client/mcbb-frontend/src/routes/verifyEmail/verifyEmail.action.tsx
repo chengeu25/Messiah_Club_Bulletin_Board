@@ -61,6 +61,12 @@ const verifyEmailAction: ActionFunction = async ({ request }) => {
     if (request.ok) {
       return redirect(serviceTo || '/dashboard');
     } else {
+      if (request.status === 429) {
+        return json(
+          { error: 'Too many requests. Please try again later.' },
+          { status: 429 }
+        );
+      }
       const jsonResp = await request.json();
       return json({ error: jsonResp.error }, { status: jsonResp.status });
     }

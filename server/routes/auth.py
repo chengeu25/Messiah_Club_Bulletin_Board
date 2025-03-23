@@ -3,14 +3,12 @@ import random
 import string
 from flask import Blueprint, request, jsonify, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from extensions import mysql
+from extensions import mysql, limiter
 from helper.send_email import send_email
 import requests
 from config import Config
 import jwt
-from flask_cors import CORS
 from helper.check_user import get_user_session_info
-
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -117,6 +115,7 @@ def is_it_a_robot(captcha_response):
 
 
 @auth_bp.route("/verify-email", methods=["POST"])
+@limiter.limit("5 per minute")
 def verify_email():
     """
     Verify a user's email using a verification code.
@@ -267,6 +266,7 @@ def check_user():
 
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5/minute")
 def login():
     """
     Authenticate a user and create a new session.
@@ -553,6 +553,7 @@ def signup():
 
 
 @auth_bp.route("/password-reset", methods=["POST"])
+@limiter.limit("5 per minute")
 def reset_password():
     """
     Reset the user's password while logged in.
