@@ -101,6 +101,7 @@ import facultyReportsLoader from './routes/dashboard/reports/SchoolWideReports.l
 import eventReportsLoader from './routes/dashboard/reports/EventReports.loader.tsx';
 import userReportsLoader from './routes/dashboard/reports/UserReports.loader.tsx';
 import reportsAction from './routes/dashboard/reports/Reports.action.tsx';
+import AddedInterestLoader from './routes/dashboard/addeditinterestpage/addeditinterest.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -188,6 +189,7 @@ const router = createBrowserRouter(
         />
         <Route
           path='addeditinterestpage'
+          loader={AddedInterestLoader}
           element={<AddedInterest />}
           action={addInterestAction}
         />

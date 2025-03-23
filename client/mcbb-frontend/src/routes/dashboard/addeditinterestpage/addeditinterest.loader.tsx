@@ -32,6 +32,7 @@ const AddedInterestLoader: LoaderFunction = async ({ request }) => {
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
   }
+  return null;
 };
 
 export default AddedInterestLoader;

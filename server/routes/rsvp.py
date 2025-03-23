@@ -61,7 +61,7 @@ def RSVP():
 
     event_id = request.args.get("event_id")  # Event ID
     print(event_id)
-    user_id = session.get("user_id")
+    user_id = user_info.get("user_id")
     typeofRSVP = request.args.get("type")  # Type parameter
 
     # Validate input parameters

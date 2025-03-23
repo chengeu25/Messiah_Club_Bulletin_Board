@@ -3,11 +3,6 @@ from flask import session
 from extensions import mysql
 
 
-from datetime import datetime, timezone, timedelta
-from flask import session
-from extensions import mysql
-
-
 def get_user_session_info():
     """
     Retrieve the current user's session information.
@@ -50,7 +45,7 @@ def get_user_session_info():
 
     # Check session activity
     last_activity = session.get("last_activity")
-    user_id = session.get("user_id")
+    session_id = session.get("session_id")
     school_id = session.get("school")
 
     # Check for explicit logout flag
@@ -61,7 +56,7 @@ def get_user_session_info():
 
     # Validate session
     if (
-        user_id is None
+        session_id is None
         or last_activity is None
         or datetime.now(timezone.utc) - last_activity
         >= timedelta(minutes=60)  # Extend session timeout to 60 minutes
@@ -80,15 +75,45 @@ def get_user_session_info():
         return default_return
 
     try:
+        # Retrieve user email and session details using the session token
+        cur.execute(
+            """SELECT sm.user_email, sm.expires_at
+               FROM session_mapping sm
+               WHERE sm.session_id = %s""",
+            (session_id,),
+        )
+        session_data = cur.fetchone()
+
+        # If no session data is found, clear the session
+        if not session_data:
+            print("GET_USER_SESSION_INFO: Session not found")
+            session.clear()
+            return default_return
+
+        user_email, expires_at = session_data
+
+        # Ensure `expires_at` is timezone-aware
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+        # Compare with the current UTC time
+        if datetime.now(timezone.utc) > expires_at:
+            print("GET_USER_SESSION_INFO: Session expired")
+            cur.execute(
+                "DELETE FROM session_mapping WHERE session_id = %s", (session_id,)
+            )
+            conn.commit()
+            session.clear()
+            return default_return
+
         # Fetch user details
         cur.execute(
             """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned, gender
-                FROM users 
-                WHERE email = %s
-                    AND is_active = 1
-                    AND school_id = %s
-            """,
-            (user_id, school_id),
+               FROM users 
+               WHERE email = %s
+                 AND is_active = 1
+                 AND school_id = %s""",
+            (user_email, school_id),
         )
         result = cur.fetchone()
 
@@ -102,13 +127,12 @@ def get_user_session_info():
         # Fetch club admins
         cur.execute(
             """SELECT a.club_id 
-            FROM club_admin a
-            INNER JOIN users u ON u.email = a.user_id
-            WHERE a.user_id = %s
-                AND u.is_active = 1
-                AND a.is_active = 1
-            """,
-            (user_id,),
+               FROM club_admin a
+               INNER JOIN users u ON u.email = a.user_id
+               WHERE a.user_id = %s
+                 AND u.is_active = 1
+                 AND a.is_active = 1""",
+            (user_email,),
         )
         result_2 = cur.fetchall()
         club_admins = list(map(lambda x: x[0], result_2)) if result_2 else None
@@ -116,11 +140,11 @@ def get_user_session_info():
         # Fetch user tags
         cur.execute(
             """SELECT tag_name 
-            FROM tag t 
-            INNER JOIN user_tags ut 
-                ON t.tag_id = ut.tag_id 
-            WHERE ut.user_id = %s""",
-            (user_id,),
+               FROM tag t 
+               INNER JOIN user_tags ut 
+                   ON t.tag_id = ut.tag_id 
+               WHERE ut.user_id = %s""",
+            (user_email,),
         )
         result_3 = cur.fetchall()
         tags = list(map(lambda x: x[0], result_3)) if result_3 else None
@@ -132,7 +156,7 @@ def get_user_session_info():
 
         # Construct and return user info
         return {
-            "user_id": user_id,
+            "user_id": user_email,
             "name": result[2],
             "emailVerified": result[1],
             "isFaculty": result[3],

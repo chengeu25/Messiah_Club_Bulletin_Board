@@ -536,7 +536,7 @@ def get_event(event_id):
     cur = mysql.connection.cursor()
 
     school_id = session.get("school")
-    user_id = session.get("user_id")
+    user_id = current_user.get("user_id")
 
     cur.execute(
         """SELECT e.event_id, e.start_time, e.end_time, e.location, e.description, e.cost, e.event_name, e.gender_restriction, e.is_approved FROM event e
@@ -770,7 +770,7 @@ def get_club_events(club_id):
         return jsonify({"error": "Database connection error"}), 500
 
     school_id = session.get("school")
-    user_id = session.get("user_id")
+    user_id = current_user.get("user_id")
 
     # Get start date from query parameters
     start_date = request.args.get("start_date", datetime.now(pytz.utc).isoformat())
@@ -1586,8 +1586,9 @@ def get_comments(event_id):
 def post_comment():
     cur = None
     try:
+        current_user = get_user_session_info()
         # Check if the user is logged in
-        user_id = session.get("user_id")
+        user_id = current_user.get("user_id")
         school_id = session.get("school")
 
         if not user_id:
@@ -1627,8 +1628,10 @@ def post_comment():
 def post_sub_comment():
     cur = None
     try:
+        current_user = get_user_session_info()
+
         # Check if the user is logged in
-        user_id = session.get("user_id")
+        user_id = current_user.get("user_id")
         school_id = session.get("school")
 
         if not user_id:

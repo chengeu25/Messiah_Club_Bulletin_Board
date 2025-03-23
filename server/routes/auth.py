@@ -9,6 +9,7 @@ import requests
 from config import Config
 import jwt
 from helper.check_user import get_user_session_info
+import secrets  # For generating secure random tokens
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -147,7 +148,8 @@ def verify_email():
     """
     data = request.get_json()
     input_code = data.get("code")
-    email = session.get("user_id")
+    current_user = get_user_session_info()
+    email = current_user.get("user_id")
 
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
@@ -199,7 +201,8 @@ def resend_code():
     - Requires an active user session with a user_id
     """
     # get email from session
-    email = session.get("user_id")
+    current_user = get_user_session_info()
+    email = current_user["user_id"]
 
     if session.get("verification_code") is None or request.json.get("forceResend"):
         # Generate a new verification code
@@ -303,7 +306,7 @@ def login():
     - Validates input data
     - Checks database for user credentials
     - Verifies password using Werkzeug's check_password_hash
-    - Sets session user_id and last_activity
+    - Sets session variables with a random session token
     - Resets email verification status
     - Supports optional "remember me" functionality
     """
@@ -314,15 +317,16 @@ def login():
         return jsonify({"error": "Email and password are required"}), 400
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
     cur = mysql.connection.cursor()
 
     # Retrieve the hashed password from the database
     cur.execute(
         """SELECT pwd1, is_banned
-                FROM users 
-                WHERE email = %s
-                    AND is_active = 1
-                    AND school_id = %s""",
+           FROM users 
+           WHERE email = %s
+             AND is_active = 1
+             AND school_id = %s""",
         (data["email"], data["school"]),
     )
     result = cur.fetchone()
@@ -343,10 +347,25 @@ def login():
     if not check_password_hash(hashed_password, data["password"]):
         return jsonify({"error": "Authentication failed"}), 401
 
-    # Set the user ID and activity timestamp in the session
-    session["user_id"] = data["email"]
+    # Generate a random session token
+    session_token = secrets.token_hex(32)
+
+    # Calculate session expiration (e.g., 1 hour)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=1)
+
+    # Store the session token in the database
+    cur.execute(
+        """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
+           VALUES (%s, %s, %s, %s, %s)""",
+        (session_token, data["email"], data["school"], now, expires_at),
+    )
+    mysql.connection.commit()
+
+    # Set the session variables
+    session["session_id"] = session_token
     session["school"] = data["school"]
-    session["last_activity"] = datetime.now(timezone.utc)
+    session["last_activity"] = now
 
     cur.close()
 
@@ -370,7 +389,7 @@ def logout():
     """
     Terminate the current user session.
 
-    This endpoint clears the user's session data, effectively logging them out.
+    This endpoint clears the user's session data and invalidates the session token.
 
     Returns:
         JSON response:
@@ -379,15 +398,28 @@ def logout():
 
     Behavior:
     - Clears all session variables
+    - Removes the session token from the database
     - Ensures complete session termination
     """
+    session_id = session.pop("session_id", None)
+
+    if session_id:
+        try:
+            cur = mysql.connection.cursor()
+            # Remove the session token from the database
+            cur.execute(
+                "DELETE FROM session_mapping WHERE session_id = %s", (session_id,)
+            )
+            mysql.connection.commit()
+            cur.close()
+        except Exception as e:
+            print(f"Error invalidating session: {str(e)}")
+            return jsonify({"error": "Failed to log out"}), 500
 
     # Clear all session data
     session.clear()
 
-    # Restore the logout flag
     session["is_logged_out"] = True
-    session.modified = True
 
     resp = jsonify({"message": "Logged out successfully"})
     return resp, 200
@@ -431,29 +463,19 @@ def signup():
             {"error": "Database connection error"}, 500 status
         - On banned user:
             {"error": "User is banned"}, 403 status
-
-    Behavior:
-    - Validates input data completeness and format
-    - Verifies reCAPTCHA to prevent bot registrations
-    - Checks for existing email in the database
-    - Hashes the password for secure storage
-    - Generates a verification code and sends verification email
-    - Creates a new user record in the database
-    - Sets up initial session for the new user
     """
     data = request.get_json()
-    email = data.get("email")  # These are to get the current inputs
+    email = data.get("email")
     name = data.get("name")
     password = data.get("password")
     school = data.get("school")
     email_frequency = data.get("emailFrequency")
     email_preferences = data.get("emailPreferences")
-    if data.get("gender") == "Male":
-        gender = "M"
-    elif data.get("gender") == "Female":
-        gender = "F"
-    else:
-        gender = "O"
+    gender = (
+        "M"
+        if data.get("gender") == "Male"
+        else "F" if data.get("gender") == "Female" else "O"
+    )
     captcha_response = data.get("captchaResponse")
 
     # Validate reCAPTCHA response
@@ -463,14 +485,14 @@ def signup():
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
 
-    # to check if the email is unique
     cur = mysql.connection.cursor()
+
+    # Check if the email is unique
     cur.execute(
         "SELECT name, email, is_banned, is_active FROM users WHERE email = %s",
-        (str(email),),
+        (email,),
     )
     existing_user = cur.fetchone()
-    cur.close()
 
     if existing_user:
         # Check if the user is banned
@@ -479,7 +501,6 @@ def signup():
 
         # If user exists but is inactive, reactivate the user
         if existing_user[3] == 0:
-            cur = mysql.connection.cursor()
             cur.execute(
                 """UPDATE users 
                 SET PWD1 = %s, 
@@ -503,21 +524,33 @@ def signup():
                 ),
             )
             mysql.connection.commit()
-            cur.close()
 
-            session["user_id"] = email
+            # Generate a random session token
+            session_token = secrets.token_hex(32)
+            now = datetime.now(timezone.utc)
+            expires_at = now + timedelta(hours=1)
+
+            # Store the session token in the database
+            cur.execute(
+                """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
+                   VALUES (%s, %s, %s, %s, %s)""",
+                (session_token, email, school, now, expires_at),
+            )
+            mysql.connection.commit()
+
+            # Set session variables
+            session["session_id"] = session_token
             session["school"] = school
-            session["last_activity"] = datetime.now(timezone.utc)
+            session["last_activity"] = now
 
             return jsonify({"message": "User reactivated successfully"}), 200
 
-        return jsonify({"error": "email already in use"}), 400
+        return jsonify({"error": "Email already in use"}), 400
 
-    # Hash da password
+    # Hash the password
     hashed_password = generate_password_hash(password)
-    # Putting it all into the database if pass
 
-    cur = mysql.connection.cursor()
+    # Insert the new user into the database
     cur.execute(
         """INSERT INTO users (
                 EMAIL, 
@@ -531,7 +564,7 @@ def signup():
                 NAME,
                 EMAIL_FREQUENCY,
                 EMAIL_EVENT_TYPE
-            ) VALUES (%s, 0, %s, %s, 0,0,1,%s,%s, %s, %s)""",
+            ) VALUES (%s, 0, %s, %s, 0, 0, 1, %s, %s, %s, %s)""",
         (
             email,
             hashed_password,
@@ -544,27 +577,42 @@ def signup():
     )
     mysql.connection.commit()
 
-    session["user_id"] = email
+    # Generate a random session token
+    session_token = secrets.token_hex(32)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=1)
+
+    # Store the session token in the database
+    cur.execute(
+        """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
+           VALUES (%s, %s, %s, %s, %s)""",
+        (session_token, email, school, now, expires_at),
+    )
+    mysql.connection.commit()
+
+    # Set session variables
+    session["session_id"] = session_token
     session["school"] = school
-    session["last_activity"] = datetime.now(timezone.utc)
+    session["last_activity"] = now
 
     cur.close()
-    return jsonify({"message ": "User Success!"}), 200
+    return jsonify({"message": "User created successfully"}), 201
 
 
 @auth_bp.route("/password-reset", methods=["POST"])
 @limiter.limit("5 per minute")
 def reset_password():
     """
-    Reset the user's password while logged in.
+    Reset the user's password.
 
-    This endpoint allows a logged-in user to change their current password,
-    requiring verification of the current password.
+    This endpoint allows a user to reset their password by verifying the current password
+    and ensuring the new password is unique to the last three saved passwords.
 
     Expected JSON payload:
     {
-        "currentPassword": str,  # User's current password
-        "newPassword": str       # User's desired new password
+        "emailRequest": str,  # User's email
+        "oldPassword": str,   # User's current password
+        "newPassword": str    # User's desired new password
     }
 
     Returns:
@@ -581,11 +629,11 @@ def reset_password():
             {"error": "Authentication failed"}, 401 status
 
     Behavior:
-    - Validates that a user is currently logged in
+    - Validates the provided email, current password, and new password
     - Verifies the current password matches the stored password
-    - Generates a new password hash
+    - Ensures the new password is unique to the last three saved passwords
     - Updates the user's password in the database
-    - Ensures password security by requiring current password confirmation
+    - Invalidates the current session token and generates a new one
     """
     data = request.json
     if data is None:
@@ -595,18 +643,24 @@ def reset_password():
         or data["oldPassword"] is None
         or data["newPassword"] is None
     ):
-        return jsonify({"error": "Email and password are required"}), 400
+        return (
+            jsonify(
+                {"error": "Email, current password, and new password are required"}
+            ),
+            400,
+        )
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+
     cur = mysql.connection.cursor()
 
     # Retrieve the hashed passwords from the database
     cur.execute(
-        """Select pwd1, pwd2, pwd3, email_verified
-                FROM users
-                WHERE email = %s
-                    AND is_active = 1""",
-        (session["user_id"],),
+        """SELECT pwd1, pwd2, pwd3, email_verified
+           FROM users
+           WHERE email = %s
+             AND is_active = 1""",
+        (data["emailRequest"],),
     )
     result = cur.fetchone()
 
@@ -619,18 +673,13 @@ def reset_password():
     if not check_password_hash(hashed_password, data["oldPassword"]):
         return jsonify({"error": "Authentication failed"}), 401
 
-    # Set the user ID and activity timestamp in the session
-    session["user_id"] = data["emailRequest"]["email"]
-    session["last_activity"] = datetime.now(timezone.utc)
-
     # Check if email is verified
     is_email_verified = result[3]
     if not is_email_verified == 1:
         return jsonify({"error": "Email not verified"}), 401
 
-    # Check if new password is unique to the last three saved passwords
+    # Check if the new password is unique to the last three saved passwords
     new_password = data["newPassword"]
-
     if (
         check_password_hash(result[0], new_password)
         or (
@@ -649,22 +698,51 @@ def reset_password():
             400,
         )
 
-    # Cascade passwords
+    # Cascade passwords (shift pwd1 -> pwd2 -> pwd3)
     cur.execute(
         """UPDATE users
-                SET pwd3 = %s, pwd2 = %s, pwd1 = %s
-                WHERE email = %s""",
+           SET pwd3 = %s, pwd2 = %s, pwd1 = %s
+           WHERE email = %s""",
         (
-            str(result[1]),
-            str(result[0]),
-            generate_password_hash(str(data["newPassword"])),
-            str(session["user_id"]),
+            result[1],
+            result[0],
+            generate_password_hash(new_password),
+            data["emailRequest"],
         ),
     )
-
     mysql.connection.commit()
+
+    # Invalidate the current session token
+    session_id = session.pop("session_id", None)
+    if session_id:
+        cur.execute("DELETE FROM session_mapping WHERE session_id = %s", (session_id,))
+        mysql.connection.commit()
+
+    # Generate a new session token
+    new_session_token = secrets.token_hex(32)
+    now = datetime.now(timezone.utc)
+    expires_at = now + timedelta(hours=1)
+
+    # Store the new session token in the database
+    cur.execute(
+        """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
+           VALUES (%s, %s, %s, %s, %s)""",
+        (
+            new_session_token,
+            data["emailRequest"],
+            session.get("school"),
+            now,
+            expires_at,
+        ),
+    )
+    mysql.connection.commit()
+
+    # Update the session with the new session token
+    session["session_id"] = new_session_token
+    session["last_activity"] = now
+
     cur.close()
-    session.pop("user_id", None)
+
     return jsonify({"message": "Password updated successfully"}), 200
 
 
