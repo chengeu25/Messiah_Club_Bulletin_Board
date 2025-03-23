@@ -352,7 +352,7 @@ def login():
 
     # Calculate session expiration (e.g., 1 hour)
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(hours=1)
+    expires_at = now + timedelta(minutes=Config.SESSION_TIMEOUT)
 
     # Store the session token in the database
     cur.execute(
@@ -580,7 +580,7 @@ def signup():
     # Generate a random session token
     session_token = secrets.token_hex(32)
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(hours=1)
+    expires_at = now + timedelta(minutes=Config.SESSION_TIMEOUT)
 
     # Store the session token in the database
     cur.execute(
