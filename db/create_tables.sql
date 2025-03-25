@@ -132,7 +132,7 @@ CREATE TABLE `comments` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`event_id`) REFERENCES `event` (`EVENT_ID`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `comments_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`EMAIL`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,7 +269,26 @@ CREATE TABLE `school` (
   `is_approved` tinyint(1) DEFAULT '0',
   `logo_prefix` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`SCHOOL_ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `session_mapping`
+--
+
+DROP TABLE IF EXISTS `session_mapping`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `session_mapping` (
+  `session_id` varchar(64) NOT NULL,
+  `user_email` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `school_id` int NOT NULL,
+  `created_at` datetime NOT NULL,
+  `expires_at` datetime NOT NULL,
+  PRIMARY KEY (`session_id`),
+  KEY `user_email` (`user_email`),
+  CONSTRAINT `session_mapping_ibfk_1` FOREIGN KEY (`user_email`) REFERENCES `users` (`EMAIL`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -285,8 +304,10 @@ CREATE TABLE `tag` (
   `school_id` int DEFAULT NULL,
   PRIMARY KEY (`TAG_ID`),
   KEY `school_id` (`school_id`),
-  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  CONSTRAINT `tag_ibfk_1` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`),
+  CONSTRAINT `tag_ibfk_2` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`),
+  CONSTRAINT `tag_ibfk_3` FOREIGN KEY (`school_id`) REFERENCES `SCHOOL` (`SCHOOL_ID`)
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -324,7 +345,7 @@ CREATE TABLE `user_tags` (
   PRIMARY KEY (`USER_TAG_ID`),
   KEY `FK_USER_TAGS_TAG_ID_idx` (`TAG_ID`),
   CONSTRAINT `FK_USER_TAGS_TAG_ID` FOREIGN KEY (`TAG_ID`) REFERENCES `tag` (`TAG_ID`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=79 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -368,4 +389,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-03-16 15:48:12
+-- Dump completed on 2025-03-25 19:35:40
