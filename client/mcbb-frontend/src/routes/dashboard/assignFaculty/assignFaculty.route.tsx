@@ -35,6 +35,7 @@ type FacultyData = {
  */
 const AssignFaculty = () => {
   const [canDelete, setCanDelete] = useState<boolean>(false);
+  const [userDelete, setUserDelete] = useState<boolean>(false);
   const [tableData, setTableData] = useState<FacultyData[]>([]);
   const [emailList, setEmailList] = useState<string[]>([]);
   const { loading, setLoading } = useLoading();
@@ -91,6 +92,7 @@ const AssignFaculty = () => {
         const user = await checkUser();
         if ((user as User).canDeleteFaculty) {
           setCanDelete(true);
+          setUserDelete(true);
         }
       } catch (error) {
         console.error('Error checking user:', error);
@@ -315,11 +317,11 @@ const AssignFaculty = () => {
                         }}
                         aria-label={`Set ${item.name} as active`}
                         style={{
-                          cursor: item.can_delete_faculty
+                          cursor: userDelete
                             ? 'pointer'
                             : 'not-allowed'
                         }}
-                        disabled={!item.can_delete_faculty}
+                        disabled={!userDelete}
                       />
                     </td>
                     <td style={{ textAlign: 'center' }}>
@@ -331,17 +333,17 @@ const AssignFaculty = () => {
                         aria-label={`Remove ${item.name} from faculty`}
                         style={{
                           padding: '5px 10px',
-                          backgroundColor: item.can_delete_faculty
+                          backgroundColor: userDelete
                             ? 'var(--foreground-rgb)'
                             : 'var(--foreground-disabled-rgb)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '5px',
-                          cursor: item.can_delete_faculty
+                          cursor: userDelete
                             ? 'pointer'
                             : 'not-allowed'
                         }}
-                        disabled={!item.can_delete_faculty}
+                        disabled={!userDelete}
                       >
                         Remove
                       </button>
