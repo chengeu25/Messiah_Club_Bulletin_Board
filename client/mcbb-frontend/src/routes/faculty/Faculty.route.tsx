@@ -2,7 +2,8 @@ import {
   FaChalkboardTeacher,
   FaUser,
   FaCheckCircle,
-  FaBuilding
+  FaBuilding,
+  FaRegListAlt
 } from 'react-icons/fa';
 import Sidebar from '../../components/sidebar/Sidebar.component';
 import { Outlet } from 'react-router';
@@ -24,6 +25,11 @@ const Faculty = () => {
       text: 'Approvals',
       icon: <FaCheckCircle />,
       route: '/dashboard/faculty/facultyEventApproval'
+    },
+    {
+      text: 'Moderation',
+      icon: <FaRegListAlt />,
+      route: '/dashboard/faculty/commentModeration'
     },
     {
       text: 'School',

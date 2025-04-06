@@ -18,6 +18,8 @@ interface CommentProps {
   lastModified: Date;
   indentLevel?: number;
   commentInput: string;
+  isReported: boolean;
+  isDeleted: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -48,6 +50,8 @@ const Comment = ({
   lastModified,
   indentLevel,
   commentInput,
+  isReported,
+  isDeleted,
   onChange
 }: CommentProps) => (
   <div
@@ -55,26 +59,50 @@ const Comment = ({
     style={{ marginLeft: 20 * (indentLevel ?? 0) }}
   >
     <div className='flex items-center gap-4'>
-      <div className='text-sm text-gray-500'>{creator}</div>
-      <div className='text-sm text-gray-500'>{lastModified.toString()}</div>
-      <div className='text-sm text-gray-500 underline'>Report this</div>
+      <div className='text-sm text-gray-500'>{!isDeleted ? creator : 'Deleted'}</div>
+      <div className='text-sm text-gray-500'>{!isDeleted ? lastModified.toString() : '...'}</div>
+      {!isDeleted && (
+        <div className='flex-shrink-0'>
+          <button
+            className='text-sm text-gray-500 underline'
+            aria-label='Report'
+            name='report'
+            type='submit'
+            style={{
+              cursor: isReported
+                ? 'cursor'
+                : 'cursor',
+              color: isReported
+                ? '#b1b1b1'
+                : 'gray'
+            }}
+            disabled={isReported}
+          >
+            Report
+          </button>
+        </div>
+      )}
     </div>
-    <div className='text-sm text-black'>{content}</div>
-    <div className='flex flex-row w-full gap-2 items-center'>
-      <Input
-        label='Reply: '
-        placeholder='Reply'
-        name='comment'
-        type='text'
-        filled={false}
-        value={commentInput}
-        onChange={onChange}
-        labelOnSameLine
-      />
-      <div className='flex-shrink-0'>
-        <Button text='Reply' type='submit' filled={true} className='w-auto' />
+    <div className={`text-sm ${!isDeleted ? 'text-black' : 'text-gray-500 italic'}`}>
+      {!isDeleted ? content : 'This comment has been deleted.'}
+    </div>
+    {!isDeleted && (
+      <div className='flex flex-row w-full gap-2 items-center'>
+        <Input
+          label='Reply: '
+          placeholder='Reply'
+          name='comment'
+          type='text'
+          filled={false}
+          value={commentInput}
+          onChange={onChange}
+          labelOnSameLine
+        />
+        <div className='flex-shrink-0'>
+          <Button text='Reply' type='submit' filled={true} className='w-auto' />
+        </div>
       </div>
-    </div>
+    )}
   </div>
 );
 

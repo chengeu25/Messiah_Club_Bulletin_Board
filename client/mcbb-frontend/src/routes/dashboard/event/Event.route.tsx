@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { redirect, useLocation } from 'react-router-dom';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -117,7 +117,7 @@ const Event = () => {
   const location = useLocation();
   const { currentSchool } = useSchool();
   const [commentInput, setCommentInput] = useState('');
-
+  const [commentData, setCommentData] = useState(comments);
   const eventID = event.id;
 
   useEffect(() => {
@@ -186,32 +186,66 @@ const Event = () => {
     ).name;
     const indent = item.indent_level ?? 0;
 
-    if (comment === '') {
-      return;
+    formData.append('action', action);
+    formData.append('parentId', item.comment_id.toString());
+    formData.append('eventId', eventID.toString());
+    formData.append('indentLevel', indent.toString());
+
+    if (action === 'report') {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/events/report-comment`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+              action: 'report',
+              commentId: item.comment_id.toString()
+            })
+          }
+        );
+        if (!response.ok) {
+          alert(
+            `Something went wrong, comment not reported. Error: ${response.statusText}`
+          );
+          return null;
+        }
+        setCommentData((prevData) =>
+          prevData.map((row) =>
+            row.comment_id === item.comment_id
+              ? { ...row, is_flagged: 1 }
+              : row
+          )
+        );
+      } catch (error) {
+        console.error(error);
+        return redirect(`dashboard/event/${item.comment_id.toString()}`);
+      }
     } else {
-      formData.append('action', action);
-      formData.append('parentId', item.comment_id.toString());
-      formData.append('eventId', eventID.toString());
-      formData.append('indentLevel', indent.toString());
+      if (comment === '') {
+        return;
+      }
+      submit(
+        {
+          comment: comment,
+          parentId: item.comment_id.toString(),
+          eventId: eventID,
+          action: 'subComment',
+          indentLevel: (indent + 1).toString()
+        },
+        { method: 'POST' }
+      );
+
+      item.commentInput = '';
+      setCommentInputs((prev) => ({
+        ...prev,
+        [item.comment_id]: ''
+      }));
+      setCommentInput('');
     }
-
-    submit(
-      {
-        comment: comment,
-        parentId: item.comment_id.toString(),
-        eventId: eventID,
-        action: 'subComment',
-        indentLevel: (indent + 1).toString()
-      },
-      { method: 'POST' }
-    );
-
-    item.commentInput = '';
-    setCommentInputs((prev) => ({
-      ...prev,
-      [item.comment_id]: ''
-    }));
-    setCommentInput('');
   };
 
   // State to manage individual comment inputs
@@ -441,8 +475,8 @@ const Event = () => {
 
       {/* Rendered comments */}
       <div className='w-full flex flex-col align-left gap-2'>
-        {comments && comments.length > 0 ? (
-          comments.map((item, index) => (
+        {commentData && commentData.length > 0 ? (
+          commentData.map((item, index) => (
             <Form
               key={index}
               onSubmit={(e) => handleSubmitSubComment(e, item)}
@@ -454,6 +488,8 @@ const Event = () => {
                 lastModified={new Date(item.posted_timestamp)}
                 indentLevel={item.indent_level}
                 commentInput={commentInputs[item.comment_id] || ''} // Ensure commentInput is always defined
+                isReported={item.is_flagged}
+                isDeleted={item.is_deleted}
                 onChange={(e) =>
                   handleCommentInputChange(
                     item.comment_id,

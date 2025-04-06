@@ -732,3 +732,106 @@ def get_users():
     finally:
         if cur is not None:
             cur.close()
+
+@admintools_bp.route("/get-reported-comments", methods=["GET"])
+def get_comments():
+    user = get_user_session_info()
+    if not user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    cur = mysql.connection.cursor()
+    try:
+        query = """
+            SELECT comment_id, event_id, user_id, is_deleted, content, posted_timestamp, parent
+                FROM comments
+                WHERE is_flagged = 1
+                ORDER BY posted_timestamp ASC
+        """
+        
+        cur.execute(query)
+        result = cur.fetchall()
+
+        # Convert result to list of dictionairies
+        comment_list = [
+            {
+                "comment_id": comment[0],
+                "event_id": comment[1],
+                "user_id": comment[2],
+                "is_deleted": comment[3],
+                "content": comment[4],
+                "posted_timestamp": comment[5],
+                "parent": comment[6]
+            }
+            for comment in result
+        ]
+        return jsonify(comment_list), 200
+    
+    except Exception as e:
+        print(f"Error getting comments: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()
+
+@admintools_bp.route("/approve-comment", methods=["POST"])
+def approve_comment():
+    user = get_user_session_info()
+    if not user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    cur = mysql.connection.cursor()
+
+    data = request.json
+    print("data: ", data)
+
+    # Establish database connection
+    conn = mysql.connection
+    cur = conn.cursor()
+
+    try:
+        query = """
+            UPDATE comments
+            SET is_flagged = 0
+            WHERE comment_id = %s"""
+        params = [data["comment_id"]]
+
+        cur.execute(query, params)
+        conn.commit()
+
+        return jsonify({"message": "Comment approved successfully"}), 200
+    except Exception as e:
+        print(f"Error approving comment: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()
+
+@admintools_bp.route("/delete-comment", methods=["POST"])
+def delete_comment():
+    user = get_user_session_info()
+    if not user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+    cur = mysql.connection.cursor()
+
+    data = request.json
+    print("data: ", data)
+
+    # Establish database connection
+    conn = mysql.connection
+    cur = conn.cursor()
+
+    try:
+        query = """
+            UPDATE comments
+            SET is_deleted = 1, is_flagged = 0
+            WHERE comment_id = %s"""
+        params = [data["comment_id"]]
+
+        cur.execute(query, params)
+        conn.commit()
+
+        return jsonify({"message": "Comment deleted successfully"}), 200
+    except Exception as e:
+        print(f"Error deleting comment: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()

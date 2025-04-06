@@ -1551,7 +1551,7 @@ def get_comments(event_id):
     cur = mysql.connection.cursor()
     try:
         cur.execute(
-            """select comment_id, user_id, is_flagged, is_deleted, content, posted_timestamp, parent, indent_level
+            """SELECT comment_id, user_id, is_flagged, is_deleted, content, posted_timestamp, parent, indent_level
                 FROM comments
                 WHERE event_id = %s""",
             (event_id,),
@@ -1609,11 +1609,6 @@ def post_comment():
         )
         conn.commit()
 
-        # comment_list = get_comments(data['event_id'])
-        # print(comment_list)
-
-        # return jsonify(comment_list), 200
-
         return jsonify({"message": "Comment added successfully"}), 200
 
     except Exception as e:
@@ -1638,7 +1633,6 @@ def post_sub_comment():
             return jsonify({"error": "User not logged in"}), 401
 
         data = request.json
-        print(data)
 
         # Establish database connection
         conn = mysql.connection
@@ -1663,6 +1657,43 @@ def post_sub_comment():
 
     except Exception as e:
         print(f"Error adding comment: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+    finally:
+        if cur is not None:
+            cur.close()
+
+@events_bp.route("/report-comment", methods=["POST"])
+def report_comment():
+    cur = None
+    try:
+        current_user = get_user_session_info()
+
+        # Check if the user is logged in
+        user_id = current_user.get("user_id")
+        school_id = session.get("school")
+
+        if not user_id:
+            return jsonify({"error": "User not logged in"}), 401
+        
+        data = request.json
+
+        # Establish database connection
+        conn = mysql.connection
+        cur = conn.cursor()
+
+        # Query to set comment to reported
+        cur.execute(
+            """UPDATE comments
+                SET is_flagged = 1
+                WHERE comment_id = %s""",
+            (data['commentId'],),
+        )
+        conn.commit()
+
+        return jsonify({"message": "Comment reported successfully"}), 200
+    
+    except Exception as e:
+        print(f"Error reporting comment: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
     finally:
         if cur is not None:
