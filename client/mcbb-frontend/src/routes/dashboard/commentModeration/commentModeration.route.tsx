@@ -2,17 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Form, redirect, useLoaderData } from 'react-router-dom';
 import useLoading from '../../../hooks/useLoading';
 import Loading from '../../../components/ui/Loading';
+import { useNotification } from '../../../contexts/NotificationContext';
 import ReportedComment from '../../../components/reportedComments/reportedComment.component';
-
-/*type LoaderData = {
-    user: User;
-    comments: CommentData[];
-    searchQuery: String;
-    loaderError: String | null;
-}*/
 
 const commentModeration = () => {
     const { loading, setLoading } = useLoading();
+    const { addNotification } = useNotification();
     const [tableData, setTableData] = useState<any[]>([]);
     const [error, setError] = useState<String | null>(null);
 
@@ -69,6 +64,7 @@ const commentModeration = () => {
                 setTableData((prevData) =>
                     prevData.filter((row) => row.comment_id !== item.comment_id)
                 );
+                addNotification('Comment approved successfully', 'success');
             } catch (error) {
                 console.error(error);
                 return redirect(`/dashboard/comentModeration`);
@@ -100,6 +96,7 @@ const commentModeration = () => {
                 setTableData((prevData) =>
                     prevData.filter((row) => row.comment_id !== item.comment_id)
                 );
+                addNotification('Comment declined successfully', 'success');
             } catch (error) {
                 console.error(error);
                 return redirect(`/dashboard/commentModeration`);

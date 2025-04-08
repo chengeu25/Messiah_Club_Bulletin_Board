@@ -40,6 +40,7 @@ import loginLoader from './routes/login/Login.loader.tsx';
 import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
+import ForgotPasswordTokenLoader from './routes/passwordToken/PasswordToken.loader.tsx';
 import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
 import ClubForm from './routes/dashboard/club/edit_new/ClubForm.route.tsx';
 import clubFormLoader from './routes/dashboard/club/edit_new/ClubForm.loader.tsx';
@@ -157,6 +158,7 @@ const router = createBrowserRouter(
       <Route
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
+        loader={ForgotPasswordTokenLoader}
         action={forgotPasswordTokenAction}
       />
       <Route

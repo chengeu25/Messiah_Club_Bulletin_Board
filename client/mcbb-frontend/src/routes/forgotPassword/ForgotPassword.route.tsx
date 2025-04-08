@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useActionData, useSubmit } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { useActionData, useNavigate, useSearchParams, useSubmit } from 'react-router-dom';
 import Input from '../../components/formElements/Input.component';
 import Button from '../../components/formElements/Button.component';
 import ResponsiveForm from '../../components/formElements/ResponsiveForm';
@@ -41,8 +41,23 @@ const ForgotPassword = () => {
   };
 
   const { addNotification } = useNotification();
-
   const { loading, setLoading } = useLoading();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const hasShownNotification = useRef(false);
+
+  useEffect(() => {
+    const message = searchParams.get('message');
+
+    if (message && !hasShownNotification.current) {
+      hasShownNotification.current = true;
+      addNotification(message, 'error');
+    }
+
+    const params = new URLSearchParams(searchParams);
+    params.delete("message");
+    navigate({ search: params.toString() }, { replace: true });
+  }, []);
 
   useEffect(() => {
     if (actionData) {

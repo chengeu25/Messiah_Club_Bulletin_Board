@@ -156,6 +156,7 @@ const Event = () => {
     ).name;
 
     if (comment === '') {
+      addNotification('Comment cannot be empty', 'error');
       return;
     } else {
       formData.append('schoolId', currentSchool?.id?.toString() ?? '');
@@ -220,12 +221,14 @@ const Event = () => {
               : row
           )
         );
+        addNotification('Comment reported successfully', 'success');
       } catch (error) {
         console.error(error);
         return redirect(`dashboard/event/${item.comment_id.toString()}`);
       }
     } else {
       if (comment === '') {
+        addNotification('Comment cannot be empty', 'error');
         return;
       }
       submit(
