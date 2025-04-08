@@ -11,7 +11,10 @@ const schoolEditloader: LoaderFunction = async ({ request }) => {
     return redirect('/verifyEmail');
   }
   if ((user as User).isFaculty === false) {
-    return redirect('/dashboard/home');
+    throw new Response('You need faculty privileges to access this page', {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
 
   try {

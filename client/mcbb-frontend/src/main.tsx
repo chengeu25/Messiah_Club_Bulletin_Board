@@ -90,7 +90,6 @@ import imageAction from './routes/dashboard/images/Image.action.tsx';
 import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
 import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
 import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
-import { DynamicLogo } from './components/ui/DynamicLogo.component.tsx';
 import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
 import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
 import Faculty from './routes/faculty/Faculty.route.tsx';
@@ -122,50 +121,65 @@ const router = createBrowserRouter(
       errorElement={<ErrorPage />}
     >
       <Route index element={<LandingPage />} />
-      <Route path='login' element={<LoginRedirector />}>
+      <Route
+        path='login'
+        element={<LoginRedirector />}
+        errorElement={<ErrorPage />}
+      >
         <Route
           path=':schoolId'
           element={<Login />}
           loader={loginLoader}
           action={loginAction}
+          errorElement={<ErrorPage />}
         />
       </Route>
-      <Route path='logout' loader={logoutLoader} />
+      <Route path='logout' loader={logoutLoader} errorElement={<ErrorPage />} />
       <Route
         path='signup/:schoolId'
         element={<SignUp />}
         action={signUpAction}
         loader={signUpLoader}
+        errorElement={<ErrorPage />}
       />
       <Route
         path='verifyEmail'
         element={<VerifyEmail />}
         action={verifyEmailAction}
         loader={verifyEmailLoader}
+        errorElement={<ErrorPage />}
       />
       <Route
         path='forgot'
         element={<ForgotPassword />}
         action={forgotPasswordAction}
+        errorElement={<ErrorPage />}
       />
       <Route
         path='changePassword'
         element={<ChangePassword />}
         action={changePasswordAction}
         loader={changePasswordLoader}
+        errorElement={<ErrorPage />}
       />
-      <Route path='forgotPasswordMessage' element={<ForgotPasswordMessage />} />
+      <Route
+        path='forgotPasswordMessage'
+        element={<ForgotPasswordMessage />}
+        errorElement={<ErrorPage />}
+      />
       <Route
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
         loader={ForgotPasswordTokenLoader}
         action={forgotPasswordTokenAction}
+        errorElement={<ErrorPage />}
       />
       <Route
         path='selectSchool'
         element={<SelectSchool />}
         loader={selectSchoolLoader}
         action={selectSchoolAction}
+        errorElement={<ErrorPage />}
       />
       <Route path='dashboard' element={<Dashboard />} loader={dashboardLoader}>
         <Route
@@ -173,62 +187,57 @@ const router = createBrowserRouter(
           element={<Home />}
           loader={homeLoader}
           action={homeAction}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='cohostApproval'
           element={<CohostApproval />}
           loader={cohostApprovalLoader}
           action={cohostApprovalAction}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='calendar'
           element={<Calendar />}
           loader={calendarLoader}
           action={homeAction}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='clubs'
           element={<Clubs />}
           loader={clubsLoader}
           action={clubsAction}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='addeditinterestpage'
           loader={AddedInterestLoader}
           element={<AddedInterest />}
           action={addInterestAction}
+          errorElement={<ErrorPage />}
         />
         <Route
           path='userReports/:id'
           element={<Reports />}
           loader={userReportsLoader}
           action={reportsAction}
+          errorElement={<ErrorPage />}
         />
-        <Route
-          path='event'
-          errorElement={
-            <div className='w-full h-full flex justify-center items-center'>
-              <div className='text-center flex items-center justify-center flex-col'>
-                <div className='w-[200px] h-[80px] invert'>
-                  <DynamicLogo />
-                </div>
-                Event not found or access not permitted
-              </div>
-            </div>
-          }
-        >
+        <Route path='event' errorElement={<ErrorPage />}>
           <Route
             path=':id'
             element={<Event />}
             loader={eventLoader}
             action={eventAction}
-            errorElement={<div>Event not found</div>}
+            errorElement={<ErrorPage />}
           >
             <Route
               path='images/:imageId'
               element={<Image />}
               action={imageAction}
               loader={eventLoader}
+              errorElement={<ErrorPage />}
             />
           </Route>
           <Route
@@ -236,21 +245,29 @@ const router = createBrowserRouter(
             element={<Reports />}
             loader={eventReportsLoader}
             action={reportsAction}
+            errorElement={<ErrorPage />}
           />
         </Route>
-        <Route path='club' element={<Club />} loader={clubLoader} />
+        <Route
+          path='club'
+          element={<Club />}
+          loader={clubLoader}
+          errorElement={<ErrorPage />}
+        />
         <Route path='club'>
           <Route
             path=':id'
             element={<Club />}
             loader={clubLoader}
             action={clubAction}
+            errorElement={<ErrorPage />}
           >
             <Route
               path='images/:imageId'
               element={<Image />}
               action={imageAction}
               loader={clubLoader}
+              errorElement={<ErrorPage />}
             />
           </Route>
           <Route
@@ -258,13 +275,19 @@ const router = createBrowserRouter(
             element={<ClubForm />}
             loader={clubFormLoader}
             action={clubFormAction}
+            errorElement={<ErrorPage />}
           />
-          <Route path=':id/delete' loader={deleteClubLoader} />
+          <Route
+            path=':id/delete'
+            loader={deleteClubLoader}
+            errorElement={<ErrorPage />}
+          />
           <Route
             path=':id/newEvent'
             loader={clubEventFormLoader}
             element={<ClubEventForm />}
             action={clubEventFormAction}
+            errorElement={<ErrorPage />}
           />
 
           <Route
@@ -272,6 +295,7 @@ const router = createBrowserRouter(
             element={<Reports />}
             loader={clubReportsLoader}
             action={reportsAction}
+            errorElement={<ErrorPage />}
           />
 
           <Route
@@ -279,6 +303,7 @@ const router = createBrowserRouter(
             element={<ClubForm />}
             action={clubFormAction}
             loader={clubFormLoader}
+            errorElement={<ErrorPage />}
           />
         </Route>
 
@@ -288,36 +313,42 @@ const router = createBrowserRouter(
             element={<Reports />}
             loader={facultyReportsLoader}
             action={reportsAction}
+            errorElement={<ErrorPage />}
           />
           <Route
             path='facultyEventApproval'
             element={<FacultyEventApproval />}
             loader={facultyEventApprovalloader}
             action={facultyEventApprovalAction}
+            errorElement={<ErrorPage />}
           />
           <Route
             path='schoolEdit'
             element={<SchoolEdit />}
             loader={schoolEditloader}
             action={schoolEditaction}
+            errorElement={<ErrorPage />}
           />
           <Route
             path='assignFaculty'
             element={<AssignFaculty />}
             loader={assignFacultyLoader}
             action={assignFacultyAction}
+            errorElement={<ErrorPage />}
           />
           <Route
             path='adminUserForm'
             element={<AdminUserForm />}
             loader={adminUserFormLoader}
             action={adminUserFormAction}
+            errorElement={<ErrorPage />}
           />
           <Route
             path='commentModeration'
             element={<CommentModeration />}
             loader={commentModerationLoader}
             action={commentModerationAction}
+            errorElement={<ErrorPage />}
           />
         </Route>
 
@@ -326,12 +357,14 @@ const router = createBrowserRouter(
           loader={emailPreferencesLoader}
           action={emailPreferencesAction}
           element={<EmailPreferences />}
+          errorElement={<ErrorPage />}
         />
         <Route
           path={'accountInfo'} // '/account-info' (or whatever the path is)
           element={<AccountInfo />} // This is the AccountInfo component to render
           loader={accountInfoLoader} // Loader function to fetch user data
           action={accountInfoAction} // Action function to handle form submission or other actions (optional)
+          errorElement={<ErrorPage />}
         />
       </Route>
       <Route
@@ -339,18 +372,29 @@ const router = createBrowserRouter(
         element={<EditInterest />}
         action={EditInterestsAction}
         loader={EditInterestLoader}
+        errorElement={<ErrorPage />}
       />
       <Route
         path='/club/:clubId/sendEmail'
         element={<SendEmailForm />}
         action={sendEmailAction}
+        errorElement={<ErrorPage />}
       />
-      <Route path='aboutus' element={<AboutUs />} />
-      <Route path='contactus' element={<ContactUs />} />{' '}
+      <Route
+        path='aboutus'
+        element={<AboutUs />}
+        errorElement={<ErrorPage />}
+      />
+      <Route
+        path='contactus'
+        element={<ContactUs />}
+        errorElement={<ErrorPage />}
+      />{' '}
       <Route
         path='/addSchool'
         element={<AddSchoolPage />}
         action={addSchoolsAction}
+        errorElement={<ErrorPage />}
       />
     </Route>
   )

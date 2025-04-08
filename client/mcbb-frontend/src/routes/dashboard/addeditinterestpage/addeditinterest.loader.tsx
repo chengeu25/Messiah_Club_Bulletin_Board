@@ -27,7 +27,10 @@ const AddedInterestLoader: LoaderFunction = async ({ request }) => {
     return redirect('/login?serviceTo=' + url.pathname);
   }
   if ((user as User).isFaculty === false) {
-    return redirect('/dashboard/home');
+    throw new Response('You need faculty privileges to access this page', {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');

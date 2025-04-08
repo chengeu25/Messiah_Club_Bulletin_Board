@@ -1,5 +1,6 @@
-import logo from '../../../assets/logo.png';
-import { Link, useRouteError } from 'react-router-dom';
+import { useMemo } from 'react';
+import errorImg from '/Error.jpg';
+import { Link, useRouteError, isRouteErrorResponse } from 'react-router-dom';
 
 /**
  * ErrorPage component for handling and displaying unexpected application errors.
@@ -23,27 +24,53 @@ import { Link, useRouteError } from 'react-router-dom';
  */
 const ErrorPage = () => {
   // Retrieve error details from React Router
-  const errorMessage = useRouteError();
+  const error = useRouteError();
+
+  // Check if the error is a RouteErrorResponse (e.g., 404, 403)
+  const errorDetails = useMemo(() => {
+    if (isRouteErrorResponse(error)) {
+      return {
+        status: error.status,
+        statusText: error.statusText || 'An error occurred',
+        message: error.data || 'Something went wrong.'
+      };
+    }
+    return {
+      status: 500,
+      statusText: 'Internal Server Error',
+      message: 'An unexpected error occurred.'
+    };
+  }, [error]);
 
   return (
-    <div className='h-[100dvh] w-screen foreground-filled flex flex-col justify-center items-center text-white'>
-      {/* Application logo with homepage link */}
+    <div className='h-[100dvh] w-screen flex flex-col justify-center items-center text-black'>
       <Link to='/'>
-        <img src={logo} className='w-[400px]' alt='logo' />
+        <img
+          src={errorImg}
+          className='w-[400px] rounded-xl'
+          alt='shark chewing on wires'
+        />
       </Link>
 
-      {/* Error message display */}
-      <h1 className='text-xl'>
-        An unexpected error occurred:{' '}
-        {errorMessage instanceof Error ? errorMessage.message : 'Unknown error'}
-        .
+      {/* Error status and message display */}
+      <h1 className='text-3xl font-bold'>
+        {errorDetails.status}: {errorDetails.statusText}
       </h1>
 
+      <p className='text-lg mt-4'>
+        {errorDetails?.status === 404
+          ? "Whatever you're looking for is definitely not here."
+          : errorDetails?.status === 500
+          ? 'Looks like the SHARCs are chewing the wires again!'
+          : errorDetails?.status === 403
+          ? 'You do not have permission to access this page.'
+          : 'Something went wrong.'}
+      </p>
+
       {/* Navigation and support instructions */}
-      <div>
-        Please try again or{' '}
+      <div className='mt-6'>
         <Link to='/' className='underline'>
-          click here
+          Click here
         </Link>{' '}
         to go back to the homepage.
       </div>

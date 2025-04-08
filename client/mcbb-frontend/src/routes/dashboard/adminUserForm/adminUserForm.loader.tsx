@@ -20,7 +20,10 @@ const adminUserFormLoader: LoaderFunction = async ({ request }) => {
     return redirect('/login?serviceTo=' + new URL(request.url).pathname);
   }
   if ((user as User).isFaculty === false) {
-    return redirect('/dashboard/home');
+    throw new Response('You need faculty privileges to access this page', {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
 
   const url = new URL(request.url);
