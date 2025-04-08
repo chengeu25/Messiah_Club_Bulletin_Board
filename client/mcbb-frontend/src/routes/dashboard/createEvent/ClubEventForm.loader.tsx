@@ -1,6 +1,6 @@
 import { json, LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
-import { UserType as User } from '../../../types/databaseTypes';
+import { UserType as User, UserType } from '../../../types/databaseTypes';
 // import { isAdminForClub } from '../../../helper/clubAdminCheck';
 
 // @ts-ignore
@@ -13,6 +13,15 @@ const clubEventFormLoader: LoaderFunction = async ({ params, request }) => {
   }
   if ((user as User).emailVerified === false) {
     return redirect('/verifyEmail');
+  }
+  if (
+    (user as UserType).isFaculty === false &&
+    !user.clubAdmins.includes(Number(params.id))
+  ) {
+    throw new Response("You aren't allowed in here!", {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
 
   const clubsResponse = await fetch(
@@ -27,7 +36,6 @@ const clubEventFormLoader: LoaderFunction = async ({ params, request }) => {
   );
 
   const clubs = await clubsResponse.json();
-
   // const clubId = params.clubId; // Assuming clubId is passed as a route parameter
   // const isAdmin = await isAdminForClub(user, clubId);
   // if (!isAdmin) {

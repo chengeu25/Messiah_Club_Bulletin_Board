@@ -105,6 +105,7 @@ import AddedInterestLoader from './routes/dashboard/addeditinterestpage/addediti
 import commentModerationLoader from './routes/dashboard/commentModeration/commentModeration.loader.tsx';
 import commentModerationAction from './routes/dashboard/commentModeration/commentModeration.action.tsx';
 import CommentModeration from './routes/dashboard/commentModeration/commentModeration.route.tsx';
+import SendEmailLoader from './routes/dashboard/club/SendEmailForm/SendEmail.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -377,6 +378,7 @@ const router = createBrowserRouter(
       <Route
         path='/club/:clubId/sendEmail'
         element={<SendEmailForm />}
+        loader={SendEmailLoader}
         action={sendEmailAction}
         errorElement={<ErrorPage />}
       />
