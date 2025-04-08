@@ -125,6 +125,35 @@ const eventAction: ActionFunction = async ({ request }) => {
     return redirect(`/dashboard/event/${eventId}`);
   }
 
+  // Handle report action
+  if (action === 'report') {
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/events/report-comment`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            commentId: commentId
+          })
+        }
+      );
+      if (!response.ok) {
+        alert(
+          `Something went wrong, comment not reported. Error: ${response.statusText}`
+        );
+        return null;
+      }
+    } catch (error) {
+      console.error(error);
+      return redirect(`dashboard/event/${eventId}`);
+    }
+    return redirect(`/dashboard/event/${eventId}`);
+  }
+
   // Handle cancel action
   if (action === 'cancel') {
     const response = await fetch(

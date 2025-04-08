@@ -806,14 +806,14 @@ def forgot_password():
     )
     result = cur.fetchone()
 
-    school_id = result[3]
-
     # If no matching email is found, return an error
     if result is None:
         return jsonify({"error": "Invalid email"}), 401
 
     if Config.SECRET_KEY is None:
         return jsonify({"error": "Developer did not set secret key"}), 500
+
+    school_id = result[3]
 
     # Generate a reset token
     token = jwt.encode(
@@ -959,6 +959,50 @@ def forgot_password_reset():
     cur.close()
     session.pop("user_id", None)
     return jsonify({"message": "Password reset successful"}), 200
+
+
+@auth_bp.route("/password-token-check", methods=["POST"])
+def password_token_check():
+    """
+    Check the validity of a password reset token.
+
+    This endpoint verifies the provided password reset token and checks if it is valid.
+
+    Expected JSON payload:
+    {
+        "token": str
+    }
+    """
+    data = request.json
+    if data is None:
+        return jsonify({"error": "No data was provided"}), 400
+    if data.get("token") is None:
+        return jsonify({"error": "Token is required"}), 400
+    if not mysql.connection:
+        return jsonify({"error": "Database connection error"}), 500
+
+    cur = mysql.connection.cursor()
+
+    # Check if the token exists in the database
+    cur.execute(
+        """SELECT email, reset_token, email_verified, school_id
+           FROM users 
+           WHERE reset_token = %s 
+             AND is_active = 1""",
+        (data["token"],),
+    )
+    result = cur.fetchone()
+
+    if result is None:
+        return jsonify({"error": "Invalid token"}), 401
+
+    # Check if the token is expired
+    try:
+        jwt.decode(data["token"], Config.SECRET_KEY, algorithms=["HS256"])
+        return jsonify({"message": "Valid token"}), 200
+    except jwt.ExpiredSignatureError:
+        return jsonify({"error": "Token has expired"}), 401
+    return jsonify({"message": "Valid token"}), 200
 
 
 @auth_bp.route("/account-info", methods=["POST"])

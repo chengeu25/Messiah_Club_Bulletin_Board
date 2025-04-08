@@ -40,6 +40,7 @@ import loginLoader from './routes/login/Login.loader.tsx';
 import changePasswordLoader from './routes/changePassword/changePassword.loader.tsx';
 import ForgotPasswordToken from './routes/passwordToken/PasswordToken.route.tsx';
 import forgotPasswordTokenAction from './routes/passwordToken/PasswordToken.action.tsx';
+import ForgotPasswordTokenLoader from './routes/passwordToken/PasswordToken.loader.tsx';
 import clubsAction from './routes/dashboard/clubs/Clubs.action.tsx';
 import ClubForm from './routes/dashboard/club/edit_new/ClubForm.route.tsx';
 import clubFormLoader from './routes/dashboard/club/edit_new/ClubForm.loader.tsx';
@@ -102,6 +103,9 @@ import eventReportsLoader from './routes/dashboard/reports/EventReports.loader.t
 import userReportsLoader from './routes/dashboard/reports/UserReports.loader.tsx';
 import reportsAction from './routes/dashboard/reports/Reports.action.tsx';
 import AddedInterestLoader from './routes/dashboard/addeditinterestpage/addeditinterest.loader.tsx';
+import commentModerationLoader from './routes/dashboard/commentModeration/commentModeration.loader.tsx';
+import commentModerationAction from './routes/dashboard/commentModeration/commentModeration.action.tsx';
+import CommentModeration from './routes/dashboard/commentModeration/commentModeration.route.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -154,6 +158,7 @@ const router = createBrowserRouter(
       <Route
         path='forgotPasswordToken'
         element={<ForgotPasswordToken />}
+        loader={ForgotPasswordTokenLoader}
         action={forgotPasswordTokenAction}
       />
       <Route
@@ -307,6 +312,12 @@ const router = createBrowserRouter(
             element={<AdminUserForm />}
             loader={adminUserFormLoader}
             action={adminUserFormAction}
+          />
+          <Route
+            path='commentModeration'
+            element={<CommentModeration />}
+            loader={commentModerationLoader}
+            action={commentModerationAction}
           />
         </Route>
 
