@@ -71,7 +71,10 @@ const clubFormLoader: LoaderFunction = async ({ params, request }) => {
       !(user as User).isFaculty &&
       !(user as User).clubAdmins.includes(parseInt(id))
     )
-      return redirect('/dashboard/clubs');
+      throw new Response("You aren't allowed in here!", {
+        status: 403,
+        statusText: 'Forbidden'
+      });
 
     // Fetch club details from backend
     const clubResponse = await fetch(

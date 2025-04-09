@@ -32,7 +32,10 @@ const eventReportsLoader: LoaderFunction = async ({ request, params }) => {
       event.host.some((host) => host.id === adminClubId)
     )
   ) {
-    return redirect('/dashboard/home');
+    throw new Response("You aren't allowed in here!", {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
   const resp = await fetch(
     `${import.meta.env.VITE_API_BASE_URL}/api/reports/names/EVENT`,

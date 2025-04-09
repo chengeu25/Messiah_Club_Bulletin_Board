@@ -11,7 +11,10 @@ const userReportsLoader: LoaderFunction = async ({ request }) => {
     return redirect('/verifyEmail');
   }
   if ((user as UserType).isFaculty === false) {
-    return redirect('/dashboard/home');
+    throw new Response('You need faculty privileges to access this page.', {
+      status: 403,
+      statusText: 'Forbidden'
+    });
   }
   const resp = await fetch(
     `${import.meta.env.VITE_API_BASE_URL}/api/reports/names/USER`,
