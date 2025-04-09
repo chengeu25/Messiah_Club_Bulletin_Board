@@ -63,7 +63,7 @@ const ErrorPage = () => {
           : errorDetails?.status === 500
           ? 'Looks like the SHARCs are chewing the wires again!'
           : errorDetails?.status === 403
-          ? 'You do not have permission to access this page.'
+          ? 'Yeah, you\'re definitely not allowed here.'
           : 'Something went wrong.'}
       </p>
 
