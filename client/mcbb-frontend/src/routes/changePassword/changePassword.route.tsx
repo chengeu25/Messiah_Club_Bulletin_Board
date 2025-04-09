@@ -34,6 +34,14 @@ const ChangePassword = () => {
   const [message, setMessage] = useState<string | null>(null);
   const { loading, setLoading } = useLoading();
 
+  // Password input state management
+  const [currentPassword, setCurrentPassword] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [passwordMatch, setPasswordMatch] = useState<boolean>(true);
+  const [passwordReuse, setPasswordReuse] = useState<boolean>(false);
+  const [isPasswordStrong, setIsPasswordStrong] = useState<boolean>(true);
+
   useEffect(() => {
     if (actionData) {
       setLoading(false);
@@ -63,19 +71,54 @@ const ChangePassword = () => {
     ) {
       setLoading(false);
       setError('Please fill out all fields.');
-    } else if (formData.get('npwd') !== formData.get('cnpwd')) {
-      setLoading(false);
-      setError('Passwords do not match.');
-    } else if (!passwordStrongOrNah(formData.get('npwd') as string)) {
-      setLoading(false);
-      setError(
-        'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, and one special character (!@#$%^&*)'
-      );
     } else {
       formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
       submit(formData, { method: 'post' });
     }
+  };
+
+  /**
+   * Handles current password input and validates current password reuse
+   *
+   * @function handleCurrentPasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Current password input event
+   * @description Checks and updates password matching
+   */
+  const handleCurrentPasswordChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const currentPassword = event.target.value;
+    setCurrentPassword(currentPassword);
+    setPasswordReuse(currentPassword === password);
+  };
+
+  /**
+   * Handles password input and validates password strength
+   *
+   * @function handlePasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Password input event
+   * @description Checks and updates password strength
+   */
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = event.target.value;
+    setPassword(newPassword);
+    setIsPasswordStrong(passwordStrongOrNah(newPassword));
+  };
+
+  /**
+   * Handles confirm password input and validates password matching
+   *
+   * @function handleConfirmPasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Confirm password input event
+   * @description Checks and updates password matching
+   */
+  const handleConfirmPasswordChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newConfirmPassword = event.target.value;
+    setConfirmPassword(newConfirmPassword);
+    setPasswordMatch(newConfirmPassword === password);
   };
 
   return loading ? (
@@ -92,7 +135,9 @@ const ChangePassword = () => {
             name='pwd'
             type='password'
             placeholder='Password'
-            filled={false}
+              filled={false}
+              value={currentPassword}
+              onInput={handleCurrentPasswordChange}
           />
           <Input
             label='Enter your new password:'
@@ -100,20 +145,42 @@ const ChangePassword = () => {
             type='password'
             placeholder='Password'
             filled={false}
-          />
+            value={password}
+            onInput={handlePasswordChange}
+            />
+            {/* Password strength error */}
+            {!isPasswordStrong && (
+              <p className='text-red-500 text-sm'>
+                Password must be at least 8 characters, contain an uppercase letter,
+                a digit, and a special character.
+              </p>
+            )}
+            {/* Password reuse error */}
+            {passwordReuse && (
+              <p className='text-red-500 text-sm'>
+                Password cannot be the same as the current password.
+              </p>
+            )}
           <Input
             label='Confirm your new password:'
             name='cnpwd'
             type='password'
             placeholder='Password'
             filled={false}
-          />
+            value={confirmPassword}
+            onInput={handleConfirmPasswordChange}
+            />
+            {/* Password matching error */}
+            {!passwordMatch && (
+              <p className='text-red-500 text-sm'>Passwords do not match.</p>
+            )}
           <div className='flex flex-row gap-2'>
             <Button
               text='Change Password'
               type='submit'
               name='changePassword'
-            />
+              disabled={!isPasswordStrong || password !== confirmPassword || passwordReuse}
+          />
           </div>
         </Form>
       </div>
