@@ -20,6 +20,7 @@ const PasswordTokenLoader: LoaderFunction = async ({ request }) => {
         }
         const tokenData = await response.json();
         console.log('Token data: ', tokenData);
+        return { tokenData: tokenData };
         
     } catch (error) {
         console.error('Error fetching token data: ', error);

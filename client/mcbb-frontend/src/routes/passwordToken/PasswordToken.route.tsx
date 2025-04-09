@@ -46,6 +46,12 @@ const ForgotPassswordToken = () => {
   };
   const { addNotification } = useNotification();
 
+  // Password input state management
+  const [password, setPassword] = useState<string>('');
+  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  const [passwordMatch, setPasswordMatch] = useState<boolean>(true);
+  const [isPasswordStrong, setIsPasswordStrong] = useState<boolean>(true);
+
   // State management for form validation and messages
   const [error, setError] = useState<string | null>(null);
 
@@ -83,31 +89,39 @@ const ForgotPassswordToken = () => {
     // Create search params from location
     const searchParams = new URLSearchParams(location.search);
 
-    // Validate password inputs
-    if (String(formData.get('newPassword')) === '') {
-      setError('Please enter a new password');
-      setLoading(false);
-    } else if (String(formData.get('confirmPassword')) === '') {
-      setError('Please enter password again');
-      setLoading(false);
-    } else if (
-      String(formData.get('newPassword')) !==
-      String(formData.get('confirmPassword'))
-    ) {
-      setError('Passwords do not match');
-      setLoading(false);
-    } else if (!passwordStrongOrNah(String(formData.get('newPassword')))) {
-      setError(
-        'Password must be at least 8 characters in length and include at least one capital letter, one lowercase letter, one number, and one special character (!@#$%^&*)'
-      );
-      setLoading(false);
-    } else {
-      // Append token and submit form
-      formData.append('action', action);
-      formData.append('token', searchParams.get('token') as string);
-      formData.append('schoolId', searchParams.get('schoolId') as string);
-      submit(formData, { method: 'post' });
-    }
+    // Append token and submit form
+    formData.append('action', action);
+    formData.append('token', searchParams.get('token') as string);
+    formData.append('schoolId', searchParams.get('schoolId') as string);
+    submit(formData, { method: 'post' });
+  };
+
+  /**
+   * Handles password input and validates password strength
+   *
+   * @function handlePasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Password input event
+   * @description Checks and updates password strength
+   */
+  const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = event.target.value;
+    setPassword(newPassword);
+    setIsPasswordStrong(passwordStrongOrNah(newPassword));
+  };
+
+  /**
+   * Handles confirm password input and validates password matching
+   *
+   * @function handleConfirmPasswordChange
+   * @param {React.ChangeEvent<HTMLInputElement>} event - Confirm password input event
+   * @description Checks and updates password matching
+   */
+  const handleConfirmPasswordChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const newConfirmPassword = event.target.value;
+    setConfirmPassword(newConfirmPassword);
+    setPasswordMatch(newConfirmPassword === password);
   };
 
   return loading ? (
@@ -126,20 +140,40 @@ const ForgotPassswordToken = () => {
         type='password'
         placeholder='Password'
         filled={false}
-      />
+        value={password}
+        onInput={handlePasswordChange}
+        />
+        {/* Password strength error */}
+        {!isPasswordStrong && (
+          <p className='text-red-500 text-sm'>
+            Password must be at least 8 characters, contain an uppercase letter,
+            a digit, and a special character.
+          </p>
+        )}
 
       {/* Confirm password input */}
       <Input
         label='Confirm password:'
         name='confirmPassword'
         type='password'
-        placeholder='Password'
+        placeholder='Confirm Password'
         filled={false}
-      />
+        value={confirmPassword}
+        onInput={handleConfirmPasswordChange}
+        />
+        {/* Password matching error */}
+        {!passwordMatch && (
+          <p className='text-red-500 text-sm'>Passwords do not match.</p>
+        )}
 
       {/* Submit button */}
       <div className='flex flex-row gap-2'>
-        <Button text='Submit' type='submit' name='submitResetPassword' />
+          <Button
+            text='Submit'
+            type='submit'
+            name='submitResetPassword'
+            disabled={!isPasswordStrong || password !== confirmPassword}
+          />
       </div>
     </ResponsiveForm>
   );
