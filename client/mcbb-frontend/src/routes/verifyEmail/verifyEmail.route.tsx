@@ -77,6 +77,14 @@ const VerifyEmail = () => {
     }
   }, [loaderData]);
 
+  useEffect(() => {
+    const message = sessionStorage.getItem("accountSuccessMessage");
+    if (message) {
+      addNotification(message, "success");
+      sessionStorage.removeItem("accountSuccessMessage");
+    }
+  }, []);
+
   /**
    * Handles form submission for email verification
    *

@@ -104,6 +104,7 @@ const ChangePassword = () => {
     const newPassword = event.target.value;
     setPassword(newPassword);
     setIsPasswordStrong(passwordStrongOrNah(newPassword));
+    setPasswordReuse(currentPassword === newPassword);
   };
 
   /**
@@ -135,9 +136,9 @@ const ChangePassword = () => {
             name='pwd'
             type='password'
             placeholder='Password'
-              filled={false}
-              value={currentPassword}
-              onInput={handleCurrentPasswordChange}
+            filled={false}
+            value={currentPassword}
+            onInput={handleCurrentPasswordChange}
           />
           <Input
             label='Enter your new password:'

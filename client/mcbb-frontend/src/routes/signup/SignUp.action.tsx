@@ -78,7 +78,7 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   // Check if the response is OK (HTTP 200)
   if (response.ok) {
     // Redirect on successful signup
-    return redirect('/verifyEmail');
+    return redirect('/verifyEmail?message=Successful%20signup');
   } else {
     const respJson = await response.json();
     return json({ error: respJson.error }, { status: 400 });

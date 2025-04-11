@@ -46,6 +46,7 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const hasShownNotification = useRef(false);
 
+  // Displays expired token error message if present in URL
   useEffect(() => {
     const message = searchParams.get('message');
 

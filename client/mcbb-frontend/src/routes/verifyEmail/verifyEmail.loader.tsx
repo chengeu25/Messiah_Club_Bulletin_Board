@@ -72,6 +72,19 @@ const verifyEmailLoader: LoaderFunction = async ({
     }
   }
 
+  // Display account creation message if present in URL
+  const url = new URL(request.url);
+  const message = url.searchParams.get("message");
+
+  if (message) {
+    // Store message in sessionStorage or pass it through loader data
+    sessionStorage.setItem("accountSuccessMessage", message);
+
+    // Clean the URL by redirecting without the message
+    url.searchParams.delete("message");
+    return redirect(url.pathname + url.search);
+  }
+
   // Proceed to verify email page
   return null;
 };
