@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../contexts/NotificationContext';
 
 /**
@@ -29,6 +29,7 @@ const EditInterests: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { addNotification } = useNotification();
+  const navigate = useNavigate();
   const [isMounted, setIsMounted] = useState(false);
   const [isFaculty, setIsFaculty] = useState<boolean>(false); // Add state for user role
 
@@ -148,6 +149,7 @@ const EditInterests: React.FC = () => {
 
       if (response.ok) {
         addNotification('Interests updated successfully', 'success');
+        navigate('/dashboard');
       } else {
         setError(result.error || 'An error occurred');
       }
