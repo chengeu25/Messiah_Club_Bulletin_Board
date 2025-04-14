@@ -44,10 +44,10 @@ const ChangePassword = () => {
 
   useEffect(() => {
     if (actionData) {
-      setLoading(false);
       if (actionData.error) {
         setError(actionData.error);
         addNotification(actionData.error, 'error');
+        setLoading(false);
       } else if (actionData.message) {
         setMessage(actionData.message);
         addNotification(actionData.message, 'success');
