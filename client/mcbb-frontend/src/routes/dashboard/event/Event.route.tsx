@@ -478,8 +478,8 @@ const Event = () => {
 
       {/* Rendered comments */}
       <div className='w-full flex flex-col align-left gap-2'>
-        {commentData && commentData.length > 0 ? (
-          commentData.map((item, index) => (
+        {comments && comments.length > 0 ? (
+          comments.map((item, index) => (
             <Form
               key={index}
               onSubmit={(e) => handleSubmitSubComment(e, item)}
