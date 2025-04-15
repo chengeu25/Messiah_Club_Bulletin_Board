@@ -154,19 +154,30 @@ const Event = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-
+  
     if (comment === '') {
       addNotification('Comment cannot be empty', 'error');
       return;
     } else {
       formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
-      submit(
-        { id: eventID, comment: comment, action: 'comment' },
-        { method: 'POST' }
-      );
+  
+      try {
+        // Assuming `submit` doesn't return a Response object:
+        await submit(
+          { id: eventID, comment: comment, action: 'comment' },
+          { method: 'POST' }
+        );
+        
+        // After successful submission:
+        addNotification('Comment submitted successfully', 'success');
+      } catch (error) {
+        console.error('Error submitting comment:', error);
+        addNotification('Error submitting comment', 'error');
+      }
     }
-
+  
+    // Clear the input after successful submission
     setCommentInput('');
   };
 
