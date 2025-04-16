@@ -60,7 +60,7 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
       new Date(startingDate).toISOString()
     )}&end_date=${encodeURIComponent(
       subtractDays(new Date(startingDate), -numDays).toISOString()
-    )}&filter=${encodeURIComponent(filterParam)}`,
+    )}&filter=${encodeURIComponent(filterParam)}&images=false`,
     {
       method: 'GET',
       credentials: 'include',

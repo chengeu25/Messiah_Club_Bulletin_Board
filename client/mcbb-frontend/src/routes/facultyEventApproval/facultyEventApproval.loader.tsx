@@ -37,7 +37,7 @@ const facultyEventApprovalloader: LoaderFunction = async ({ request }) => {
         startDate
       )}&end_date=${encodeURIComponent(endDate)}&school_id=${encodeURIComponent(
         schoolId
-      )}&user_id=${encodeURIComponent(userId)}&approved=false`,
+      )}&user_id=${encodeURIComponent(userId)}&approved=false&images=false`,
       {
         method: 'GET',
         credentials: 'include',

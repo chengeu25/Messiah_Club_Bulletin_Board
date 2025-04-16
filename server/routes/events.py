@@ -94,8 +94,69 @@ def get_club_id(cur, club_name):
         raise ValueError("Club not found")
 
 
+def get_event_image(cur, event_id):
+    """
+    Retrieve the event image for a given event ID.
+
+    Args:
+        cur (mysql.connection.cursor): Active database cursor
+        event_id (int): Unique identifier for the event
+
+    Returns:
+        dict: A dictionary with the event ID, image prefix, image, and image ID
+
+    Raises:
+        ValueError: If no event is found with the given ID
+
+    Behavior:
+    - Queries the event table for the matching event ID
+    - Returns the event ID, image prefix, image, and image ID if found
+    - Raises an exception if no matching event exists
+    """
+    cur.execute(
+        """SELECT 
+                e.event_id,
+                (SELECT image_prefix
+                    FROM event_photo
+                    WHERE event_id = e.event_id
+                    ORDER BY event_photo_id
+                    LIMIT 1) AS image_prefix,
+                (SELECT image
+                    FROM event_photo
+                    WHERE event_id = e.event_id
+                    ORDER BY event_photo_id
+                    LIMIT 1) AS image,
+                (SELECT event_photo_id
+                    FROM event_photo
+                    WHERE event_id = e.event_id
+                    ORDER BY event_photo_id
+                    LIMIT 1) AS image_id
+            FROM event e
+            LEFT JOIN event_photo ep
+                ON ep.event_id = e.event_id
+            WHERE e.event_id = %s""",
+        (event_id,),
+    )
+    result = cur.fetchone()
+    return {
+        "image": (
+            f"{result[1]},{base64.b64encode(result[2]).decode('utf-8')}"
+            if (result[1] is not None and result[2] is not None)
+            else None
+        ),
+        "id": result[3],
+    }
+
+
 def get_events_by_date(
-    cur, start_date, end_date, school_id, user_id, filter_query="", approved=True
+    cur,
+    start_date,
+    end_date,
+    school_id,
+    user_id,
+    filter_query="",
+    approved=True,
+    incl_images=True,
 ):
     """
     Retrieve events within a specified date range for a specific school.
@@ -169,21 +230,6 @@ def get_events_by_date(
                         WHEN MAX(CASE WHEN us.subscribed_or_blocked = 0 THEN 1 ELSE 0 END) = 1 THEN 0
                         ELSE NULL
                       END AS is_subscribed,
-                      (SELECT image_prefix
-                        FROM event_photo
-                        WHERE event_id = e.event_id
-                        ORDER BY event_photo_id
-                        LIMIT 1) AS image_prefix,
-                      (SELECT image
-                        FROM event_photo
-                        WHERE event_id = e.event_id
-                        ORDER BY event_photo_id
-                        LIMIT 1) AS image,
-                      (SELECT event_photo_id
-                        FROM event_photo
-                        WHERE event_id = e.event_id
-                        ORDER BY event_photo_id
-                        LIMIT 1) AS image_id,
                       e.gender_restriction
                 FROM event e
                 LEFT JOIN event_host eh
@@ -200,8 +246,6 @@ def get_events_by_date(
                     ON et.event_id = e.event_id
                 LEFT JOIN tag t
                     ON t.tag_id = et.tag_id
-                LEFT JOIN event_photo ep
-                    ON ep.event_id = e.event_id
                 LEFT JOIN user_subscription us
                     ON us.club_id = eh.club_id
                     AND us.email = %s
@@ -272,19 +316,14 @@ def get_events_by_date(
                             [] if x[8] is None else x[8].split(","),
                         )
                     ],
+                    "image": (
+                        None if incl_images is False else get_event_image(cur, x[0])
+                    ),
                     "rsvp": "" if x[9] is None else ("rsvp" if x[9] else "block"),
                     "tags": [] if x[10] is None else x[10].split(","),
                     "subscribed": True if x[11] == 1 else False,
                     "blocked": True if x[11] == 0 else False,
-                    "image": {
-                        "image": (
-                            f"{x[12]},{base64.b64encode(x[13]).decode('utf-8')}"
-                            if (x[12] is not None and x[13] is not None)
-                            else None
-                        ),
-                        "id": x[14],
-                    },
-                    "genderRestriction": x[15],
+                    "genderRestriction": x[12],
                 },
                 result,
             )
@@ -895,6 +934,7 @@ def get_events():
     end_date = request.args.get("end_date")
     filter_query = request.args.get("filter")
     approved = request.args.get("approved")
+    incl_images = request.args.get("images")
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
     if not filter_query:
@@ -915,6 +955,7 @@ def get_events():
         current_user["user_id"],
         filter_query,
         approved,
+        incl_images,
     )
     cur.close()
     if "error" in result:
@@ -1662,6 +1703,7 @@ def post_sub_comment():
         if cur is not None:
             cur.close()
 
+
 @events_bp.route("/report-comment", methods=["POST"])
 def report_comment():
     cur = None
@@ -1674,7 +1716,7 @@ def report_comment():
 
         if not user_id:
             return jsonify({"error": "User not logged in"}), 401
-        
+
         data = request.json
 
         # Establish database connection
@@ -1686,12 +1728,12 @@ def report_comment():
             """UPDATE comments
                 SET is_flagged = 1
                 WHERE comment_id = %s""",
-            (data['commentId'],),
+            (data["commentId"],),
         )
         conn.commit()
 
         return jsonify({"message": "Comment reported successfully"}), 200
-    
+
     except Exception as e:
         print(f"Error reporting comment: {str(e)}")
         return jsonify({"error": "An unexpected error occurred"}), 500
