@@ -62,7 +62,11 @@ const Event = ({
       >
         {!small && (
           <img
-            src={`data:image/${prefix};base64,${base64Image}`}
+            src={
+              base64Image !== ''
+                ? `data:image/${prefix};base64,${base64Image}`
+                : '/logo.png'
+            }
             alt={title}
             style={{ objectFit: 'cover' }}
             className='h-[200px] w-[200px] lg:h-[100px] lg:w-[100px] bg-gray-800 rounded-lg'
