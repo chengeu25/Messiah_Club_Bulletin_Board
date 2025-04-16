@@ -117,7 +117,6 @@ const Event = () => {
   const location = useLocation();
   const { currentSchool } = useSchool();
   const [commentInput, setCommentInput] = useState('');
-  const [commentData, setCommentData] = useState(comments);
   const eventID = event.id;
 
   useEffect(() => {
@@ -154,21 +153,21 @@ const Event = () => {
     const action = (
       (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
     ).name;
-  
+
     if (comment === '') {
       addNotification('Comment cannot be empty', 'error');
       return;
     } else {
       formData.append('schoolId', currentSchool?.id?.toString() ?? '');
       formData.append('action', action);
-  
+
       try {
         // Assuming `submit` doesn't return a Response object:
         await submit(
           { id: eventID, comment: comment, action: 'comment' },
           { method: 'POST' }
         );
-        
+
         // After successful submission:
         addNotification('Comment submitted successfully', 'success');
       } catch (error) {
@@ -176,7 +175,7 @@ const Event = () => {
         addNotification('Error submitting comment', 'error');
       }
     }
-  
+
     // Clear the input after successful submission
     setCommentInput('');
   };
@@ -225,13 +224,6 @@ const Event = () => {
           );
           return null;
         }
-        setCommentData((prevData) =>
-          prevData.map((row) =>
-            row.comment_id === item.comment_id
-              ? { ...row, is_flagged: 1 }
-              : row
-          )
-        );
         addNotification('Comment reported successfully', 'success');
       } catch (error) {
         console.error(error);
