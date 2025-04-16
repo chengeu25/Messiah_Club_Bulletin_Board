@@ -134,7 +134,9 @@ def get_event_image(cur, event_id):
             FROM event e
             LEFT JOIN event_photo ep
                 ON ep.event_id = e.event_id
-            WHERE e.event_id = %s""",
+            WHERE e.event_id = %s
+                AND e.is_approved = 1
+                AND e.is_active = 1""",
         (event_id,),
     )
     result = cur.fetchone()

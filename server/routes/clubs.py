@@ -32,7 +32,6 @@ def get_clubs():
                         "id": int,
                         "name": str,
                         "description": str,
-                        "image": str (base64 encoded logo or None),
                         "tags": [str]
                     }
                 ]
@@ -113,35 +112,102 @@ def get_clubs():
         if not clubs:
             return jsonify({"error": "No clubs found"}), 404
 
-        # Fetch club logos separately
-        club_ids = [club[0] for club in clubs]
-        if club_ids:
-            format_strings = ",".join(["%s"] * len(club_ids))
-            cur.execute(
-                f"""SELECT club_id, club_logo, logo_prefix
-                    FROM club
-                    WHERE club_id IN ({format_strings})""",
-                tuple(club_ids),
-            )
-            logos = cur.fetchall()
-            logos_dict = {logo[0]: (logo[1], logo[2]) for logo in logos}
-        else:
-            logos_dict = {}
-
         result = [
             {
                 "id": club[0],
                 "name": club[1],
                 "description": club[2],
-                "image": (
-                    f"{logos_dict[club[0]][1]},{base64.b64encode(logos_dict[club[0]][0]).decode('utf-8')}"
-                    if club[0] in logos_dict and logos_dict[club[0]][0]
-                    else None
-                ),
                 "subscribed": True if (club[3] == 1 or club[3] == True) else False,
                 "tags": club[4].split(",") if club[4] else [],
             }
             for club in clubs
+        ]
+
+        cur.close()
+        return jsonify(result), 200
+
+    except Exception as e:
+        print(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+@clubs_bp.route("/images", methods=["POST"])
+def get_images():
+    """
+    Retrieve images for specified clubs.
+
+    This endpoint fetches images for specified clubs, returning a dictionary
+    where the keys are club IDs and the values are the image paths.
+
+    Request Body:
+        club_ids (list): List of club IDs to fetch images for
+        is_active (bool): Whether to fetch active or inactive clubs
+
+    Returns:
+        JSON response:
+        - On successful image retrieval:
+            {
+                "images": [
+                    {
+                        id: int,
+                        image: str
+                    }
+                ]
+            }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Requires an active MySQL database connection
+    - Fetches images for specified clubs
+    - Converts timestamps to UTC
+    """
+    club_ids = request.json.get("club_ids")
+    is_active = request.json.get("is_active")
+    if not isinstance(club_ids, list):
+        return jsonify({"error": "Invalid data provided"}), 400
+
+    for club_id in club_ids:
+        if not isinstance(club_id, int):
+            return jsonify({"error": "Invalid data provided"}), 400
+
+    current_user = get_user_session_info()
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    if is_active == False and not current_user["isFaculty"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    try:
+        if not mysql.connection:
+            return jsonify({"error": "Database connection error"}), 500
+
+        cur = mysql.connection.cursor()
+        format_strings = ",".join(["%s"] * len(club_ids))
+        cur.execute(
+            f"""SELECT club_id, club_logo, logo_prefix
+                FROM club
+                WHERE club_id IN ({format_strings}) 
+                    AND is_active = %s""",
+            tuple(
+                [*club_ids, 0 if ((not is_active) and current_user["isFaculty"]) else 1]
+            ),
+        )
+        logos = cur.fetchall()
+        logos_dict = {logo[0]: (logo[1], logo[2]) for logo in logos}
+
+        result = [
+            {
+                "id": logo[0],
+                "image": (
+                    f"{logos_dict[logo[0]][1]},{base64.b64encode(logos_dict[logo[0]][0]).decode('utf-8')}"
+                    if logo[0] in logos_dict and logos_dict[logo[0]][0]
+                    else None
+                ),
+            }
+            for logo in logos
         ]
 
         cur.close()

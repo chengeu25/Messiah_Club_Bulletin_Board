@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from 'react';
 import {
   Form,
   useLoaderData,
@@ -5,7 +6,7 @@ import {
   useSubmit
 } from 'react-router-dom';
 import Club from '../../../components/dashboard/Club.component';
-import { ClubType, UserType } from '../../../types/databaseTypes';
+import { ClubType, ImageType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 import { clubPassesSearch } from '../../../helper/eventHelpers';
 import useLoading from '../../../hooks/useLoading';
@@ -23,6 +24,10 @@ interface LoaderData {
   inactiveClubs: ClubType[];
   /** Current user's information */
   user: UserType;
+  /** List of active clubs' logos */
+  clubLogos: Promise<ImageType[]>;
+  /** List of inactive clubs' logos */
+  inactiveClubLogos: Promise<ImageType[]>;
 }
 
 /**
@@ -40,8 +45,51 @@ const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
   const [searchParams] = useSearchParams();
-
   const { loading } = useLoading();
+
+  // State to store resolved club logos
+  const [clubLogos, setClubLogos] = useState<ImageType[] | null>(null);
+  const [inactiveClubLogos, setInactiveClubLogos] = useState<
+    ImageType[] | null
+  >(null);
+
+  // Effect to resolve the clubLogos promise
+  useEffect(() => {
+    let isMounted = true; // To prevent state updates if the component unmounts
+    data.clubLogos
+      .then((logos) => {
+        if (isMounted) {
+          setClubLogos(logos);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setClubLogos(null); // Handle errors gracefully
+        }
+      });
+    return () => {
+      isMounted = false; // Cleanup on unmount
+    };
+  }, [data.clubLogos]);
+
+  // Effect to resolve the inactiveClubLogos promise
+  useEffect(() => {
+    let isMounted = true; // To prevent state updates if the component unmounts
+    data.inactiveClubLogos
+      .then((logos) => {
+        if (isMounted) {
+          setInactiveClubLogos(logos);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setInactiveClubLogos(null); // Handle errors gracefully
+        }
+      });
+    return () => {
+      isMounted = false; // Cleanup on unmount
+    };
+  }, [data.inactiveClubLogos]);
 
   /**
    * Handles form submission for club-related actions.
@@ -88,6 +136,11 @@ const Clubs = () => {
             <Club
               key={club.name}
               {...club}
+              image={
+                clubLogos
+                  ? clubLogos.find((logo) => logo.id === club.id)?.image ?? ''
+                  : ''
+              }
               editable={
                 data.user.isFaculty || data.user.clubAdmins?.includes(club.id)
               }
@@ -107,6 +160,12 @@ const Clubs = () => {
               <Club
                 key={club.name + '-' + club.id}
                 {...club}
+                image={
+                  inactiveClubLogos
+                    ? inactiveClubLogos.find((logo) => logo.id === club.id)
+                        ?.image ?? ''
+                    : ''
+                }
                 editable={false}
                 deletable={false}
                 inactive

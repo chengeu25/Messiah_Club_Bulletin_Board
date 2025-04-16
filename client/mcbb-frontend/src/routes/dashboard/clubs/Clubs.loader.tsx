@@ -1,6 +1,40 @@
-import { json, LoaderFunction, redirect } from 'react-router';
+import { defer, LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
-import { UserType as User } from '../../../types/databaseTypes';
+import {
+  ClubType,
+  ImageType,
+  UserType as User
+} from '../../../types/databaseTypes';
+
+const fetchClubLogos = async (
+  clubIds: number[],
+  isActive: boolean
+): Promise<ImageType[]> => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/clubs/images`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          is_active: isActive,
+          club_ids: clubIds
+        })
+      }
+    );
+    if (!response.ok) {
+      throw new Error('Failed to fetch active club logos');
+    }
+    const data = (await response.json()) as ImageType[];
+    return data;
+  } catch (error) {
+    console.error('Error fetching active club logos:', error);
+    return [];
+  }
+};
 
 /**
  * Loader function for the clubs dashboard route.
@@ -85,7 +119,22 @@ const clubsLoader: LoaderFunction = async ({ request }) => {
   const inactiveClubs = inactiveClubsResponse.ok
     ? await inactiveClubsResponse.json()
     : [];
-  return json({ user, clubs, inactiveClubs }, { status: 200 });
+
+  const clubLogos = fetchClubLogos(
+    clubs.map((club: ClubType) => club.id),
+    true
+  );
+  const inactiveClubLogos = !user.isFaculty
+    ? []
+    : fetchClubLogos(
+        inactiveClubs.map((club: ClubType) => club.id),
+        false
+      );
+
+  return defer(
+    { user, clubs, inactiveClubs, clubLogos, inactiveClubLogos },
+    { status: 200 }
+  );
 };
 
 export default clubsLoader;
