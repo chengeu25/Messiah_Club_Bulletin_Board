@@ -138,13 +138,18 @@ def get_event_image(cur, event_id):
         (event_id,),
     )
     result = cur.fetchone()
+    if result is None:
+        return {
+            "image": None,
+            "id": event_id,
+        }
     return {
         "image": (
             f"{result[1]},{base64.b64encode(result[2]).decode('utf-8')}"
             if (result[1] is not None and result[2] is not None)
             else None
         ),
-        "id": result[3],
+        "id": event_id,
     }
 
 
@@ -880,6 +885,55 @@ def get_club_events(club_id):
     return jsonify({"events": final_result}), 200
 
 
+@events_bp.route("/images", methods=["POST"])
+def get_event_images():
+    """
+    Retrieve images for specified events.
+
+    This endpoint fetches images for specified events, returning a dictionary
+    where the keys are event IDs and the values are the image paths.
+
+    Request Body:
+        event_ids (list): List of event IDs to fetch images for
+
+    Returns:
+        JSON response:
+        - On successful image retrieval:
+            {
+                "images": [
+                    {
+                        id: int,
+                        image: str
+                    }
+                ]
+            }, 200 status
+        - On unauthorized access:
+            {"error": "Unauthorized"}, 403 status
+        - On database connection error:
+            {"error": "Database connection error"}, 500 status
+
+    Behavior:
+    - Requires an active MySQL database connection
+    - Fetches images for specified events
+    - Converts timestamps to UTC
+    - Supports filtering events from a specific start date
+    """
+    # Check if user is authenticated
+    current_user = get_user_session_info()
+
+    if not current_user["user_id"]:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    event_ids = request.json.get("event_ids")
+
+    cur = mysql.connection.cursor()
+    result = [get_event_image(cur, event_id) for event_id in event_ids]
+
+    cur.close()
+
+    return jsonify({"images": result}), 200
+
+
 @events_bp.route("/events", methods=["GET"])
 def get_events():
     """
@@ -934,7 +988,7 @@ def get_events():
     end_date = request.args.get("end_date")
     filter_query = request.args.get("filter")
     approved = request.args.get("approved")
-    incl_images = request.args.get("images")
+    incl_images = False if request.args.get("images") == "false" else True
     if not start_date or not end_date:
         return jsonify({"error": "Missing required date parameters"}), 400
     if not filter_query:

@@ -4,8 +4,8 @@ import {
   eventPassesSearch,
   sortEventsByDay
 } from '../../../helper/eventHelpers';
-import { EventType, UserType } from '../../../types/databaseTypes';
-import { useMemo } from 'react';
+import { EventType, ImageType } from '../../../types/databaseTypes';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Form,
   useSubmit,
@@ -26,14 +26,39 @@ import useLoading from '../../../hooks/useLoading';
  * @returns {React.ReactElement} Rendered home dashboard with events
  */
 const Home = () => {
-  const { events } = useLoaderData() as {
+  const { events, images } = useLoaderData() as {
     events: EventType[];
-    user: UserType;
+    images: Promise<ImageType[]>;
   };
   const submit = useSubmit();
   const [params] = useSearchParams();
   const { currentSchool } = useSchool();
   const { loading } = useLoading();
+
+  // State to store merged events with images
+  const [mergedEvents, setMergedEvents] = useState<EventType[]>(events);
+
+  // Load images and merge with events
+  useEffect(() => {
+    let isMounted = true; // To prevent state updates if the component unmounts
+    images
+      .then((loadedImages) => {
+        if (isMounted) {
+          const eventsWithImages = (events as EventType[]).map((event) => ({
+            ...event,
+            image: loadedImages.find((img) => img.id === event.id) || null
+          }));
+          setMergedEvents(eventsWithImages as EventType[]);
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to load images:', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [events, images]);
 
   /**
    * Memoized function to filter events based on search query and user filters.
@@ -49,10 +74,10 @@ const Home = () => {
    */
   const filteredEvents = useMemo(
     () =>
-      events.filter((event: EventType) =>
+      mergedEvents.filter((event: EventType) =>
         eventPassesSearch(event, params.get('search') ?? '')
       ),
-    [events, params]
+    [mergedEvents, params]
   );
 
   /**

@@ -1,6 +1,69 @@
-import { json, LoaderFunction, redirect } from 'react-router';
+import { defer, LoaderFunction, redirect } from 'react-router';
 import checkUser from '../../../helper/checkUser';
-import { UserType as User } from '../../../types/databaseTypes';
+import { EventType, UserType as User } from '../../../types/databaseTypes';
+
+const fetchImages = async (eventIds: number[]) => {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/events/images`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          event_ids: eventIds
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch images');
+    }
+
+    const { images } = await response.json();
+    return images;
+  } catch (error) {
+    console.error('Failed to fetch images:', error);
+    throw new Error('Failed to fetch images');
+  }
+};
+
+const fetchEvents = async (searchParam: string, filterParam: string) => {
+  try {
+    const response = await fetch(
+      `${
+        import.meta.env.VITE_API_BASE_URL
+      }/api/events/events?start_date=${encodeURIComponent(
+        new Date().toISOString()
+      )}&end_date=${encodeURIComponent(
+        new Date(
+          new Date(new Date().setHours(0, 0, 0, 0)).getTime() +
+            7 * 24 * 60 * 60 * 1000
+        ).toISOString()
+      )}&search=${encodeURIComponent(searchParam)}&filter=${encodeURIComponent(
+        filterParam
+      )}&images=false`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch events');
+    }
+
+    const eventsJson = await response.json();
+    return eventsJson.events;
+  } catch (error) {
+    throw new Error('Failed to fetch events');
+  }
+};
 
 /**
  * Loader function for the home dashboard route.
@@ -46,35 +109,11 @@ const homeLoader: LoaderFunction = async ({ request }) => {
   const searchParam = url.searchParams.get('search') || '';
   const filterParam = url.searchParams.get('filter') || '';
 
-  const response = await fetch(
-    `${
-      import.meta.env.VITE_API_BASE_URL
-    }/api/events/events?start_date=${encodeURIComponent(
-      new Date().toISOString()
-    )}&end_date=${encodeURIComponent(
-      new Date(
-        new Date(new Date().setHours(0, 0, 0, 0)).getTime() +
-          7 * 24 * 60 * 60 * 1000
-      ).toISOString()
-    )}&search=${encodeURIComponent(searchParam)}&filter=${encodeURIComponent(
-      filterParam
-    )}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }
-  );
+  const events = await fetchEvents(searchParam, filterParam);
 
-  if (!response.ok) {
-    throw new Error('Failed to fetch events');
-  }
+  const images = fetchImages(events.map((event: EventType) => event?.id));
 
-  const eventsJson = await response.json();
-  const events = eventsJson?.events;
-  return json({ user, events }, { status: 200 });
+  return defer({ user, events, images }, { status: 200 });
 };
 
 export default homeLoader;
