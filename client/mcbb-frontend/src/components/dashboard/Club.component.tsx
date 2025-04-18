@@ -63,7 +63,7 @@ const Club = ({
     className='flex flex-col xl:flex-row gap-4 w-full items-center'
   >
     <img
-      src={image}
+      src={image !== '' && image !== undefined ? image : '/logo.png'}
       alt={name}
       style={{ objectFit: 'cover' }}
       className='h-[200px] w-[200px] sm:h-[100px] sm:w-[100px] bg-gray-800 rounded-lg'
