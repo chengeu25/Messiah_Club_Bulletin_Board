@@ -6,19 +6,14 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import ReportedComment from '../../../components/reportedComments/reportedComment.component';
 
 const commentModeration = () => {
-    const { loading, setLoading } = useLoading();
+    const { loading } = useLoading();
     const { addNotification } = useNotification();
     const [tableData, setTableData] = useState<any[]>([]);
-    const [error, setError] = useState<String | null>(null);
 
-    const { comments, loaderError } = useLoaderData() as {
+    const { comments } = useLoaderData() as {
         comments: any[];
         loaderError: String | null;
     };
-
-    if (loaderError) {
-        setError(loaderError);
-    }
 
     useEffect(() => {
         setTableData(comments);
@@ -29,7 +24,6 @@ const commentModeration = () => {
         item: any
     ) => {
         event.preventDefault(); // Prevent page reload.
-        setError(null); // Reset error message.
         const formData = new FormData(event.currentTarget);
         const action = (
             (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement
