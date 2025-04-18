@@ -31,6 +31,7 @@ interface InputProps {
   required?: boolean;
   onInput?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onChange?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onKeyDown?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   value?: string;
   checked?: boolean;
   defaultValue?: string;
@@ -74,6 +75,7 @@ const Input = ({
   required = false,
   onInput,
   onChange,
+  onKeyDown,
   value,
   checked,
   defaultValue,
@@ -113,6 +115,7 @@ const Input = ({
           defaultValue={defaultValue}
           onInput={onInput}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           value={value}
         ></textarea>
       ) : (
@@ -130,6 +133,7 @@ const Input = ({
           )} p-2 rounded-lg flex-grow ${!filled && 'text-black'}`}
           onInput={onInput}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           value={value}
           checked={checked}
           defaultValue={defaultValue}

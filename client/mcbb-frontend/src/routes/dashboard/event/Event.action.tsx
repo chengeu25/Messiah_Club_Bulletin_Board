@@ -137,7 +137,7 @@ const eventAction: ActionFunction = async ({ request }) => {
           },
           credentials: 'include',
           body: JSON.stringify({
-            commentId: commentId
+          commentId: commentId
           })
         }
       );

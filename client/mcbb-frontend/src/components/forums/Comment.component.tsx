@@ -21,6 +21,7 @@ interface CommentProps {
   isReported: boolean;
   isDeleted: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 /**
@@ -52,7 +53,8 @@ const Comment = ({
   commentInput,
   isReported,
   isDeleted,
-  onChange
+  onChange,
+  onKeyDown
 }: CommentProps) => (
   <div
     className='flex flex-col gap-2 bg-gray-200 rounded-lg p-4'
@@ -96,6 +98,7 @@ const Comment = ({
           filled={false}
           value={commentInput}
           onChange={onChange}
+          onKeyDown={onKeyDown}
           labelOnSameLine
         />
         <div className='flex-shrink-0'>

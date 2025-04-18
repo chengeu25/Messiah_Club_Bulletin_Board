@@ -109,7 +109,7 @@ const commentModeration = () => {
         <Loading />
     ) : (
         <div className='w-full h-full flex justify-center items-center'>
-            <div className='flex flex-col w-full h-full sm:w-3/4 sm:h-auto sm:min-h-[50%] justify-start items-start shadow-md rounded-lg p-5 bg-white'>
+            <div className='flex flex-col w-full sm:w-3/4 min-h-[30vh] max-h-[70vh] overflow-y-auto justify-start items-start shadow-md rounded-lg p-5 bg-white'>
             <h1 className='text-3xl font-bold mb-4'>Reported Comments</h1>
             <div className='flex flex-col gap-2 w-full'>
                 {tableData && tableData.length > 0 ? (

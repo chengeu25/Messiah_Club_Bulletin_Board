@@ -117,6 +117,7 @@ const Event = () => {
   const location = useLocation();
   const { currentSchool } = useSchool();
   const [commentInput, setCommentInput] = useState('');
+  const [commentData, setCommentData] = useState(comments);
   const eventID = event.id;
 
   useEffect(() => {
@@ -187,6 +188,7 @@ const Event = () => {
       indent_level: number;
       event_id: number;
       commentInput: string;
+      isReported: boolean;
     }
   ) => {
     event.preventDefault();
@@ -203,32 +205,14 @@ const Event = () => {
     formData.append('indentLevel', indent.toString());
 
     if (action === 'report') {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/events/report-comment`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              action: 'report',
-              commentId: item.comment_id.toString()
-            })
-          }
-        );
-        if (!response.ok) {
-          alert(
-            `Something went wrong, comment not reported. Error: ${response.statusText}`
-          );
-          return null;
-        }
-        addNotification('Comment reported successfully', 'success');
-      } catch (error) {
-        console.error(error);
-        return redirect(`dashboard/event/${item.comment_id.toString()}`);
-      }
+      submit(
+        {
+          action: 'report',
+          commentId: item.comment_id.toString(),
+          eventId: eventID
+        },
+        { method: 'POST' }
+      );
     } else {
       if (comment === '') {
         addNotification('Comment cannot be empty', 'error');
@@ -252,6 +236,49 @@ const Event = () => {
       }));
       setCommentInput('');
     }
+  };
+
+  const handleKeySubmitSubComment = async (
+    event: React.KeyboardEvent<HTMLFormElement>,
+    item: {
+      comment_id: string;
+      indent_level: number;
+      event_id: number;
+      commentInput: string;
+    }
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const comment = formData.get('comment')?.toString() || '';
+    const indent = item.indent_level ?? 0;
+    const action = 'subComment';
+    
+    formData.append('action', action);
+    formData.append('parentId', item.comment_id.toString());
+    formData.append('eventId', eventID.toString());
+    formData.append('indentLevel', indent.toString());
+
+    if (comment === '') {
+      addNotification('Comment cannot be empty', 'error');
+      return;
+    }
+    submit(
+      {
+        comment: comment,
+        parentId: item.comment_id.toString(),
+        eventId: eventID,
+        action: 'subComment',
+        indentLevel: (indent + 1).toString()
+      },
+      { method: 'POST' }
+    );
+
+    item.commentInput = '';
+    setCommentInputs((prev) => ({
+      ...prev,
+      [item.comment_id]: ''
+    }));
+    setCommentInput('');
   };
 
   // State to manage individual comment inputs
@@ -486,6 +513,11 @@ const Event = () => {
             <Form
               key={index}
               onSubmit={(e) => handleSubmitSubComment(e, item)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  handleKeySubmitSubComment(e, item);
+                }
+              }}
               className='flex flex-col gap-2 w-full'
             >
               <Comment
