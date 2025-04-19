@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { redirect, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -117,7 +117,6 @@ const Event = () => {
   const location = useLocation();
   const { currentSchool } = useSchool();
   const [commentInput, setCommentInput] = useState('');
-  const [commentData, setCommentData] = useState(comments);
   const eventID = event.id;
 
   useEffect(() => {
@@ -252,7 +251,7 @@ const Event = () => {
     const comment = formData.get('comment')?.toString() || '';
     const indent = item.indent_level ?? 0;
     const action = 'subComment';
-    
+
     formData.append('action', action);
     formData.append('parentId', item.comment_id.toString());
     formData.append('eventId', eventID.toString());
@@ -306,7 +305,7 @@ const Event = () => {
 
         {/* Cancel Event Button */}
         {!loading && (
-          <>
+          <div className='flex flex-col md:flex-row gap-2'>
             <Form
               onSubmit={(e) => {
                 if (!confirm('Are you sure you want to cancel this event?')) {
@@ -346,22 +345,22 @@ const Event = () => {
               )}
               <input type='hidden' name='id' value={event.id} />
             </Form>
-          </>
-        )}
 
-        {/* RSVP Dropdown */}
-        {!loading && (
-          <Form className='flex-shrink-0 flex'>
-            <RSVPDropdown
-              handleRSVPClick={(type) =>
-                submit(
-                  { id: event.id, type: type, action: 'rsvp' },
-                  { method: 'post' }
-                )
-              }
-              initialValue={event?.rsvp}
-            />
-          </Form>
+            {/* RSVP Dropdown */}
+            {!loading && (
+              <Form className='flex-shrink-0 flex'>
+                <RSVPDropdown
+                  handleRSVPClick={(type) =>
+                    submit(
+                      { id: event.id, type: type, action: 'rsvp' },
+                      { method: 'post' }
+                    )
+                  }
+                  initialValue={event?.rsvp}
+                />
+              </Form>
+            )}
+          </div>
         )}
       </Card>
 
@@ -514,7 +513,7 @@ const Event = () => {
               key={index}
               onSubmit={(e) => handleSubmitSubComment(e, item)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === 'Enter' && !e.shiftKey) {
                   handleKeySubmitSubComment(e, item);
                 }
               }}
