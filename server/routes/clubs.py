@@ -110,7 +110,7 @@ def get_clubs():
         clubs = cur.fetchall()
 
         if not clubs:
-            return jsonify({"error": "No clubs found"}), 404
+            return jsonify([]), 200
 
         result = [
             {

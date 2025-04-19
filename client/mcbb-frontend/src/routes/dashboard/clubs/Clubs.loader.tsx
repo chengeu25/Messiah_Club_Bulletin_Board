@@ -120,16 +120,20 @@ const clubsLoader: LoaderFunction = async ({ request }) => {
     ? await inactiveClubsResponse.json()
     : [];
 
-  const clubLogos = fetchClubLogos(
-    clubs.map((club: ClubType) => club.id),
-    true
-  );
-  const inactiveClubLogos = !user.isFaculty
-    ? []
-    : fetchClubLogos(
-        inactiveClubs.map((club: ClubType) => club.id),
-        false
-      );
+  const clubLogos =
+    clubs.length === 0
+      ? new Promise((resolve) => resolve([]))
+      : fetchClubLogos(
+          clubs.map((club: ClubType) => club.id),
+          true
+        );
+  const inactiveClubLogos =
+    !user.isFaculty || inactiveClubs.length === 0
+      ? new Promise((resolve) => resolve([]))
+      : fetchClubLogos(
+          inactiveClubs.map((club: ClubType) => club.id),
+          false
+        );
 
   return defer(
     { user, clubs, inactiveClubs, clubLogos, inactiveClubLogos },

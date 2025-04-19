@@ -75,21 +75,28 @@ const Clubs = () => {
   // Effect to resolve the inactiveClubLogos promise
   useEffect(() => {
     let isMounted = true; // To prevent state updates if the component unmounts
-    data.inactiveClubLogos
-      .then((logos) => {
-        if (isMounted) {
-          setInactiveClubLogos(logos);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setInactiveClubLogos(null); // Handle errors gracefully
-        }
-      });
+    try {
+      data?.inactiveClubLogos
+        ?.then((logos) => {
+          if (isMounted) {
+            setInactiveClubLogos(logos);
+          }
+        })
+        ?.catch(() => {
+          if (isMounted) {
+            setInactiveClubLogos(null); // Handle errors gracefully
+          }
+        });
+    } catch (error) {
+      if (isMounted) {
+        setInactiveClubLogos(null); // Handle errors gracefully
+      }
+    }
+
     return () => {
       isMounted = false; // Cleanup on unmount
     };
-  }, [data.inactiveClubLogos]);
+  }, [data?.inactiveClubLogos]);
 
   /**
    * Handles form submission for club-related actions.
@@ -127,6 +134,12 @@ const Clubs = () => {
       )}
       {loading ? (
         <div>Loading clubs...</div>
+      ) : data.clubs.filter((club) =>
+          clubPassesSearch(club, searchParams.get('search') ?? '')
+        ).length === 0 ? (
+        <div className='text-2xl font-bold text-center'>
+          No clubs found with the specified search criteria.
+        </div>
       ) : (
         data.clubs
           .filter((club) =>
