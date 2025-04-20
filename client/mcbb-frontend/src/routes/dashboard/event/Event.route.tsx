@@ -212,6 +212,7 @@ const Event = () => {
         },
         { method: 'POST' }
       );
+      addNotification('Comment reported successfully', 'success');
     } else {
       if (comment === '') {
         addNotification('Comment cannot be empty', 'error');
@@ -227,6 +228,7 @@ const Event = () => {
         },
         { method: 'POST' }
       );
+      addNotification('Comment submitted successfully', 'success');
 
       item.commentInput = '';
       setCommentInputs((prev) => ({
@@ -272,6 +274,7 @@ const Event = () => {
       { method: 'POST' }
     );
 
+    addNotification('Comment submitted successfully', 'success');
     item.commentInput = '';
     setCommentInputs((prev) => ({
       ...prev,
