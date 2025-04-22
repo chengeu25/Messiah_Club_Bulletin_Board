@@ -59,7 +59,7 @@ const Comment = ({
   autoComplete
 }: CommentProps) => (
   <div
-    className='flex flex-col gap-2 bg-gray-200 rounded-lg p-4'
+    className='break-words whitespace-normal flex flex-col gap-2 bg-gray-200 rounded-lg p-4'
     style={{ marginLeft: 20 * (indentLevel ?? 0) }}
   >
     <div className='flex items-center gap-4'>
