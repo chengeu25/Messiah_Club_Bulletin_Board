@@ -22,6 +22,7 @@ interface CommentProps {
   isDeleted: boolean;
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
+  autoComplete?: string;
 }
 
 /**
@@ -54,7 +55,8 @@ const Comment = ({
   isReported,
   isDeleted,
   onChange,
-  onKeyDown
+  onKeyDown,
+  autoComplete
 }: CommentProps) => (
   <div
     className='flex flex-col gap-2 bg-gray-200 rounded-lg p-4'
@@ -99,6 +101,7 @@ const Comment = ({
           value={commentInput}
           onChange={onChange}
           onKeyDown={onKeyDown}
+          autoComplete={autoComplete}
           labelOnSameLine
         />
         <div className='flex-shrink-0'>

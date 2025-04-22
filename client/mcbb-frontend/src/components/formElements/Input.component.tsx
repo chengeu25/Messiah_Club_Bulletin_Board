@@ -32,6 +32,7 @@ interface InputProps {
   onInput?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onChange?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
   onKeyDown?: FormEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  autoComplete?: string;
   value?: string;
   checked?: boolean;
   defaultValue?: string;
@@ -76,6 +77,7 @@ const Input = ({
   onInput,
   onChange,
   onKeyDown,
+  autoComplete,
   value,
   checked,
   defaultValue,
@@ -134,6 +136,7 @@ const Input = ({
           onInput={onInput}
           onChange={onChange}
           onKeyDown={onKeyDown}
+          autoComplete={autoComplete}
           value={value}
           checked={checked}
           defaultValue={defaultValue}

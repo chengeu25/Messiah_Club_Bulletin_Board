@@ -1,4 +1,4 @@
-import { ActionFunction, redirect } from 'react-router-dom';
+import { ActionFunction, json, redirect } from 'react-router-dom';
 
 /**
  * Action handler for event-related interactions.
@@ -27,7 +27,14 @@ import { ActionFunction, redirect } from 'react-router-dom';
  *
  * @throws {Error} Displays an alert if RSVP request fails
  */
-const eventAction: ActionFunction = async ({ request }) => {
+export type EventActionResponse = {
+  success?: boolean;
+  error?: boolean;
+  message?: string;
+  actionType?: 'comment' | 'report';
+};
+
+export const eventAction: ActionFunction = async ({ request }) => {
   // Parse form data
   const formData = await request.formData();
   const action = formData.get('action');
@@ -91,7 +98,11 @@ const eventAction: ActionFunction = async ({ request }) => {
       console.error(error);
       return redirect(`/dashboard/event/${id}`);
     }
-    return redirect(`/dashboard/event/${id}`);
+    return json<EventActionResponse>({
+      success: true,
+      message: 'Comment submitted successfully!',
+      actionType: 'comment'
+    });
   }
 
   if (action === 'subComment') {
@@ -122,7 +133,11 @@ const eventAction: ActionFunction = async ({ request }) => {
       console.error(error);
       return redirect(`/dashboard/event/${eventId}`);
     }
-    return redirect(`/dashboard/event/${eventId}`);
+    return json<EventActionResponse>({
+      success: true,
+      message: 'Comment submitted successfully!',
+      actionType: 'comment'
+    });
   }
 
   // Handle report action
@@ -151,7 +166,11 @@ const eventAction: ActionFunction = async ({ request }) => {
       console.error(error);
       return redirect(`dashboard/event/${eventId}`);
     }
-    return redirect(`/dashboard/event/${eventId}`);
+    return json<EventActionResponse>({
+      success: true,
+      message: 'Comment reported successfully!',
+      actionType: 'report'
+    });
   }
 
   // Handle cancel action
