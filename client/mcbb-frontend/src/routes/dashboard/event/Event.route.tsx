@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useActionData, useLocation } from 'react-router-dom';
 import Card from '../../../components/ui/Card';
 import { IoMdTime } from 'react-icons/io';
 import { IoLocationOutline } from 'react-icons/io5';
@@ -28,6 +28,7 @@ import { useSchool } from '../../../contexts/SchoolContext';
 import { ImManWoman } from 'react-icons/im';
 import useLoading from '../../../hooks/useLoading';
 import { useNotification } from '../../../contexts/NotificationContext';
+import type { EventActionResponse } from './Event.action';
 
 /**
  * Event details page component.
@@ -118,11 +119,18 @@ const Event = () => {
   const { currentSchool } = useSchool();
   const [commentInput, setCommentInput] = useState('');
   const eventID = event.id;
+  const actionData = useActionData() as EventActionResponse | undefined;
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const newError = searchParams.get('error');
     const newMessage = searchParams.get('message');
+
+    if (actionData) {
+      if (actionData.success && actionData.message) {
+        addNotification(actionData.message, 'success')
+      }
+    }
 
     if (newError || newMessage) {
       if (newError) {
@@ -142,7 +150,7 @@ const Event = () => {
 
       window.history.replaceState({}, document.title, newUrl);
     }
-  }, [location.search]);
+  }, [location.search, actionData]);
 
   const handleSubmitComment = async (
     event: React.FormEvent<HTMLFormElement>
@@ -168,8 +176,6 @@ const Event = () => {
           { method: 'POST' }
         );
 
-        // After successful submission:
-        addNotification('Comment submitted successfully', 'success');
       } catch (error) {
         console.error('Error submitting comment:', error);
         addNotification('Error submitting comment', 'error');
@@ -492,6 +498,7 @@ const Event = () => {
             onChange={(e) =>
               setCommentInput((e.target as HTMLInputElement).value ?? '')
             }
+            autoComplete='off'
             labelOnSameLine
           />
           <div className='flex-shrink-0'>
@@ -533,6 +540,7 @@ const Event = () => {
                     (e.target as HTMLInputElement).value
                   )
                 }
+                autoComplete='off'
               />
             </Form>
           ))
