@@ -12,7 +12,6 @@ import {
   useLoaderData,
   useSearchParams
 } from 'react-router-dom';
-import useLoading from '../../../hooks/useLoading';
 
 /**
  * Home dashboard component displaying events for the current week.
