@@ -9,7 +9,6 @@ import Club from '../../../components/dashboard/Club.component';
 import { ClubType, ImageType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 import { clubPassesSearch } from '../../../helper/eventHelpers';
-import useLoading from '../../../hooks/useLoading';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
@@ -45,7 +44,7 @@ const Clubs = () => {
   const data: LoaderData = useLoaderData() as LoaderData;
   const submit = useSubmit();
   const [searchParams] = useSearchParams();
-  const { loading } = useLoading();
+  const [loading, setLoading] = useState(true);
 
   // State to store resolved club logos
   const [clubLogos, setClubLogos] = useState<ImageType[] | null>(null);
@@ -97,6 +96,11 @@ const Clubs = () => {
       isMounted = false; // Cleanup on unmount
     };
   }, [data?.inactiveClubLogos]);
+
+  // Effect to update loading state
+  useEffect(() => {
+    if (data.clubs.length > 0) setLoading(false);
+  }, [data]);
 
   /**
    * Handles form submission for club-related actions.

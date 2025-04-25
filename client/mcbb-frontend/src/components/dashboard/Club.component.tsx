@@ -4,6 +4,7 @@ import Card from '../ui/Card';
 import { CgDetailsMore } from 'react-icons/cg';
 import { LiaTrashRestoreSolid } from 'react-icons/lia';
 import { Form } from 'react-router-dom';
+import LazyImage from '../ui/LazyImage';
 
 /**
  * Represents the properties for the Club component
@@ -62,7 +63,7 @@ const Club = ({
     color='gray-200'
     className='flex flex-col xl:flex-row gap-4 w-full items-center'
   >
-    <img
+    <LazyImage
       src={image !== '' && image !== undefined ? image : '/logo.png'}
       alt={name}
       style={{ objectFit: 'cover' }}

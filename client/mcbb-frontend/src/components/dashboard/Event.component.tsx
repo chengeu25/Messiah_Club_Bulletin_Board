@@ -4,6 +4,7 @@ import Card from '../ui/Card';
 import RSVPDropdown from '../specialDropdowns/RSVPDropdown.component';
 import { CgDetailsMore } from 'react-icons/cg';
 import { useMemo } from 'react';
+import LazyImage from '../ui/LazyImage';
 
 /**
  * Represents the properties for the Event component
@@ -61,7 +62,7 @@ const Event = ({
         className='flex flex-col lg:flex-row gap-4 w-full items-center text-black'
       >
         {!small && (
-          <img
+          <LazyImage
             src={
               base64Image !== ''
                 ? `data:image/${prefix};base64,${base64Image}`

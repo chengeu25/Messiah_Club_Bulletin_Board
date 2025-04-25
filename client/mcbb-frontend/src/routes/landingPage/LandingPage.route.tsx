@@ -11,6 +11,7 @@ import { useSchool } from '../../contexts/SchoolContext';
 import { MdOutlineEvent } from 'react-icons/md';
 import { IoMdNotifications, IoMdShare } from 'react-icons/io';
 import { CgMenuGridO } from 'react-icons/cg';
+import LazyImage from '../../components/ui/LazyImage';
 
 /**
  * LandingPage component for introducing SHARC and its features.
@@ -83,7 +84,7 @@ const LandingPage = () => {
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           {/* Feature cards showcasing application capabilities */}
           <Card color='blue-700' padding={0}>
-            <img
+            <LazyImage
               src={home1}
               className='w-full h-full object-cover rounded-lg'
               alt='SHARC Feature 1'
@@ -110,14 +111,14 @@ const LandingPage = () => {
             </div>
           </Card>
           <Card color='blue-700' padding={0}>
-            <img
+            <LazyImage
               src={home2}
               className='w-full h-full object-cover rounded-lg'
               alt='SHARC Feature 2'
             />
           </Card>
           <Card color='blue-300' padding={0}>
-            <img
+            <LazyImage
               src={home3}
               className='w-full h-full object-cover rounded-lg'
               alt='SHARC Feature 3'
@@ -147,7 +148,7 @@ const LandingPage = () => {
             </div>
           </Card>
           <Card color='blue-700' padding={0}>
-            <img
+            <LazyImage
               src={home4}
               className='w-full h-full object-cover rounded-lg'
               alt='SHARC Feature 4'

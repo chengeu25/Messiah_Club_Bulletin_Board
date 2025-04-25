@@ -33,7 +33,7 @@ const Home = () => {
   const submit = useSubmit();
   const [params] = useSearchParams();
   const { currentSchool } = useSchool();
-  const { loading } = useLoading();
+  const [loading, setLoading] = useState(true);
 
   // State to store merged events with images
   const [mergedEvents, setMergedEvents] = useState<EventType[]>(events);
@@ -59,6 +59,11 @@ const Home = () => {
       isMounted = false;
     };
   }, [events, images]);
+
+  // Effect to update loading state
+  useEffect(() => {
+    setLoading(false);
+  }, [mergedEvents]);
 
   /**
    * Memoized function to filter events based on search query and user filters.
