@@ -43,7 +43,11 @@ const LazyImage = ({
       src={isVisible ? src : undefined}
       alt={alt}
       {...props}
-      style={{ opacity: isVisible ? 1 : 0, transition: 'opacity 0.5s' }}
+      style={{
+        opacity: isVisible ? 1 : 0,
+        transition: 'opacity 0.5s',
+        ...props?.style
+      }}
     />
   );
 };
