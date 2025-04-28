@@ -78,14 +78,16 @@ const Club = () => {
           onSubmit={handleSubmit}
           className='flex-shrink-0 flex gap-2 text-nowrap flex-col sm:flex-row'
         >
+          {user?.clubAdmins?.includes(club?.id) && (
+            <Button
+              type='submit'
+              text='New Event'
+              filled={true}
+              name='newEvent'
+            />
+          )}
           {(user?.clubAdmins?.includes(club?.id) || user.isFaculty) && (
             <>
-              <Button
-                type='submit'
-                text='New Event'
-                filled={true}
-                name='newEvent'
-              />
               <Button
                 type='submit'
                 text='Reports'

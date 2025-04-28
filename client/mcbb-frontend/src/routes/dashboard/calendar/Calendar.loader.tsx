@@ -47,19 +47,24 @@ const calendarLoader: LoaderFunction = async ({ request }) => {
   }
 
   // Determine starting date and number of days to display
+  const numDays = parseInt(searchParams.get('numDays') ?? '1');
   const startingDate =
-    searchParams.get('startingDate') ??
-    new Date(new Date().setHours(0, 0, 0, 0)).toLocaleDateString();
-  const numDays = searchParams.get('numDays') ?? 1;
+    searchParams.get('startingDate') !== undefined &&
+    searchParams.get('startingDate') !== null
+      ? new Date(searchParams.get('startingDate') as string)
+      : new Date(new Date().setHours(0, 0, 0, 0));
+  const startingDateUTC = startingDate.toUTCString();
+  const endingDate = subtractDays(startingDate, -numDays);
+  const endingDateUTC = endingDate.toUTCString();
 
   // Fetch events from backend API
   const response = await fetch(
     `${
       import.meta.env.VITE_API_BASE_URL
     }/api/events/events?start_date=${encodeURIComponent(
-      new Date(startingDate).toISOString()
+      new Date(startingDateUTC).toISOString()
     )}&end_date=${encodeURIComponent(
-      subtractDays(new Date(startingDate), -numDays).toISOString()
+      new Date(endingDateUTC).toISOString()
     )}&filter=${encodeURIComponent(filterParam)}&images=false`,
     {
       method: 'GET',

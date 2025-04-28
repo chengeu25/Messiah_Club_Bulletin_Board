@@ -218,8 +218,8 @@ def get_events_by_date(
     - Supports empty result sets
     """
     try:
-        start_date = datetime.fromisoformat(start_date).strftime("%Y-%m-%d")
-        end_date = datetime.fromisoformat(end_date).strftime("%Y-%m-%d")
+        start_date = datetime.fromisoformat(start_date)
+        end_date = datetime.fromisoformat(end_date)
         cur.execute(
             """SELECT e.event_id,
                       e.start_time, 
