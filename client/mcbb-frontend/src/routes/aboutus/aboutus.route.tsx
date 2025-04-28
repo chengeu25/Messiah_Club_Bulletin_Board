@@ -1,5 +1,5 @@
 import React from 'react';
-import us from '../../../assets/us.jpeg';
+import us from '../../../assets/us.png';
 
 const AboutUs: React.FC = () => {
   return (

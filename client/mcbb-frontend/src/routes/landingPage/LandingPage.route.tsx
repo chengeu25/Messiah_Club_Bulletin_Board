@@ -1,9 +1,9 @@
 import { useNavigate, Link } from 'react-router-dom';
 
-import home1 from '../../../assets/home1.jpg';
-import home2 from '../../../assets/home2.jpg';
-import home3 from '../../../assets/home3.jpg';
-import home4 from '../../../assets/home4.jpg';
+import home1 from '../../../assets/home1.png';
+import home2 from '../../../assets/home2.png';
+import home3 from '../../../assets/home3.png';
+import home4 from '../../../assets/home4.png';
 
 import Button from '../../components/formElements/Button.component';
 import Card from '../../components/ui/Card';
