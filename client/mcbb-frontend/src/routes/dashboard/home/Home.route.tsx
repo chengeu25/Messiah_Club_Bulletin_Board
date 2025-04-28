@@ -1,4 +1,5 @@
 import Day from '../../../components/dashboard/Day.component';
+import { useNotification } from '../../../contexts/NotificationContext';
 import { useSchool } from '../../../contexts/SchoolContext';
 import {
   eventPassesSearch,
@@ -33,6 +34,7 @@ const Home = () => {
   const [params] = useSearchParams();
   const { currentSchool } = useSchool();
   const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotification();
 
   // State to store merged events with images
   const [mergedEvents, setMergedEvents] = useState<EventType[]>(events);
@@ -52,6 +54,10 @@ const Home = () => {
       })
       .catch((error) => {
         console.error('Failed to load images:', error);
+        addNotification(
+          'Image loading failed, please refresh the page.',
+          'error'
+        );
       });
 
     return () => {

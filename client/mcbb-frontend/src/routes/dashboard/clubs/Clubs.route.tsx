@@ -9,6 +9,7 @@ import Club from '../../../components/dashboard/Club.component';
 import { ClubType, ImageType, UserType } from '../../../types/databaseTypes';
 import Button from '../../../components/formElements/Button.component';
 import { clubPassesSearch } from '../../../helper/eventHelpers';
+import { useNotification } from '../../../contexts/NotificationContext';
 
 /**
  * Interface defining the structure of data loaded for the Clubs page.
@@ -45,6 +46,7 @@ const Clubs = () => {
   const submit = useSubmit();
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotification();
 
   // State to store resolved club logos
   const [clubLogos, setClubLogos] = useState<ImageType[] | null>(null);
@@ -64,6 +66,10 @@ const Clubs = () => {
       .catch(() => {
         if (isMounted) {
           setClubLogos(null); // Handle errors gracefully
+          addNotification(
+            'Failed to fetch club logos, please refresh.',
+            'error'
+          );
         }
       });
     return () => {
@@ -84,6 +90,10 @@ const Clubs = () => {
         ?.catch(() => {
           if (isMounted) {
             setInactiveClubLogos(null); // Handle errors gracefully
+            addNotification(
+              'Failed to fetch club logos, please refresh.',
+              'error'
+            );
           }
         });
     } catch (error) {
