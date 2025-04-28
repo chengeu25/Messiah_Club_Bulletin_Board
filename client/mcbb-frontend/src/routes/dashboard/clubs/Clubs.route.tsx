@@ -57,21 +57,22 @@ const Clubs = () => {
   // Effect to resolve the clubLogos promise
   useEffect(() => {
     let isMounted = true; // To prevent state updates if the component unmounts
-    data.clubLogos
-      .then((logos) => {
-        if (isMounted) {
-          setClubLogos(logos);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setClubLogos(null); // Handle errors gracefully
-          addNotification(
-            'Failed to fetch club logos, please refresh.',
-            'error'
-          );
-        }
-      });
+    try {
+      data.clubLogos
+        .then((logos) => {
+          if (isMounted) {
+            setClubLogos(logos);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setClubLogos(null); // Handle errors gracefully
+          }
+        });
+    } catch (error) {
+      addNotification('Failed to fetch club logos, please refresh.', 'error');
+    }
+
     return () => {
       isMounted = false; // Cleanup on unmount
     };
@@ -90,15 +91,12 @@ const Clubs = () => {
         ?.catch(() => {
           if (isMounted) {
             setInactiveClubLogos(null); // Handle errors gracefully
-            addNotification(
-              'Failed to fetch club logos, please refresh.',
-              'error'
-            );
           }
         });
     } catch (error) {
       if (isMounted) {
         setInactiveClubLogos(null); // Handle errors gracefully
+        addNotification('Failed to fetch club logos, please refresh.', 'error');
       }
     }
 

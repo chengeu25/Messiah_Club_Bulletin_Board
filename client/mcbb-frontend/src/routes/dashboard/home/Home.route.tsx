@@ -42,23 +42,26 @@ const Home = () => {
   // Load images and merge with events
   useEffect(() => {
     let isMounted = true; // To prevent state updates if the component unmounts
-    images
-      .then((loadedImages) => {
-        if (isMounted) {
-          const eventsWithImages = (events as EventType[]).map((event) => ({
-            ...event,
-            image: loadedImages.find((img) => img.id === event.id) || null
-          }));
-          setMergedEvents(eventsWithImages as EventType[]);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to load images:', error);
-        addNotification(
-          'Image loading failed, please refresh the page.',
-          'error'
-        );
-      });
+    try {
+      images
+        .then((loadedImages) => {
+          if (isMounted) {
+            const eventsWithImages = (events as EventType[]).map((event) => ({
+              ...event,
+              image: loadedImages.find((img) => img.id === event.id) || null
+            }));
+            setMergedEvents(eventsWithImages as EventType[]);
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to load images:', error);
+        });
+    } catch (error) {
+      addNotification(
+        'Image loading failed, please refresh the page.',
+        'error'
+      );
+    }
 
     return () => {
       isMounted = false;
