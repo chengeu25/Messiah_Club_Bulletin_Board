@@ -128,7 +128,7 @@ const Event = () => {
 
     if (actionData) {
       if (actionData.success && actionData.message) {
-        addNotification(actionData.message, 'success')
+        addNotification(actionData.message, 'success');
       }
     }
 
@@ -175,7 +175,6 @@ const Event = () => {
           { id: eventID, comment: comment, action: 'comment' },
           { method: 'POST' }
         );
-
       } catch (error) {
         console.error('Error submitting comment:', error);
         addNotification('Error submitting comment', 'error');
@@ -429,14 +428,17 @@ const Event = () => {
             <FaDollarSign size={24} /> <strong>Cost:</strong>{' '}
             {event?.cost ? `$${event.cost}` : 'FREE'}
           </p>
-          <p className='flex flex-row gap-2 items-center'>
-            <ImManWoman size={24} /> <strong>Gender Restriction:</strong>{' '}
-            {event?.genderRestriction === 'M'
-              ? 'Male'
-              : event?.genderRestriction === 'F'
-              ? 'Female'
-              : 'None'}
-          </p>
+          {(event?.genderRestriction === 'M' ||
+            event?.genderRestriction === 'F') && (
+            <p className='flex flex-row gap-2 items-center'>
+              <ImManWoman size={24} /> <strong>Only Allow Gender:</strong>{' '}
+              {event?.genderRestriction === 'M'
+                ? 'Male'
+                : event?.genderRestriction === 'F'
+                ? 'Female'
+                : 'None'}
+            </p>
+          )}
         </Card>
       </div>
 

@@ -129,12 +129,12 @@ const FacultyEventApproval = () => {
                       <strong>Event Tags:</strong> {event.tags.join(', ')}
                     </p>
                     <p className='mb-2'>
-                      <strong>Gender Restriction:</strong>{' '}
+                      <strong>Only Allow Gender:</strong>{' '}
                       {event.genderRestriction === 'M'
                         ? 'Male'
                         : event.genderRestriction === 'F'
                         ? 'Female'
-                        : 'None'}
+                        : 'No Restriction'}
                     </p>
                   </div>
                   <div className='mt-8 md:mt-8 md:w-1/3 flex flex-col items-center'>

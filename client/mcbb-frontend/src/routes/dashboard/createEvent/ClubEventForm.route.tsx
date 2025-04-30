@@ -163,7 +163,7 @@ const ClubEventForm = () => {
             );
             const blob = await (await fetch(resizedImage as string)).blob();
             const compressedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
+              type: 'image/jpeg'
             });
             setEventPhotos((prevPhotos) => [...prevPhotos, compressedFile]);
           } catch (e) {
@@ -332,7 +332,10 @@ const ClubEventForm = () => {
             <p className='text-sm font-semibold'>Selected Photos:</p>
             <ul>
               {eventPhotos.map((photo, idx) => (
-                <li key={idx} className='text-sm text-gray-700 flex items-center'>
+                <li
+                  key={idx}
+                  className='text-sm text-gray-700 flex items-center'
+                >
                   {photo.name}
                   <button
                     type='button'
@@ -390,11 +393,8 @@ const ClubEventForm = () => {
         />
       </div>
       <div className='mb-4'>
-        <label
-          htmlFor='genderRestriction'
-          className='block text-sm font-medium text-gray-700'
-        >
-          Gender Restriction
+        <label htmlFor='genderRestriction' className='block'>
+          Only Allow Attendees of Gender:
         </label>
         <select
           id='genderRestriction'
@@ -410,7 +410,13 @@ const ClubEventForm = () => {
       </div>
       <div className='flex flex-row gap-2'>
         <Button text='Submit' type='submit' filled name='submit' />
-        <Button text='Cancel' filled={false} type='button' name='cancel' onClick={handleCancel} />
+        <Button
+          text='Cancel'
+          filled={false}
+          type='button'
+          name='cancel'
+          onClick={handleCancel}
+        />
       </div>
     </ResponsiveForm>
   );
