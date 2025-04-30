@@ -1,4 +1,4 @@
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLoaderData } from 'react-router-dom';
 
 import home1 from '../../../assets/home1.png';
 import home2 from '../../../assets/home2.png';
@@ -38,6 +38,7 @@ const LandingPage = () => {
   // Navigation hook for programmatic routing
   const navigate = useNavigate();
   const { currentSchool } = useSchool();
+  const user = useLoaderData();
 
   return (
     <div className='bg-blue-900 relative overflow-y-auto w-full h-full'>
@@ -54,30 +55,35 @@ const LandingPage = () => {
             organizations, and events on campus that pique your interest.
           </p>
 
-          {/* Sign-up button */}
-          <Button
-            text='Sign Up'
-            className='p-4'
-            onClick={() => {
-              if (currentSchool) {
-                navigate(`/signup/${currentSchool.id}`);
-              } else {
-                navigate('/selectSchool?route=signup');
-              }
-            }}
-            filled={true}
-          />
+          {!user && (
+            <div className={`relative flex flex-col gap-5 bg-blue-900`}>
+              {/* Sign-up button */}
+              <Button
+                text='Sign Up'
+                className='p-4'
+                onClick={() => {
+                  if (currentSchool) {
+                    navigate(`/signup/${currentSchool.id}`);
+                  } else {
+                    navigate('/selectSchool?route=signup');
+                  }
+                }}
+                filled={true}
+              />
 
-          {/* New "Add School" button */}
-          <p className='font-italic text-gray-300 text-xl'>
-            Want to use SHARC for your school?
-          </p>
-          <Button
-            text='Add School'
-            className='p-4'
-            onClick={() => navigate('/addSchool')}
-            filled={true}
-          />
+              {/* New "Add School" button */}
+              <p className='font-italic text-gray-300 text-xl'>
+                Want to use SHARC for your school? Got questions? Contact us to
+                get started!
+              </p>
+              <Button
+                text='Contact Us'
+                className='p-4'
+                onClick={() => navigate('/contactus')}
+                filled={true}
+              />
+            </div>
+          )}
         </div>
 
         {/* Features grid with image and text cards */}

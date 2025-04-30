@@ -106,6 +106,7 @@ import commentModerationLoader from './routes/dashboard/commentModeration/commen
 import commentModerationAction from './routes/dashboard/commentModeration/commentModeration.action.tsx';
 import CommentModeration from './routes/dashboard/commentModeration/commentModeration.route.tsx';
 import SendEmailLoader from './routes/dashboard/club/SendEmailForm/SendEmail.loader.tsx';
+import landingPageLoader from './routes/landingPage/LandingPage.loader.tsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -121,7 +122,7 @@ const router = createBrowserRouter(
       loader={rootLoader}
       errorElement={<ErrorPage />}
     >
-      <Route index element={<LandingPage />} />
+      <Route index loader={landingPageLoader} element={<LandingPage />} />
       <Route
         path='login'
         element={<LoginRedirector />}
