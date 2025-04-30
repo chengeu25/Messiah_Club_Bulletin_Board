@@ -26,6 +26,7 @@ const EditInterests: React.FC = () => {
   // State for managing interests
   const [allInterests, setAllInterests] = useState<string[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [initialInterests, setInitialInterests] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { addNotification } = useNotification();
@@ -91,6 +92,7 @@ const EditInterests: React.FC = () => {
       .then((data) => {
         if (data.interests) {
           setSelectedInterests(data.interests);
+          setInitialInterests(data.interests);
         }
       })
       .catch((error) =>
@@ -199,8 +201,13 @@ const EditInterests: React.FC = () => {
           </div>
           <div className='flex w-full'>
             <button
-              className='foreground-filled-focusable text-white py-4 flex-1 mr-2 rounded-lg'
+              className={`foreground-filled-focusable ${
+                selectedInterests === initialInterests
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              } text-white py-4 flex-1 mr-2 rounded-lg`}
               type='submit'
+              disabled={selectedInterests === initialInterests}
             >
               Save Changes
             </button>
