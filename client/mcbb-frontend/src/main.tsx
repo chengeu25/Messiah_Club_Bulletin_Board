@@ -90,8 +90,8 @@ import imageAction from './routes/dashboard/images/Image.action.tsx';
 import SchoolEdit from './routes/schoolEdit/schoolEdit.route.tsx';
 import schoolEditloader from './routes/schoolEdit/schoolEdit.loader.tsx';
 import { schoolEditaction } from './routes/schoolEdit/schoolEdit.action.tsx';
-import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
-import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
+// import AddSchoolPage from './routes/landingPage/addSchool/addSchool.route.tsx';
+// import addSchoolsAction from './routes/landingPage/addSchool/addSchool.action.tsx';
 import Faculty from './routes/faculty/Faculty.route.tsx';
 import facultyLoader from './routes/faculty/Faculty.loader.tsx';
 import { NotificationProvider } from './contexts/NotificationContext.tsx';
@@ -393,12 +393,12 @@ const router = createBrowserRouter(
         element={<ContactUs />}
         errorElement={<ErrorPage />}
       />{' '}
-      <Route
+      {/* <Route
         path='/addSchool'
         element={<AddSchoolPage />}
         action={addSchoolsAction}
         errorElement={<ErrorPage />}
-      />
+      /> */}
     </Route>
   )
 );
