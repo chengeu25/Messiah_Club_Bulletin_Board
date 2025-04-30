@@ -145,10 +145,10 @@ export const AdminUserForm = () => {
       <div className='w-full h-full flex flex-col gap-4'>
         <div className='flex flex-row gap-2'>
           <Input
-            label='Search Usernames'
+            label='Search Users By Name:'
             type='text'
             name='search'
-            placeholder='Search users by username'
+            placeholder='Enter name here...'
             labelOnSameLine={true}
             filled={false}
             value={localSearch}
@@ -166,7 +166,7 @@ export const AdminUserForm = () => {
           <table className='w-full border-collapse'>
             <thead>
               <tr className='bg-gray-100'>
-                <th className='border p-2'>Username</th>
+                <th className='border p-2'>Name</th>
                 <th className='border p-2'>Email</th>
                 <th className='border p-2'>Status</th>
                 <th className='border p-2'>Actions</th>
