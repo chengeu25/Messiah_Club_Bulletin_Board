@@ -32,7 +32,9 @@ def create_app(config_class=Config):
                                          Defaults to the Config class.
     Returns:
         Flask: A configured Flask application instance.
+        hihi
     """
+
     app = Flask(__name__)
     app.config.from_object(config_class)
 
