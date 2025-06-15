@@ -372,7 +372,9 @@ def login():
     email = data["email"]
     remember = data["remember"]
 
-    response = jsonify({"message": "Login successful", "user_id": email})
+    response = jsonify(
+        {"message": "Login successful", "user_id": email, "session_id": session_token}
+    )
 
     if remember:
         # Set a cookie that expires in 30 days
