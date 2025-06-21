@@ -17,14 +17,28 @@ export default defineConfig({
         display: 'standalone',
         icons: [
           {
-            src: '/assets/icon-192x192.png',
+            src: '/icon-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/assets/icon-512x512.png',
+            src: '/icon-512x512.png',
             sizes: '512x512',
             type: 'image/png'
+          }
+        ],
+        screenshots: [
+          {
+            src: '/desktop.png',
+            sizes: '1903x927',
+            type: 'image/png',
+            form_factor: 'wide'
+          },
+          {
+            src: '/mobile.png',
+            sizes: '485x927',
+            type: 'image/png',
+            form_factor: 'narrow'
           }
         ]
       },
