@@ -375,9 +375,7 @@ def login():
     email = data["email"]
     remember = data["remember"]
 
-    response = jsonify(
-        {"message": "Login successful", "user_id": email, "session_id": session_token}
-    )
+    response = jsonify({"message": "Login successful", "user_id": email})
 
     if remember:
         # Set a cookie that expires in 30 days
@@ -440,14 +438,16 @@ def signup():
 
     Expected JSON payload:
     {
-        "email": str,           # User's email address
-        "password": str,        # User's password
-        "name": str,            # User's full name
-        "captchaResponse": str  # reCAPTCHA verification token
-        "school": int           # School ID
-        "emailFrequency": str   # Email frequency preference
-        "emailPreferences": str # Email preferences
-        "gender": str           # User's gender
+        "email": str,            # User's email address
+        "password": str,         # User's password
+        "name": str,             # User's full name
+        "captchaResponse": str,  # reCAPTCHA verification token
+        "school": int,           # School ID
+        "emailFrequency": str,   # Email frequency preference
+        "emailPreferences": str, # Email preferences
+        "gender": str,           # User's gender
+        "semester": str,         # 'Fall' or 'Spring'
+        "year: str               # Year the user started college
     }
 
     Returns:
@@ -477,6 +477,8 @@ def signup():
     is_mobile = request.headers.get("X-Client-Type", "web") == "mobile"
     email_frequency = data.get("emailFrequency")
     email_preferences = data.get("emailPreferences")
+    semester = data.get("semester")
+    year = data.get("year")
     gender = (
         "M"
         if data.get("gender") == "Male"
@@ -517,7 +519,9 @@ def signup():
                     NAME = %s, 
                     EMAIL_VERIFIED = 0,
                     EMAIL_FREQUENCY = %s,
-                    EMAIL_EVENT_TYPE = %s
+                    EMAIL_EVENT_TYPE = %s,
+                    SEMESTER_STARTED = %s,
+                    YEAR_STARTED = %s
                 WHERE EMAIL = %s AND SCHOOL_ID = %s""",
                 (
                     generate_password_hash(password),
@@ -525,6 +529,8 @@ def signup():
                     name,
                     email_frequency,
                     email_preferences,
+                    semester,
+                    year,
                     email,
                     school,
                 ),
@@ -569,8 +575,10 @@ def signup():
                 SCHOOL_ID, 
                 NAME,
                 EMAIL_FREQUENCY,
-                EMAIL_EVENT_TYPE
-            ) VALUES (%s, 0, %s, %s, 0, 0, 1, %s, %s, %s, %s)""",
+                EMAIL_EVENT_TYPE,
+                SEMESTER_STARTED,
+                YEAR_STARTED
+            ) VALUES (%s, 0, %s, %s, 0, 0, 1, %s, %s, %s, %s, %s, %s)""",
         (
             email,
             hashed_password,
@@ -579,6 +587,8 @@ def signup():
             name,
             email_frequency,
             email_preferences,
+            semester,
+            year,
         ),
     )
     mysql.connection.commit()
@@ -1023,6 +1033,11 @@ def update_account_info():
         if not data:
             return jsonify({"error": "No data was provided"}), 400
 
+        semester = data.get("semester")
+        year = data.get("year")
+        if not semester or not year:
+            return jsonify({"error": "Semester and year are required"}), 400
+
         # Validate name
         new_name = data.get("name")
         if not new_name:
@@ -1062,8 +1077,8 @@ def update_account_info():
 
         # Update the user's name and gender in the database
         cur.execute(
-            "UPDATE users SET NAME = %s, gender = %s WHERE EMAIL = %s",
-            (new_name, gender, email),
+            "UPDATE users SET NAME = %s, gender = %s, semester_started = %s, year_started = %s WHERE EMAIL = %s",
+            (new_name, gender, semester, year, email),
         )
         mysql.connection.commit()
 

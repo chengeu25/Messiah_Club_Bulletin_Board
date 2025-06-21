@@ -11,6 +11,7 @@ import { useNotification } from '../../contexts/NotificationContext';
 import Loading from '../../components/ui/Loading';
 import useLoading from '../../hooks/useLoading';
 import { UserType } from '../../types/databaseTypes';
+import Select from '../../components/formElements/Select.component';
 
 /**
  * AccountInfo component for updating user account name and gender.
@@ -70,6 +71,7 @@ const AccountInfo = () => {
             placeholder='Full Name'
             defaultValue={user?.name || ''}
             filled={false}
+            required
           />
 
           <div className='flex flex-col gap-2'>
@@ -95,6 +97,26 @@ const AccountInfo = () => {
               <option value='other'>Other</option>
             </select>
           </div>
+
+          <Select
+            label='Semester in which you started college:'
+            name='semester'
+            options={['Fall', 'Spring']}
+            filled={false}
+            defaultValue={user?.semester ?? 'Fall'}
+            required
+          />
+
+          <Input
+            label='Year in which you started college:'
+            name='year'
+            type='number'
+            defaultValue={user?.year ?? ''}
+            filled={false}
+            min={new Date().getFullYear() - 10}
+            max={new Date().getFullYear() + 2}
+            required
+          />
 
           <div className='flex flex-row gap-2'>
             <Button

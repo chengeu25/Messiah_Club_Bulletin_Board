@@ -24,6 +24,10 @@ export interface UserType {
   clubAdmins: number[];
   /** List of tags associated with the user's interests or affiliations */
   tags: string[];
+  /** Semester in which the user started college */
+  semester: 'Spring' | 'Fall';
+  /** Year in which the user started college */
+  year: number;
 }
 
 /**

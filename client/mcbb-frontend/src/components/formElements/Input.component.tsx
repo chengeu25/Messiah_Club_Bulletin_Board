@@ -35,11 +35,13 @@ interface InputProps {
   autoComplete?: string;
   value?: string;
   checked?: boolean;
-  defaultValue?: string;
+  defaultValue?: string | number;
   multiline?: boolean;
   accept?: string;
   multiple?: boolean;
   labelOnSameLine?: boolean;
+  min?: number;
+  max?: number;
 }
 
 /**
@@ -84,7 +86,9 @@ const Input = ({
   multiline = false,
   accept,
   multiple = false,
-  labelOnSameLine = false
+  labelOnSameLine = false,
+  min,
+  max
 }: InputProps) => {
   const location = useLocation();
 
@@ -142,6 +146,8 @@ const Input = ({
           defaultValue={defaultValue}
           accept={accept}
           multiple={multiple}
+          min={min}
+          max={max}
         />
       )}
     </label>

@@ -91,6 +91,17 @@ const SignUp = () => {
     }
   }, [actionData]);
 
+  function isYearInRange(year: number) {
+    // Get the current year
+    const currentYear = new Date().getFullYear();
+
+    // Calculate the end year (2 years in the future)
+    const endYear = currentYear + 2;
+
+    // Check if the year is between startYear and endYear (inclusive)
+    return year >= new Date().getFullYear() - 10 && year <= endYear;
+  }
+
   /**
    * Handles form submission with comprehensive validation
    *
@@ -136,6 +147,8 @@ const SignUp = () => {
       confirmPassword === '' ||
       formData.get('name') === '' ||
       formData.get('email') === '' ||
+      formData.get('semester') === '' ||
+      !isYearInRange(parseInt((formData.get('year') ?? '0') as string)) ||
       !captchaResponse
     ) {
       setError('Please fill out all required');
@@ -299,6 +312,25 @@ const SignUp = () => {
           onChange={handleCaptchaChange}
         />
       </div>
+
+      {/* Class Level */}
+      <Select
+        label='Semester You Started College: '
+        name='semester'
+        options={['Fall', 'Spring']}
+        filled={false}
+        required
+      />
+      <Input
+        label='Year You Started College:'
+        name='year'
+        type='number'
+        defaultValue={new Date().getFullYear()}
+        filled={false}
+        min={new Date().getFullYear() - 10}
+        max={new Date().getFullYear() + 2}
+        required
+      />
 
       {/* Email Preferences */}
       <div className='w-full'>

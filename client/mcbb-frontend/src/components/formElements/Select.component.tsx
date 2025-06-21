@@ -23,6 +23,7 @@ interface SelectProps {
   required?: boolean;
   className?: string;
   value?: string;
+  defaultValue?: string;
 }
 
 /**
@@ -48,7 +49,8 @@ const Select = ({
   label,
   required,
   className,
-  value
+  value,
+  defaultValue
 }: SelectProps) => {
   const location = useLocation();
 
@@ -69,7 +71,7 @@ const Select = ({
         onChange={onChange}
         name={name}
         value={value}
-        defaultValue={value === null ? options[0] : undefined}
+        defaultValue={defaultValue ?? (value === null ? options[0] : undefined)}
       >
         {options.map((option) => (
           <option key={option} value={option}>

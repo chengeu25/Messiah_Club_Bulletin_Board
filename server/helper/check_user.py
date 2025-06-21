@@ -19,6 +19,8 @@ def get_user_session_info():
         - canDeleteFaculty (bool or None): Permission to delete faculty
         - clubAdmins (list or None): List of club IDs administered by the user
         - tags (list or None): List of user's interest tags
+        - semester (str or None): 'Fall' or 'Spring'
+        - year (int or None): Year the user started college
 
     Behavior:
     - Checks session last activity timestamp
@@ -41,6 +43,8 @@ def get_user_session_info():
         "canDeleteFaculty": None,
         "clubAdmins": None,
         "tags": None,
+        "semester": None,
+        "year": None,
     }
 
     # Check session activity
@@ -108,7 +112,7 @@ def get_user_session_info():
 
         # Fetch user details
         cur.execute(
-            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned, gender
+            """SELECT email, email_verified, name, is_faculty, can_delete_faculty, is_banned, gender, semester_started, year_started
                FROM users 
                WHERE email = %s
                  AND is_active = 1
@@ -164,6 +168,8 @@ def get_user_session_info():
             "clubAdmins": club_admins,
             "tags": tags,
             "gender": result[6],
+            "semester": result[7],
+            "year": result[8],
         }
 
     except Exception as e:

@@ -14,6 +14,8 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const name = formData.get('name');
   const gender = formData.get('gender');
+  const semester = formData.get('semester');
+  const year = formData.get('year');
 
   const emailRequest = await checkUser();
   if (emailRequest === false) {
@@ -31,7 +33,7 @@ const accountInfoAction: ActionFunction = async ({ request }) => {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({ name, gender, emailRequest })
+        body: JSON.stringify({ name, gender, emailRequest, semester, year })
       }
     );
 

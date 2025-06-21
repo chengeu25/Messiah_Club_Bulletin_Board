@@ -113,7 +113,9 @@ export class AuthSync {
           canDeleteFaculty: json.canDeleteFaculty === 1 ? true : false,
           clubAdmins: json.clubAdmins,
           tags: json.tags,
-          gender: json.gender
+          gender: json.gender,
+          semester: json.semester,
+          year: json.year
         };
       } catch {
         return false;

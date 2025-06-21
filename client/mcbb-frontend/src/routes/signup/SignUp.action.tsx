@@ -39,6 +39,8 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
   const name = formData.get('name');
   const school = formData.get('schoolId');
   const captchaResponse = formData.get('captchaResponse');
+  const semester = formData.get('semester');
+  const year = formData.get('year');
   const action = formData.get('action');
 
   if (action === 'switchSchool') {
@@ -68,6 +70,8 @@ const signUpAction = async ({ request }: ActionFunctionArgs) => {
         name,
         captchaResponse,
         school,
+        semester,
+        year,
         emailPreferences,
         emailFrequency
       }),
