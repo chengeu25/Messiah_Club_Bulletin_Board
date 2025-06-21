@@ -44,7 +44,7 @@ const SidebarButton = ({ text, icon, route }: SidebarButtonProps) => {
   return (
     <button
       onClick={() => navigate(route)}
-      className='flex justify-center items-center flex-col'
+      className='flex justify-center items-center flex-col w-full'
     >
       <IconContext.Provider
         value={{
