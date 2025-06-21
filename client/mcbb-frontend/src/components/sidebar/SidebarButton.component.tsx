@@ -47,7 +47,10 @@ const SidebarButton = ({ text, icon, route }: SidebarButtonProps) => {
       className='flex justify-center items-center flex-col'
     >
       <IconContext.Provider
-        value={{ className: 'w-8 h-8 foreground-outlined' }}
+        value={{
+          className:
+            'w-8 h-8 foreground-outlined flex items-center justify-center'
+        }}
       >
         {icon}
       </IconContext.Provider>
