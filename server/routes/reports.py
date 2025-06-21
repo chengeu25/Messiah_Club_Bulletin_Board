@@ -167,7 +167,22 @@ REPORTS: ReportObject = {
             "query": """
                 SELECT 
                     u.email, 
-                    u.name
+                    u.name,
+                    u.gender,
+                    CASE 
+                        WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 0  -- Started in Fall
+                                ELSE 1  -- Started in Spring
+                            END)
+                        ELSE  -- Current semester is Fall
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
+                                ELSE 2  -- Started in Spring
+                            END)
+                    END AS semesters_completed
                 FROM user_subscription us
                 JOIN users u ON us.email = u.email
                 WHERE us.club_id = %s
@@ -264,7 +279,22 @@ REPORTS: ReportObject = {
                 SELECT 
                     e.event_name,
                     u.email,
-                    u.name
+                    u.name,
+                    u.gender,
+                    CASE 
+                        WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 0  -- Started in Fall
+                                ELSE 1  -- Started in Spring
+                            END)
+                        ELSE  -- Current semester is Fall
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
+                                ELSE 2  -- Started in Spring
+                            END)
+                    END AS semesters_completed
                 FROM rsvp r
                 INNER JOIN users u ON r.user_id = u.email
                 INNER JOIN event e ON r.event_id = e.event_id
