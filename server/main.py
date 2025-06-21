@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import os
-from flask import Flask, redirect, session, url_for
+from flask import Flask, redirect, session, url_for, request
 from config import Config
 from extensions import mysql, cors, limiter
 from routes.auth import auth_bp
@@ -33,6 +33,7 @@ def create_app(config_class=Config):
     Returns:
         Flask: A configured Flask application instance.
     """
+
     app = Flask(__name__)
     app.config.from_object(config_class)
 
@@ -44,12 +45,21 @@ def create_app(config_class=Config):
     # Access JWT_EXPIRATION in your setup
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=Config.JWT_EXPIRATION)
 
-    def check_session_timeout():
+    def check_session_timeout(is_mobile=False):
         if "last_activity" in session:
             now = datetime.now(timezone.utc)
             last_activity = session["last_activity"]
             timeout_duration = timedelta(
-                minutes=int(os.getenv("SESSION_TIMEOUT_MINUTES", 60))
+                minutes=int(
+                    os.getenv(
+                        (
+                            "SESSION_TIMEOUT_MOBILE_MINUTES"
+                            if is_mobile
+                            else "SESSION_TIMEOUT_MINUTES"
+                        ),
+                        60,
+                    )
+                )
             )  # Use environment variable for timeout duration
 
             if now - last_activity > timeout_duration:
@@ -113,7 +123,8 @@ def create_app(config_class=Config):
 
     @app.before_request
     def before_request():
-        check_session_timeout()
+        is_mobile = request.headers.get("X-Client-Type", "web") == "mobile"
+        check_session_timeout(is_mobile)
 
     @appcontext_tearing_down.connect_via(app)
     def close_mysql_connection(sender, **extra):
@@ -128,4 +139,4 @@ def create_app(config_class=Config):
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, port=3000)
+    app.run(debug=True, host="0.0.0.0", port=3000)

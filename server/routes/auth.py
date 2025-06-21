@@ -317,6 +317,7 @@ def login():
         return jsonify({"error": "Email and password are required"}), 400
     if not mysql.connection:
         return jsonify({"error": "Database connection error"}), 500
+    is_mobile = request.headers.get("X-Client-Type", "web") == "mobile"
 
     cur = mysql.connection.cursor()
 
@@ -352,7 +353,9 @@ def login():
 
     # Calculate session expiration (e.g., 1 hour)
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(minutes=Config.SESSION_TIMEOUT)
+    expires_at = now + timedelta(
+        minutes=(Config.SESSION_TIMEOUT_MOBILE if is_mobile else Config.SESSION_TIMEOUT)
+    )
 
     # Store the session token in the database
     cur.execute(
@@ -372,7 +375,9 @@ def login():
     email = data["email"]
     remember = data["remember"]
 
-    response = jsonify({"message": "Login successful", "user_id": email})
+    response = jsonify(
+        {"message": "Login successful", "user_id": email, "session_id": session_token}
+    )
 
     if remember:
         # Set a cookie that expires in 30 days
@@ -469,6 +474,7 @@ def signup():
     name = data.get("name")
     password = data.get("password")
     school = data.get("school")
+    is_mobile = request.headers.get("X-Client-Type", "web") == "mobile"
     email_frequency = data.get("emailFrequency")
     email_preferences = data.get("emailPreferences")
     gender = (
@@ -580,7 +586,9 @@ def signup():
     # Generate a random session token
     session_token = secrets.token_hex(32)
     now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(minutes=Config.SESSION_TIMEOUT)
+    expires_at = now + timedelta(
+        minutes=(Config.SESSION_TIMEOUT_MOBILE if is_mobile else Config.SESSION_TIMEOUT)
+    )
 
     # Store the session token in the database
     cur.execute(

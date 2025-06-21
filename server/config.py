@@ -58,3 +58,4 @@ class Config:
 
     # Session timeout
     SESSION_TIMEOUT = int(os.getenv("SESSION_TIMEOUT_MINUTES", 60))
+    SESSION_TIMEOUT_MOBILE = int(os.getenv("SESSION_TIMEOUT_MOBILE_MINUTES", 43200))
