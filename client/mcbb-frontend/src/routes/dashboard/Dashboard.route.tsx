@@ -64,7 +64,7 @@ const Dashboard = () => {
 
       {/* Mobile Sidebar */}
       <div className='border-t-2 border-gray-100 shadow-md flex sm:hidden w-full gap-2 p-2 items-center justify-center sticky bottom-0 bg-white'>
-        <div className='flex w-full max-w-xs justify-between'>
+        <div className='flex w-full max-w-xs justify-between mb-2'>
           <Sidebar buttonList={buttonList} />
         </div>
       </div>
