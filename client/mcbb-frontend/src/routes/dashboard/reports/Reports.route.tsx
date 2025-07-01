@@ -83,7 +83,17 @@ const Reports: React.FC = () => {
                 <tr className='border border-black' key={index}>
                   {Object.values(row).map((value, index) => (
                     <td className='border border-black' key={index}>
-                      {value}
+                      {typeof value === 'string' && !isNaN(Date.parse(value))
+                        ? new Date(value).toLocaleString(undefined, {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })
+                        : value}
                     </td>
                   ))}
                 </tr>

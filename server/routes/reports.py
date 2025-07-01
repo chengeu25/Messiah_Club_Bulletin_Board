@@ -53,9 +53,9 @@ REPORTS: ReportObject = {
                     GROUP BY ut.user_id
                 )
                 SELECT 
-                    u.email, 
-                    u.name,
-                    u.gender,
+                    u.email AS Email, 
+                    u.name AS Name,
+                    u.gender AS Gender,
                     CASE 
                         WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
                             (YEAR(CURDATE()) - u.YEAR_STARTED) * 2 + 
@@ -69,10 +69,10 @@ REPORTS: ReportObject = {
                                 WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
                                 ELSE 2  -- Started in Spring
                             END)
-                    END - 1 AS semesters_completed,
-                    COALESCE(r.events_rsvpd, 0) AS events_rsvpd, 
-                    COALESCE(us.clubs_subscribed, 0) AS clubs_subscribed,
-                    COALESCE(t.interests, '') AS interests
+                    END - 1 AS `Semesters Completed`,
+                    COALESCE(r.events_rsvpd, 0) AS `Events RSVP'd`, 
+                    COALESCE(us.clubs_subscribed, 0) AS `Clubs Subscribed`,
+                    COALESCE(t.interests, '') AS Interests
                 FROM users u
                 LEFT JOIN rsvp_counts r ON u.email = r.user_id
                 LEFT JOIN subscription_counts us ON u.email = us.email
@@ -108,9 +108,9 @@ REPORTS: ReportObject = {
                 GROUP BY ct.tag_id
                 )
                 SELECT 
-                    t.tag_name, 
-                    COALESCE(rc.rsvp_count, 0) AS events_rsvpd, 
-                    COALESCE(cc.club_count, 0) AS clubs_subscribed
+                    t.tag_name AS `Tag Name`, 
+                    COALESCE(rc.rsvp_count, 0) AS `Events RSVP'd`, 
+                    COALESCE(cc.club_count, 0) AS `Clubs Subscribed`
                 FROM tag t
                 LEFT JOIN rsvp_counts rc ON t.tag_id = rc.tag_id
                 LEFT JOIN club_counts cc ON t.tag_id = cc.tag_id
@@ -151,8 +151,8 @@ REPORTS: ReportObject = {
                     GROUP BY t.tag_name
                 )
                 SELECT 
-                    t.tag_name, 
-                    COALESCE(utc.usage_count, 0) + COALESCE(ctc.usage_count, 0) + COALESCE(etc.usage_count, 0) AS total_usage_count
+                    t.tag_name AS `Tag Name`, 
+                    COALESCE(utc.usage_count, 0) + COALESCE(ctc.usage_count, 0) + COALESCE(etc.usage_count, 0) AS `Total Usage Count`
                 FROM tag t
                 LEFT JOIN user_tag_counts utc ON t.tag_name = utc.tag_name
                 LEFT JOIN club_tag_counts ctc ON t.tag_name = ctc.tag_name
@@ -167,8 +167,8 @@ REPORTS: ReportObject = {
             "name": "Clubs Created This Year",
             "query": """
                 SELECT 
-                    c.club_name, 
-                    c.creation_date
+                    c.club_name AS `Club Name`, 
+                    c.creation_date AS `Creation Date`
                 FROM club c
                 WHERE c.school_id = %s;
             """,
@@ -179,8 +179,8 @@ REPORTS: ReportObject = {
             "name": "RSVP Activity by Semesters Completed",
             "query": """
                 SELECT
-                    semesters_completed,
-                    COUNT(r.rsvp_id) AS total_rsvps
+                    semesters_completed AS `Semesters Completed`,
+                    COUNT(r.rsvp_id) AS `Total RSVPs`
                 FROM (
                     SELECT 
                         u.email,
@@ -217,7 +217,7 @@ REPORTS: ReportObject = {
                     CASE WHEN u.gender = 'M' THEN 'Male'
                          WHEN u.gender = 'F' THEN 'Female'
                          ELSE 'Not Given'
-                    END) AS gender, COUNT(r.rsvp_id) AS rsvps
+                    END) AS Gender, COUNT(r.rsvp_id) AS `Total RSVPs`
                 FROM users u
                 INNER JOIN rsvp r
                     ON u.email = r.user_id
@@ -235,9 +235,9 @@ REPORTS: ReportObject = {
             "name": "List of Club Subscribers",
             "query": """
                 SELECT 
-                    u.email, 
-                    u.name,
-                    u.gender,
+                    u.email AS Email, 
+                    u.name AS Name,
+                    u.gender AS Gender,
                     CASE 
                         WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
                             (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
@@ -251,7 +251,7 @@ REPORTS: ReportObject = {
                                 WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
                                 ELSE 2  -- Started in Spring
                             END)
-                    END - 1 AS semesters_completed
+                    END - 1 AS `Semesters Completed`
                 FROM user_subscription us
                 JOIN users u ON us.email = u.email
                 WHERE us.club_id = %s
@@ -265,9 +265,9 @@ REPORTS: ReportObject = {
             "name": "Club Events and RSVPs",
             "query": """
                 SELECT 
-                    e.event_name, 
-                    e.start_time AS event_date,
-                    COUNT(r.rsvp_id) AS total_rsvps
+                    e.event_name AS `Event Name`, 
+                    e.start_time AS `Event Date`,
+                    COUNT(r.rsvp_id) AS RSVPs
                 FROM event e
                 JOIN event_tags et ON e.event_id = et.event_id
                 JOIN club_tags ct ON et.tag_id = ct.tag_id
@@ -284,8 +284,8 @@ REPORTS: ReportObject = {
             "name": "RSVP Activity by Semesters Completed",
             "query": """
                 SELECT
-                    semesters_completed,
-                    COUNT(r.rsvp_id) AS total_rsvps
+                    semesters_completed AS `Semesters Completed`,
+                    COUNT(r.rsvp_id) AS `Total RSVPs`
                 FROM (
                     SELECT 
                         u.email,
@@ -323,7 +323,7 @@ REPORTS: ReportObject = {
                     CASE WHEN u.gender = 'M' THEN 'Male'
                          WHEN u.gender = 'F' THEN 'Female'
                          ELSE 'Not Given'
-                    END) AS gender, COUNT(r.rsvp_id) AS rsvps
+                    END) AS Gender, COUNT(r.rsvp_id) AS `Total RSVPs`
                 FROM users u
                 INNER JOIN rsvp r
                     ON u.email = r.user_id
@@ -358,12 +358,14 @@ REPORTS: ReportObject = {
             "name": "User Subscription History",
             "query": """
                 SELECT 
-                    email, 
-                    club_id, 
-                    subscribed_or_blocked, 
-                    is_active
-                FROM user_subscription
-                WHERE email = %s;
+                    us.email AS Email, 
+                    c.club_name AS `Club Name`
+                FROM user_subscription us
+                INNER JOIN club c
+                    ON c.club_id = us.club_id
+                WHERE email = %s
+                    AND us.is_active = 1
+                    AND us.subscribed_or_blocked = 1;
             """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
@@ -372,9 +374,9 @@ REPORTS: ReportObject = {
             "name": "List of Comments Created by a Given User",
             "query": """
                 SELECT 
-                    u.name AS user_name,
-                    c.content, 
-                    c.posted_timestamp
+                    u.name AS Name,
+                    c.content AS Content, 
+                    c.posted_timestamp AS `Date Posted`
                 FROM comments c
                 JOIN users u ON c.user_id = u.email
                 WHERE c.user_id = %s;
@@ -386,12 +388,15 @@ REPORTS: ReportObject = {
             "name": "User RSVP History",
             "query": """
                 SELECT
-                    user_id,
-                    event_id,
-                    is_active,
-                    is_yes
-                FROM rsvp
-                WHERE user_id = %s;
+                    r.user_id as Email,
+                    e.event_name as `Event Name`,
+                    e.start_time as `Event Date`
+                FROM rsvp r
+                INNER JOIN event e
+                    ON r.event_id = e.event_id
+                WHERE user_id = %s
+                    AND r.is_active = 1
+                    AND r.is_yes = 1;
             """,
             "queryParams": ["ID"],
             "accessControl": "Faculty",
@@ -402,10 +407,10 @@ REPORTS: ReportObject = {
             "name": "Users RSVPd",
             "query": """
                 SELECT 
-                    e.event_name,
-                    u.email,
-                    u.name,
-                    u.gender,
+                    e.event_name AS `Event Name`,
+                    u.email AS Email,
+                    u.name AS Name,
+                    u.gender AS Gender,
                     CASE 
                         WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
                             (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
@@ -419,7 +424,7 @@ REPORTS: ReportObject = {
                                 WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
                                 ELSE 2  -- Started in Spring
                             END)
-                    END - 1 AS semesters_completed
+                    END - 1 AS `Semesters Completed`
                 FROM rsvp r
                 INNER JOIN users u ON r.user_id = u.email
                 INNER JOIN event e ON r.event_id = e.event_id
