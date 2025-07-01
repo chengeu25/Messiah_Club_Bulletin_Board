@@ -54,7 +54,22 @@ REPORTS: ReportObject = {
                 )
                 SELECT 
                     u.email, 
-                    u.name, 
+                    u.name,
+                    u.gender,
+                    CASE 
+                        WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
+                            (YEAR(CURDATE()) - u.YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 0  -- Started in Fall
+                                ELSE 1  -- Started in Spring
+                            END)
+                        ELSE  -- Current semester is Fall
+                            (YEAR(CURDATE()) - u.YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
+                                ELSE 2  -- Started in Spring
+                            END)
+                    END - 1 AS semesters_completed,
                     COALESCE(r.events_rsvpd, 0) AS events_rsvpd, 
                     COALESCE(us.clubs_subscribed, 0) AS clubs_subscribed,
                     COALESCE(t.interests, '') AS interests
@@ -160,6 +175,60 @@ REPORTS: ReportObject = {
             "queryParams": ["School"],
             "accessControl": "Faculty",
         },
+        {
+            "name": "RSVP Activity by Semesters Completed",
+            "query": """
+                SELECT
+                    semesters_completed,
+                    COUNT(r.rsvp_id) AS total_rsvps
+                FROM (
+                    SELECT 
+                        u.email,
+                        CASE 
+                        WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 0  -- Started in Fall
+                                ELSE 1  -- Started in Spring
+                            END)
+                        ELSE  -- Current semester is Fall
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
+                                ELSE 2  -- Started in Spring
+                            END)
+                    END - 1 AS semesters_completed
+                    FROM users u
+                ) AS user_semesters
+                JOIN rsvp r ON user_semesters.email = r.user_id
+                JOIN event_host eh ON r.event_id = eh.event_id
+                WHERE r.is_active = 1
+                    AND r.is_yes = 1
+                GROUP BY semesters_completed
+                ORDER BY semesters_completed;
+            """,
+            "queryParams": [],
+            "accessControl": "Club Admin",
+        },
+        {
+            "name": "RSVP Activity by Gender",
+            "query": """
+                SELECT (
+                    CASE WHEN u.gender = 'M' THEN 'Male'
+                         WHEN u.gender = 'F' THEN 'Female'
+                         ELSE 'Not Given'
+                    END) AS gender, COUNT(r.rsvp_id) AS rsvps
+                FROM users u
+                INNER JOIN rsvp r
+                    ON u.email = r.user_id
+                JOIN event_host eh ON r.event_id = eh.event_id
+                WHERE r.is_active = 1
+                    AND r.is_yes = 1
+                GROUP BY u.gender
+            """,
+            "queryParams": [],
+            "accessControl": "Club Admin",
+        },
     ],
     "CLUB": [
         {
@@ -182,7 +251,7 @@ REPORTS: ReportObject = {
                                 WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
                                 ELSE 2  -- Started in Spring
                             END)
-                    END AS semesters_completed
+                    END - 1 AS semesters_completed
                 FROM user_subscription us
                 JOIN users u ON us.email = u.email
                 WHERE us.club_id = %s
@@ -207,6 +276,62 @@ REPORTS: ReportObject = {
                     AND r.is_yes = 1
                 WHERE ct.club_id = %s  -- Filtering only by the specific club ID
                 GROUP BY e.event_id, e.event_name, e.start_time;
+            """,
+            "queryParams": ["ID"],
+            "accessControl": "Club Admin",
+        },
+        {
+            "name": "RSVP Activity by Semesters Completed",
+            "query": """
+                SELECT
+                    semesters_completed,
+                    COUNT(r.rsvp_id) AS total_rsvps
+                FROM (
+                    SELECT 
+                        u.email,
+                        CASE 
+                        WHEN MONTH(CURDATE()) < 7 THEN  -- Current semester is Spring
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 0  -- Started in Fall
+                                ELSE 1  -- Started in Spring
+                            END)
+                        ELSE  -- Current semester is Fall
+                            (YEAR(CURDATE()) - YEAR_STARTED) * 2 + 
+                            (CASE 
+                                WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
+                                ELSE 2  -- Started in Spring
+                            END)
+                    END - 1 AS semesters_completed
+                    FROM users u
+                ) AS user_semesters
+                JOIN rsvp r ON user_semesters.email = r.user_id
+                JOIN event_host eh ON r.event_id = eh.event_id
+                WHERE eh.club_id = %s
+                    AND r.is_active = 1
+                    AND r.is_yes = 1
+                GROUP BY semesters_completed
+                ORDER BY semesters_completed;
+            """,
+            "queryParams": ["ID"],
+            "accessControl": "Club Admin",
+        },
+        {
+            "name": "RSVP Activity by Gender",
+            "query": """
+                SELECT (
+                    CASE WHEN u.gender = 'M' THEN 'Male'
+                         WHEN u.gender = 'F' THEN 'Female'
+                         ELSE 'Not Given'
+                    END) AS gender, COUNT(r.rsvp_id) AS rsvps
+                FROM users u
+                INNER JOIN rsvp r
+                    ON u.email = r.user_id
+                JOIN event_host eh ON r.event_id = eh.event_id
+                WHERE eh.club_id = %s
+                    AND r.is_active = 1
+                    AND r.is_yes = 1
+                GROUP BY u.gender
             """,
             "queryParams": ["ID"],
             "accessControl": "Club Admin",
@@ -294,7 +419,7 @@ REPORTS: ReportObject = {
                                 WHEN SEMESTER_STARTED = 'Fall' THEN 1  -- Started in Fall
                                 ELSE 2  -- Started in Spring
                             END)
-                    END AS semesters_completed
+                    END - 1 AS semesters_completed
                 FROM rsvp r
                 INNER JOIN users u ON r.user_id = u.email
                 INNER JOIN event e ON r.event_id = e.event_id
