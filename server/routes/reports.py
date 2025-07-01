@@ -301,15 +301,14 @@ REPORTS: ReportObject = {
                     e.start_time AS `Event Date`,
                     COUNT(DISTINCT r.rsvp_id) AS RSVPs
                 FROM event e
-                JOIN event_tags et ON e.event_id = et.event_id
-                JOIN club_tags ct ON et.tag_id = ct.tag_id
+                JOIN event_host eh ON e.event_id = eh.event_id
                 LEFT JOIN (SELECT rs.is_active, rs.is_yes, rs.event_id, rs.rsvp_id FROM rsvp rs
                             INNER JOIN users u
                                 ON rs.user_id = u.email
                             WHERE u.is_active = 1) r ON e.event_id = r.event_id 
                     AND r.is_active = 1 
                     AND r.is_yes = 1
-                WHERE ct.club_id = %s  -- Filtering only by the specific club ID
+                WHERE eh.club_id = %s  -- Filtering only by the specific club ID
                     AND e.start_time BETWEEN %s AND %s
                 GROUP BY e.event_id, e.event_name, e.start_time;
             """,
