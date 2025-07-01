@@ -7,6 +7,18 @@ const reportsAction: ActionFunction = async ({
   const id = params?.id;
   const formData = await request.formData();
 
+  const [startDate, endDate] = [
+    formData.get('start-date') as string,
+    formData.get('end-date') as string
+  ].map((date) => new Date(date).toISOString());
+
+  if (new Date(startDate) > new Date(endDate)) {
+    return json(
+      { error: 'Start date must be before end date' },
+      { status: 400 }
+    );
+  }
+
   const resp = await fetch(
     `${import.meta.env.VITE_API_BASE_URL}/api/reports/`,
     {
@@ -18,6 +30,8 @@ const reportsAction: ActionFunction = async ({
       body: JSON.stringify({
         name: formData.get('name'),
         category: formData.get('category'),
+        startDate,
+        endDate,
         objId: id
       })
     }

@@ -5,6 +5,8 @@ import { downloadCSV, downloadPDF } from '../../../helper/reportDownloaders';
 import { useEffect, useState } from 'react';
 import { useSchool } from '../../../contexts/SchoolContext';
 import { useNotification } from '../../../contexts/NotificationContext';
+import Input from '../../../components/formElements/Input.component';
+import { oneYearAgo } from '../../../helper/dateUtils';
 
 const Reports: React.FC = () => {
   const { reports, category } = useLoaderData() as {
@@ -40,6 +42,33 @@ const Reports: React.FC = () => {
           }}
           value={reportName}
         />
+        {reportName.includes('RSVP') && category !== 'EVENT' && (
+          <>
+            <div className='flex flex-row gap-2'>
+              <Input
+                type='date'
+                label='Include Events From: '
+                name='start-date'
+                labelOnSameLine
+                filled={false}
+                defaultValue={oneYearAgo()}
+              />
+              <Input
+                type='date'
+                label='To: '
+                name='end-date'
+                labelOnSameLine
+                filled={false}
+                defaultValue={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div>
+              Date filtering only affects events and RSVPs. All other activity
+              is always displayed for all active users.
+            </div>
+          </>
+        )}
+
         <input type='hidden' name='category' value={category} />
         <Button text='Generate Report' type='submit' />
         {actionData?.report !== undefined && actionData?.report !== null && (

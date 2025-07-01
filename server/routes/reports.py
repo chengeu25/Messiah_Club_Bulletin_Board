@@ -2,9 +2,10 @@ from flask import Blueprint, jsonify, request, session
 from extensions import mysql
 from helper.check_user import get_user_session_info
 from typing import List, Literal, TypedDict
+from datetime import datetime
 
 AccessControl = Literal["Club Admin", "Faculty"]
-QueryParam = Literal["School", "ID"]
+QueryParam = Literal["School", "ID", "StartDate", "EndDate"]
 
 
 class Report(TypedDict):
@@ -20,6 +21,20 @@ class ReportObject(TypedDict):
     USER: List[Report]
     EVENT: List[Report]
 
+    from datetime import datetime
+
+
+def iso_to_mysql_date(iso_str: str) -> str:
+    """
+    Converts an ISO 8601 date string to a MySQL date string (YYYY-MM-DD).
+    Returns None if input is invalid.
+    """
+    try:
+        dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+        return dt.strftime("%Y-%m-%d")
+    except Exception:
+        return None
+
 
 REPORTS: ReportObject = {
     "SCHOOL_WIDE": [
@@ -29,7 +44,7 @@ REPORTS: ReportObject = {
                 WITH rsvp_counts AS (
                     SELECT 
                         user_id, 
-                        COUNT(rsvp_id) AS events_rsvpd
+                        COUNT(DISTINCT rsvp_id) AS events_rsvpd
                     FROM rsvp
                     WHERE is_active = 1
                         AND is_yes = 1
@@ -38,7 +53,7 @@ REPORTS: ReportObject = {
                 subscription_counts AS (
                     SELECT 
                         email, 
-                        COUNT(subscription_id) AS clubs_subscribed
+                        COUNT(DISTINCT subscription_id) AS clubs_subscribed
                     FROM user_subscription
                     WHERE is_active = 1
                         AND subscribed_or_blocked = 1
@@ -78,6 +93,7 @@ REPORTS: ReportObject = {
                 LEFT JOIN subscription_counts us ON u.email = us.email
                 LEFT JOIN tag_groups t ON u.email = t.user_id
                 WHERE u.school_id = %s
+                    AND u.is_active = 1
                 GROUP BY u.email, u.name;
             """,
             "queryParams": ["School"],
@@ -93,8 +109,12 @@ REPORTS: ReportObject = {
                     COUNT(DISTINCT r.rsvp_id) AS rsvp_count
                 FROM rsvp r
                 JOIN event_tags et ON r.event_id = et.event_id
+                JOIN event e ON r.event_id = e.event_id
+                JOIN users u on u.email = r.user_id
                 WHERE r.is_yes = 1
                     AND r.is_active = 1
+                    AND e.start_time BETWEEN %s AND %s
+                    AND u.is_active = 1
                 GROUP BY et.tag_id
                 ), club_counts AS
                 (
@@ -103,8 +123,10 @@ REPORTS: ReportObject = {
                     COUNT(DISTINCT us.subscription_id) AS club_count
                 FROM user_subscription us
                 JOIN club_tags ct ON us.club_id = ct.club_id
+                JOIN users u on us.email = u.email
                 WHERE us.is_active = 1
                     AND us.subscribed_or_blocked = 1
+                    AND u.is_active = 1
                 GROUP BY ct.tag_id
                 )
                 SELECT 
@@ -114,10 +136,10 @@ REPORTS: ReportObject = {
                 FROM tag t
                 LEFT JOIN rsvp_counts rc ON t.tag_id = rc.tag_id
                 LEFT JOIN club_counts cc ON t.tag_id = cc.tag_id
-                WHERE t.school_id = %s
+                WHERE t.school_id = %s 
                 GROUP BY t.tag_name, rc.rsvp_count, cc.club_count;
             """,
-            "queryParams": ["School"],
+            "queryParams": ["StartDate", "EndDate", "School"],
             "accessControl": "Faculty",
         },
         {
@@ -126,7 +148,7 @@ REPORTS: ReportObject = {
                 WITH user_tag_counts AS (
                     SELECT 
                         t.tag_name, 
-                        COUNT(ut.user_id) AS usage_count
+                        COUNT(DISTINCT ut.user_id) AS usage_count
                     FROM user_tags ut
                     JOIN tag t ON ut.tag_id = t.tag_id
                     WHERE t.school_id = %s
@@ -135,7 +157,7 @@ REPORTS: ReportObject = {
                 club_tag_counts AS (
                     SELECT 
                         t.tag_name, 
-                        COUNT(ct.club_id) AS usage_count
+                        COUNT(DISTINCT ct.club_id) AS usage_count
                     FROM club_tags ct
                     JOIN tag t ON ct.tag_id = t.tag_id
                     WHERE t.school_id = %s
@@ -144,7 +166,7 @@ REPORTS: ReportObject = {
                 event_tag_counts AS (
                     SELECT 
                         t.tag_name, 
-                        COUNT(et.event_id) AS usage_count
+                        COUNT(DISTINCT et.event_id) AS usage_count
                     FROM event_tags et
                     JOIN tag t ON et.tag_id = t.tag_id
                     WHERE t.school_id = %s
@@ -180,7 +202,7 @@ REPORTS: ReportObject = {
             "query": """
                 SELECT
                     semesters_completed AS `Semesters Completed`,
-                    COUNT(r.rsvp_id) AS `Total RSVPs`
+                    COUNT(DISTINCT r.rsvp_id) AS `Total RSVPs`
                 FROM (
                     SELECT 
                         u.email,
@@ -199,15 +221,20 @@ REPORTS: ReportObject = {
                             END)
                     END - 1 AS semesters_completed
                     FROM users u
+                    WHERE u.is_active = 1
                 ) AS user_semesters
-                JOIN rsvp r ON user_semesters.email = r.user_id
+                JOIN rsvp r ON user_semesters.email = r.user_id AND r.is_active = 1 AND r.is_yes = 1
                 JOIN event_host eh ON r.event_id = eh.event_id
+                JOIN event e ON r.event_id = e.event_id
+                JOIN users u ON u.email = r.user_id
                 WHERE r.is_active = 1
                     AND r.is_yes = 1
+                    AND u.is_active = 1
+                    AND e.start_time BETWEEN %s AND %s
                 GROUP BY semesters_completed
                 ORDER BY semesters_completed;
             """,
-            "queryParams": [],
+            "queryParams": ["StartDate", "EndDate"],
             "accessControl": "Club Admin",
         },
         {
@@ -217,16 +244,20 @@ REPORTS: ReportObject = {
                     CASE WHEN u.gender = 'M' THEN 'Male'
                          WHEN u.gender = 'F' THEN 'Female'
                          ELSE 'Not Given'
-                    END) AS Gender, COUNT(r.rsvp_id) AS `Total RSVPs`
+                    END) AS Gender, COUNT(DISTINCT r.rsvp_id) AS `Total RSVPs`
                 FROM users u
                 INNER JOIN rsvp r
                     ON u.email = r.user_id
+                INNER JOIN event e 
+                    ON e.event_id = r.event_id
                 JOIN event_host eh ON r.event_id = eh.event_id
                 WHERE r.is_active = 1
                     AND r.is_yes = 1
+                    AND e.start_time BETWEEN %s and %s
+                    AND u.is_active = 1
                 GROUP BY u.gender
             """,
-            "queryParams": [],
+            "queryParams": ["StartDate", "EndDate"],
             "accessControl": "Club Admin",
         },
     ],
@@ -256,6 +287,7 @@ REPORTS: ReportObject = {
                 JOIN users u ON us.email = u.email
                 WHERE us.club_id = %s
                     AND us.is_active = 1
+                    AND u.is_active = 1
                     AND us.subscribed_or_blocked = 1;
             """,
             "queryParams": ["ID"],
@@ -267,17 +299,21 @@ REPORTS: ReportObject = {
                 SELECT 
                     e.event_name AS `Event Name`, 
                     e.start_time AS `Event Date`,
-                    COUNT(r.rsvp_id) AS RSVPs
+                    COUNT(DISTINCT r.rsvp_id) AS RSVPs
                 FROM event e
                 JOIN event_tags et ON e.event_id = et.event_id
                 JOIN club_tags ct ON et.tag_id = ct.tag_id
-                LEFT JOIN rsvp r ON e.event_id = r.event_id 
+                LEFT JOIN (SELECT rs.is_active, rs.is_yes, rs.event_id, rs.rsvp_id FROM rsvp rs
+                            INNER JOIN users u
+                                ON rs.user_id = u.email
+                            WHERE u.is_active = 1) r ON e.event_id = r.event_id 
                     AND r.is_active = 1 
                     AND r.is_yes = 1
                 WHERE ct.club_id = %s  -- Filtering only by the specific club ID
+                    AND e.start_time BETWEEN %s AND %s
                 GROUP BY e.event_id, e.event_name, e.start_time;
             """,
-            "queryParams": ["ID"],
+            "queryParams": ["ID", "StartDate", "EndDate"],
             "accessControl": "Club Admin",
         },
         {
@@ -285,7 +321,7 @@ REPORTS: ReportObject = {
             "query": """
                 SELECT
                     semesters_completed AS `Semesters Completed`,
-                    COUNT(r.rsvp_id) AS `Total RSVPs`
+                    COUNT(DISTINCT r.rsvp_id) AS `Total RSVPs`
                 FROM (
                     SELECT 
                         u.email,
@@ -304,16 +340,21 @@ REPORTS: ReportObject = {
                             END)
                     END - 1 AS semesters_completed
                     FROM users u
+                    WHERE u.is_active = 1
                 ) AS user_semesters
                 JOIN rsvp r ON user_semesters.email = r.user_id
                 JOIN event_host eh ON r.event_id = eh.event_id
+                JOIN event e ON e.event_id = r.event_id
+                JOIN users u ON u.email = r.user_id
                 WHERE eh.club_id = %s
                     AND r.is_active = 1
                     AND r.is_yes = 1
+                    AND e.start_time BETWEEN %s AND %s
+                    AND u.is_active = 1
                 GROUP BY semesters_completed
                 ORDER BY semesters_completed;
             """,
-            "queryParams": ["ID"],
+            "queryParams": ["ID", "StartDate", "EndDate"],
             "accessControl": "Club Admin",
         },
         {
@@ -323,34 +364,54 @@ REPORTS: ReportObject = {
                     CASE WHEN u.gender = 'M' THEN 'Male'
                          WHEN u.gender = 'F' THEN 'Female'
                          ELSE 'Not Given'
-                    END) AS Gender, COUNT(r.rsvp_id) AS `Total RSVPs`
+                    END) AS Gender, COUNT(DISTINCT r.rsvp_id) AS `Total RSVPs`
                 FROM users u
                 INNER JOIN rsvp r
                     ON u.email = r.user_id
                 JOIN event_host eh ON r.event_id = eh.event_id
+                INNER JOIN event e
+                    ON e.event_id = r.event_id
                 WHERE eh.club_id = %s
                     AND r.is_active = 1
                     AND r.is_yes = 1
+                    AND u.is_active = 1
+                    AND e.start_time BETWEEN %s AND %s
                 GROUP BY u.gender
             """,
-            "queryParams": ["ID"],
+            "queryParams": ["ID", "StartDate", "EndDate"],
             "accessControl": "Club Admin",
         },
         {
             "name": "Number of Events, Subscriptions, and RSVPs",
             "query": """
                 SELECT
-                    count(eh.event_id) as Events,
-                    count(distinct us.subscription_id) as Subscriptions,
-                    count(r.rsvp_id) as RSVPs
-                FROM user_subscription us
-                JOIN club c on us.club_id = c.club_id
-                JOIN event_host eh on c.club_id = eh.club_id
-                LEFT JOIN rsvp r on eh.event_id = r.event_id
-                WHERE c.club_id = %s;
+                    -- Events created by the club in the date range
+                    COUNT(DISTINCT e.event_id) AS Events,
+                    -- All-time active subscriptions for the club
+                    (
+                        SELECT COUNT(DISTINCT us2.subscription_id)
+                        FROM user_subscription us2
+                        INNER JOIN users u ON u.email = us2.email
+                        WHERE us2.club_id = %s
+                        AND us2.is_active = 1
+                        AND us2.subscribed_or_blocked = 1
+                        AND u.is_active = 1
+                    ) AS Subscriptions,
+                    -- RSVPs for events created by the club in the date range
+                    COUNT(DISTINCT r.rsvp_id) AS RSVPs
+                FROM event_host eh
+                JOIN event e ON e.event_id = eh.event_id
+                LEFT JOIN (SELECT rs.is_active, rs.is_yes, rs.event_id, rs.rsvp_id FROM rsvp rs
+                            INNER JOIN users u2
+                                ON rs.user_id = u2.email
+                            WHERE u2.is_active = 1) r ON eh.event_id = r.event_id
+                    AND r.is_active = 1
+                    AND r.is_yes = 1
+                WHERE eh.club_id = %s
+                AND e.start_time BETWEEN %s AND %s;
             """,
-            "queryParams": ["ID"],
-            "accessControl": "Faculty",
+            "queryParams": ["ID", "ID", "StartDate", "EndDate"],
+            "accessControl": "Club Admin",
         },
     ],
     "USER": [
@@ -396,9 +457,10 @@ REPORTS: ReportObject = {
                     ON r.event_id = e.event_id
                 WHERE user_id = %s
                     AND r.is_active = 1
-                    AND r.is_yes = 1;
+                    AND r.is_yes = 1
+                    AND e.start_time BETWEEN %s AND %s;
             """,
-            "queryParams": ["ID"],
+            "queryParams": ["ID", "StartDate", "EndDate"],
             "accessControl": "Faculty",
         },
     ],
@@ -430,10 +492,11 @@ REPORTS: ReportObject = {
                 INNER JOIN event e ON r.event_id = e.event_id
                 WHERE r.event_id = %s
                     AND r.is_active = 1
-                    AND r.is_yes = 1;
+                    AND r.is_yes = 1
+                    AND u.is_active = 1;
             """,
             "queryParams": ["ID"],
-            "accessControl": "Faculty",
+            "accessControl": "Club Admin",
         }
     ],
 }
@@ -441,13 +504,17 @@ REPORTS: ReportObject = {
 reports_bp = Blueprint("reports", __name__)
 
 
-def resolve_params(params, id):
+def resolve_params(params, id, start_date, end_date):
     return_val = []
     for param in params:
         if param == "ID":
             return_val.append(id)
         elif param == "School":
             return_val.append(session.get("school"))
+        elif param == "StartDate":
+            return_val.append(start_date)
+        elif param == "EndDate":
+            return_val.append(end_date)
         else:
             return_val.append(param)
     return return_val
@@ -459,6 +526,8 @@ def get_report():
     request_json = request.json if request.json is not None else {}
     category = request_json.get("category")
     obj_id = request_json.get("objId")
+    start_date = request_json.get("startDate")
+    end_date = request_json.get("endDate")
     if category is None:
         return jsonify({"error": "Missing report category"}), 400
     name = request_json.get("name")
@@ -504,8 +573,10 @@ def get_report():
     # Execute the report query
     try:
         print(query)
-        print(tuple(resolve_params(params, obj_id)))
-        cursor.execute(query, tuple(resolve_params(params, obj_id)))
+        print(tuple(resolve_params(params, obj_id, start_date, end_date)))
+        cursor.execute(
+            query, tuple(resolve_params(params, obj_id, start_date, end_date))
+        )
         report = cursor.fetchall()
         column_titles = [desc[0] for desc in cursor.description]
     except Exception as e:

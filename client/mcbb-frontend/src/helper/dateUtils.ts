@@ -28,3 +28,22 @@ export const getDayName = (date: Date) => {
   const dayIndex = date.getDay(); // getDay() returns a number from 0 (Sunday) to 6 (Saturday)
   return daysOfWeek[dayIndex];
 };
+
+/**
+ * Get the date one year ago
+ * @returns string The date one year ago as a string
+ */
+export const oneYearAgo = () => {
+  // Get the current date
+  const currentDate = new Date();
+
+  // Subtract one year
+  const lastYearDate = new Date(
+    currentDate.setFullYear(currentDate.getFullYear() - 1)
+  );
+
+  // Format the date as YYYY-MM-DD
+  const yearAgoString = lastYearDate.toISOString().split('T')[0];
+
+  return yearAgoString;
+};
