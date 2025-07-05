@@ -697,7 +697,7 @@ def reset_password():
         return jsonify({"error": "Authentication failed"}), 401
 
     # Check if email is verified
-    is_email_verified = user.get("email_verified")
+    is_email_verified = user.get("emailVerified")
     if not is_email_verified == 1:
         return jsonify({"error": "Email not verified"}), 401
 
