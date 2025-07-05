@@ -80,11 +80,13 @@ export class AuthSync {
    * - Sends a request to the backend to validate the current session
    * - Handles network errors and invalid session states
    */
-  async checkSession(): Promise<UserType | false> {
+  async checkSession(skipMFACheck: boolean): Promise<UserType | false> {
     return this.runExclusive(async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/auth/check-user`,
+          `${
+            import.meta.env.VITE_API_BASE_URL
+          }/api/auth/check-user?noMFA=${skipMFACheck}`,
           {
             method: 'GET',
             credentials: 'include',
@@ -166,10 +168,11 @@ const checkUser = async (
   options: {
     requireFaculty?: boolean;
     requireDeleteFaculty?: boolean;
+    skipMFACheck?: boolean;
   } = {}
 ): Promise<UserType | false> => {
   const authSync = AuthSync.getInstance();
-  const user = await authSync.checkSession();
+  const user = await authSync.checkSession(options?.skipMFACheck ?? false);
 
   if (!user) {
     return false;

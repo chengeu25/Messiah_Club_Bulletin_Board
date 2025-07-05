@@ -3,7 +3,7 @@ from flask import session
 from extensions import mysql
 
 
-def get_user_session_info():
+def get_user_session_info(mfa_required=True):
     """
     Retrieve the current user's session information.
 
@@ -81,7 +81,7 @@ def get_user_session_info():
     try:
         # Retrieve user email and session details using the session token
         cur.execute(
-            """SELECT sm.user_email, sm.expires_at
+            """SELECT sm.user_email, sm.expires_at, sm.email_verified
                FROM session_mapping sm
                WHERE sm.session_id = %s""",
             (session_id,),
@@ -94,7 +94,11 @@ def get_user_session_info():
             session.clear()
             return default_return
 
-        user_email, expires_at = session_data
+        user_email, expires_at, email_verified = session_data
+
+        # If email is not verified and MFA is required, return no user
+        if mfa_required and not email_verified:
+            return default_return
 
         # Ensure `expires_at` is timezone-aware
         if expires_at.tzinfo is None:
@@ -162,7 +166,7 @@ def get_user_session_info():
         return {
             "user_id": user_email,
             "name": result[2],
-            "emailVerified": result[1],
+            "emailVerified": email_verified,
             "isFaculty": result[3],
             "canDeleteFaculty": result[4],
             "clubAdmins": club_admins,

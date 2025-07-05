@@ -40,7 +40,7 @@ const verifyEmailLoader: LoaderFunction = async ({
   request
 }: LoaderFunctionArgs) => {
   // Check user authentication status
-  const user = (await checkUser()) as UserType;
+  const user = (await checkUser({ skipMFACheck: true })) as UserType;
 
   if (!user) {
     // Redirect to login with serviceTo as a proper parameter
@@ -74,14 +74,14 @@ const verifyEmailLoader: LoaderFunction = async ({
 
   // Display account creation message if present in URL
   const url = new URL(request.url);
-  const message = url.searchParams.get("message");
+  const message = url.searchParams.get('message');
 
   if (message) {
     // Store message in sessionStorage or pass it through loader data
-    sessionStorage.setItem("accountSuccessMessage", message);
+    sessionStorage.setItem('accountSuccessMessage', message);
 
     // Clean the URL by redirecting without the message
-    url.searchParams.delete("message");
+    url.searchParams.delete('message');
     return redirect(url.pathname + url.search);
   }
 

@@ -8,14 +8,18 @@ from helper.send_email import send_email
 import requests
 from config import Config
 import jwt
-from helper.check_user import get_user_session_info
-import secrets  # For generating secure random tokens
+
+import secrets
+
+from helper.check_user import (
+    get_user_session_info,
+)  # For generating secure random tokens
 
 auth_bp = Blueprint("auth", __name__)
 
 
 # Function to update the email verification status in the database
-def update_email_verified(email, **kwargs):
+def update_email_verified(session_id, **kwargs):
     """
     Update the email verification status for a user in the database.
 
@@ -43,8 +47,8 @@ def update_email_verified(email, **kwargs):
             return False
 
         cursor = mysql.connection.cursor()
-        query = "UPDATE users SET EMAIL_VERIFIED = %s WHERE email = %s"
-        cursor.execute(query, (1 if kwargs["verified"] else 0, email))
+        query = "UPDATE session_mapping SET EMAIL_VERIFIED = %s WHERE session_id = %s"
+        cursor.execute(query, (1 if kwargs["verified"] else 0, session_id))
         mysql.connection.commit()  # Commit the transaction
         return True
     except:
@@ -148,8 +152,7 @@ def verify_email():
     """
     data = request.get_json()
     input_code = data.get("code")
-    current_user = get_user_session_info()
-    email = current_user.get("user_id")
+    get_user_session_info(mfa_required=False)
 
     if not input_code:
         return jsonify({"error": "Verification code is required"}), 400
@@ -160,7 +163,7 @@ def verify_email():
     if stored_session_code == input_code:
         # Update EMAIL_VERIFIED field in the database
         update_success = update_email_verified(
-            email, verified=True
+            session.get("session_id"), verified=True
         )  # Function that updates EMAIL_VERIFIED field
 
         if update_success:
@@ -201,7 +204,7 @@ def resend_code():
     - Requires an active user session with a user_id
     """
     # get email from session
-    current_user = get_user_session_info()
+    current_user = get_user_session_info(mfa_required=False)
     email = current_user["user_id"]
 
     if session.get("verification_code") is None or request.json.get("forceResend"):
@@ -260,7 +263,9 @@ def check_user():
         - Successful active session: User details, 200 status
         - No active session: Null user details, 401 status
     """
-    user_info = get_user_session_info()
+    mfa_required = request.args.get("noMFA", False)
+    print(mfa_required)
+    user_info = get_user_session_info(mfa_required=(not mfa_required))
 
     # Determine status code based on user_id presence
     status_code = 200 if user_info["user_id"] is not None else 401
@@ -339,9 +344,6 @@ def login():
     # Check if user is banned
     if result[1] == 1:  # is_banned is the second column
         return jsonify({"error": "User is banned"}), 403
-
-    # Turn off email verified
-    update_email_verified(data["email"], verified=False)
 
     # Verify the provided password against the hashed password
     hashed_password = result[0]
@@ -672,7 +674,7 @@ def reset_password():
 
     cur = mysql.connection.cursor()
 
-    print(data["emailRequest"])
+    user = get_user_session_info()
 
     # Retrieve the hashed passwords from the database
     cur.execute(
@@ -695,7 +697,7 @@ def reset_password():
         return jsonify({"error": "Authentication failed"}), 401
 
     # Check if email is verified
-    is_email_verified = result[3]
+    is_email_verified = user.get("email_verified")
     if not is_email_verified == 1:
         return jsonify({"error": "Email not verified"}), 401
 
@@ -739,28 +741,28 @@ def reset_password():
         cur.execute("DELETE FROM session_mapping WHERE session_id = %s", (session_id,))
         mysql.connection.commit()
 
-    # Generate a new session token
-    new_session_token = secrets.token_hex(32)
-    now = datetime.now(timezone.utc)
-    expires_at = now + timedelta(hours=1)
+    # # Generate a new session token
+    # new_session_token = secrets.token_hex(32)
+    # now = datetime.now(timezone.utc)
+    # expires_at = now + timedelta(hours=1)
 
-    # Store the new session token in the database
-    cur.execute(
-        """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
-           VALUES (%s, %s, %s, %s, %s)""",
-        (
-            new_session_token,
-            data["emailRequest"],
-            session.get("school"),
-            now,
-            expires_at,
-        ),
-    )
-    mysql.connection.commit()
+    # # Store the new session token in the database
+    # cur.execute(
+    #     """INSERT INTO session_mapping (session_id, user_email, school_id, created_at, expires_at)
+    #        VALUES (%s, %s, %s, %s, %s)""",
+    #     (
+    #         new_session_token,
+    #         data["emailRequest"],
+    #         session.get("school"),
+    #         now,
+    #         expires_at,
+    #     ),
+    # )
+    # mysql.connection.commit()
 
-    # Update the session with the new session token
-    session["session_id"] = new_session_token
-    session["last_activity"] = now
+    # # Update the session with the new session token
+    # session["session_id"] = new_session_token
+    # session["last_activity"] = now
 
     cur.close()
 
